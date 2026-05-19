@@ -1,0 +1,50 @@
+import { useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+
+const PAGE_TITLES = {
+  '/dashboard':          'Dashboard',
+  '/products':           'Productos',
+  '/sales':              'Ventas',
+  '/sales/new':          'Nueva Venta',
+  '/stock':              'Stock',
+  '/reports':            'Reportes',
+  '/settings/users':     'Usuarios',
+  '/admin/businesses':   'Negocios',
+}
+
+const ROLE_BADGE = {
+  SUPER_ADMIN: 'bg-indigo-100 text-indigo-700',
+  OWNER:       'bg-orange-100 text-orange-700',
+  EMPLOYEE:    'bg-slate-100 text-slate-600',
+}
+
+const ROLE_LABEL = {
+  SUPER_ADMIN: 'Super Admin',
+  OWNER:       'Owner',
+  EMPLOYEE:    'Employee',
+}
+
+export default function Topbar() {
+  const { pathname } = useLocation()
+  const { user } = useAuth()
+
+  const title = PAGE_TITLES[pathname] ?? 'Eazy Stock'
+  const badgeClass = ROLE_BADGE[user?.role] ?? 'bg-gray-100 text-gray-600'
+
+  return (
+    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
+      <h1 className="text-base font-semibold text-gray-900">{title}</h1>
+
+      <div className="flex items-center gap-3">
+        {user?.businessName && (
+          <span className="hidden text-sm text-gray-500 sm:block">{user.businessName}</span>
+        )}
+        {user?.role && (
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeClass}`}>
+            {ROLE_LABEL[user.role] ?? user.role}
+          </span>
+        )}
+      </div>
+    </header>
+  )
+}
