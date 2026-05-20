@@ -9,6 +9,8 @@ import NewSalePage from '../pages/NewSalePage'
 import StockPage from '../pages/stock/StockPage'
 import ReportsPage from '../pages/ReportsPage'
 import UsersPage from '../pages/UsersPage'
+import SuppliersPage from '../pages/SuppliersPage'
+import BrandsPage from '../pages/BrandsPage'
 import BusinessesPage from '../pages/admin/BusinessesPage'
 
 export default function AppRouter() {
@@ -43,6 +45,12 @@ export default function AppRouter() {
       } />
       <Route path="/settings/users" element={
         <ProtectedRoute allowedRoles={['OWNER']}><UsersPage /></ProtectedRoute>
+      } />
+      <Route path="/suppliers" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><SuppliersPage /></ProtectedRoute>
+      } />
+      <Route path="/brands" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
       } />
 
       {/* SUPER_ADMIN only */}

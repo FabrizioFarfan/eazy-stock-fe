@@ -4,18 +4,20 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, Loader2 } from 'lucide-react'
 import { useCreateProduct, useUpdateProduct } from '../../hooks/useProducts'
+import { useSuppliers } from '../../hooks/useSuppliers'
+import { useBrands } from '../../hooks/useBrands'
 import { useAuth } from '../../context/AuthContext'
 
 const schema = z.object({
   name:         z.string().min(2, 'Mínimo 2 caracteres'),
   unit:         z.string().min(1, 'Requerido'),
   description:  z.string().optional(),
-  brand:        z.string().optional(),
-  providerName: z.string().optional(),
+  supplierId:   z.string().optional(),
+  brandId:      z.string().optional(),
   providerCode: z.string().optional(),
   purchasePrice: z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
   salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
-  minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).int('Debe ser entero').min(0, 'Mínimo 0'),
+  minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).int().min(0, 'Mínimo 0'),
 })
 
 function Field({ label, required, error, children }) {
@@ -33,6 +35,9 @@ function Field({ label, required, error, children }) {
 const inputCls =
   'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
 
+const selectCls =
+  'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 bg-white w-full'
+
 export default function ProductFormModal({ product, onClose }) {
   const isEdit = !!product
   const { user } = useAuth()
@@ -40,6 +45,12 @@ export default function ProductFormModal({ product, onClose }) {
   const update = useUpdateProduct()
   const mutation = isEdit ? update : create
   const isBusy = mutation.isPending
+
+  // Load suppliers and brands for selects
+  const { data: suppliersData } = useSuppliers({ size: 200 })
+  const { data: brandsData }    = useBrands({ size: 200 })
+  const suppliers = suppliersData?.content ?? []
+  const brands    = brandsData?.content    ?? []
 
   const {
     register,
@@ -53,34 +64,52 @@ export default function ProductFormModal({ product, onClose }) {
           name:          product.name ?? '',
           unit:          product.unit ?? '',
           description:   product.description ?? '',
-          brand:         product.brand ?? '',
-          providerName:  product.providerName ?? '',
+          supplierId:    product.supplierId ?? '',
+          brandId:       product.brandId ?? '',
           providerCode:  product.providerCode ?? '',
           purchasePrice: product.purchasePrice ?? '',
           salePrice:     product.salePrice ?? '',
           minStock:      product.minStock ?? 0,
         }
-      : { minStock: 0 },
+      : { minStock: 0, supplierId: '', brandId: '' },
   })
 
-  // reset when product changes (opening edit for a different row)
   useEffect(() => {
-    if (isEdit) reset({ ...product, description: product.description ?? '', brand: product.brand ?? '', providerName: product.providerName ?? '', providerCode: product.providerCode ?? '' })
+    if (isEdit) {
+      reset({
+        name:          product.name ?? '',
+        unit:          product.unit ?? '',
+        description:   product.description ?? '',
+        supplierId:    product.supplierId ?? '',
+        brandId:       product.brandId ?? '',
+        providerCode:  product.providerCode ?? '',
+        purchasePrice: product.purchasePrice ?? '',
+        salePrice:     product.salePrice ?? '',
+        minStock:      product.minStock ?? 0,
+      })
+    }
   }, [product?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (values) => {
     try {
+      const payload = {
+        ...values,
+        supplierId:    values.supplierId    || null,
+        brandId:       values.brandId       || null,
+        clearSupplierId: isEdit && !values.supplierId,
+        clearBrandId:    isEdit && !values.brandId,
+      }
+
       if (isEdit) {
-        await update.mutateAsync({ id: product.id, data: values })
+        await update.mutateAsync({ id: product.id, data: payload })
       } else {
-        const payload = user.role === 'SUPER_ADMIN'
-          ? { ...values, businessId: user.businessId }
-          : values
-        await create.mutateAsync(payload)
+        const finalPayload = user.role === 'SUPER_ADMIN'
+          ? { ...payload, businessId: user.businessId }
+          : payload
+        await create.mutateAsync(finalPayload)
       }
       onClose()
     } catch (err) {
-      // errors shown via mutation.error if needed
       console.error(err)
     }
   }
@@ -101,12 +130,10 @@ export default function ProductFormModal({ product, onClose }) {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="space-y-4 px-6 py-5">
             {/* Row 1 — 2 columns */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Col 1 */}
               <div className="space-y-4">
                 <Field label="Nombre" required error={errors.name?.message}>
                   <input {...register('name')} placeholder="Ej. Aceite motor 5W30" className={inputCls} />
@@ -116,21 +143,34 @@ export default function ProductFormModal({ product, onClose }) {
                 </Field>
               </div>
 
-              {/* Col 2 */}
               <div className="space-y-4">
-                <Field label="Marca" error={errors.brand?.message}>
-                  <input {...register('brand')} placeholder="Ej. Castrol" className={inputCls} />
+                {/* Marca — select */}
+                <Field label="Marca" error={errors.brandId?.message}>
+                  <select {...register('brandId')} className={selectCls}>
+                    <option value="">— Sin marca —</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
                 </Field>
-                <Field label="Proveedor" error={errors.providerName?.message}>
-                  <input {...register('providerName')} placeholder="Nombre del proveedor" className={inputCls} />
+
+                {/* Proveedor — select */}
+                <Field label="Proveedor" error={errors.supplierId?.message}>
+                  <select {...register('supplierId')} className={selectCls}>
+                    <option value="">— Sin proveedor —</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
                 </Field>
+
                 <Field label="Código proveedor" error={errors.providerCode?.message}>
                   <input {...register('providerCode')} placeholder="Código externo" className={inputCls} />
                 </Field>
               </div>
             </div>
 
-            {/* Descripción — full width */}
+            {/* Descripción */}
             <Field label="Descripción" error={errors.description?.message}>
               <textarea
                 {...register('description')}
@@ -140,7 +180,7 @@ export default function ProductFormModal({ product, onClose }) {
               />
             </Field>
 
-            {/* Prices row — 3 columns */}
+            {/* Prices row */}
             <div className="grid grid-cols-3 gap-4">
               <Field label="Precio compra" required error={errors.purchasePrice?.message}>
                 <input {...register('purchasePrice')} type="number" step="0.01" min="0" placeholder="0.00" className={inputCls} />

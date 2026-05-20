@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
-  LogOut,
+  LogOut, Truck, Tag,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -16,6 +16,8 @@ const NAV_ITEMS = [
   { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',        roles: ['OWNER', 'EMPLOYEE'] },
   { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',            roles: ['OWNER', 'EMPLOYEE'] },
   { icon: BarChart2,       label: 'Reportes',     path: '/reports',          roles: ['OWNER'] },
+  { icon: Truck,           label: 'Proveedores',  path: '/suppliers',        roles: ['OWNER'] },
+  { icon: Tag,             label: 'Marcas',       path: '/brands',           roles: ['OWNER'] },
   { icon: Users,           label: 'Usuarios',     path: '/settings/users',   roles: ['OWNER'] },
 
   // SUPER_ADMIN only
