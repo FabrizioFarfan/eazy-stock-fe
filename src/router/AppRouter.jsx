@@ -1,50 +1,49 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 
-import LoginPage from '../pages/LoginPage'
-import DashboardPage from '../pages/DashboardPage'
-import ProductsPage from '../pages/ProductsPage'
-import SalesPage from '../pages/SalesPage'
-import NewSalePage from '../pages/NewSalePage'
-import StockPage from '../pages/stock/StockPage'
-import ReportsPage from '../pages/ReportsPage'
-import UsersPage from '../pages/UsersPage'
-import SuppliersPage from '../pages/SuppliersPage'
-import BrandsPage from '../pages/BrandsPage'
+import LoginPage      from '../pages/LoginPage'
+import DashboardPage  from '../pages/DashboardPage'
+import ProductsPage   from '../pages/ProductsPage'
+import SalesPage      from '../pages/SalesPage'
+import NewSalePage    from '../pages/NewSalePage'
+import StockPage      from '../pages/stock/StockPage'
+import ReportsPage    from '../pages/ReportsPage'
+import EmployeesPage  from '../pages/EmployeesPage'
+import SuppliersPage  from '../pages/SuppliersPage'
+import BrandsPage     from '../pages/BrandsPage'
 import BusinessesPage from '../pages/admin/BusinessesPage'
+import OwnersPage     from '../pages/admin/OwnersPage'
 
 export default function AppRouter() {
   return (
     <Routes>
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
-
-      {/* Redirect root → login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Protected — all authenticated roles */}
+      {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={
-        <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><DashboardPage /></ProtectedRoute>
       } />
       <Route path="/products" element={
-        <ProtectedRoute><ProductsPage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ProductsPage /></ProtectedRoute>
       } />
       <Route path="/sales" element={
-        <ProtectedRoute><SalesPage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><SalesPage /></ProtectedRoute>
       } />
       <Route path="/sales/new" element={
-        <ProtectedRoute><NewSalePage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><NewSalePage /></ProtectedRoute>
       } />
       <Route path="/stock" element={
-        <ProtectedRoute><StockPage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><StockPage /></ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ReportsPage /></ProtectedRoute>
       } />
 
       {/* OWNER only */}
-      <Route path="/reports" element={
-        <ProtectedRoute allowedRoles={['OWNER']}><ReportsPage /></ProtectedRoute>
-      } />
-      <Route path="/settings/users" element={
-        <ProtectedRoute allowedRoles={['OWNER']}><UsersPage /></ProtectedRoute>
+      <Route path="/empleados" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><EmployeesPage /></ProtectedRoute>
       } />
       <Route path="/suppliers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SuppliersPage /></ProtectedRoute>
@@ -52,13 +51,15 @@ export default function AppRouter() {
       <Route path="/brands" element={
         <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
       } />
+      {/* Legacy alias — redirect old path */}
+      <Route path="/settings/users" element={<Navigate to="/empleados" replace />} />
 
       {/* SUPER_ADMIN only */}
       <Route path="/admin/businesses" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><BusinessesPage /></ProtectedRoute>
       } />
-      <Route path="/admin/users" element={
-        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><UsersPage /></ProtectedRoute>
+      <Route path="/admin/owners" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><OwnersPage /></ProtectedRoute>
       } />
 
       {/* Catch-all */}
