@@ -6,19 +6,34 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
-// Each item can guard on role OR on a permission flag (or both — both must pass)
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',        roles: null,                         permission: null },
-  { icon: Package,         label: 'Productos',   path: '/products',         roles: ['OWNER', 'EMPLOYEE'],        permission: null },
-  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',            roles: ['OWNER', 'EMPLOYEE'],        permission: null },
-  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',        roles: ['OWNER', 'EMPLOYEE'],        permission: 'canRegisterSale' },
-  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',            roles: ['OWNER', 'EMPLOYEE'],        permission: null },
-  { icon: BarChart2,       label: 'Reportes',     path: '/reports',          roles: ['OWNER', 'EMPLOYEE'],        permission: 'canViewReports' },
-  { icon: Users,           label: 'Usuarios',     path: '/settings/users',   roles: ['OWNER'],                    permission: null },
+/**
+ * Nav items per role.
+ * - roles: null  → visible to ALL authenticated roles
+ * - roles: [...]  → visible only to those roles
+ * - permission: string → additionally requires can(permission) (OWNER/SUPER_ADMIN always pass)
+ */
+const SUPER_ADMIN_NAV = [
+  { icon: Building2, label: 'Negocios', path: '/admin/businesses' },
+  { icon: Users,     label: 'Owners',   path: '/admin/owners' },
+]
 
-  // SUPER_ADMIN only
-  { icon: Building2,       label: 'Negocios',     path: '/admin/businesses', roles: ['SUPER_ADMIN'],              permission: null },
-  { icon: Users,           label: 'Usuarios',     path: '/admin/users',      roles: ['SUPER_ADMIN'],              permission: null },
+const OWNER_NAV = [
+  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',  permission: null },
+  { icon: Package,         label: 'Productos',   path: '/products',   permission: null },
+  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',      permission: null },
+  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',      permission: null },
+  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',  permission: 'canRegisterSale' },
+  { icon: BarChart2,       label: 'Reportes',     path: '/reports',    permission: 'canViewReports' },
+  { icon: Users,           label: 'Empleados',    path: '/empleados',  permission: null },
+]
+
+const EMPLOYEE_NAV = [
+  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',  permission: null },
+  { icon: Package,         label: 'Productos',   path: '/products',   permission: null },
+  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',      permission: null },
+  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',      permission: null },
+  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',  permission: 'canRegisterSale' },
+  { icon: BarChart2,       label: 'Reportes',     path: '/reports',    permission: 'canViewReports' },
 ]
 
 const ROLE_LABEL = {
@@ -27,15 +42,19 @@ const ROLE_LABEL = {
   EMPLOYEE: 'Employee',
 }
 
+function navItemsForRole(role) {
+  if (role === 'SUPER_ADMIN') return SUPER_ADMIN_NAV
+  if (role === 'OWNER')       return OWNER_NAV
+  if (role === 'EMPLOYEE')    return EMPLOYEE_NAV
+  return []
+}
+
 export default function Sidebar() {
   const { user, can, logout } = useAuth()
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (!user) return false
-    const roleOk = !item.roles || item.roles.includes(user.role)
-    const permOk = !item.permission || can(item.permission)
-    return roleOk && permOk
-  })
+  const items = navItemsForRole(user?.role).filter(
+    (item) => !item.permission || can(item.permission),
+  )
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -54,7 +73,7 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <ul className="space-y-0.5">
-          {visibleItems.map(({ icon: Icon, label, path }) => (
+          {items.map(({ icon: Icon, label, path }) => (
             <li key={path}>
               <NavLink
                 to={path}
