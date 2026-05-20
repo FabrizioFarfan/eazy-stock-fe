@@ -6,21 +6,19 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
+// Each item can guard on role OR on a permission flag (or both — both must pass)
 const NAV_ITEMS = [
-  // All roles
-  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',        roles: null },
-
-  // OWNER + EMPLOYEE only
-  { icon: Package,         label: 'Productos',   path: '/products',         roles: ['OWNER', 'EMPLOYEE'] },
-  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',            roles: ['OWNER', 'EMPLOYEE'] },
-  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',        roles: ['OWNER', 'EMPLOYEE'] },
-  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',            roles: ['OWNER', 'EMPLOYEE'] },
-  { icon: BarChart2,       label: 'Reportes',     path: '/reports',          roles: ['OWNER'] },
-  { icon: Users,           label: 'Usuarios',     path: '/settings/users',   roles: ['OWNER'] },
+  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',        roles: null,                         permission: null },
+  { icon: Package,         label: 'Productos',   path: '/products',         roles: ['OWNER', 'EMPLOYEE'],        permission: null },
+  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',            roles: ['OWNER', 'EMPLOYEE'],        permission: null },
+  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',        roles: ['OWNER', 'EMPLOYEE'],        permission: 'canRegisterSale' },
+  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',            roles: ['OWNER', 'EMPLOYEE'],        permission: null },
+  { icon: BarChart2,       label: 'Reportes',     path: '/reports',          roles: ['OWNER', 'EMPLOYEE'],        permission: 'canViewReports' },
+  { icon: Users,           label: 'Usuarios',     path: '/settings/users',   roles: ['OWNER'],                    permission: null },
 
   // SUPER_ADMIN only
-  { icon: Building2,       label: 'Negocios',     path: '/admin/businesses', roles: ['SUPER_ADMIN'] },
-  { icon: Users,           label: 'Usuarios',     path: '/admin/users',      roles: ['SUPER_ADMIN'] },
+  { icon: Building2,       label: 'Negocios',     path: '/admin/businesses', roles: ['SUPER_ADMIN'],              permission: null },
+  { icon: Users,           label: 'Usuarios',     path: '/admin/users',      roles: ['SUPER_ADMIN'],              permission: null },
 ]
 
 const ROLE_LABEL = {
@@ -30,11 +28,14 @@ const ROLE_LABEL = {
 }
 
 export default function Sidebar() {
-  const { user, logout } = useAuth()
+  const { user, can, logout } = useAuth()
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  )
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (!user) return false
+    const roleOk = !item.roles || item.roles.includes(user.role)
+    const permOk = !item.permission || can(item.permission)
+    return roleOk && permOk
+  })
 
   const initials = user?.name
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()

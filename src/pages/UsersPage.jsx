@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, Power } from 'lucide-react'
+import { UserPlus, X, Loader2, Power, Shield } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useUsers, useCreateUser, useToggleUser } from '../hooks/useUsers'
+import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +50,116 @@ function SkeletonRow() {
         </td>
       ))}
     </tr>
+  )
+}
+
+// ── permission labels ─────────────────────────────────────────────────────────
+
+const PERMISSION_META = [
+  { key: 'canManageProducts',      label: 'Gestionar productos' },
+  { key: 'canReceiveMerchandise',  label: 'Recibir mercadería' },
+  { key: 'canModifyStockManually', label: 'Ajuste de stock manual' },
+  { key: 'canRegisterSale',        label: 'Registrar ventas' },
+  { key: 'canCancelSale',          label: 'Cancelar ventas' },
+  { key: 'canApplyDiscount',       label: 'Aplicar descuentos' },
+  { key: 'canEditPrices',          label: 'Editar precios' },
+  { key: 'canViewReports',         label: 'Ver reportes' },
+  { key: 'canManageEmployees',     label: 'Gestionar empleados' },
+  { key: 'canManageSuppliers',     label: 'Gestionar proveedores y marcas' },
+  { key: 'canViewAuditLog',        label: 'Ver log de auditoría' },
+]
+
+// ── PermissionsPanel ──────────────────────────────────────────────────────────
+
+function PermissionsPanel({ targetUser, onClose }) {
+  const qc = useQueryClient()
+
+  const { data: perms, isLoading } = useQuery({
+    queryKey: ['permissions', targetUser.id],
+    queryFn: () => getUserPermissions(targetUser.id),
+  })
+
+  const patch = useMutation({
+    mutationFn: (update) => patchUserPermissions(targetUser.id, update),
+    onSuccess: (updated) => {
+      qc.setQueryData(['permissions', targetUser.id], updated)
+    },
+  })
+
+  const handleToggle = (key, current) => {
+    patch.mutate({ [key]: !current })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/30">
+      <div className="flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">
+              Permisos — {targetUser.name}
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Los cambios se aplican de inmediato
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Toggles */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 11 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="h-4 w-40 animate-pulse rounded bg-gray-100" />
+                  <div className="h-6 w-10 animate-pulse rounded-full bg-gray-100" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {PERMISSION_META.map(({ key, label }) => {
+                const value = perms?.[key] ?? false
+                const busy  = patch.isPending
+
+                return (
+                  <li key={key} className="flex items-center justify-between gap-4">
+                    <span className="text-sm text-gray-700">{label}</span>
+                    <button
+                      role="switch"
+                      aria-checked={value}
+                      disabled={busy}
+                      onClick={() => handleToggle(key, value)}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:cursor-wait ${
+                        value ? 'bg-orange-500' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                          value ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {patch.isError && (
+            <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              {patch.error?.response?.data?.message ?? 'Error al actualizar permisos'}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -235,12 +347,15 @@ function UserFormModal({ onClose }) {
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth()
-  const [showModal, setShowModal]   = useState(false)
-  const [togglingId, setTogglingId] = useState(null)
+  const [showModal, setShowModal]       = useState(false)
+  const [togglingId, setTogglingId]     = useState(null)
+  const [permTarget, setPermTarget]     = useState(null)
 
   const { data: usersPage, isLoading } = useUsers()
   const users = usersPage?.content ?? []
   const toggleUser = useToggleUser()
+
+  const isOwner = currentUser?.role === 'OWNER'
 
   const handleToggle = async (id) => {
     setTogglingId(id)
@@ -290,9 +405,10 @@ export default function UsersPage() {
                 </tr>
               ) : (
                 users.map((u) => {
-                  const roleCfg = ROLE_CONFIG[u.role] ?? { label: u.role, cls: 'bg-gray-100 text-gray-600' }
-                  const isSelf  = u.id === currentUser?.id
+                  const roleCfg    = ROLE_CONFIG[u.role] ?? { label: u.role, cls: 'bg-gray-100 text-gray-600' }
+                  const isSelf     = u.id === currentUser?.id
                   const isToggling = togglingId === u.id
+                  const canEditPerms = isOwner && u.role === 'EMPLOYEE'
 
                   return (
                     <tr key={u.id} className="transition-colors hover:bg-gray-50">
@@ -333,25 +449,40 @@ export default function UsersPage() {
                         {formatDate(u.createdAt)}
                       </td>
 
-                      {/* Toggle active */}
+                      {/* Actions */}
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handleToggle(u.id)}
-                          disabled={isSelf || isToggling}
-                          title={isSelf ? 'No puedes desactivarte a ti mismo' : u.active ? 'Desactivar' : 'Activar'}
-                          className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                            u.active
-                              ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                              : 'bg-green-50 text-green-600 hover:bg-green-100'
-                          }`}
-                        >
-                          {isToggling ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            <Power size={12} />
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Permissions button — only OWNER on EMPLOYEE rows */}
+                          {canEditPerms && (
+                            <button
+                              onClick={() => setPermTarget(u)}
+                              title="Editar permisos"
+                              className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                            >
+                              <Shield size={12} />
+                              Permisos
+                            </button>
                           )}
-                          {u.active ? 'Desactivar' : 'Activar'}
-                        </button>
+
+                          {/* Toggle active */}
+                          <button
+                            onClick={() => handleToggle(u.id)}
+                            disabled={isSelf || isToggling}
+                            title={isSelf ? 'No puedes desactivarte a ti mismo' : u.active ? 'Desactivar' : 'Activar'}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                              u.active
+                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                : 'bg-green-50 text-green-600 hover:bg-green-100'
+                            }`}
+                          >
+                            {isToggling ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <Power size={12} />
+                            )}
+                            {u.active ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -363,6 +494,12 @@ export default function UsersPage() {
       </div>
 
       {showModal && <UserFormModal onClose={() => setShowModal(false)} />}
+      {permTarget && (
+        <PermissionsPanel
+          targetUser={permTarget}
+          onClose={() => setPermTarget(null)}
+        />
+      )}
     </div>
   )
 }
