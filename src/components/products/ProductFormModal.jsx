@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff } from 'lucide-react'
 import { useCreateProduct, useUpdateProduct } from '../../hooks/useProducts'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useBrands } from '../../hooks/useBrands'
@@ -52,10 +52,76 @@ export default function ProductFormModal({ product, onClose }) {
   const suppliers = suppliersData?.content ?? []
   const brands    = brandsData?.content    ?? []
 
+  // Camera state for scanning providerCode
+  const [hasCameraSupport, setHasCameraSupport] = useState(false)
+  const [cameraOpen, setCameraOpen]             = useState(false)
+  const videoRef        = useRef(null)
+  const streamRef       = useRef(null)
+  const detectorRef     = useRef(null)
+  const scanIntervalRef = useRef(null)
+
+  useEffect(() => {
+    const supported =
+      !!navigator.mediaDevices?.getUserMedia &&
+      typeof window.BarcodeDetector !== 'undefined'
+    setHasCameraSupport(supported)
+  }, [])
+
+  useEffect(() => {
+    return () => stopCamera()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stopCamera = () => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current)
+      scanIntervalRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+    setCameraOpen(false)
+  }
+
+  const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      })
+      streamRef.current = stream
+      videoRef.current.srcObject = stream
+      await videoRef.current.play()
+      setCameraOpen(true)
+
+      detectorRef.current = new window.BarcodeDetector({
+        formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
+      })
+
+      scanIntervalRef.current = setInterval(async () => {
+        if (!videoRef.current || !detectorRef.current) return
+        try {
+          const barcodes = await detectorRef.current.detect(videoRef.current)
+          if (barcodes.length > 0) {
+            stopCamera()
+            setValue('providerCode', barcodes[0].rawValue)
+          }
+        } catch {
+          // frame not ready yet
+        }
+      }, 500)
+    } catch {
+      // Permission denied or device unavailable — fail silently
+    }
+  }
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -165,7 +231,43 @@ export default function ProductFormModal({ product, onClose }) {
                 </Field>
 
                 <Field label="Código proveedor" error={errors.providerCode?.message}>
-                  <input {...register('providerCode')} placeholder="Código externo" className={inputCls} />
+                  <div className="flex gap-1.5">
+                    <input
+                      {...register('providerCode')}
+                      placeholder="Código externo"
+                      className={`${inputCls} flex-1`}
+                    />
+                    {hasCameraSupport && (
+                      <button
+                        type="button"
+                        onClick={cameraOpen ? stopCamera : openCamera}
+                        title={cameraOpen ? 'Cerrar cámara' : 'Escanear con cámara'}
+                        className={`flex items-center rounded-lg px-2.5 transition ${
+                          cameraOpen
+                            ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                            : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
+                      </button>
+                    )}
+                  </div>
+                  {hasCameraSupport && (
+                    <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
+                      <div className="relative overflow-hidden rounded-lg border border-orange-200 bg-black">
+                        <video
+                          ref={videoRef}
+                          className="w-full"
+                          style={{ maxHeight: 160 }}
+                          playsInline
+                          muted
+                        />
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <div className="h-16 w-36 rounded border-2 border-orange-400 opacity-80" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Field>
               </div>
             </div>

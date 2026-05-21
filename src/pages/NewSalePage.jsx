@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, Minus, X, ShoppingCart, Loader2, Check } from 'lucide-react'
+import { Plus, Minus, X, ShoppingCart, Loader2, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { useProducts } from '../hooks/useProducts'
 import { useCreateSale } from '../hooks/useSales'
 import { useDebounce } from '../hooks/useDebounce'
+import { productsApi } from '../services/endpoints/products'
+import ScannerInput from '../components/ScannerInput'
 
 function formatCurrency(value) {
   if (value == null) return '—'
@@ -172,6 +175,29 @@ export default function NewSalePage() {
     )
   }
 
+  const scanCode = async (code) => {
+    try {
+      const product = (await productsApi.scanCode(code)).data.data
+      if (!product) {
+        toast.error('Producto no encontrado')
+        return
+      }
+      if (product.currentStock === 0) {
+        toast.warning('Sin stock disponible')
+        return
+      }
+      if (cartIds.has(product.id)) {
+        increase(product.id)
+        toast.info('Cantidad actualizada')
+        return
+      }
+      addToCart(product)
+      toast.success(product.name)
+    } catch {
+      toast.error('Producto no encontrado')
+    }
+  }
+
   const total = cart.reduce((sum, i) => sum + i.quantity * (i.product.salePrice ?? 0), 0)
 
   const handleSubmit = async () => {
@@ -202,23 +228,18 @@ export default function NewSalePage() {
       <div className="flex flex-1 gap-5 overflow-hidden">
         {/* ── LEFT: product search ── */}
         <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar producto por nombre o SKU..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
-              autoFocus
-            />
-          </div>
+          <ScannerInput
+            value={search}
+            onChange={setSearch}
+            onScan={scanCode}
+            placeholder="Buscar por nombre, SKU o escanear código..."
+          />
 
           <div className="flex-1 overflow-y-auto">
             {!debouncedSearch ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-                <Search size={36} className="text-gray-200" />
-                <p className="text-sm text-gray-400">Escribe para buscar productos</p>
+                <ShoppingCart size={36} className="text-gray-200" />
+                <p className="text-sm text-gray-400">Busca un producto o escanea su código</p>
               </div>
             ) : loadingProducts ? (
               <div className="space-y-3">
