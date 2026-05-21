@@ -32,3 +32,21 @@ export function useReportsLowStock(params, options = {}) {
     ...options,
   })
 }
+
+export function useSalesReport(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'sales', params],
+    queryFn: () => reportsApi.getSalesReport(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
+export function useSaleDetail(saleId, options = {}) {
+  return useQuery({
+    queryKey: ['sales', 'detail', saleId],
+    queryFn: () => reportsApi.getSaleDetail(saleId).then((r) => r.data.data),
+    enabled: !!saleId,
+    ...options,
+  })
+}
