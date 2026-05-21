@@ -65,11 +65,11 @@ function StatusBadge({ active }) {
 // ── main page ─────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20;
-const canMutate = (role) => role === "OWNER" || role === "SUPER_ADMIN";
+const canMutate = (u) => u?.role === "OWNER" || (u?.role === "SUPER_ADMIN" && !!u?.businessId);
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const isManager = canMutate(user?.role);
+  const isManager = canMutate(user);
 
   // ── filter state
   const [search, setSearch] = useState("");

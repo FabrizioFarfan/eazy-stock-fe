@@ -4,6 +4,11 @@ import { Camera, CameraOff, Search } from 'lucide-react'
 /**
  * Search input with physical barcode scanner + optional camera scanning.
  *
+ * Camera detection strategy:
+ *   1. Native BarcodeDetector (Chrome/Edge)    — polling via setInterval
+ *   2. @zxing/browser BrowserMultiFormatReader — Safari, Firefox, all others
+ *   Camera button is hidden if getUserMedia is not supported at all.
+ *
  * Props:
  *   value       {string}    Controlled text value (for debounced text search)
  *   onChange    {function}  Called on every keystroke (text search)
@@ -16,15 +21,12 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
 
   const videoRef        = useRef(null)
   const streamRef       = useRef(null)
-  const detectorRef     = useRef(null)
-  const scanIntervalRef = useRef(null)
+  const detectorRef     = useRef(null)   // holds BarcodeDetector OR BrowserMultiFormatReader
+  const scanIntervalRef = useRef(null)   // only used in native BarcodeDetector path
 
-  // Detect support once — needs both getUserMedia and BarcodeDetector
+  // Only requires getUserMedia — ZXing handles Safari/Firefox without BarcodeDetector
   useEffect(() => {
-    const supported =
-      !!navigator.mediaDevices?.getUserMedia &&
-      typeof window.BarcodeDetector !== 'undefined'
-    setHasCameraSupport(supported)
+    setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
   }, [])
 
   // Always stop the camera stream on unmount
@@ -33,10 +35,15 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopCamera = () => {
+    // Stop native BarcodeDetector polling
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current)
       scanIntervalRef.current = null
     }
+    // Stop ZXing reader if it is one (it has reset(), BarcodeDetector does not)
+    detectorRef.current?.reset?.()
+    detectorRef.current = null
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
@@ -49,7 +56,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
 
   const openCamera = async () => {
     try {
-      // Request permission — prompts the browser dialog on first call
+      // Request camera permission — browser shows the native permission dialog
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
       })
@@ -58,30 +65,45 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
       await videoRef.current.play()
       setCameraOpen(true)
 
-      detectorRef.current = new window.BarcodeDetector({
-        formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
-      })
+      if (typeof window.BarcodeDetector !== 'undefined') {
+        // ── Path 1: Native BarcodeDetector (Chrome / Edge) ──────────────────
+        const detector = new window.BarcodeDetector({
+          formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
+        })
+        detectorRef.current = detector
 
-      // Poll a video frame every 500 ms
-      scanIntervalRef.current = setInterval(async () => {
-        if (!videoRef.current || !detectorRef.current) return
-        try {
-          const barcodes = await detectorRef.current.detect(videoRef.current)
-          if (barcodes.length > 0) {
-            const code = barcodes[0].rawValue
-            stopCamera()
-            onScan(code)
+        scanIntervalRef.current = setInterval(async () => {
+          if (!videoRef.current || !detectorRef.current) return
+          try {
+            const barcodes = await detector.detect(videoRef.current)
+            if (barcodes.length > 0) {
+              const code = barcodes[0].rawValue
+              stopCamera()
+              onScan(code)
+            }
+          } catch {
+            // frame not ready yet — ignore
           }
-        } catch {
-          // frame not ready yet — ignore
-        }
-      }, 500)
+        }, 500)
+      } else {
+        // ── Path 2: @zxing/browser (Safari, Firefox, all others) ─────────────
+        const { BrowserMultiFormatReader } = await import('@zxing/browser')
+        const reader = new BrowserMultiFormatReader()
+        detectorRef.current = reader
+
+        reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result) {
+            stopCamera()
+            onScan(result.getText())
+          }
+        })
+      }
     } catch {
       // Permission denied or device unavailable — fail silently
     }
   }
 
-  // Physical scanner sends rapid keystrokes and finishes with Enter
+  // Physical scanner: sends rapid keystrokes ending with Enter
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && value.trim()) {
       e.preventDefault()
@@ -108,7 +130,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
           />
         </div>
 
-        {/* Camera button — only rendered when browser supports it */}
+        {/* Camera button — only rendered when browser supports getUserMedia */}
         {hasCameraSupport && (
           <button
             type="button"

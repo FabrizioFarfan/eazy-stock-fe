@@ -61,10 +61,7 @@ export default function ProductFormModal({ product, onClose }) {
   const scanIntervalRef = useRef(null)
 
   useEffect(() => {
-    const supported =
-      !!navigator.mediaDevices?.getUserMedia &&
-      typeof window.BarcodeDetector !== 'undefined'
-    setHasCameraSupport(supported)
+    setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
   }, [])
 
   useEffect(() => {
@@ -76,6 +73,9 @@ export default function ProductFormModal({ product, onClose }) {
       clearInterval(scanIntervalRef.current)
       scanIntervalRef.current = null
     }
+    // ZXing reader has reset(); native BarcodeDetector does not — optional chaining handles both
+    detectorRef.current?.reset?.()
+    detectorRef.current = null
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
@@ -96,22 +96,38 @@ export default function ProductFormModal({ product, onClose }) {
       await videoRef.current.play()
       setCameraOpen(true)
 
-      detectorRef.current = new window.BarcodeDetector({
-        formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
-      })
+      if (typeof window.BarcodeDetector !== 'undefined') {
+        // Native BarcodeDetector (Chrome / Edge)
+        const detector = new window.BarcodeDetector({
+          formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
+        })
+        detectorRef.current = detector
 
-      scanIntervalRef.current = setInterval(async () => {
-        if (!videoRef.current || !detectorRef.current) return
-        try {
-          const barcodes = await detectorRef.current.detect(videoRef.current)
-          if (barcodes.length > 0) {
-            stopCamera()
-            setValue('providerCode', barcodes[0].rawValue)
+        scanIntervalRef.current = setInterval(async () => {
+          if (!videoRef.current || !detectorRef.current) return
+          try {
+            const barcodes = await detector.detect(videoRef.current)
+            if (barcodes.length > 0) {
+              stopCamera()
+              setValue('providerCode', barcodes[0].rawValue)
+            }
+          } catch {
+            // frame not ready yet
           }
-        } catch {
-          // frame not ready yet
-        }
-      }, 500)
+        }, 500)
+      } else {
+        // @zxing/browser fallback (Safari, Firefox, all others)
+        const { BrowserMultiFormatReader } = await import('@zxing/browser')
+        const reader = new BrowserMultiFormatReader()
+        detectorRef.current = reader
+
+        reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result) {
+            stopCamera()
+            setValue('providerCode', result.getText())
+          }
+        })
+      }
     } catch {
       // Permission denied or device unavailable — fail silently
     }
