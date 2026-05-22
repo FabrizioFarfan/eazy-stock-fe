@@ -1,8 +1,22 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
+import { useAuth } from '../context/AuthContext'
 
 import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
+
+const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/sales/new' }
+
+function LandingRoute() {
+  const { token, user, isLoading } = useAuth()
+  if (isLoading) return (
+    <div className="flex h-screen items-center justify-center bg-[#0f172a]">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+    </div>
+  )
+  if (token) return <Navigate to={ROLE_HOME[user?.role] ?? '/dashboard'} replace />
+  return <LandingPage />
+}
 import DashboardPage  from '../pages/DashboardPage'
 import ProductsPage   from '../pages/ProductsPage'
 import SalesPage      from '../pages/SalesPage'
@@ -20,7 +34,7 @@ export default function AppRouter() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<LandingRoute />} />
       <Route path="/login" element={<LoginPage />} />
 
       {/* OWNER + EMPLOYEE */}

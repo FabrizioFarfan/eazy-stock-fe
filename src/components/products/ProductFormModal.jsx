@@ -64,10 +64,7 @@ export default function ProductFormModal({ product, onClose }) {
   const scanIntervalRef = useRef(null)
 
   useEffect(() => {
-    const supported =
-      !!navigator.mediaDevices?.getUserMedia &&
-      typeof window.BarcodeDetector !== 'undefined'
-    setHasCameraSupport(supported)
+    setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
   }, [])
 
   useEffect(() => { return () => stopCamera() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -86,16 +83,19 @@ export default function ProductFormModal({ product, onClose }) {
       videoRef.current.srcObject = stream
       await videoRef.current.play()
       setCameraOpen(true)
-      detectorRef.current = new window.BarcodeDetector({
-        formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
-      })
-      scanIntervalRef.current = setInterval(async () => {
-        if (!videoRef.current || !detectorRef.current) return
-        try {
-          const barcodes = await detectorRef.current.detect(videoRef.current)
-          if (barcodes.length > 0) { stopCamera(); setValue('providerCode', barcodes[0].rawValue) }
-        } catch { /* frame not ready */ }
-      }, 500)
+
+      if (typeof window.BarcodeDetector !== 'undefined') {
+        detectorRef.current = new window.BarcodeDetector({
+          formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
+        })
+        scanIntervalRef.current = setInterval(async () => {
+          if (!videoRef.current || !detectorRef.current) return
+          try {
+            const barcodes = await detectorRef.current.detect(videoRef.current)
+            if (barcodes.length > 0) { stopCamera(); setValue('providerCode', barcodes[0].rawValue) }
+          } catch { /* frame not ready */ }
+        }, 500)
+      }
     } catch { /* permission denied */ }
   }
 
