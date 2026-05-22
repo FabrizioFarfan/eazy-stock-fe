@@ -1,4 +1,5 @@
-import { BookOpen, User, Building2, Mail, Shield, LogOut, ChevronRight } from 'lucide-react'
+import { BookOpen, User, Building2, Mail, Shield, LogOut, ChevronRight, MonitorX } from 'lucide-react'
+import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const ROLE_LABEL = {
@@ -46,7 +47,14 @@ function Section({ title, children }) {
 }
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, logoutAll } = useAuth()
+  const [loggingOutAll, setLoggingOutAll] = useState(false)
+
+  const handleLogoutAll = async () => {
+    if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return
+    setLoggingOutAll(true)
+    await logoutAll()
+  }
 
   const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
 
@@ -112,12 +120,25 @@ export default function SettingsPage() {
       <Section title="Sesión">
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3.5 py-4 -mx-5 px-5 rounded-xl text-left hover:bg-red-50 transition-colors group"
+          className="flex w-full items-center gap-3.5 py-4 -mx-5 px-5 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 group-hover:bg-red-100 transition-colors">
             <LogOut size={15} className="text-red-500" />
           </div>
           <span className="text-sm font-semibold text-red-500">Cerrar sesión</span>
+        </button>
+        <button
+          onClick={handleLogoutAll}
+          disabled={loggingOutAll}
+          className="flex w-full items-center gap-3.5 py-4 -mx-5 px-5 rounded-xl text-left hover:bg-red-50 transition-colors group disabled:opacity-50"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 group-hover:bg-red-100 transition-colors">
+            <MonitorX size={15} className="text-red-400" />
+          </div>
+          <div className="flex-1">
+            <span className="text-sm font-semibold text-red-400">Cerrar sesión en todos los dispositivos</span>
+            <p className="text-xs text-gray-400">Invalida todas las sesiones activas</p>
+          </div>
         </button>
       </Section>
 

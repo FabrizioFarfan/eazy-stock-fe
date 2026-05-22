@@ -11,16 +11,13 @@ const REDIRECT_BY_ROLE = {
   EMPLOYEE: "/sales/new",
 };
 
-// OWNER and SUPER_ADMIN always have all permissions
 const ALWAYS_ALLOWED = ["OWNER", "SUPER_ADMIN"];
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser]               = useState(null);
   const [permissions, setPermissions] = useState(null);
-  const [token, setToken] = useState(() =>
-    localStorage.getItem("eazystock_token"),
-  );
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken]             = useState(() => localStorage.getItem("eazystock_token"));
+  const [isLoading, setIsLoading]     = useState(true);
   const navigate = useNavigate();
 
   const loadPermissions = useCallback(async () => {
@@ -32,7 +29,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Rehydrate user on mount if a token is already stored
+  // Rehydrate user on mount — the axios interceptor will silently refresh if needed
   useEffect(() => {
     if (!token) {
       setIsLoading(false);
@@ -43,10 +40,14 @@ export function AuthProvider({ children }) {
       .then(async (res) => {
         const userData = res.data.data ?? res.data;
         setUser(userData);
+        // Sync access token in case the interceptor refreshed it during /me
+        const currentToken = localStorage.getItem("eazystock_token");
+        if (currentToken !== token) setToken(currentToken);
         await loadPermissions();
       })
       .catch(() => {
         localStorage.removeItem("eazystock_token");
+        localStorage.removeItem("eazystock_refresh_token");
         setToken(null);
       })
       .finally(() => setIsLoading(false));
@@ -55,25 +56,41 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
-    const { token: newToken, user: userData } = res.data;
+    const { accessToken, refreshToken, user: userData } = res.data;
 
-    localStorage.setItem("eazystock_token", newToken);
-    setToken(newToken);
+    localStorage.setItem("eazystock_token", accessToken);
+    localStorage.setItem("eazystock_refresh_token", refreshToken);
+    setToken(accessToken);
     setUser(userData);
     await loadPermissions();
 
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken = localStorage.getItem("eazystock_refresh_token");
+    try {
+      if (refreshToken) await api.post("/auth/logout", { refreshToken });
+    } catch { /* ignore — clear locally regardless */ }
+    _clearSession();
+  };
+
+  const logoutAll = async () => {
+    try {
+      await api.post("/auth/logout-all");
+    } catch { /* ignore */ }
+    _clearSession();
+  };
+
+  const _clearSession = () => {
     localStorage.removeItem("eazystock_token");
+    localStorage.removeItem("eazystock_refresh_token");
     setToken(null);
     setUser(null);
     setPermissions(null);
     navigate("/login");
   };
 
-  /** Returns true if the current user has the given permission flag. */
   const can = useCallback(
     (permission) => {
       if (!user) return false;
@@ -85,7 +102,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, logout }}
+      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll }}
     >
       {children}
     </AuthContext.Provider>
