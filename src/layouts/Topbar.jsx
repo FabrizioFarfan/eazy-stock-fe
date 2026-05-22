@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom'
+import { Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const PAGE_TITLES = {
@@ -9,7 +10,11 @@ const PAGE_TITLES = {
   '/stock':              'Stock',
   '/reports':            'Reportes',
   '/settings/users':     'Usuarios',
+  '/empleados':          'Empleados',
+  '/suppliers':          'Proveedores',
+  '/brands':             'Marcas',
   '/admin/businesses':   'Negocios',
+  '/admin/owners':       'Owners',
 }
 
 const ROLE_BADGE = {
@@ -24,7 +29,7 @@ const ROLE_LABEL = {
   EMPLOYEE:    'Employee',
 }
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }) {
   const { pathname } = useLocation()
   const { user } = useAuth()
 
@@ -32,8 +37,18 @@ export default function Topbar() {
   const badgeClass = ROLE_BADGE[user?.role] ?? 'bg-gray-100 text-gray-600'
 
   return (
-    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <h1 className="text-base font-semibold text-gray-900">{title}</h1>
+    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={onMenuClick}
+          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 md:hidden"
+          aria-label="Abrir menú"
+        >
+          <Menu size={20} />
+        </button>
+        <h1 className="text-base font-semibold text-gray-900">{title}</h1>
+      </div>
 
       <div className="flex items-center gap-3">
         {user?.businessName && (
