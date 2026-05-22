@@ -15,6 +15,7 @@ const PAGE_TITLES = {
   '/brands':             'Marcas',
   '/admin/businesses':   'Negocios',
   '/admin/owners':       'Owners',
+  '/settings':           'Ajustes',
 }
 
 const ROLE_BADGE = {

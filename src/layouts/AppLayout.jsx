@@ -1,9 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import TutorialModal from '../components/tutorial/TutorialModal'
+import { useAuth } from '../context/AuthContext'
 
 export default function AppLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user } = useAuth()
+  const [sidebarOpen,  setSidebarOpen]  = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+
+  const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
+
+  // Show on first visit
+  useEffect(() => {
+    if (tutorialKey && !localStorage.getItem(tutorialKey)) {
+      setShowTutorial(true)
+    }
+  }, [tutorialKey])
+
+  // Listen for manual trigger from SettingsPage
+  useEffect(() => {
+    const handler = () => setShowTutorial(true)
+    window.addEventListener('eazystock:show-tutorial', handler)
+    return () => window.removeEventListener('eazystock:show-tutorial', handler)
+  }, [])
+
+  const closeTutorial = () => {
+    if (tutorialKey) localStorage.setItem(tutorialKey, '1')
+    setShowTutorial(false)
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -14,6 +39,7 @@ export default function AppLayout({ children }) {
           {children}
         </main>
       </div>
+      {showTutorial && <TutorialModal onClose={closeTutorial} />}
     </div>
   )
 }

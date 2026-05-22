@@ -11,6 +11,7 @@ import ReportsPage    from '../pages/ReportsPage'
 import EmployeesPage  from '../pages/EmployeesPage'
 import SuppliersPage  from '../pages/SuppliersPage'
 import BrandsPage     from '../pages/BrandsPage'
+import SettingsPage   from '../pages/SettingsPage'
 import BusinessesPage from '../pages/admin/BusinessesPage'
 import OwnersPage     from '../pages/admin/OwnersPage'
 
@@ -50,6 +51,10 @@ export default function AppRouter() {
       } />
       <Route path="/brands" element={
         <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
+      } />
+      {/* Settings — todos los roles autenticados */}
+      <Route path="/settings" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE', 'SUPER_ADMIN']}><SettingsPage /></ProtectedRoute>
       } />
       {/* Legacy alias — redirect old path */}
       <Route path="/settings/users" element={<Navigate to="/empleados" replace />} />

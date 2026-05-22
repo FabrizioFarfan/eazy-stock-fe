@@ -238,10 +238,10 @@ export default function ProductsPage() {
                       {p.name}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {p.brand || "—"}
+                      {p.brandName || "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
-                      {p.providerName || "—"}
+                      {p.supplierName || "—"}
                     </td>
                     <td className="px-4 py-3 text-right text-gray-700">
                       {formatCurrency(p.purchasePrice)}
