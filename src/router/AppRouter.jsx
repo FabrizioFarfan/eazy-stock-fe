@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 
+import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
 import DashboardPage  from '../pages/DashboardPage'
 import ProductsPage   from '../pages/ProductsPage'
@@ -19,8 +20,8 @@ export default function AppRouter() {
   return (
     <Routes>
       {/* Public */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={
