@@ -50,9 +50,8 @@ function navItemsForRole(role) {
 
 export default function Sidebar({ open = false, onClose = () => {} }) {
   const { user, can, logout } = useAuth()
-  const { pathname } = useLocation()
+  const { pathname }          = useLocation()
 
-  // Close sidebar on navigation (mobile)
   useEffect(() => {
     onClose()
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,7 +69,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
       {/* Mobile backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 md:hidden"
+          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
       )}
@@ -87,17 +86,17 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         {/* Mobile close button */}
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+          className="absolute right-3 top-3 rounded-xl p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden transition-colors"
         >
           <X size={18} />
         </button>
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
-            <Package size={16} className="text-white" />
+        <div className="flex items-center gap-3 px-5 py-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 shadow-lg shadow-orange-500/30">
+            <Package size={17} className="text-white" />
           </div>
-          <span className="text-lg font-semibold text-white">Eazy Stock</span>
+          <span className="text-lg font-bold text-white">Eazy Stock</span>
         </div>
 
         {/* Nav */}
@@ -108,14 +107,14 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
                 <NavLink
                   to={path}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-orange-500 text-white'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/40'
+                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
                     }`
                   }
                 >
-                  <Icon size={18} />
+                  <Icon size={17} />
                   {label}
                 </NavLink>
               </li>
@@ -124,21 +123,21 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         </nav>
 
         {/* User footer */}
-        <div className="border-t border-slate-700 p-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-semibold text-white">
+        <div className="border-t border-slate-700/60 p-3">
+          <div className="flex items-center gap-3 rounded-xl px-2 py-2">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500 text-sm font-bold text-white shadow-sm">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+              <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
               <span className="text-xs text-slate-400">{ROLE_LABEL[user?.role] ?? user?.role}</span>
             </div>
             <button
               onClick={logout}
               title="Cerrar sesión"
-              className="flex-shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+              className="flex-shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-red-400"
             >
-              <LogOut size={16} />
+              <LogOut size={15} />
             </button>
           </div>
         </div>

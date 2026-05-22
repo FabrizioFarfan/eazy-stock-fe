@@ -39,15 +39,15 @@ function formatDate(str) {
 
 // ── shared sub-components ─────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, label, value, colorCls }) {
+function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5">
-      <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${colorCls}`}>
-        <Icon size={20} className="text-white" />
+    <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
+        <Icon size={20} className={iconColor} />
       </div>
       <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p>
+        <p className="mt-0.5 text-2xl font-bold text-gray-900">{value}</p>
       </div>
     </div>
   )
@@ -63,29 +63,29 @@ function MovementsTable({ movements }) {
   if (!movements?.length)
     return <p className="py-8 text-center text-sm text-gray-400">Sin movimientos en este período</p>
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200">
+    <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-            <th className="px-3 py-3">Fecha</th>
-            <th className="px-3 py-3">Producto</th>
-            <th className="px-3 py-3 text-center">Tipo</th>
-            <th className="px-3 py-3 text-center">Cantidad</th>
-            <th className="px-3 py-3">Usuario</th>
+          <tr className="border-b border-gray-100 bg-gray-50/60 text-left">
+            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Fecha</th>
+            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Tipo</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Cantidad</th>
+            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Usuario</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody>
           {movements.map((m) => {
             const cfg = TYPE_CONFIG[m.type] ?? { label: m.type, cls: 'bg-gray-100 text-gray-600' }
             return (
-              <tr key={m.id} className="hover:bg-gray-50">
-                <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{formatDate(m.createdAt)}</td>
-                <td className="px-3 py-2 font-medium text-gray-900">{m.productName}</td>
-                <td className="px-3 py-2 text-center">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>
+              <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50/70 transition-colors">
+                <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{formatDate(m.createdAt)}</td>
+                <td className="px-4 py-3 font-semibold text-gray-900">{m.productName}</td>
+                <td className="px-4 py-3 text-center">
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
                 </td>
-                <td className="px-3 py-2 text-center font-medium text-gray-700">{m.quantity}</td>
-                <td className="px-3 py-2 text-gray-500">{m.createdByName ?? '—'}</td>
+                <td className="px-4 py-3 text-center font-semibold text-gray-700">{m.quantity}</td>
+                <td className="px-4 py-3 text-gray-500">{m.createdByName ?? '—'}</td>
               </tr>
             )
           })}
@@ -186,10 +186,10 @@ function TabDaily({ businessId }) {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard icon={ShoppingCart}  label="Ventas realizadas"   value={data?.totalSales    ?? 0}                    colorCls="bg-blue-500" />
-            <StatCard icon={Package}       label="Items vendidos"      value={data?.totalItemsSold ?? 0}                   colorCls="bg-indigo-500" />
-            <StatCard icon={TrendingUp}    label="Ingresos"            value={formatCurrency(data?.totalRevenue)}          colorCls="bg-green-500" />
-            <StatCard icon={ArrowUpDown}   label="Movimientos del día" value={data?.movements?.length ?? 0}                colorCls="bg-amber-500" />
+            <StatCard icon={ShoppingCart}  label="Ventas realizadas"   value={data?.totalSales    ?? 0}                    iconBg="bg-blue-50"    iconColor="text-blue-500" />
+            <StatCard icon={Package}       label="Items vendidos"      value={data?.totalItemsSold ?? 0}                   iconBg="bg-indigo-50"  iconColor="text-indigo-500" />
+            <StatCard icon={TrendingUp}    label="Ingresos"            value={formatCurrency(data?.totalRevenue)}          iconBg="bg-emerald-50" iconColor="text-emerald-500" />
+            <StatCard icon={ArrowUpDown}   label="Movimientos del día" value={data?.movements?.length ?? 0}                iconBg="bg-amber-50"   iconColor="text-amber-500" />
           </div>
           <MovementsTable movements={data?.movements} />
         </>
@@ -417,18 +417,18 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-xl font-semibold text-gray-900">Reportes</h2>
+      <h2 className="text-2xl font-bold text-gray-900">Reportes</h2>
 
       {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-gray-100 p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-100 bg-gray-50 p-1.5 shadow-sm">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => switchTab(tab.id)}
-            className={`flex-shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
               activeTab === tab.id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-100'
+                : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             {tab.label}
