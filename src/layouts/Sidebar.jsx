@@ -93,7 +93,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
 
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
-          <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-xl object-contain" />
+          <img src="/logo.png" alt="Eazy Stock" className="h-11 w-11 rounded-xl object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
         </div>
 

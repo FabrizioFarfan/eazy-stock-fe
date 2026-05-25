@@ -12,7 +12,8 @@ export const productsApi = {
 
   deactivate: (id) => api.delete(`/products/${id}`),
 
-  getQr: (id) => api.get(`/products/${id}/qr`, { responseType: 'blob' }),
+  getQr:      (id) => api.get(`/products/${id}/qr`,      { responseType: 'blob' }),
+  getBarcode: (id) => api.get(`/products/${id}/barcode`, { responseType: 'blob' }),
 
   scanCode: (code) => api.get(`/products/scan/${code}`),
 }
