@@ -1,7 +1,12 @@
-import { BookOpen, User, Building2, Mail, Shield, LogOut, ChevronRight, MonitorX, Moon, Sun } from 'lucide-react'
+import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
+import { usersApi } from '../services/endpoints/users'
 
 const ROLE_LABEL = {
   SUPER_ADMIN: 'Super Admin',
@@ -47,6 +52,82 @@ function Section({ title, children }) {
   )
 }
 
+const pwSchema = z.object({
+  currentPassword: z.string().min(1, 'Requerido'),
+  newPassword:     z.string().min(6, 'Mínimo 6 caracteres'),
+  confirmPassword: z.string().min(1, 'Requerido'),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+})
+
+const inputCls = 'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 pr-10'
+
+function PasswordField({ label, name, register, error, showMap, toggleShow }) {
+  const show = showMap[name]
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        <input
+          {...register(name)}
+          type={show ? 'text' : 'password'}
+          className={inputCls}
+        />
+        <button
+          type="button"
+          onClick={() => toggleShow(name)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          {show ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+      {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+    </div>
+  )
+}
+
+function ChangePasswordForm() {
+  const [pending, setPending] = useState(false)
+  const [show, setShow] = useState({ currentPassword: false, newPassword: false, confirmPassword: false })
+  const toggleShow = (field) => setShow((s) => ({ ...s, [field]: !s[field] }))
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(pwSchema),
+  })
+
+  const onSubmit = async ({ currentPassword, newPassword }) => {
+    setPending(true)
+    try {
+      await usersApi.changePassword({ currentPassword, newPassword })
+      toast.success('Contraseña actualizada')
+      reset()
+    } catch (err) {
+      toast.error(err?.response?.data?.message ?? 'Error al cambiar la contraseña')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
+      <PasswordField label="Contraseña actual"   name="currentPassword" register={register} error={errors.currentPassword} showMap={show} toggleShow={toggleShow} />
+      <PasswordField label="Nueva contraseña"    name="newPassword"     register={register} error={errors.newPassword}     showMap={show} toggleShow={toggleShow} />
+      <PasswordField label="Confirmar contraseña" name="confirmPassword" register={register} error={errors.confirmPassword} showMap={show} toggleShow={toggleShow} />
+      <div className="flex justify-end pt-1">
+        <button
+          type="submit"
+          disabled={pending}
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
+        >
+          {pending && <Loader2 size={14} className="animate-spin" />}
+          {pending ? 'Guardando...' : 'Cambiar contraseña'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export default function SettingsPage() {
   const { user, logout, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
@@ -56,13 +137,6 @@ export default function SettingsPage() {
     if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return
     setLoggingOutAll(true)
     await logoutAll()
-  }
-
-  const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
-
-  const handleReplayTutorial = () => {
-    if (tutorialKey) localStorage.removeItem(tutorialKey)
-    window.dispatchEvent(new CustomEvent('eazystock:show-tutorial'))
   }
 
   const initials = user?.name
@@ -132,10 +206,15 @@ export default function SettingsPage() {
         </button>
       </Section>
 
+      {/* Password */}
+      <Section title="Cambiar contraseña">
+        <ChangePasswordForm />
+      </Section>
+
       {/* Help */}
       <Section title="Ayuda">
         <button
-          onClick={handleReplayTutorial}
+          onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-tutorial'))}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">

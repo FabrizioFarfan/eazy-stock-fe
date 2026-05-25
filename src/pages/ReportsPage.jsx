@@ -257,7 +257,7 @@ function TabByProduct({ businessId }) {
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `S/ ${v}`} />
                   <YAxis type="category" dataKey="productName" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => [formatCurrency(v), 'Ingresos']} />
-                  <Bar dataKey="totalRevenue" fill="#f97316" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="totalRevenue" fill="#2563EB" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -327,7 +327,7 @@ function TabByProvider({ businessId }) {
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `S/ ${v}`} />
                   <YAxis type="category" dataKey="providerName" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => [formatCurrency(v), 'Ingresos']} />
-                  <Bar dataKey="totalRevenue" fill="#f97316" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="totalRevenue" fill="#2563EB" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

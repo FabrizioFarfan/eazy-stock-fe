@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 const SUPER_ADMIN_NAV = [
   { icon: Building2, label: 'Negocios', path: '/admin/businesses' },
   { icon: Users,     label: 'Owners',   path: '/admin/owners' },
+  { icon: Settings,  label: 'Ajustes',  path: '/settings' },
 ]
 
 const OWNER_NAV = [

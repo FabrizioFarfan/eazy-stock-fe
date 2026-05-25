@@ -16,7 +16,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (!token) return <Navigate to="/login" replace />
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />
+    const home = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/dashboard' }
+    return <Navigate to={home[user.role] ?? '/dashboard'} replace />
   }
 
   return <AppLayout>{children}</AppLayout>

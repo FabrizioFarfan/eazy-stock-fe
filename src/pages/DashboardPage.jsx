@@ -116,11 +116,11 @@ function SuperAdminDashboard({ name }) {
             Nuevo negocio
           </button>
           <button
-            onClick={() => navigate('/admin/users')}
+            onClick={() => navigate('/admin/owners')}
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Users size={15} />
-            Nuevo usuario
+            Nuevo owner
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
+import SaleDetailModal from '../components/reports/SaleDetailModal'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -36,9 +37,10 @@ export default function SalesPage() {
   const { user } = useAuth()
   const canCreate = user?.role === 'OWNER' || user?.role === 'EMPLOYEE'
 
-  const [from, setFrom] = useState('')
-  const [to, setTo]     = useState('')
-  const [page, setPage] = useState(0)
+  const [from, setFrom]               = useState('')
+  const [to, setTo]                   = useState('')
+  const [page, setPage]               = useState(0)
+  const [selectedSaleId, setSelectedSaleId] = useState(null)
 
   useEffect(() => { setPage(0) }, [from, to])
 
@@ -160,8 +162,11 @@ export default function SalesPage() {
                       {formatCurrency(sale.total)}
                     </td>
                     <td className="px-5 py-3.5 text-center">
-                      <button title="Ver detalle"
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                      <button
+                        title="Ver detalle"
+                        onClick={() => setSelectedSaleId(sale.id)}
+                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                      >
                         <Eye size={14} />
                       </button>
                     </td>
@@ -192,6 +197,12 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+      {selectedSaleId && (
+        <SaleDetailModal
+          saleId={selectedSaleId}
+          onClose={() => setSelectedSaleId(null)}
+        />
+      )}
     </div>
   )
 }

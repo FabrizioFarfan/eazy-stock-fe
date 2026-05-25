@@ -8,4 +8,7 @@ export const usersApi = {
   // body: { name, email, password, role, businessId }
 
   toggleActive: (id) => api.put(`/users/${id}/activate`),
+
+  changePassword: (data) => api.put('/users/me/password', data),
+  // body: { currentPassword, newPassword }
 }

@@ -5,7 +5,7 @@ import { Camera, CameraOff, Search } from 'lucide-react'
  * Search input with physical barcode scanner + optional camera scanning.
  *
  * Camera detection strategy:
- *   1. Native BarcodeDetector (Chrome/Edge)    — polling via setInterval
+ *   1. Native BarcodeDetector (Chrome/Edge)    — polling via recursive setTimeout
  *   2. @zxing/browser BrowserMultiFormatReader — Safari, Firefox, all others
  *   Camera button is hidden if getUserMedia is not supported at all.
  *
@@ -22,7 +22,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const videoRef        = useRef(null)
   const streamRef       = useRef(null)
   const detectorRef     = useRef(null)   // holds BarcodeDetector OR BrowserMultiFormatReader
-  const scanIntervalRef = useRef(null)   // only used in native BarcodeDetector path
+  const scanTimeoutRef  = useRef(null)   // only used in native BarcodeDetector path
 
   // Only requires getUserMedia — ZXing handles Safari/Firefox without BarcodeDetector
   useEffect(() => {
@@ -36,9 +36,9 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
 
   const stopCamera = () => {
     // Stop native BarcodeDetector polling
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current)
-      scanIntervalRef.current = null
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current)
+      scanTimeoutRef.current = null
     }
     // Stop ZXing reader if it is one (it has reset(), BarcodeDetector does not)
     detectorRef.current?.reset?.()
@@ -72,19 +72,24 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
         })
         detectorRef.current = detector
 
-        scanIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || !detectorRef.current) return
-          try {
-            const barcodes = await detector.detect(videoRef.current)
-            if (barcodes.length > 0) {
-              const code = barcodes[0].rawValue
-              stopCamera()
-              onScan(code)
+        const scheduleScan = () => {
+          scanTimeoutRef.current = setTimeout(async () => {
+            if (!videoRef.current || !detectorRef.current) return
+            try {
+              const barcodes = await detectorRef.current.detect(videoRef.current)
+              if (barcodes.length > 0) {
+                const code = barcodes[0].rawValue
+                stopCamera()
+                onScan(code)
+                return
+              }
+            } catch {
+              // frame not ready yet — ignore
             }
-          } catch {
-            // frame not ready yet — ignore
-          }
-        }, 500)
+            if (detectorRef.current) scheduleScan()
+          }, 300)
+        }
+        scheduleScan()
       } else {
         // ── Path 2: @zxing/browser (Safari, Firefox, all others) ─────────────
         const { BrowserMultiFormatReader } = await import('@zxing/browser')
