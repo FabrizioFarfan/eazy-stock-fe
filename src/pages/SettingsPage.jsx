@@ -1,6 +1,7 @@
-import { BookOpen, User, Building2, Mail, Shield, LogOut, ChevronRight, MonitorX } from 'lucide-react'
+import { BookOpen, User, Building2, Mail, Shield, LogOut, ChevronRight, MonitorX, Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../hooks/useTheme'
 
 const ROLE_LABEL = {
   SUPER_ADMIN: 'Super Admin',
@@ -23,7 +24,7 @@ const AVATAR_GRADIENT = {
 function InfoRow({ icon: Icon, label, value }) {
   if (!value) return null
   return (
-    <div className="flex items-center gap-3.5 py-3.5 border-b border-gray-50 last:border-0">
+    <div className="flex items-center gap-3.5 border-b border-gray-50 py-3.5 last:border-0">
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50">
         <Icon size={14} className="text-gray-400" />
       </div>
@@ -48,6 +49,7 @@ function Section({ title, children }) {
 
 export default function SettingsPage() {
   const { user, logout, logoutAll } = useAuth()
+  const { isDark, toggle: toggleTheme } = useTheme()
   const [loggingOutAll, setLoggingOutAll] = useState(false)
 
   const handleLogoutAll = async () => {
@@ -73,7 +75,7 @@ export default function SettingsPage() {
     <div className="mx-auto flex max-w-lg flex-col gap-4">
 
       {/* Profile header card */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="h-16 bg-gradient-to-r from-[#111827] to-slate-700" />
         <div className="px-6 pb-5">
           <div className="-mt-7 flex items-end justify-between">
@@ -99,11 +101,42 @@ export default function SettingsPage() {
         <InfoRow icon={Building2} label="Negocio"  value={user?.businessName} />
       </Section>
 
-      {/* Tutorial */}
+      {/* Appearance */}
+      <Section title="Apariencia">
+        <button
+          onClick={toggleTheme}
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100">
+            {isDark
+              ? <Sun  size={15} className="text-yellow-500" />
+              : <Moon size={15} className="text-slate-500"  />
+            }
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">
+              {isDark ? 'Modo claro' : 'Modo oscuro'}
+            </p>
+            <p className="text-xs text-gray-400">
+              {isDark ? 'Cambiar a interfaz clara' : 'Cambiar a interfaz oscura'}
+            </p>
+          </div>
+          {/* Toggle pill */}
+          <div className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+            isDark ? 'bg-blue-600' : 'bg-gray-200'
+          }`}>
+            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+              isDark ? 'translate-x-6' : 'translate-x-1'
+            }`} />
+          </div>
+        </button>
+      </Section>
+
+      {/* Help */}
       <Section title="Ayuda">
         <button
           onClick={handleReplayTutorial}
-          className="flex w-full items-center gap-3.5 py-4 text-left hover:bg-gray-50 -mx-5 px-5 rounded-xl transition-colors"
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
             <BookOpen size={15} className="text-blue-600" />
@@ -120,9 +153,9 @@ export default function SettingsPage() {
       <Section title="Sesión">
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3.5 py-4 -mx-5 px-5 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 group-hover:bg-red-100 transition-colors">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 transition-colors group-hover:bg-red-100">
             <LogOut size={15} className="text-red-500" />
           </div>
           <span className="text-sm font-semibold text-red-500">Cerrar sesión</span>
@@ -130,9 +163,9 @@ export default function SettingsPage() {
         <button
           onClick={handleLogoutAll}
           disabled={loggingOutAll}
-          className="flex w-full items-center gap-3.5 py-4 -mx-5 px-5 rounded-xl text-left hover:bg-red-50 transition-colors group disabled:opacity-50"
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-red-50 transition-colors group disabled:opacity-50"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 group-hover:bg-red-100 transition-colors">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 transition-colors group-hover:bg-red-100">
             <MonitorX size={15} className="text-red-400" />
           </div>
           <div className="flex-1">

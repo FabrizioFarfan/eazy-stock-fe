@@ -18,3 +18,96 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK MODE
+   Specificity: `.dark .bg-white` (0,2,0) > `.bg-white` (0,1,0) — no !important needed.
+   Applied when `html` has the `dark` class (toggled by useTheme hook).
+───────────────────────────────────────────────────────────────────────────── */
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Page / body backgrounds */
+html.dark body             { background-color: #111827; }
+html.dark .bg-gray-50      { background-color: #111827; }
+html.dark .bg-white        { background-color: #1F2937; }
+html.dark .bg-gray-100     { background-color: #374151; }
+html.dark .bg-gray-200     { background-color: #4B5563; }
+
+/* Opacity variants */
+html.dark .bg-gray-50\/60  { background-color: rgb(17 24 39 / 0.6); }
+
+/* Text */
+html.dark .text-gray-900   { color: #F9FAFB; }
+html.dark .text-gray-800   { color: #F3F4F6; }
+html.dark .text-gray-700   { color: #E5E7EB; }
+html.dark .text-gray-600   { color: #D1D5DB; }
+html.dark .text-gray-500   { color: #9CA3AF; }
+html.dark .text-gray-400   { color: #6B7280; }
+html.dark .text-gray-300   { color: #4B5563; }
+
+/* Borders */
+html.dark .border-gray-50  { border-color: #1F2937; }
+html.dark .border-gray-100 { border-color: #374151; }
+html.dark .border-gray-200 { border-color: #4B5563; }
+html.dark .border-gray-300 { border-color: #6B7280; }
+
+/* Ring (badge outlines) */
+html.dark .ring-gray-100   { --tw-ring-color: #374151; }
+html.dark .ring-gray-200   { --tw-ring-color: #4B5563; }
+
+/* Hover overrides for light bg hover states */
+html.dark .hover\:bg-gray-50:hover  { background-color: #374151; }
+html.dark .hover\:bg-gray-100:hover { background-color: #4B5563; }
+
+/* Focus ring on inputs */
+html.dark .focus\:border-blue-600:focus { border-color: #3B82F6; }
+
+/* Inputs, textareas, selects */
+html.dark input:not([type='checkbox']):not([type='radio']):not([type='range']),
+html.dark textarea,
+html.dark select {
+  background-color: #374151;
+  border-color: #4B5563;
+  color: #F9FAFB;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #6B7280; }
+
+/* Dividers */
+html.dark .divide-gray-100 > * + * { border-color: #374151; }
+html.dark .divide-gray-200 > * + * { border-color: #4B5563; }
+
+/* Sidebar note: already uses #111827 background — no change needed */
+/* Topbar bg-white is covered by the .bg-white override above */
+
+/* Skeleton loaders */
+html.dark .animate-pulse.bg-gray-100 { background-color: #374151; }
+
+/* Dropdown / popover backgrounds */
+html.dark .bg-white.shadow-lg,
+html.dark .bg-white.shadow-xl { background-color: #1F2937; }
+
+/* Red soft backgrounds — keep readable */
+html.dark .bg-red-50    { background-color: rgb(127 29 29 / 0.3); }
+html.dark .bg-red-100   { background-color: rgb(127 29 29 / 0.4); }
+
+/* Emerald soft backgrounds */
+html.dark .bg-emerald-50 { background-color: rgb(6 78 59 / 0.3); }
+
+/* Blue soft backgrounds */
+html.dark .bg-blue-50  { background-color: rgb(30 58 138 / 0.3); }
+html.dark .bg-blue-100 { background-color: rgb(30 58 138 / 0.4); }
+
+/* Amber/warning soft backgrounds */
+html.dark .bg-amber-50   { background-color: rgb(120 53 15 / 0.3); }
+html.dark .bg-yellow-50  { background-color: rgb(120 53 15 / 0.3); }
+
+/* Slate soft backgrounds */
+html.dark .bg-slate-100  { background-color: #374151; }
+html.dark .bg-slate-50   { background-color: #1F2937; }
+
+/* Override gradient banners in SettingsPage etc */
+html.dark .from-\[\#111827\] { --tw-gradient-from: #0f172a; }

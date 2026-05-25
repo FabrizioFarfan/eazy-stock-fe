@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Eazy Stock — Gestión de inventario simple e intuitiva para tu negocio" />
     <title>Eazy Stock</title>
+    <!-- Anti-FOUC: apply dark class before first paint -->
+    <script>
+      (function () {
+        var t = localStorage.getItem('eazystock_theme')
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
