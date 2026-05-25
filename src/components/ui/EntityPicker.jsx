@@ -59,9 +59,9 @@ export default function EntityPicker({
 
       {/* Selected badge */}
       {selectedItem && (
-        <div className="flex items-center gap-1.5 rounded-lg bg-orange-50 border border-orange-200 px-2.5 py-1.5">
-          <Check size={13} className="text-orange-500 flex-shrink-0" />
-          <span className="text-sm font-medium text-orange-700 truncate">{selectedItem.name}</span>
+        <div className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1.5">
+          <Check size={13} className="text-blue-600 flex-shrink-0" />
+          <span className="text-sm font-medium text-blue-700 truncate">{selectedItem.name}</span>
         </div>
       )}
 
@@ -73,7 +73,7 @@ export default function EntityPicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+          className="w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
         />
       </div>
 
@@ -91,8 +91,8 @@ export default function EntityPicker({
               onClick={() => onChange(value === item.id ? null : item.id)}
               className={`flex-shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 value === item.id
-                  ? 'border-orange-500 bg-orange-500 text-white'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-orange-300 hover:text-orange-600'
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-700'
               }`}
             >
               {item.name}
@@ -106,13 +106,13 @@ export default function EntityPicker({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="flex w-fit items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors"
+          className="flex w-fit items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-blue-500 hover:text-blue-700 transition-colors"
         >
           <Plus size={11} />
           {createLabel}
         </button>
       ) : (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-2.5 space-y-2">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2.5 space-y-2">
           <input
             type="text"
             value={newName}
@@ -120,7 +120,7 @@ export default function EntityPicker({
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreate())}
             placeholder="Nombre *"
             autoFocus
-            className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
+            className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
           />
           {extraFields.map((f) => (
             <input
@@ -129,7 +129,7 @@ export default function EntityPicker({
               value={extra[f.name] ?? ''}
               onChange={(e) => setExtra((prev) => ({ ...prev, [f.name]: e.target.value }))}
               placeholder={f.placeholder}
-              className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20"
+              className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
             />
           ))}
           <div className="flex gap-2">
@@ -137,7 +137,7 @@ export default function EntityPicker({
               type="button"
               onClick={handleCreate}
               disabled={!newName.trim() || isCreating}
-              className="flex items-center gap-1.5 rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isCreating ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
               Crear

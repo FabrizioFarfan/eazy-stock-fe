@@ -20,7 +20,7 @@ function ProductCard({ product, inCart, onAdd }) {
 
   return (
     <div className={`rounded-2xl border bg-white p-4 transition-all ${
-      inCart ? 'border-orange-200 shadow-sm shadow-orange-100/80' : 'border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md'
+      inCart ? 'border-blue-200 shadow-sm shadow-blue-100/80' : 'border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md'
     }`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -51,7 +51,7 @@ function ProductCard({ product, inCart, onAdd }) {
 
         {inCart ? (
           <button disabled
-            className="flex items-center gap-1.5 rounded-xl border border-orange-300 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-600">
+            className="flex items-center gap-1.5 rounded-xl border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
             <Check size={12} />En carrito
           </button>
         ) : noStock ? (
@@ -61,7 +61,7 @@ function ProductCard({ product, inCart, onAdd }) {
           </button>
         ) : (
           <button onClick={() => onAdd(product)}
-            className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.95]">
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.95]">
             <Plus size={12} />Agregar
           </button>
         )}
@@ -222,7 +222,7 @@ export default function NewSalePage() {
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">Carrito</h3>
               {cart.length > 0 && (
-                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-600">
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
                   {cart.length}
                 </span>
               )}
@@ -250,7 +250,7 @@ export default function NewSalePage() {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notas (opcional)..."
             rows={2}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400"
+            className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400"
           />
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -268,7 +268,7 @@ export default function NewSalePage() {
             <button
               onClick={handleSubmit}
               disabled={cart.length === 0 || createSale.isPending}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-bold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
               {createSale.isPending ? 'Registrando...' : 'Confirmar venta'}

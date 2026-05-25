@@ -86,7 +86,7 @@ export default function ReportFilters({ businessId }) {
   }
 
   const selectCls =
-    'rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 bg-white'
+    'rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
@@ -98,7 +98,7 @@ export default function ReportFilters({ businessId }) {
             onClick={() => applyPreset(p)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               preset === p.label
-                ? 'bg-orange-500 text-white'
+                ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -109,7 +109,7 @@ export default function ReportFilters({ businessId }) {
           onClick={() => { setPreset('custom') }}
           className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
             preset === 'custom'
-              ? 'bg-orange-500 text-white'
+              ? 'bg-blue-600 text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >

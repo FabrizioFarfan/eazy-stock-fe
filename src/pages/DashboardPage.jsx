@@ -110,7 +110,7 @@ function SuperAdminDashboard({ name }) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate('/admin/businesses')}
-            className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98]"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
           >
             <Building2 size={15} />
             Nuevo negocio
@@ -175,7 +175,7 @@ function SuperAdminDashboard({ name }) {
         <div className="border-t border-gray-50 px-6 py-3.5">
           <button
             onClick={() => navigate('/admin/businesses')}
-            className="text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
           >
             Ver todos los negocios →
           </button>
@@ -343,7 +343,7 @@ function EmployeeDashboard({ name }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {loadingSales ? <StatCardSkeleton /> : (
           <StatCard icon={ShoppingCart} label="Mis ventas hoy" value={myVentasHoy}
-            iconBg="bg-orange-50" iconColor="text-orange-500" />
+            iconBg="bg-blue-50" iconColor="text-blue-600" />
         )}
         {loadingLowStock ? <StatCardSkeleton /> : (
           <StatCard icon={AlertTriangle} label="Productos bajo stock" value={bajosDeStock}
@@ -356,7 +356,7 @@ function EmployeeDashboard({ name }) {
         <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
         <button
           onClick={() => navigate('/sales/new')}
-          className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98]"
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
         >
           <ShoppingCart size={15} />
           Nueva venta

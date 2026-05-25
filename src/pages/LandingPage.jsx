@@ -9,12 +9,10 @@ import {
 // ─── Navbar ──────────────────────────────────────────────────────────────────
 function Navbar() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0f172a]/95 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#111827]/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
-            <Package size={16} className="text-white" />
-          </div>
+          <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
         </div>
         <nav className="hidden items-center gap-7 md:flex">
@@ -24,7 +22,7 @@ function Navbar() {
         </nav>
         <Link
           to="/login"
-          className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
         >
           Iniciar sesión
         </Link>
@@ -47,9 +45,9 @@ function AppMockup() {
 
       <div className="flex">
         {/* Mini sidebar */}
-        <div className="flex w-44 flex-shrink-0 flex-col gap-1 border-r border-white/5 bg-[#0f172a] p-3">
+        <div className="flex w-44 flex-shrink-0 flex-col gap-1 border-r border-white/5 bg-[#111827] p-3">
           <div className="mb-2 flex items-center gap-2 px-2 py-1">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-orange-500">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600">
               <Package size={11} className="text-white" />
             </div>
             <span className="text-xs font-bold text-white">Eazy Stock</span>
@@ -61,7 +59,7 @@ function AppMockup() {
             { icon: ArrowUpDown, label: 'Stock',       active: false },
             { icon: BarChart2,   label: 'Reportes',    active: false },
           ].map(({ icon: Icon, label, active }) => (
-            <div key={label} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${active ? 'bg-orange-500 text-white' : 'text-slate-400'}`}>
+            <div key={label} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${active ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
               <Icon size={12} />
               {label}
             </div>
@@ -85,7 +83,7 @@ function AppMockup() {
           </div>
 
           {/* Table header */}
-          <div className="grid grid-cols-4 gap-2 rounded-t-lg bg-[#0f172a] px-3 py-1.5">
+          <div className="grid grid-cols-4 gap-2 rounded-t-lg bg-[#111827] px-3 py-1.5">
             {['SKU', 'Producto', 'Stock', 'Precio'].map((h) => (
               <span key={h} className="text-[9px] font-semibold uppercase text-slate-500">{h}</span>
             ))}
@@ -112,7 +110,7 @@ function AppMockup() {
               <div className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
               En tiempo real
             </span>
-            <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[9px] font-semibold text-orange-400">
+            <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-[9px] font-semibold text-blue-500">
               3 productos con stock bajo
             </span>
           </div>
@@ -125,18 +123,18 @@ function AppMockup() {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <section className="bg-[#0f172a] pb-20 pt-32">
+    <section className="bg-[#111827] pb-20 pt-32">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
           {/* Text */}
           <div className="flex-1 text-center lg:text-left">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-600/30 bg-blue-600/10 px-3 py-1.5 text-xs font-medium text-blue-500">
               <Zap size={12} />
               Gestión de inventario para PYMEs
             </div>
             <h1 className="mb-5 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
               Tu inventario,{' '}
-              <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
                 bajo control.
               </span>
               <br />
@@ -148,7 +146,7 @@ function Hero() {
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start">
               <Link
                 to="/login"
-                className="flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/25 hover:bg-orange-600 transition-colors"
+                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 transition-colors"
               >
                 Empezar ahora — es gratis
                 <ChevronRight size={16} />
@@ -210,7 +208,7 @@ function Stats() {
 const FEATURES = [
   {
     icon: Package,
-    color: 'bg-orange-100 text-orange-600',
+    color: 'bg-blue-100 text-blue-700',
     title: 'Inventario en tiempo real',
     desc: 'SKU único, precios de compra y venta, stock mínimo con alertas automáticas. Todo actualizado al instante.',
   },
@@ -263,7 +261,7 @@ function Features() {
     <section id="features" className="bg-gray-50 py-20">
       <div className="mx-auto max-w-6xl px-5">
         <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-orange-500">Funcionalidades</p>
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Funcionalidades</p>
           <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Todo lo que tu negocio necesita
           </h2>
@@ -313,20 +311,20 @@ function HowItWorks() {
     <section id="how" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-5">
         <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-orange-500">Proceso</p>
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Proceso</p>
           <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Arranca en 3 pasos simples
           </h2>
         </div>
         <div className="relative grid gap-8 md:grid-cols-3">
           {/* Connector line */}
-          <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-orange-200 via-orange-400 to-orange-200 md:block" />
+          <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-blue-200 via-blue-500 to-blue-200 md:block" />
 
           {steps.map(({ num, icon: Icon, title, desc }) => (
             <div key={num} className="relative flex flex-col items-center text-center">
-              <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-2xl bg-orange-500 shadow-lg shadow-orange-200">
+              <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
                 <Icon size={36} className="text-white" />
-                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0f172a] text-xs font-extrabold text-orange-400">
+                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-extrabold text-blue-500">
                   {num}
                 </span>
               </div>
@@ -383,7 +381,7 @@ const ROADMAP = [
 
 const STATUS_STYLE = {
   done:    { dot: 'bg-green-500', badge: 'bg-green-100 text-green-700',  border: 'border-green-200' },
-  next:    { dot: 'bg-orange-500 animate-pulse', badge: 'bg-orange-100 text-orange-700', border: 'border-orange-200' },
+  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-100 text-blue-700', border: 'border-blue-200' },
   planned: { dot: 'bg-blue-400',  badge: 'bg-blue-100 text-blue-700',   border: 'border-blue-200'  },
   future:  { dot: 'bg-gray-300',  badge: 'bg-gray-100 text-gray-500',   border: 'border-gray-200'  },
 }
@@ -397,7 +395,7 @@ function Roadmap() {
     <section id="roadmap" className="bg-gray-50 py-20">
       <div className="mx-auto max-w-4xl px-5">
         <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-orange-500">Roadmap</p>
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Roadmap</p>
           <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Lo que viene
           </h2>
@@ -447,7 +445,7 @@ function WhatsAppHighlight() {
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-5">
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
+        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#111827] to-[#1e293b]">
           <div className="flex flex-col items-center gap-10 p-8 md:flex-row md:p-12">
             {/* Text */}
             <div className="flex-1 text-center md:text-left">
@@ -477,9 +475,7 @@ function WhatsAppHighlight() {
             <div className="w-full max-w-xs flex-shrink-0">
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#111b21] shadow-2xl">
                 <div className="flex items-center gap-3 border-b border-white/10 bg-[#202c33] px-4 py-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500">
-                    <Package size={16} className="text-white" />
-                  </div>
+                  <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-full object-contain" />
                   <div>
                     <p className="text-sm font-semibold text-white">Eazy Stock Bot</p>
                     <p className="text-xs text-green-400">en línea</p>
@@ -546,17 +542,17 @@ function ImportExportHighlight() {
 // ─── CTA Banner ───────────────────────────────────────────────────────────────
 function CtaBanner() {
   return (
-    <section className="bg-orange-500 py-16">
+    <section className="bg-blue-600 py-16">
       <div className="mx-auto max-w-3xl px-5 text-center">
         <h2 className="mb-3 text-2xl font-extrabold text-white sm:text-3xl">
           ¿Listo para tener tu inventario bajo control?
         </h2>
-        <p className="mb-8 text-orange-100">
+        <p className="mb-8 text-blue-100">
           Únete a los negocios que ya gestionan su inventario con EazyStock. Sin complicaciones, sin costos ocultos.
         </p>
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-orange-600 shadow-lg hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-lg hover:bg-blue-50 transition-colors"
         >
           Empezar ahora — es gratis
           <ChevronRight size={16} />
@@ -569,13 +565,11 @@ function CtaBanner() {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="bg-[#0f172a] py-12">
+    <footer className="bg-[#111827] py-12">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
-              <Package size={16} className="text-white" />
-            </div>
+            <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
             <span className="text-base font-bold text-white">Eazy Stock</span>
           </div>
           <p className="text-sm text-slate-500">

@@ -174,7 +174,7 @@ function TabDaily({ businessId }) {
         <label className="text-sm text-gray-600">Fecha</label>
         <input
           type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
         />
       </div>
       {isLoading ? (
@@ -213,14 +213,14 @@ function TabByProduct({ businessId }) {
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Desde</label>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Hasta</label>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
-        <button onClick={run} className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+        <button onClick={run} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
           Generar reporte
         </button>
       </div>
@@ -283,14 +283,14 @@ function TabByProvider({ businessId }) {
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Desde</label>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Hasta</label>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
-        <button onClick={run} className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+        <button onClick={run} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
           Generar reporte
         </button>
       </div>

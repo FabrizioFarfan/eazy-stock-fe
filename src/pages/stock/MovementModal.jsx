@@ -33,7 +33,7 @@ const ACCENT = {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400 bg-white'
+  'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 bg-white'
 
 export default function MovementModal({ type, onClose }) {
   const [search, setSearch]                   = useState('')
@@ -113,7 +113,7 @@ export default function MovementModal({ type, onClose }) {
                     ) : (
                       results.map((p) => (
                         <button key={p.id} type="button" onClick={() => selectProduct(p)}
-                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-orange-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
                           <span className="font-semibold text-gray-900">{p.name}</span>
                           <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
                         </button>
@@ -169,7 +169,7 @@ export default function MovementModal({ type, onClose }) {
               Cancelar
             </button>
             <button type="submit" disabled={!selectedProduct || createMovement.isPending}
-              className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-60">
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {createMovement.isPending && <Loader2 size={14} className="animate-spin" />}
               {createMovement.isPending ? 'Guardando...' : 'Guardar'}
             </button>

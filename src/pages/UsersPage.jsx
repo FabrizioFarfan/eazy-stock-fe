@@ -27,7 +27,7 @@ function initials(name = '') {
 
 const ROLE_CONFIG = {
   SUPER_ADMIN: { label: 'Super Admin', cls: 'bg-purple-100 text-purple-700' },
-  OWNER:       { label: 'Owner',       cls: 'bg-orange-100 text-orange-700' },
+  OWNER:       { label: 'Owner',       cls: 'bg-blue-100 text-blue-700' },
   EMPLOYEE:    { label: 'Empleado',    cls: 'bg-slate-100  text-slate-700'  },
 }
 
@@ -137,7 +137,7 @@ function PermissionsPanel({ targetUser, onClose }) {
                       disabled={busy}
                       onClick={() => handleToggle(key, value)}
                       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:cursor-wait ${
-                        value ? 'bg-orange-500' : 'bg-gray-200'
+                        value ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                     >
                       <span
@@ -166,7 +166,7 @@ function PermissionsPanel({ targetUser, onClose }) {
 // ── form schema ───────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
+  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 function buildSchema(isSuperAdmin) {
   return z.object({
@@ -331,7 +331,7 @@ function UserFormModal({ onClose }) {
             <button
               type="submit"
               disabled={createUser.isPending}
-              className="flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {createUser.isPending && <Loader2 size={14} className="animate-spin" />}
               {createUser.isPending ? 'Creando...' : 'Crear usuario'}
@@ -373,7 +373,7 @@ export default function UsersPage() {
         <h2 className="text-xl font-semibold text-gray-900">Usuarios</h2>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <UserPlus size={15} />
           Nuevo usuario

@@ -32,7 +32,7 @@ function Field({ label, required, error, children }) {
 }
 
 const inputCls =
-  'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
+  'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 export default function ProductFormModal({ product, onClose }) {
   const isEdit = !!product
@@ -253,7 +253,7 @@ export default function ProductFormModal({ product, onClose }) {
                     title={cameraOpen ? 'Cerrar cámara' : 'Escanear'}
                     className={`flex items-center rounded-lg px-2.5 transition ${
                       cameraOpen
-                        ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                         : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
                     }`}
                   >
@@ -263,10 +263,10 @@ export default function ProductFormModal({ product, onClose }) {
               </div>
               {hasCameraSupport && (
                 <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
-                  <div className="relative overflow-hidden rounded-lg border border-orange-200 bg-black">
+                  <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-black">
                     <video ref={videoRef} className="w-full" style={{ maxHeight: 140 }} playsInline muted />
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <div className="h-14 w-32 rounded border-2 border-orange-400 opacity-80" />
+                      <div className="h-14 w-32 rounded border-2 border-blue-500 opacity-80" />
                     </div>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export default function ProductFormModal({ product, onClose }) {
             <button
               type="submit"
               disabled={isBusy}
-              className="flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isBusy && <Loader2 size={14} className="animate-spin" />}
               {isBusy ? 'Guardando...' : 'Guardar'}

@@ -15,7 +15,7 @@ const schema = z.object({
 })
 
 const inputCls =
-  'rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400 w-full bg-white'
+  'rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 w-full bg-white'
 
 function Field({ label, error, children }) {
   return (
@@ -95,7 +95,7 @@ function SupplierModal({ supplier, onClose }) {
               Cancelar
             </button>
             <button type="submit" disabled={mutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-60">
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
               {mutation.isPending ? 'Guardando...' : 'Guardar'}
             </button>
@@ -119,7 +119,7 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-sm font-bold text-orange-500">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-blue-600">
             {initials}
           </div>
           <div>
@@ -192,13 +192,13 @@ export default function SuppliersPage() {
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">Proveedores</h2>
           {!isLoading && (
-            <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-bold text-orange-600">
+            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {data?.totalElements ?? 0}
             </span>
           )}
         </div>
         <button onClick={() => setModal({ supplier: null })}
-          className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98]">
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
           <Plus size={15} />
           Nuevo proveedor
         </button>
@@ -209,7 +209,7 @@ export default function SuppliersPage() {
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         <input type="text" placeholder="Buscar proveedor..." value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
       </div>
 
       {/* Grid */}
@@ -229,7 +229,7 @@ export default function SuppliersPage() {
             <p className="mt-1 text-xs text-gray-400">Agrega tu primer proveedor para asociarlo a productos</p>
           </div>
           <button onClick={() => setModal({ supplier: null })}
-            className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 transition-all active:scale-[0.98]">
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98]">
             <Plus size={14} />
             Agregar proveedor
           </button>

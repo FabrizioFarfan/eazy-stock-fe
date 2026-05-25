@@ -94,7 +94,7 @@ export default function StockPage() {
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
         <Calendar size={15} className="flex-shrink-0 text-gray-400" />
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 bg-white">
+          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white">
           <option value="">Todos los tipos</option>
           <option value="PURCHASE_ENTRY">Entradas</option>
           <option value="SALE">Ventas</option>
@@ -104,16 +104,16 @@ export default function StockPage() {
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500">Desde</span>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500">Hasta</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
         {(typeFilter || from || to) && (
           <button onClick={() => { setTypeFilter(''); setFrom(''); setTo('') }}
-            className="text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors">
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
             Limpiar
           </button>
         )}

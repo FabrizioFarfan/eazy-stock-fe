@@ -17,7 +17,7 @@ function CustomTooltip({ active, payload, label }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg text-xs">
       <p className="font-semibold text-gray-700 mb-1">{label}</p>
-      <p className="text-orange-500">Ingresos: {formatCurrency(payload[0]?.value)}</p>
+      <p className="text-blue-600">Ingresos: {formatCurrency(payload[0]?.value)}</p>
       {payload[1] && <p className="text-indigo-500">Unidades: {payload[1].value}</p>}
     </div>
   )

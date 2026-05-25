@@ -20,7 +20,7 @@ const PAGE_TITLES = {
 
 const ROLE_BADGE = {
   SUPER_ADMIN: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100',
-  OWNER:       'bg-orange-50 text-orange-700 ring-1 ring-orange-100',
+  OWNER:       'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
   EMPLOYEE:    'bg-slate-100 text-slate-600',
 }
 

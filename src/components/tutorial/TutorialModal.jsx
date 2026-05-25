@@ -4,7 +4,7 @@ import { Package, ShoppingCart, ArrowUpDown, BarChart2, Sparkles, ChevronRight, 
 const STEPS = [
   {
     icon: Sparkles,
-    color: 'bg-orange-500',
+    color: 'bg-blue-600',
     title: '¡Bienvenido a Eazy Stock!',
     desc: 'Todo lo que necesitas para gestionar el inventario y ventas de tu negocio en un solo lugar, fácil y rápido.',
   },
@@ -73,7 +73,7 @@ export default function TutorialModal({ onClose }) {
               key={i}
               onClick={() => setStep(i)}
               className={`h-1.5 rounded-full transition-all ${
-                i === step ? 'w-6 bg-orange-500' : 'w-1.5 bg-gray-300'
+                i === step ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300'
               }`}
             />
           ))}
@@ -91,7 +91,7 @@ export default function TutorialModal({ onClose }) {
 
           <button
             onClick={() => isLast ? onClose() : setStep(step + 1)}
-            className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
           >
             {isLast ? '¡Empezar!' : 'Siguiente'}
             {!isLast && <ChevronRight size={14} />}

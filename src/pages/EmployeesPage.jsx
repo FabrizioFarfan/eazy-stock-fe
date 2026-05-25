@@ -31,7 +31,7 @@ function avatarGradient(name = '') {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
+  'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 // ── Permissions panel ─────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ function PermissionsPanel({ targetUser, onClose }) {
                       disabled={patch.isPending}
                       onClick={() => patch.mutate({ [key]: !value })}
                       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:cursor-wait ${
-                        value ? 'bg-orange-500' : 'bg-gray-200'
+                        value ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                     >
                       <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ${value ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -204,7 +204,7 @@ function CreateEmployeeModal({ businessName, onClose }) {
               Cancelar
             </button>
             <button type="submit" disabled={createEmployee.isPending}
-              className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-60">
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {createEmployee.isPending && <Loader2 size={14} className="animate-spin" />}
               {createEmployee.isPending ? 'Creando...' : 'Crear empleado'}
             </button>
@@ -255,13 +255,13 @@ export default function EmployeesPage() {
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">Empleados</h2>
           {!isLoading && (
-            <span className="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-bold text-orange-600">
+            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}
             </span>
           )}
         </div>
         <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600 transition-all active:scale-[0.98]">
+          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
           <UserPlus size={15} />
           Nuevo empleado
         </button>
@@ -272,7 +272,7 @@ export default function EmployeesPage() {
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         <input type="text" placeholder="Buscar por nombre o email..." value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
       </div>
 
       {/* Table */}

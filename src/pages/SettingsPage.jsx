@@ -10,13 +10,13 @@ const ROLE_LABEL = {
 
 const ROLE_COLOR = {
   SUPER_ADMIN: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100',
-  OWNER:       'bg-orange-50 text-orange-700 ring-1 ring-orange-100',
+  OWNER:       'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
   EMPLOYEE:    'bg-slate-100 text-slate-600',
 }
 
 const AVATAR_GRADIENT = {
   SUPER_ADMIN: 'from-indigo-400 to-indigo-600',
-  OWNER:       'from-orange-400 to-orange-600',
+  OWNER:       'from-blue-500 to-blue-700',
   EMPLOYEE:    'from-slate-400 to-slate-600',
 }
 
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
       {/* Profile header card */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-        <div className="h-16 bg-gradient-to-r from-[#0f172a] to-slate-700" />
+        <div className="h-16 bg-gradient-to-r from-[#111827] to-slate-700" />
         <div className="px-6 pb-5">
           <div className="-mt-7 flex items-end justify-between">
             <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-xl font-extrabold text-white shadow-lg ring-4 ring-white`}>
@@ -105,8 +105,8 @@ export default function SettingsPage() {
           onClick={handleReplayTutorial}
           className="flex w-full items-center gap-3.5 py-4 text-left hover:bg-gray-50 -mx-5 px-5 rounded-xl transition-colors"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-orange-50">
-            <BookOpen size={15} className="text-orange-500" />
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+            <BookOpen size={15} className="text-blue-600" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">Ver tutorial</p>

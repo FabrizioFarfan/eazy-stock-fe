@@ -76,7 +76,7 @@ export default function QrModal({ product, onClose }) {
             <a
               href={qrUrl}
               download={`${product.sku}.png`}
-              className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               <Download size={14} />
               Descargar

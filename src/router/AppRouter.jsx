@@ -10,8 +10,8 @@ const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLO
 function LandingRoute() {
   const { token, user, isLoading } = useAuth()
   if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-[#0f172a]">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+    <div className="flex h-screen items-center justify-center bg-[#111827]">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
     </div>
   )
   if (token) return <Navigate to={ROLE_HOME[user?.role] ?? '/dashboard'} replace />

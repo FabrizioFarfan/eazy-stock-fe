@@ -125,7 +125,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+            className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
             autoFocus
           />
         </div>
@@ -137,7 +137,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             onClick={cameraOpen ? stopCamera : openCamera}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
               cameraOpen
-                ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                 : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -150,7 +150,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
       {/* Camera viewport — kept in DOM so videoRef stays valid; hidden via CSS when closed */}
       {hasCameraSupport && (
         <div className={cameraOpen ? 'block' : 'hidden'}>
-          <div className="relative overflow-hidden rounded-xl border border-orange-200 bg-black">
+          <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-black">
             <video
               ref={videoRef}
               className="w-full"
@@ -160,7 +160,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             />
             {/* Scan-guide overlay */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-32 w-56 rounded border-2 border-orange-400 opacity-80" />
+              <div className="h-32 w-56 rounded border-2 border-blue-500 opacity-80" />
             </div>
           </div>
           <p className="mt-1 text-center text-xs text-gray-400">

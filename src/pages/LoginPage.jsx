@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { Package, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const FEATURES = [
@@ -39,18 +39,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Brand panel — desktop only */}
-      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between bg-[#0f172a] px-14 py-12 xl:px-20">
+      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between bg-[#111827] px-14 py-12 xl:px-20">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 shadow-lg shadow-orange-500/40">
-            <Package size={18} className="text-white" />
-          </div>
+          <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-xl object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
         </div>
 
         <div>
           <h1 className="text-5xl font-extrabold leading-tight text-white">
             Tu inventario,<br />
-            <span className="text-orange-400">bajo control.</span>
+            <span className="text-blue-500">bajo control.</span>
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-slate-400 max-w-md">
             Gestiona productos, ventas y proveedores desde una sola plataforma.
@@ -60,8 +58,8 @@ export default function LoginPage() {
           <ul className="mt-10 space-y-4">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-center gap-3">
-                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-orange-500/20">
-                  <Check size={11} className="text-orange-400" />
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600/20">
+                  <Check size={11} className="text-blue-500" />
                 </span>
                 <span className="text-sm text-slate-300">{f}</span>
               </li>
@@ -79,9 +77,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0f172a] shadow-xl">
-              <Package size={26} className="text-orange-500" />
-            </div>
+            <img src="/logo.png" alt="Eazy Stock" className="h-16 w-16 rounded-2xl object-contain" />
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-900">Eazy Stock</h2>
               <p className="mt-1 text-sm text-gray-500">Ingresa a tu cuenta</p>
@@ -112,7 +108,7 @@ export default function LoginPage() {
                   placeholder="usuario@empresa.com"
                   required
                   autoComplete="email"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                 />
               </div>
 
@@ -131,7 +127,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                 />
               </div>
 
@@ -144,7 +140,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 hover:shadow-orange-500/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60"
+                className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60"
               >
                 {submitting ? 'Ingresando...' : 'Ingresar'}
               </button>

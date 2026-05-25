@@ -99,7 +99,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
               content.map((row) => (
                 <tr
                   key={row.saleId}
-                  className="cursor-pointer hover:bg-orange-50 transition-colors"
+                  className="cursor-pointer hover:bg-blue-50 transition-colors"
                   onClick={() => setSelectedSaleId(row.saleId)}
                 >
                   <td className="px-4 py-3">

@@ -15,7 +15,7 @@ function formatDate(str) {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
+  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 const PAGE_SIZE = 20
 
@@ -193,7 +193,7 @@ function BusinessFormModal({ business, onClose }) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
               {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear negocio'}
@@ -230,7 +230,7 @@ export default function BusinessesPage() {
         <h2 className="text-xl font-semibold text-gray-900">Negocios</h2>
         <button
           onClick={() => setModal('create')}
-          className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <Plus size={15} />
           Nuevo negocio

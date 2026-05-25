@@ -56,7 +56,7 @@ export default function SummaryCards({ summary, isLoading }) {
         icon={Receipt}
         label="Ticket promedio"
         value={formatCurrency(summary?.ticketAvg)}
-        colorCls="bg-orange-500"
+        colorCls="bg-blue-600"
       />
     </div>
   )

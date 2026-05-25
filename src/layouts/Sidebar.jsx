@@ -77,7 +77,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-30 flex h-screen w-64 flex-shrink-0 flex-col bg-[#0f172a]
+          fixed inset-y-0 left-0 z-30 flex h-screen w-64 flex-shrink-0 flex-col bg-[#111827]
           transition-transform duration-300 ease-in-out
           ${open ? 'translate-x-0' : '-translate-x-full'}
           md:relative md:translate-x-0
@@ -93,9 +93,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
 
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 shadow-lg shadow-orange-500/30">
-            <Package size={17} className="text-white" />
-          </div>
+          <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-xl object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
         </div>
 
@@ -109,7 +107,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/40'
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/40'
                         : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
                     }`
                   }
@@ -125,7 +123,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         {/* User footer */}
         <div className="border-t border-slate-700/60 p-3">
           <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-orange-500 text-sm font-bold text-white shadow-sm">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm">
               {initials}
             </div>
             <div className="min-w-0 flex-1">

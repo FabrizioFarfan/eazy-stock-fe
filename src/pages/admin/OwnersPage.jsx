@@ -40,7 +40,7 @@ function SkeletonRow() {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 placeholder-gray-400'
+  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 // ── form schema ───────────────────────────────────────────────────────────────
 
@@ -163,7 +163,7 @@ function CreateOwnerModal({ onClose }) {
                         placeholder="Buscar por nombre o RUC..."
                         value={bizSearch}
                         onChange={(e) => setBizSearch(e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                       />
                     </div>
                   )}
@@ -200,7 +200,7 @@ function CreateOwnerModal({ onClose }) {
             <button
               type="submit"
               disabled={createOwner.isPending || allBusinesses.length === 0}
-              className="flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {createOwner.isPending && <Loader2 size={14} className="animate-spin" />}
               {createOwner.isPending ? 'Creando...' : 'Crear Owner'}
@@ -238,7 +238,7 @@ export default function OwnersPage() {
         <h2 className="text-xl font-semibold text-gray-900">Owners</h2>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <UserPlus size={15} />
           Nuevo Owner
