@@ -179,10 +179,10 @@ export default function NewSalePage() {
       </div>
 
       {/* ── Main: stacked on mobile, side-by-side on lg+ ── */}
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
 
         {/* ── Products column ── */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-1">
           <ScannerInput
             value={search}
             onChange={setSearch}
@@ -219,7 +219,7 @@ export default function NewSalePage() {
         </div>
 
         {/* ── Cart column ── */}
-        <div ref={cartRef} className="flex flex-col gap-3">
+        <div ref={cartRef} className="flex flex-col gap-3 lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4">
 
           {/* Items */}
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
