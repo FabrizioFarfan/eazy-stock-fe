@@ -19,29 +19,29 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
 
-  const videoRef        = useRef(null)
-  const streamRef       = useRef(null)
-  const detectorRef     = useRef(null)   // holds BarcodeDetector OR BrowserMultiFormatReader
-  const scanTimeoutRef  = useRef(null)   // only used in native BarcodeDetector path
-  const firedRef        = useRef(false)  // one-shot gate: prevents double-fire from any detection path
+  const videoRef       = useRef(null)
+  const streamRef      = useRef(null)
+  const detectorRef    = useRef(null)  // BarcodeDetector | BrowserMultiFormatReader
+  const scanTimeoutRef = useRef(null)  // BarcodeDetector path only
+  const sessionRef     = useRef(0)     // increments each openCamera; stale callbacks see wrong value → ignored
+  const onScanRef      = useRef(onScan)
 
-  // Only requires getUserMedia — ZXing handles Safari/Firefox without BarcodeDetector
+  // Always keep onScanRef current so closures call the latest version (avoids stale cartIds)
+  useEffect(() => { onScanRef.current = onScan })
+
   useEffect(() => {
     setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
   }, [])
 
-  // Always stop the camera stream on unmount
   useEffect(() => {
     return () => stopCamera()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopCamera = () => {
-    // Stop native BarcodeDetector polling
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current)
       scanTimeoutRef.current = null
     }
-    // Stop ZXing reader if it is one (it has reset(), BarcodeDetector does not)
     detectorRef.current?.reset?.()
     detectorRef.current = null
 
@@ -49,19 +49,16 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
       streamRef.current.getTracks().forEach((t) => t.stop())
       streamRef.current = null
     }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
+    if (videoRef.current) videoRef.current.srcObject = null
     setCameraOpen(false)
   }
 
   const openCamera = async () => {
     try {
-      firedRef.current = false  // reset gate for this camera session
+      sessionRef.current++                    // new session — old callbacks see a different number and bail
+      const mySession = sessionRef.current
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       streamRef.current = stream
       videoRef.current.srcObject = stream
       await videoRef.current.play()
@@ -69,29 +66,27 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
 
       if (typeof window.BarcodeDetector !== 'undefined') {
         // ── Path 1: Native BarcodeDetector (Chrome / Edge) ──────────────────
-        const detector = new window.BarcodeDetector({
+        detectorRef.current = new window.BarcodeDetector({
           formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
         })
-        detectorRef.current = detector
 
         const scheduleScan = () => {
           scanTimeoutRef.current = setTimeout(async () => {
-            if (!videoRef.current || !detectorRef.current) return
+            if (sessionRef.current !== mySession || !videoRef.current || !detectorRef.current) return
             try {
               const barcodes = await detectorRef.current.detect(videoRef.current)
-              if (barcodes.length > 0 && !firedRef.current) {
-                firedRef.current = true
+              if (barcodes.length > 0) {
+                sessionRef.current++            // invalidate — no more callbacks for this session
                 stopCamera()
-                onScan(barcodes[0].rawValue)
+                onScanRef.current(barcodes[0].rawValue)
                 return
               }
-            } catch {
-              // frame not ready yet — ignore
-            }
-            if (detectorRef.current) scheduleScan()
+            } catch { /* frame not ready */ }
+            if (sessionRef.current === mySession) scheduleScan()
           }, 300)
         }
         scheduleScan()
+
       } else {
         // ── Path 2: @zxing/browser (Safari, Firefox, all others) ─────────────
         const { BrowserMultiFormatReader } = await import('@zxing/browser')
@@ -99,10 +94,10 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
         detectorRef.current = reader
 
         reader.decodeFromVideoElement(videoRef.current, (result) => {
-          if (result && !firedRef.current) {
-            firedRef.current = true
+          if (result && sessionRef.current === mySession) {
+            sessionRef.current++                // invalidate — ZXing may still fire; they'll bail
             stopCamera()
-            onScan(result.getText())
+            onScanRef.current(result.getText())
           }
         })
       }
