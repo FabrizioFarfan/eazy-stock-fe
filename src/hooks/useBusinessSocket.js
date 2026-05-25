@@ -18,9 +18,13 @@ export function useBusinessSocket(businessId, onEvent) {
   useEffect(() => {
     if (!businessId) return
 
-    client.onConnect = () => {
+    let subscription = null
+
+    const handleConnect = () => {
       setConnected(true)
-      client.subscribe(`/topic/business/${businessId}`, (msg) => {
+      // Unsubscribe any previous subscription before creating a new one
+      subscription?.unsubscribe()
+      subscription = client.subscribe(`/topic/business/${businessId}`, (msg) => {
         try {
           const wsEvent = JSON.parse(msg.body)
           onEventRef.current?.(wsEvent)
@@ -30,10 +34,23 @@ export function useBusinessSocket(businessId, onEvent) {
       })
     }
 
-    client.onDisconnect = () => setConnected(false)
-    client.activate()
+    client.configure({
+      onConnect:    handleConnect,
+      onDisconnect: () => setConnected(false),
+      onStompError: (frame) => console.error('[WS] STOMP error:', frame.headers?.message),
+      onWebSocketError: (evt) => console.error('[WS] WebSocket error:', evt),
+    })
+
+    // If already connected (e.g. hot-reload), subscribe immediately without re-activating
+    if (client.connected) {
+      handleConnect()
+    } else {
+      client.activate()
+    }
 
     return () => {
+      subscription?.unsubscribe()
+      subscription = null
       client.deactivate()
       setConnected(false)
     }
