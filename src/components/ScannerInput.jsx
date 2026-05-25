@@ -23,6 +23,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const streamRef       = useRef(null)
   const detectorRef     = useRef(null)   // holds BarcodeDetector OR BrowserMultiFormatReader
   const scanTimeoutRef  = useRef(null)   // only used in native BarcodeDetector path
+  const firedRef        = useRef(false)  // one-shot gate: prevents double-fire from any detection path
 
   // Only requires getUserMedia — ZXing handles Safari/Firefox without BarcodeDetector
   useEffect(() => {
@@ -56,7 +57,8 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
 
   const openCamera = async () => {
     try {
-      // Request camera permission — browser shows the native permission dialog
+      firedRef.current = false  // reset gate for this camera session
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
       })
@@ -77,10 +79,10 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             if (!videoRef.current || !detectorRef.current) return
             try {
               const barcodes = await detectorRef.current.detect(videoRef.current)
-              if (barcodes.length > 0) {
-                const code = barcodes[0].rawValue
+              if (barcodes.length > 0 && !firedRef.current) {
+                firedRef.current = true
                 stopCamera()
-                onScan(code)
+                onScan(barcodes[0].rawValue)
                 return
               }
             } catch {
@@ -97,7 +99,8 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
         detectorRef.current = reader
 
         reader.decodeFromVideoElement(videoRef.current, (result) => {
-          if (result) {
+          if (result && !firedRef.current) {
+            firedRef.current = true
             stopCamera()
             onScan(result.getText())
           }
