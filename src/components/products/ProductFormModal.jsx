@@ -58,10 +58,10 @@ export default function ProductFormModal({ product, onClose }) {
   // Camera
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
   const [cameraOpen, setCameraOpen]             = useState(false)
-  const videoRef        = useRef(null)
-  const streamRef       = useRef(null)
-  const detectorRef     = useRef(null)
-  const scanIntervalRef = useRef(null)
+  const videoRef       = useRef(null)
+  const streamRef      = useRef(null)
+  const detectorRef    = useRef(null)
+  const scanTimeoutRef = useRef(null)
 
   useEffect(() => {
     setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
@@ -70,9 +70,10 @@ export default function ProductFormModal({ product, onClose }) {
   useEffect(() => { return () => stopCamera() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopCamera = () => {
-    if (scanIntervalRef.current) { clearInterval(scanIntervalRef.current); scanIntervalRef.current = null }
-    if (streamRef.current)       { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null }
-    if (videoRef.current)        { videoRef.current.srcObject = null }
+    if (scanTimeoutRef.current) { clearTimeout(scanTimeoutRef.current); scanTimeoutRef.current = null }
+    detectorRef.current = null
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null }
+    if (videoRef.current)  { videoRef.current.srcObject = null }
     setCameraOpen(false)
   }
 
@@ -88,13 +89,24 @@ export default function ProductFormModal({ product, onClose }) {
         detectorRef.current = new window.BarcodeDetector({
           formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
         })
-        scanIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || !detectorRef.current) return
-          try {
-            const barcodes = await detectorRef.current.detect(videoRef.current)
-            if (barcodes.length > 0) { stopCamera(); setValue('providerCode', barcodes[0].rawValue) }
-          } catch { /* frame not ready */ }
-        }, 500)
+
+        // Recursive setTimeout — only one detect() in flight at a time.
+        // detectorRef being null is the stop signal.
+        const scheduleScan = () => {
+          scanTimeoutRef.current = setTimeout(async () => {
+            if (!detectorRef.current || !videoRef.current) return
+            try {
+              const barcodes = await detectorRef.current.detect(videoRef.current)
+              if (barcodes.length > 0) {
+                stopCamera()
+                setValue('providerCode', barcodes[0].rawValue)
+                return // do not reschedule
+              }
+            } catch { /* frame not ready */ }
+            if (detectorRef.current) scheduleScan() // reschedule only if still active
+          }, 400)
+        }
+        scheduleScan()
       }
     } catch { /* permission denied */ }
   }
