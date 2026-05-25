@@ -1,21 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import client from '../services/wsClient'
 
 /**
  * Subscribes to the business-scoped WebSocket topic.
  *
  * @param {string|null} businessId  UUID of the tenant to subscribe to.
- *                                   Pass null/undefined to skip connection.
- * @param {function}    onEvent     Optional callback invoked with each WsEvent.
- *
- * @returns {{ connected: boolean, lastEvent: object|null }}
- *
- * Usage (not wired to any page yet — infrastructure only):
- *   const { connected, lastEvent } = useBusinessSocket(user?.businessId, handleEvent)
+ * @param {function}    onEvent     Called with each WsEvent (always latest version via ref).
+ * @returns {{ connected: boolean }}
  */
 export function useBusinessSocket(businessId, onEvent) {
   const [connected, setConnected] = useState(false)
-  const [lastEvent, setLastEvent] = useState(null)
+  const onEventRef = useRef(onEvent)
+
+  // Keep ref current so the subscription closure always calls the latest callback
+  useEffect(() => { onEventRef.current = onEvent })
 
   useEffect(() => {
     if (!businessId) return
@@ -25,18 +23,14 @@ export function useBusinessSocket(businessId, onEvent) {
       client.subscribe(`/topic/business/${businessId}`, (msg) => {
         try {
           const wsEvent = JSON.parse(msg.body)
-          setLastEvent(wsEvent)
-          onEvent?.(wsEvent)
+          onEventRef.current?.(wsEvent)
         } catch {
           // malformed message — ignore
         }
       })
     }
 
-    client.onDisconnect = () => {
-      setConnected(false)
-    }
-
+    client.onDisconnect = () => setConnected(false)
     client.activate()
 
     return () => {
@@ -45,5 +39,5 @@ export function useBusinessSocket(businessId, onEvent) {
     }
   }, [businessId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { connected, lastEvent }
+  return { connected }
 }
