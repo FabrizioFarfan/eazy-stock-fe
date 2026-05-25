@@ -166,7 +166,7 @@ export default function NewSalePage() {
 
   return (
     /* pb-24: leaves room for the sticky bar on mobile */
-    <div className="flex flex-col gap-4 pb-24 lg:pb-0">
+    <div className="flex flex-col gap-4 pb-24">
 
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
@@ -179,10 +179,10 @@ export default function NewSalePage() {
       </div>
 
       {/* ── Main: stacked on mobile, side-by-side on lg+ ── */}
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+      <div className="flex flex-col gap-5">
 
         {/* ── Products column ── */}
-        <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-1">
+        <div className="flex flex-col gap-3">
           <ScannerInput
             value={search}
             onChange={setSearch}
@@ -219,7 +219,7 @@ export default function NewSalePage() {
         </div>
 
         {/* ── Cart column ── */}
-        <div ref={cartRef} className="flex flex-col gap-3 lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4">
+        <div ref={cartRef} className="flex flex-col gap-3">
 
           {/* Items */}
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -285,7 +285,7 @@ export default function NewSalePage() {
 
       {/* ── Sticky checkout bar — mobile only, appears when cart has items ── */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-xl lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-xl">
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <p className="text-xs text-gray-500">
