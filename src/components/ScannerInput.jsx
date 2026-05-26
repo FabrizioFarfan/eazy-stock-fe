@@ -25,6 +25,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const scanTimeoutRef = useRef(null)  // BarcodeDetector path only
   const sessionRef     = useRef(0)     // increments each openCamera; stale callbacks see wrong value → ignored
   const firedRef       = useRef(false) // extra guard: ensures onScan fires at most once per session
+  const isOpeningRef   = useRef(false) // prevents concurrent openCamera calls (double-tap on mobile)
   const onScanRef      = useRef(onScan)
 
   // Always keep onScanRef current so closures call the latest version (avoids stale cartIds)
@@ -55,6 +56,8 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   }
 
   const openCamera = async () => {
+    if (isOpeningRef.current) return          // double-tap guard: ignore while already opening
+    isOpeningRef.current = true
     try {
       sessionRef.current++                    // new session — old callbacks see a different number and bail
       firedRef.current = false                // reset fire guard for this session
@@ -108,6 +111,8 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
       }
     } catch {
       // Permission denied or device unavailable — fail silently
+    } finally {
+      isOpeningRef.current = false
     }
   }
 
