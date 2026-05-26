@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Package } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import TutorialModal from '../components/tutorial/TutorialModal'
@@ -18,21 +18,44 @@ export default function AppLayout({ children }) {
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
 
-  // OWNERs receive real-time sale notifications from their employees
+  // Both OWNER and EMPLOYEE subscribe to real-time business events
   useBusinessSocket(
-    user?.role === 'OWNER' ? user?.businessId : null,
+    (user?.role === 'OWNER' || user?.role === 'EMPLOYEE') ? user?.businessId : null,
     (event) => {
-      if (event.type !== 'NEW_SALE') return
-      const sale  = event.payload
-      const items = sale.items?.length ?? 0
-      toast.success(`Nueva venta · ${formatCurrency(sale.total)}`, {
-        description: `${sale.employeeName} · ${items} producto${items !== 1 ? 's' : ''}`,
-        icon: <ShoppingCart size={16} />,
-        duration: 6000,
-      })
-      queryClient.invalidateQueries({ queryKey: ['sales'] })
-      queryClient.invalidateQueries({ queryKey: ['reports', 'daily-summary'] })
-      queryClient.invalidateQueries({ queryKey: ['reports', 'sales'] })
+      if (event.type === 'NEW_SALE') {
+        const sale  = event.payload
+        const items = sale.items?.length ?? 0
+
+        if (user?.role === 'OWNER') {
+          // Owner sees every employee sale
+          toast.success(`Nueva venta · ${formatCurrency(sale.total)}`, {
+            description: `${sale.employeeName} · ${items} producto${items !== 1 ? 's' : ''}`,
+            icon: <ShoppingCart size={16} />,
+            duration: 6000,
+          })
+          queryClient.invalidateQueries({ queryKey: ['sales'] })
+          queryClient.invalidateQueries({ queryKey: ['reports', 'daily-summary'] })
+          queryClient.invalidateQueries({ queryKey: ['reports', 'sales'] })
+        } else if (user?.role === 'EMPLOYEE' && sale.employeeId === user?.id) {
+          // Employee sees confirmation of their own sale
+          toast.success(`Venta registrada · ${formatCurrency(sale.total)}`, {
+            description: `${items} producto${items !== 1 ? 's' : ''} · procesado correctamente`,
+            icon: <ShoppingCart size={16} />,
+            duration: 4000,
+          })
+          queryClient.invalidateQueries({ queryKey: ['sales'] })
+        }
+      }
+
+      if (event.type === 'STOCK_UPDATE' && user?.role === 'EMPLOYEE') {
+        const mov = event.payload
+        toast.info(`Nuevo stock disponible`, {
+          description: `${mov.productName} · ${mov.stockAfter} unidades ahora disponibles`,
+          icon: <Package size={16} />,
+          duration: 5000,
+        })
+        queryClient.invalidateQueries({ queryKey: ['products'] })
+      }
     },
   )
 
