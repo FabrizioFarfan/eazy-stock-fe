@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search } from 'lucide-react'
 import { toast } from 'sonner'
@@ -111,14 +111,19 @@ function CartItem({ item, onIncrease, onDecrease, onRemove }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NewSalePage() {
-  const navigate   = useNavigate()
-  const createSale = useCreateSale()
-  const cartRef    = useRef(null)
+  const navigate      = useNavigate()
+  const createSale    = useCreateSale()
+  const cartRef       = useRef(null)
+  const scanLockRef   = useRef(false)  // prevents concurrent scanCode calls
+  const cartStateRef  = useRef([])     // always points to latest cart state (avoids stale closure)
 
   const [search, setSearch]         = useState('')
   const debouncedSearch             = useDebounce(search, 400)
   const [cart, setCart]             = useState([])
   const [notes, setNotes]           = useState('')
+
+  // Keep cartStateRef in sync with cart so scanCode always reads current state
+  useEffect(() => { cartStateRef.current = cart }, [cart])
 
   const { data: productsData, isLoading: loadingProducts } = useProducts(
     debouncedSearch ? { search: debouncedSearch, size: 10, active: true } : null,
@@ -139,15 +144,24 @@ export default function NewSalePage() {
       ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))
 
   const scanCode = async (code) => {
+    if (scanLockRef.current) return           // camera fired more than once — drop duplicates
+    scanLockRef.current = true
     try {
       const product = (await productsApi.scanCode(code)).data.data
       if (!product)                   { toast.error('Producto no encontrado'); return }
       if (product.currentStock === 0) { toast.warning('Sin stock disponible'); return }
-      if (cartIds.has(product.id))    { increase(product.id); toast.info('Cantidad actualizada'); return }
+      // Read cartStateRef (not the stale closure cartIds) so same-product rescans always increment
+      if (cartStateRef.current.some((i) => i.product.id === product.id)) {
+        increase(product.id)
+        toast.info('Cantidad actualizada')
+        return
+      }
       addToCart(product)
       toast.success(product.name)
     } catch {
       toast.error('Producto no encontrado')
+    } finally {
+      scanLockRef.current = false
     }
   }
 

@@ -24,6 +24,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const detectorRef    = useRef(null)  // BarcodeDetector | BrowserMultiFormatReader
   const scanTimeoutRef = useRef(null)  // BarcodeDetector path only
   const sessionRef     = useRef(0)     // increments each openCamera; stale callbacks see wrong value → ignored
+  const firedRef       = useRef(false) // extra guard: ensures onScan fires at most once per session
   const onScanRef      = useRef(onScan)
 
   // Always keep onScanRef current so closures call the latest version (avoids stale cartIds)
@@ -56,6 +57,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
   const openCamera = async () => {
     try {
       sessionRef.current++                    // new session — old callbacks see a different number and bail
+      firedRef.current = false                // reset fire guard for this session
       const mySession = sessionRef.current
 
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
@@ -75,7 +77,9 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             if (sessionRef.current !== mySession || !videoRef.current || !detectorRef.current) return
             try {
               const barcodes = await detectorRef.current.detect(videoRef.current)
-              if (barcodes.length > 0) {
+              // Re-check session after await — a new openCamera() call may have run while detect() was in flight
+              if (barcodes.length > 0 && sessionRef.current === mySession && !firedRef.current) {
+                firedRef.current = true
                 sessionRef.current++            // invalidate — no more callbacks for this session
                 stopCamera()
                 onScanRef.current(barcodes[0].rawValue)
@@ -94,7 +98,8 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
         detectorRef.current = reader
 
         reader.decodeFromVideoElement(videoRef.current, (result) => {
-          if (result && sessionRef.current === mySession) {
+          if (result && sessionRef.current === mySession && !firedRef.current) {
+            firedRef.current = true             // prevent any queued ZXing callbacks from firing again
             sessionRef.current++                // invalidate — ZXing may still fire; they'll bail
             stopCamera()
             onScanRef.current(result.getText())
