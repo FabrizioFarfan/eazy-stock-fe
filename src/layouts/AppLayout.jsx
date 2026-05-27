@@ -33,6 +33,7 @@ export default function AppLayout({ children }) {
             duration: 6000,
           })
           queryClient.invalidateQueries({ queryKey: ['sales'] })
+          queryClient.invalidateQueries({ queryKey: ['products'] })
           queryClient.invalidateQueries({ queryKey: ['reports', 'daily-summary'] })
           queryClient.invalidateQueries({ queryKey: ['reports', 'sales'] })
         } else if (user?.role === 'EMPLOYEE' && sale.employeeId === user?.id) {
@@ -42,24 +43,24 @@ export default function AppLayout({ children }) {
             duration: 4000,
           })
           queryClient.invalidateQueries({ queryKey: ['sales'] })
+          queryClient.invalidateQueries({ queryKey: ['products'] })
         }
       }
 
-      if (event.type === 'STOCK_UPDATE' && user?.role === 'EMPLOYEE') {
+      if (event.type === 'STOCK_UPDATE') {
         const mov = event.payload
-        toast.info(`Nuevo stock disponible`, {
-          description: `${mov.productName} · ${mov.stockAfter} unidades ahora disponibles`,
-          icon: <Package size={16} />,
-          duration: 5000,
-        })
+        if (user?.role === 'EMPLOYEE') {
+          toast.info(`Nuevo stock disponible`, {
+            description: `${mov.productName} · ${mov.stockAfter} unidades ahora disponibles`,
+            icon: <Package size={16} />,
+            duration: 5000,
+          })
+        }
         queryClient.invalidateQueries({ queryKey: ['products'] })
+        queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
       }
 
-      // Refresh notification bell ~500ms after WS event so the DB transaction
-      // has time to commit before we query the notifications endpoint
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      }, 500)
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   )
 
