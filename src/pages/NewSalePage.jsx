@@ -201,7 +201,7 @@ export default function NewSalePage() {
             value={search}
             onChange={setSearch}
             onScan={scanCode}
-            placeholder="Buscar por nombre, SKU o escanear código..."
+            placeholder="Buscar por nombre, código o escanear..."
           />
 
           {!debouncedSearch ? (
@@ -210,7 +210,7 @@ export default function NewSalePage() {
                 <Search size={28} className="text-gray-400" />
               </div>
               <p className="text-sm font-medium text-gray-500">Busca un producto o escanea su código</p>
-              <p className="text-xs text-gray-400">Escribe el nombre, SKU o usa el lector de códigos</p>
+              <p className="text-xs text-gray-400">Escribe el nombre, código o usa el lector de códigos</p>
             </div>
           ) : loadingProducts ? (
             <div className="space-y-3">

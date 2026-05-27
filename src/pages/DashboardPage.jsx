@@ -254,7 +254,7 @@ function OwnerDashboard({ name, businessId }) {
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
                   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">SKU</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Mínimo</th>
                   <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Déficit</th>

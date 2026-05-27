@@ -122,7 +122,7 @@ export default function ProductsPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por nombre o SKU..."
+            placeholder="Buscar por nombre o código..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
@@ -151,7 +151,7 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">SKU</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Nombre</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Marca</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>

@@ -108,7 +108,7 @@ export default function QrModal({ product, onClose }) {
           )}
           {activeTab === 'barcode' && (
             <p className="text-center text-xs text-gray-400">
-              Formato Code 128 · SKU: {product.sku}
+              Formato Code 128 · Código: {product.sku}
             </p>
           )}
         </div>

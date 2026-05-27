@@ -127,7 +127,7 @@ export default function StockPage() {
               <tr className="border-b border-gray-100 bg-gray-50/60">
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">Fecha</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">SKU</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Tipo</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Cantidad</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Antes</th>

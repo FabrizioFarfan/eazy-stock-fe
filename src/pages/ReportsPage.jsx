@@ -232,7 +232,7 @@ function TabByProduct({ businessId }) {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   <th className="px-4 py-3">Producto</th>
-                  <th className="px-4 py-3 font-mono">SKU</th>
+                  <th className="px-4 py-3 font-mono">Código</th>
                   <th className="px-4 py-3 text-center">Unidades vendidas</th>
                   <th className="px-4 py-3 text-right">Ingresos totales</th>
                 </tr>
@@ -360,7 +360,7 @@ function TabLowStock({ businessId }) {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <th className="px-4 py-3">Producto</th>
-                <th className="px-4 py-3">SKU</th>
+                <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Marca</th>
                 <th className="px-4 py-3">Proveedor</th>
                 <th className="px-4 py-3 text-center">Stock actual</th>
