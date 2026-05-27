@@ -12,4 +12,7 @@ export const reportsApi = {
 
   // Detalle de una venta para el modal (reutiliza endpoint de sales)
   getSaleDetail: (id) => api.get(`/sales/${id}`),
+
+  // Resurtido por proveedor: params = { supplierId, from, to, businessId? }
+  getSupplierRestock: (params) => api.get('/reports/supplier-restock', { params }),
 }

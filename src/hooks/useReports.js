@@ -42,6 +42,15 @@ export function useSalesReport(params, options = {}) {
   })
 }
 
+export function useSupplierRestock(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'supplier-restock', params],
+    queryFn: () => reportsApi.getSupplierRestock(params).then((r) => r.data.data),
+    enabled: !!(params?.supplierId && params?.from && params?.to),
+    ...options,
+  })
+}
+
 export function useSaleDetail(saleId, options = {}) {
   return useQuery({
     queryKey: ['sales', 'detail', saleId],

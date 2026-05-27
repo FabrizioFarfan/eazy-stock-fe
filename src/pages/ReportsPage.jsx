@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle,
+  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -9,8 +9,9 @@ import {
 import { useAuth } from '../context/AuthContext'
 import {
   useDailySummary, useSalesByProduct, useSalesByProvider,
-  useReportsLowStock, useSalesReport,
+  useReportsLowStock, useSalesReport, useSupplierRestock,
 } from '../hooks/useReports'
+import { useSuppliers } from '../hooks/useSuppliers'
 import ReportFilters   from '../components/reports/ReportFilters'
 import SummaryCards    from '../components/reports/SummaryCards'
 import SalesByDayChart from '../components/reports/SalesByDayChart'
@@ -390,14 +391,124 @@ function TabLowStock({ businessId }) {
   )
 }
 
+// ── Tab: Resurtido por proveedor ─────────────────────────────────────────────
+
+function TabSupplierRestock({ businessId }) {
+  const todayStr = today()
+  const [supplierId, setSupplierId] = useState('')
+  const [from, setFrom]             = useState(firstOfMonth())
+  const [to,   setTo]               = useState(todayStr)
+
+  const { data: suppliersData } = useSuppliers({ size: 200, ...(businessId && { businessId }) })
+  const suppliers = suppliersData?.content ?? []
+
+  const { data: rows = [], isLoading, isFetching } = useSupplierRestock(
+    supplierId ? { supplierId, from, to, ...(businessId && { businessId }) } : null,
+  )
+
+  const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Proveedor</label>
+          <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${inputCls} min-w-48`}>
+            <option value="">Seleccionar proveedor...</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Desde</label>
+          <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hasta</label>
+          <input type="date" value={to} min={from} max={todayStr} onChange={(e) => setTo(e.target.value)} className={inputCls} />
+        </div>
+      </div>
+
+      {/* Empty state — no supplier selected */}
+      {!supplierId && (
+        <div className="flex flex-col items-center gap-3 py-16">
+          <Truck size={36} className="text-gray-200" />
+          <p className="text-sm text-gray-400">Selecciona un proveedor para ver el resurtido</p>
+        </div>
+      )}
+
+      {/* Loading */}
+      {supplierId && (isLoading || isFetching) && (
+        <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
+      )}
+
+      {/* Table */}
+      {supplierId && !isLoading && rows.length === 0 && (
+        <div className="flex flex-col items-center gap-3 py-16">
+          <Package size={36} className="text-gray-200" />
+          <p className="text-sm text-gray-400">Este proveedor no tiene productos registrados</p>
+        </div>
+      )}
+
+      {supplierId && !isLoading && rows.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">Código</th>
+                <th className="px-4 py-3 text-center">Recibido</th>
+                <th className="px-4 py-3 text-center">Vendido</th>
+                <th className="px-4 py-3 text-center">Stock actual</th>
+                <th className="px-4 py-3 text-center">Sugerido pedir</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {rows.map((r) => {
+                const suggested = Math.max(r.sold, Math.max(0, r.minStock - r.currentStock))
+                const stockOk   = r.currentStock > r.minStock
+                return (
+                  <tr key={r.productId} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{r.productName}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-400">{r.sku}</td>
+                    <td className="px-4 py-3 text-center text-gray-700">{r.received}</td>
+                    <td className="px-4 py-3 text-center text-gray-700">{r.sold}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-semibold ${stockOk ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {r.currentStock}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {suggested > 0 ? (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                          {suggested} {r.unit}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── main page ─────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'sales',       label: 'Análisis de ventas' },
-  { id: 'daily',       label: 'Resumen del día' },
-  { id: 'by-product',  label: 'Por producto' },
-  { id: 'by-provider', label: 'Por proveedor' },
-  { id: 'low-stock',   label: 'Stock bajo' },
+  { id: 'sales',            label: 'Análisis de ventas' },
+  { id: 'daily',            label: 'Resumen del día' },
+  { id: 'by-product',       label: 'Por producto' },
+  { id: 'by-provider',      label: 'Por proveedor' },
+  { id: 'low-stock',        label: 'Stock bajo' },
+  { id: 'supplier-restock', label: 'Resurtido' },
 ]
 
 export default function ReportsPage() {
@@ -438,11 +549,12 @@ export default function ReportsPage() {
 
       {/* Tab content */}
       <div>
-        {activeTab === 'sales'       && <TabSalesReport businessId={businessId} />}
-        {activeTab === 'daily'       && <TabDaily       businessId={businessId} />}
-        {activeTab === 'by-product'  && <TabByProduct   businessId={businessId} />}
-        {activeTab === 'by-provider' && <TabByProvider  businessId={businessId} />}
-        {activeTab === 'low-stock'   && <TabLowStock    businessId={businessId} />}
+        {activeTab === 'sales'            && <TabSalesReport      businessId={businessId} />}
+        {activeTab === 'daily'            && <TabDaily            businessId={businessId} />}
+        {activeTab === 'by-product'       && <TabByProduct        businessId={businessId} />}
+        {activeTab === 'by-provider'      && <TabByProvider       businessId={businessId} />}
+        {activeTab === 'low-stock'        && <TabLowStock         businessId={businessId} />}
+        {activeTab === 'supplier-restock' && <TabSupplierRestock  businessId={businessId} />}
       </div>
     </div>
   )
