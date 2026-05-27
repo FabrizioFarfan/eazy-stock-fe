@@ -26,6 +26,7 @@ import ReportsPage    from '../pages/ReportsPage'
 import EmployeesPage  from '../pages/EmployeesPage'
 import SuppliersPage  from '../pages/SuppliersPage'
 import BrandsPage     from '../pages/BrandsPage'
+import CategoriesPage from '../pages/CategoriesPage'
 import SettingsPage   from '../pages/SettingsPage'
 import BusinessesPage from '../pages/admin/BusinessesPage'
 import OwnersPage     from '../pages/admin/OwnersPage'
@@ -66,6 +67,9 @@ export default function AppRouter() {
       } />
       <Route path="/brands" element={
         <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
+      } />
+      <Route path="/categories" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><CategoriesPage /></ProtectedRoute>
       } />
       {/* Settings — todos los roles autenticados */}
       <Route path="/settings" element={

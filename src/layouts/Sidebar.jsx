@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
-  LogOut, Truck, Tag, X, Settings,
+  LogOut, Truck, Tag, FolderOpen, X, Settings,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -22,6 +22,7 @@ const OWNER_NAV = [
   { icon: BarChart2,       label: 'Reportes',     path: '/reports',    permission: 'canViewReports' },
   { icon: Truck,           label: 'Proveedores',  path: '/suppliers',  permission: null },
   { icon: Tag,             label: 'Marcas',       path: '/brands',     permission: null },
+  { icon: FolderOpen,      label: 'Categorías',   path: '/categories', permission: null },
   { icon: Users,           label: 'Empleados',    path: '/empleados',  permission: null },
   { icon: Settings,        label: 'Ajustes',      path: '/settings',   permission: null },
 ]

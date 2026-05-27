@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from 'lucide-react'
+import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
+import ProductDetailModal from '../components/products/ProductDetailModal'
 import QrModal from '../components/products/QrModal'
 
 function formatCurrency(value) {
@@ -14,7 +15,7 @@ function formatCurrency(value) {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 9 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -63,8 +64,9 @@ export default function ProductsPage() {
 
   useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter])
 
-  const [formModal, setFormModal] = useState({ open: false, product: null })
-  const [qrModal, setQrModal]     = useState(null)
+  const [formModal,   setFormModal]   = useState({ open: false, product: null })
+  const [qrModal,     setQrModal]     = useState(null)
+  const [detailModal, setDetailModal] = useState(null)
 
   const params = {
     page, size: PAGE_SIZE,
@@ -153,12 +155,14 @@ export default function ProductsPage() {
               <tr className="border-b border-gray-100 bg-gray-50/60">
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Nombre</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Categoría</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Marca</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Compra</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Venta</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Estado</th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Ver</th>
                 {isManager && <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Acciones</th>}
               </tr>
             </thead>
@@ -167,7 +171,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={isManager ? 9 : 8}>
+                  <td colSpan={isManager ? 11 : 10}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -194,13 +198,20 @@ export default function ProductsPage() {
                 products.map((p) => (
                   <tr key={p.id} className={`border-b border-gray-50 transition-colors hover:bg-gray-50/70 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
-                    <td className="max-w-[180px] truncate px-5 py-3.5 font-semibold text-gray-900">{p.name}</td>
+                    <td className="max-w-[160px] truncate px-5 py-3.5 font-semibold text-gray-900">{p.name}</td>
+                    <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
-                    <td className="max-w-[140px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
+                    <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
                     <td className="px-5 py-3.5 text-right text-gray-600">{formatCurrency(p.purchasePrice)}</td>
                     <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatCurrency(p.salePrice)}</td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
+                    <td className="px-5 py-3.5 text-center">
+                      <button onClick={() => setDetailModal(p)} title="Ver detalle"
+                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                        <Eye size={14} />
+                      </button>
+                    </td>
                     {isManager && (
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-1">
@@ -249,6 +260,7 @@ export default function ProductsPage() {
 
       {formModal.open && <ProductFormModal product={formModal.product} onClose={closeForm} />}
       {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}
+      {detailModal && <ProductDetailModal product={detailModal} onClose={() => setDetailModal(null)} />}
     </div>
   )
 }

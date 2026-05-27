@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, Plus, FolderOpen } from 'lucide-react'
 import { useCreateProduct, useUpdateProduct } from '../../hooks/useProducts'
 import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useBrands, useCreateBrand } from '../../hooks/useBrands'
+import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
 
@@ -42,18 +43,30 @@ export default function ProductFormModal({ product, onClose }) {
   const mutation = isEdit ? update : create
   const isBusy   = mutation.isPending
 
-  // Suppliers & brands
+  // Suppliers, brands, categories
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const { data: brandsData }    = useBrands({ size: 200 })
-  const suppliers = suppliersData?.content ?? []
-  const brands    = brandsData?.content    ?? []
+  const { data: categoriesData } = useCategories({ size: 200 })
+  const suppliers  = suppliersData?.content  ?? []
+  const brands     = brandsData?.content     ?? []
+  const categories = categoriesData?.content ?? []
 
   const createBrand    = useCreateBrand()
   const createSupplier = useCreateSupplier()
+  const createCategory = useCreateCategory()
 
-  // Controlled brand/supplier (outside RHF schema)
-  const [brandId,    setBrandId]    = useState(product?.brandId    ?? null)
-  const [supplierId, setSupplierId] = useState(product?.supplierId ?? null)
+  // Controlled brand/supplier/category (outside RHF schema)
+  const [brandId,     setBrandId]     = useState(product?.brandId     ?? null)
+  const [supplierId,  setSupplierId]  = useState(product?.supplierId  ?? null)
+  const [categoryId,  setCategoryId]  = useState(product?.categoryId  ?? null)
+
+  // Attributes map: Record<string, string>
+  const [attributes,  setAttributes]  = useState(product?.attributes  ?? {})
+  const [attrKey,     setAttrKey]     = useState('')
+  const [attrVal,     setAttrVal]     = useState('')
+
+  // Suggested attributes from selected category
+  const { data: suggestedAttrs = [] } = useSuggestedAttributes(categoryId)
 
   // Camera — mirrors ScannerInput logic (BarcodeDetector + ZXing fallback)
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
@@ -167,8 +180,10 @@ export default function ProductFormModal({ product, onClose }) {
         salePrice:     product.salePrice     ?? '',
         minStock:      product.minStock      ?? 0,
       })
-      setBrandId(product.brandId ?? null)
+      setBrandId(product.brandId       ?? null)
       setSupplierId(product.supplierId ?? null)
+      setCategoryId(product.categoryId ?? null)
+      setAttributes(product.attributes ?? {})
     }
   }, [product?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,12 +201,43 @@ export default function ProductFormModal({ product, onClose }) {
     setSupplierId(newSupplier.id)
   }
 
+  const handleCreateCategory = async (name) => {
+    const newCategory = await createCategory.mutateAsync({ name })
+    setCategoryId(newCategory.id)
+  }
+
+  // Attribute helpers
+  const addAttribute = (key = attrKey, val = attrVal) => {
+    const k = key.trim()
+    const v = val.trim()
+    if (!k) return
+    setAttributes((prev) => ({ ...prev, [k]: v }))
+    setAttrKey('')
+    setAttrVal('')
+  }
+
+  const removeAttribute = (key) => {
+    setAttributes((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
+  const applySuggestedAttr = (attr) => {
+    if (!(attr in attributes)) {
+      setAttributes((prev) => ({ ...prev, [attr]: '' }))
+    }
+  }
+
   const onSubmit = async (values) => {
     try {
       const payload = {
         ...values,
-        supplierId: supplierId || null,
-        brandId:    brandId    || null,
+        supplierId:  supplierId  || null,
+        brandId:     brandId     || null,
+        categoryId:  categoryId  || null,
+        attributes:  Object.keys(attributes).length > 0 ? attributes : null,
       }
 
       if (isEdit) {
@@ -199,8 +245,9 @@ export default function ProductFormModal({ product, onClose }) {
           id: product.id,
           data: {
             ...payload,
-            clearSupplierId: !supplierId,
-            clearBrandId:    !brandId,
+            clearSupplierId:  !supplierId,
+            clearBrandId:     !brandId,
+            clearCategoryId:  !categoryId,
           },
         })
       } else {
@@ -274,6 +321,18 @@ export default function ProductFormModal({ product, onClose }) {
               isCreating={createSupplier.isPending}
             />
 
+            {/* Category picker */}
+            <EntityPicker
+              label="Categoría"
+              items={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+              onCreate={handleCreateCategory}
+              placeholder="Buscar categoría..."
+              createLabel="Nueva categoría"
+              isCreating={createCategory.isPending}
+            />
+
             {/* Código proveedor */}
             <Field label="Código proveedor" error={errors.providerCode?.message}>
               <div className="flex gap-1.5">
@@ -318,6 +377,79 @@ export default function ProductFormModal({ product, onClose }) {
                 className={`${inputCls} resize-none`}
               />
             </Field>
+
+            {/* Atributos */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700">Atributos</label>
+
+              {/* Suggested attribute chips */}
+              {suggestedAttrs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestedAttrs.map((attr) => (
+                    <button
+                      key={attr}
+                      type="button"
+                      onClick={() => applySuggestedAttr(attr)}
+                      disabled={attr in attributes}
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                        attr in attributes
+                          ? 'bg-blue-100 text-blue-700 cursor-default'
+                          : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                      }`}
+                    >
+                      {!(attr in attributes) && <Plus size={10} />}
+                      {attr}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Existing attributes */}
+              {Object.keys(attributes).length > 0 && (
+                <div className="space-y-1.5">
+                  {Object.entries(attributes).map(([key, val]) => (
+                    <div key={key} className="flex items-center gap-1.5">
+                      <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
+                      <input
+                        type="text"
+                        value={val}
+                        onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
+                        placeholder="Valor..."
+                        className={`${inputCls} flex-1 py-1.5 text-xs`}
+                      />
+                      <button type="button" onClick={() => removeAttribute(key)}
+                        className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add custom attribute */}
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={attrKey}
+                  onChange={(e) => setAttrKey(e.target.value)}
+                  placeholder="Atributo..."
+                  className={`${inputCls} w-28 py-1.5 text-xs`}
+                />
+                <input
+                  type="text"
+                  value={attrVal}
+                  onChange={(e) => setAttrVal(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
+                  placeholder="Valor..."
+                  className={`${inputCls} flex-1 py-1.5 text-xs`}
+                />
+                <button type="button" onClick={() => addAttribute()}
+                  disabled={!attrKey.trim()}
+                  className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
 
             {/* Precios + Stock mínimo */}
             <div className="grid grid-cols-3 gap-3">
