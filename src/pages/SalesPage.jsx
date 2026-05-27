@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
+import { useSuppliers } from '../hooks/useSuppliers'
+import { useProducts } from '../hooks/useProducts'
+import { useDebounce } from '../hooks/useDebounce'
+import { productsApi } from '../services/endpoints/products'
+import ScannerInput from '../components/ScannerInput'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
 
 function formatDate(dateStr) {
@@ -31,23 +36,72 @@ function SkeletonRow() {
 }
 
 const PAGE_SIZE = 20
+const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
 export default function SalesPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const canCreate = user?.role === 'OWNER' || user?.role === 'EMPLOYEE'
 
-  const [from, setFrom]               = useState('')
-  const [to, setTo]                   = useState('')
-  const [page, setPage]               = useState(0)
+  // ── Date filter ───────────────────────────────────────────────────────────
+  const [from, setFrom] = useState('')
+  const [to,   setTo]   = useState('')
+
+  // ── Product multi-select filter ───────────────────────────────────────────
+  const [productSearch, setProductSearch]     = useState('')
+  const [showProdDrop, setShowProdDrop]       = useState(false)
+  const [selectedProducts, setSelectedProducts] = useState([])   // [{id, name}]
+  const debouncedProd = useDebounce(productSearch, 350)
+  const scanLockRef   = useRef(false)
+
+  const { data: prodData, isLoading: loadingProds } = useProducts(
+    debouncedProd ? { search: debouncedProd, size: 8, active: true } : null,
+    { enabled: !!debouncedProd },
+  )
+  const prodResults = prodData?.content ?? []
+
+  const addProduct = (p) => {
+    if (!selectedProducts.find((x) => x.id === p.id)) {
+      setSelectedProducts((prev) => [...prev, { id: p.id, name: p.name }])
+    }
+    setProductSearch('')
+    setShowProdDrop(false)
+  }
+
+  const removeProduct = (id) =>
+    setSelectedProducts((prev) => prev.filter((p) => p.id !== id))
+
+  const handleProductScan = async (code) => {
+    if (scanLockRef.current) return
+    scanLockRef.current = true
+    try {
+      const product = (await productsApi.scanCode(code)).data.data
+      addProduct(product)
+    } catch {
+      // code not found — user can search manually
+    } finally {
+      scanLockRef.current = false
+    }
+  }
+
+  // ── Supplier filter ───────────────────────────────────────────────────────
+  const [supplierId, setSupplierId] = useState('')
+  const { data: suppliersData } = useSuppliers({ size: 200 })
+  const suppliers = suppliersData?.content ?? []
+
+  // ── Pagination ────────────────────────────────────────────────────────────
+  const [page, setPage] = useState(0)
   const [selectedSaleId, setSelectedSaleId] = useState(null)
 
-  useEffect(() => { setPage(0) }, [from, to])
+  const hasFilters = from || to || selectedProducts.length > 0 || supplierId
 
   const params = {
-    page, size: PAGE_SIZE,
+    page,
+    size: PAGE_SIZE,
     ...(from && { from }),
     ...(to   && { to }),
+    ...(selectedProducts.length > 0 && { productIds: selectedProducts.map((p) => p.id) }),
+    ...(supplierId && { supplierId }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -58,6 +112,10 @@ export default function SalesPage() {
   const totalPages    = data?.totalPages    ?? 0
   const fromRow       = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const toRow         = Math.min((page + 1) * PAGE_SIZE, totalElements)
+
+  const clearAll = () => {
+    setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId(''); setPage(0)
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -83,24 +141,90 @@ export default function SalesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-        <Calendar size={15} className="flex-shrink-0 text-gray-400" />
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Desde</span>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+
+        {/* Row 1 — Dates */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Calendar size={15} className="flex-shrink-0 text-gray-400" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-500">Desde</span>
+            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0) }}
+              className={inputCls} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-500">Hasta</span>
+            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0) }}
+              className={inputCls} />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Hasta</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
+
+        {/* Row 2 — Product filter */}
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Filtrar por producto
+          </span>
+          <div className="relative max-w-md">
+            <ScannerInput
+              value={productSearch}
+              onChange={(v) => { setProductSearch(v); setShowProdDrop(true); setPage(0) }}
+              onScan={handleProductScan}
+              placeholder="Buscar producto o escanear código..."
+            />
+            {showProdDrop && debouncedProd && (
+              <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+                {loadingProds ? (
+                  <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+                ) : prodResults.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+                ) : (
+                  prodResults.map((p) => (
+                    <button key={p.id} type="button"
+                      onClick={() => addProduct(p)}
+                      className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                      <span className="font-semibold text-gray-900">{p.name}</span>
+                      <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Selected product tags */}
+          {selectedProducts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedProducts.map((p) => (
+                <span key={p.id}
+                  className="flex items-center gap-1 rounded-full bg-blue-100 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700">
+                  {p.name}
+                  <button onClick={() => { removeProduct(p.id); setPage(0) }}
+                    className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        {(from || to) && (
-          <button onClick={() => { setFrom(''); setTo('') }}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-            Limpiar
-          </button>
-        )}
+
+        {/* Row 3 — Supplier filter */}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Proveedor</span>
+          <select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(0) }}
+            className={`${inputCls} min-w-48`}>
+            <option value="">Todos los proveedores</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+
+          {hasFilters && (
+            <button onClick={clearAll}
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              Limpiar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -128,8 +252,8 @@ export default function SalesPage() {
                         <ShoppingCart size={28} className="text-gray-400" />
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">No hay ventas en este período</p>
-                        <p className="mt-1 text-xs text-gray-400">Ajusta el rango de fechas o registra una nueva venta</p>
+                        <p className="text-sm font-semibold text-gray-700">No hay ventas con estos filtros</p>
+                        <p className="mt-1 text-xs text-gray-400">Ajusta los filtros o registra una nueva venta</p>
                       </div>
                       {canCreate && (
                         <button onClick={() => navigate('/sales/new')}
@@ -197,6 +321,7 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+
       {selectedSaleId && (
         <SaleDetailModal
           saleId={selectedSaleId}
