@@ -55,13 +55,16 @@ export default function ProductFormModal({ product, onClose }) {
   const [brandId,    setBrandId]    = useState(product?.brandId    ?? null)
   const [supplierId, setSupplierId] = useState(product?.supplierId ?? null)
 
-  // Camera
+  // Camera — mirrors ScannerInput logic (BarcodeDetector + ZXing fallback)
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
   const [cameraOpen, setCameraOpen]             = useState(false)
   const videoRef       = useRef(null)
   const streamRef      = useRef(null)
   const detectorRef    = useRef(null)
   const scanTimeoutRef = useRef(null)
+  const sessionRef     = useRef(0)    // increments each openCamera; stale callbacks bail
+  const firedRef       = useRef(false) // fire-once guard per session
+  const isOpeningRef   = useRef(false) // prevent concurrent openCamera (double-tap)
 
   useEffect(() => {
     setHasCameraSupport(!!navigator.mediaDevices?.getUserMedia)
@@ -71,6 +74,7 @@ export default function ProductFormModal({ product, onClose }) {
 
   const stopCamera = () => {
     if (scanTimeoutRef.current) { clearTimeout(scanTimeoutRef.current); scanTimeoutRef.current = null }
+    detectorRef.current?.reset?.()
     detectorRef.current = null
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null }
     if (videoRef.current)  { videoRef.current.srcObject = null }
@@ -78,7 +82,13 @@ export default function ProductFormModal({ product, onClose }) {
   }
 
   const openCamera = async () => {
+    if (isOpeningRef.current) return
+    isOpeningRef.current = true
     try {
+      sessionRef.current++
+      firedRef.current = false
+      const mySession = sessionRef.current
+
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       streamRef.current = stream
       videoRef.current.srcObject = stream
@@ -86,29 +96,43 @@ export default function ProductFormModal({ product, onClose }) {
       setCameraOpen(true)
 
       if (typeof window.BarcodeDetector !== 'undefined') {
+        // ── Path 1: Native BarcodeDetector (Chrome / Edge) ───────────────────
         detectorRef.current = new window.BarcodeDetector({
           formats: ['qr_code', 'code_128', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e'],
         })
-
-        // Recursive setTimeout — only one detect() in flight at a time.
-        // detectorRef being null is the stop signal.
         const scheduleScan = () => {
           scanTimeoutRef.current = setTimeout(async () => {
-            if (!detectorRef.current || !videoRef.current) return
+            if (sessionRef.current !== mySession || !videoRef.current || !detectorRef.current) return
             try {
               const barcodes = await detectorRef.current.detect(videoRef.current)
-              if (barcodes.length > 0) {
+              if (barcodes.length > 0 && sessionRef.current === mySession && !firedRef.current) {
+                firedRef.current = true
+                sessionRef.current++
                 stopCamera()
                 setValue('providerCode', barcodes[0].rawValue)
-                return // do not reschedule
+                return
               }
             } catch { /* frame not ready */ }
-            if (detectorRef.current) scheduleScan() // reschedule only if still active
-          }, 400)
+            if (sessionRef.current === mySession) scheduleScan()
+          }, 300)
         }
         scheduleScan()
+      } else {
+        // ── Path 2: @zxing/browser (Safari, Firefox, all others) ──────────────
+        const { BrowserMultiFormatReader } = await import('@zxing/browser')
+        const reader = new BrowserMultiFormatReader()
+        detectorRef.current = reader
+        reader.decodeFromVideoElement(videoRef.current, (result) => {
+          if (result && sessionRef.current === mySession && !firedRef.current) {
+            firedRef.current = true
+            sessionRef.current++
+            stopCamera()
+            setValue('providerCode', result.getText())
+          }
+        })
       }
-    } catch { /* permission denied */ }
+    } catch { /* permission denied or device unavailable */ }
+    finally { isOpeningRef.current = false }
   }
 
   const {
