@@ -27,7 +27,6 @@ export default function AppLayout({ children }) {
         const items = sale.items?.length ?? 0
 
         if (user?.role === 'OWNER') {
-          // Owner sees every employee sale
           toast.success(`Nueva venta · ${formatCurrency(sale.total)}`, {
             description: `${sale.employeeName} · ${items} producto${items !== 1 ? 's' : ''}`,
             icon: <ShoppingCart size={16} />,
@@ -37,7 +36,6 @@ export default function AppLayout({ children }) {
           queryClient.invalidateQueries({ queryKey: ['reports', 'daily-summary'] })
           queryClient.invalidateQueries({ queryKey: ['reports', 'sales'] })
         } else if (user?.role === 'EMPLOYEE' && sale.employeeId === user?.id) {
-          // Employee sees confirmation of their own sale
           toast.success(`Venta registrada · ${formatCurrency(sale.total)}`, {
             description: `${items} producto${items !== 1 ? 's' : ''} · procesado correctamente`,
             icon: <ShoppingCart size={16} />,
@@ -56,6 +54,12 @@ export default function AppLayout({ children }) {
         })
         queryClient.invalidateQueries({ queryKey: ['products'] })
       }
+
+      // Refresh notification bell ~500ms after WS event so the DB transaction
+      // has time to commit before we query the notifications endpoint
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      }, 500)
     },
   )
 

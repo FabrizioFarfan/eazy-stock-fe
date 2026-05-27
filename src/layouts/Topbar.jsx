@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import NotificationBell from '../components/NotificationBell'
 
 const PAGE_TITLES = {
   '/dashboard':          'Dashboard',
@@ -36,6 +37,7 @@ export default function Topbar({ onMenuClick }) {
 
   const title      = PAGE_TITLES[pathname] ?? 'Eazy Stock'
   const badgeClass = ROLE_BADGE[user?.role] ?? 'bg-gray-100 text-gray-600'
+  const showBell   = user?.role === 'OWNER' || user?.role === 'EMPLOYEE'
 
   return (
     <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 md:px-6">
@@ -60,6 +62,7 @@ export default function Topbar({ onMenuClick }) {
             {ROLE_LABEL[user.role] ?? user.role}
           </span>
         )}
+        {showBell && <NotificationBell />}
       </div>
     </header>
   )
