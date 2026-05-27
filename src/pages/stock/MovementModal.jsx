@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Search, Loader2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
+import { X, Loader2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
 import { useProducts } from '../../hooks/useProducts'
 import { useCreateMovement } from '../../hooks/useStock'
 import { useDebounce } from '../../hooks/useDebounce'
+import ScannerInput from '../../components/ScannerInput'
+import { productsApi } from '../../services/endpoints/products'
 
 const entrySchema = z.object({
   quantity: z.coerce.number().int('Debe ser entero').positive('Debe ser mayor a 0'),
@@ -39,6 +41,8 @@ export default function MovementModal({ type, onClose }) {
   const [search, setSearch]                   = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [showDropdown, setShowDropdown]       = useState(false)
+  const [scanError, setScanError]             = useState(null)
+  const scanLockRef                           = useRef(false)
   const debouncedSearch                       = useDebounce(search, 400)
   const createMovement                        = useCreateMovement()
 
@@ -55,6 +59,21 @@ export default function MovementModal({ type, onClose }) {
     setSelectedProduct(p)
     setSearch(p.name)
     setShowDropdown(false)
+    setScanError(null)
+  }
+
+  const handleScan = async (code) => {
+    if (scanLockRef.current) return
+    scanLockRef.current = true
+    setScanError(null)
+    try {
+      const product = (await productsApi.scanCode(code)).data.data
+      selectProduct(product)
+    } catch {
+      setScanError('Código no encontrado. Búscalo por nombre.')
+    } finally {
+      scanLockRef.current = false
+    }
   }
 
   const onSubmit = async ({ quantity, notes }) => {
@@ -89,20 +108,17 @@ export default function MovementModal({ type, onClose }) {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="space-y-4 px-6 py-5">
-            {/* Product search */}
+            {/* Product search + camera scan */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Producto <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
+                <ScannerInput
                   value={search}
-                  onChange={(e) => { setSearch(e.target.value); setSelectedProduct(null); setShowDropdown(true) }}
-                  onFocus={() => search && setShowDropdown(true)}
+                  onChange={(v) => { setSearch(v); setSelectedProduct(null); setScanError(null); setShowDropdown(true) }}
+                  onScan={handleScan}
                   placeholder="Buscar producto..."
-                  className={`${inputCls} pl-10`}
                 />
                 {showDropdown && debouncedSearch && (
                   <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
@@ -122,6 +138,10 @@ export default function MovementModal({ type, onClose }) {
                   </div>
                 )}
               </div>
+
+              {scanError && (
+                <p className="mt-1.5 text-xs text-red-500">{scanError}</p>
+              )}
 
               {selectedProduct && (
                 <div className="mt-2 flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-2.5">
