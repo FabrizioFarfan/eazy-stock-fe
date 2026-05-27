@@ -2,9 +2,10 @@ import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { UserPlus, X, Loader2, ChevronLeft, ChevronRight, Search, Pencil } from 'lucide-react'
 import { useOwners, useCreateOwner } from '../../hooks/useOwners'
 import { useBusinesses } from '../../hooks/useBusinesses'
+import EditUserModal from '../../components/EditUserModal'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ function avatarColor(name = '') {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 animate-pulse rounded bg-gray-100" />
         </td>
@@ -217,8 +218,9 @@ function CreateOwnerModal({ onClose }) {
 const PAGE_SIZE = 20
 
 export default function OwnersPage() {
-  const [page, setPage]       = useState(0)
+  const [page, setPage]           = useState(0)
   const [showModal, setShowModal] = useState(false)
+  const [editTarget, setEditTarget] = useState(null)
 
   const { data, isLoading, isFetching } = useOwners({
     page,
@@ -255,6 +257,7 @@ export default function OwnersPage() {
                 <th className="px-4 py-3">Negocio</th>
                 <th className="px-4 py-3 text-center">Estado</th>
                 <th className="px-4 py-3">Registrado</th>
+                <th className="px-4 py-3 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -262,7 +265,7 @@ export default function OwnersPage() {
                 Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
               ) : owners.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-16 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="py-16 text-center text-sm text-gray-400">
                     No hay owners registrados
                   </td>
                 </tr>
@@ -292,6 +295,16 @@ export default function OwnersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(u.createdAt)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setEditTarget(u)}
+                        title="Editar usuario"
+                        className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        <Pencil size={12} />
+                        Editar
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -327,6 +340,9 @@ export default function OwnersPage() {
       </div>
 
       {showModal && <CreateOwnerModal onClose={() => setShowModal(false)} />}
+      {editTarget && (
+        <EditUserModal targetUser={editTarget} onClose={() => setEditTarget(null)} />
+      )}
     </div>
   )
 }

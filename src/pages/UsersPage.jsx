@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, Power, Shield } from 'lucide-react'
+import { UserPlus, X, Loader2, Power, Shield, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useUsers, useCreateUser, useToggleUser } from '../hooks/useUsers'
+import EditUserModal from '../components/EditUserModal'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -350,12 +351,14 @@ export default function UsersPage() {
   const [showModal, setShowModal]       = useState(false)
   const [togglingId, setTogglingId]     = useState(null)
   const [permTarget, setPermTarget]     = useState(null)
+  const [editTarget, setEditTarget]     = useState(null)
 
   const { data: usersPage, isLoading } = useUsers()
   const users = usersPage?.content ?? []
   const toggleUser = useToggleUser()
 
-  const isOwner = currentUser?.role === 'OWNER'
+  const isOwner      = currentUser?.role === 'OWNER'
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN'
 
   const handleToggle = async (id) => {
     setTogglingId(id)
@@ -405,10 +408,11 @@ export default function UsersPage() {
                 </tr>
               ) : (
                 users.map((u) => {
-                  const roleCfg    = ROLE_CONFIG[u.role] ?? { label: u.role, cls: 'bg-gray-100 text-gray-600' }
-                  const isSelf     = u.id === currentUser?.id
-                  const isToggling = togglingId === u.id
+                  const roleCfg      = ROLE_CONFIG[u.role] ?? { label: u.role, cls: 'bg-gray-100 text-gray-600' }
+                  const isSelf       = u.id === currentUser?.id
+                  const isToggling   = togglingId === u.id
                   const canEditPerms = isOwner && u.role === 'EMPLOYEE'
+                  const canEdit      = isSuperAdmin || (isOwner && u.role === 'EMPLOYEE')
 
                   return (
                     <tr key={u.id} className="transition-colors hover:bg-gray-50">
@@ -452,6 +456,18 @@ export default function UsersPage() {
                       {/* Actions */}
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
+                          {/* Edit button */}
+                          {canEdit && (
+                            <button
+                              onClick={() => setEditTarget(u)}
+                              title="Editar usuario"
+                              className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                            >
+                              <Pencil size={12} />
+                              Editar
+                            </button>
+                          )}
+
                           {/* Permissions button — only OWNER on EMPLOYEE rows */}
                           {canEditPerms && (
                             <button
@@ -494,6 +510,9 @@ export default function UsersPage() {
       </div>
 
       {showModal && <UserFormModal onClose={() => setShowModal(false)} />}
+      {editTarget && (
+        <EditUserModal targetUser={editTarget} onClose={() => setEditTarget(null)} />
+      )}
       {permTarget && (
         <PermissionsPanel
           targetUser={permTarget}

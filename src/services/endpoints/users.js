@@ -7,6 +7,9 @@ export const usersApi = {
   create: (data) => api.post('/users', data),
   // body: { name, email, password, role, businessId }
 
+  update: (id, data) => api.patch(`/users/${id}`, data),
+  // body: { name?, email?, password? }
+
   toggleActive: (id) => api.put(`/users/${id}/activate`),
 
   changePassword: (data) => api.put('/users/me/password', data),

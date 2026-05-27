@@ -20,6 +20,17 @@ export function useCreateUser() {
   })
 }
 
+export function useUpdateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }) => usersApi.update(id, data).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [USERS_KEY] })
+      qc.invalidateQueries({ queryKey: ['owners'] })
+    },
+  })
+}
+
 export function useToggleUser() {
   const qc = useQueryClient()
   return useMutation({

@@ -28,7 +28,9 @@ api.interceptors.response.use(
     const status = error.response?.status
     const data   = error.response?.data
 
-    if (status === 401 && !originalRequest._retry) {
+    // Never intercept auth/login 401s — wrong credentials should surface to the caller, not trigger a token refresh or redirect
+    const isLoginRequest = originalRequest.url?.includes('/auth/login')
+    if (status === 401 && !originalRequest._retry && !isLoginRequest) {
       const refreshToken = localStorage.getItem('eazystock_refresh_token')
 
       if (!refreshToken) {
