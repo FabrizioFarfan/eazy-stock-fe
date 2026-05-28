@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories'
 import { useDebounce } from '../hooks/useDebounce'
+import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 
 const schema = z.object({
   name:        z.string().min(2, 'Mínimo 2 caracteres'),
@@ -40,7 +41,7 @@ function CategoryModal({ category, onClose }) {
     category?.suggestedAttributes ?? [],
   )
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit ? { name: category.name, description: category.description ?? '' } : {},
   })
@@ -62,7 +63,12 @@ function CategoryModal({ category, onClose }) {
       if (isEdit) await update.mutateAsync({ id: category.id, data: payload })
       else        await create.mutateAsync(payload)
       onClose()
-    } catch (_) {}
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['name', 'description'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
+    }
   }
 
   return (
@@ -130,7 +136,7 @@ function CategoryModal({ category, onClose }) {
 
             {mutation.isError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {mutation.error?.response?.data?.message ?? 'Error al guardar'}
+                {getErrorMessage(mutation.error)}
               </p>
             )}
           </div>
@@ -227,7 +233,7 @@ export default function CategoriesPage() {
   const handleDelete = async (c) => {
     if (!window.confirm(`¿Eliminar "${c.name}"?\nEsto fallará si tiene productos asociados.`)) return
     try { await deleteCategory.mutateAsync(c.id) }
-    catch (err) { alert(err?.response?.data?.message ?? 'Error al eliminar') }
+    catch (err) { alert(getErrorMessage(err)) }
   }
 
   return (

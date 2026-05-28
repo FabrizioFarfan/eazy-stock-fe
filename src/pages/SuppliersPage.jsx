@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/useSuppliers'
 import { useDebounce } from '../hooks/useDebounce'
+import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 
 const schema = z.object({
   name:    z.string().min(2, 'Mínimo 2 caracteres'),
@@ -35,7 +36,7 @@ function SupplierModal({ supplier, onClose }) {
   const update   = useUpdateSupplier()
   const mutation = isEdit ? update : create
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit
       ? { name: supplier.name, ruc: supplier.ruc ?? '', contact: supplier.contact ?? '', phone: supplier.phone ?? '', notes: supplier.notes ?? '' }
@@ -47,7 +48,12 @@ function SupplierModal({ supplier, onClose }) {
       if (isEdit) await update.mutateAsync({ id: supplier.id, data: values })
       else await create.mutateAsync(values)
       onClose()
-    } catch (_) {}
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['name', 'ruc', 'contact', 'phone', 'notes'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
+    }
   }
 
   return (
@@ -85,7 +91,7 @@ function SupplierModal({ supplier, onClose }) {
             </Field>
             {mutation.isError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {mutation.error?.response?.data?.message ?? 'Error al guardar'}
+                {getErrorMessage(mutation.error)}
               </p>
             )}
           </div>
@@ -182,7 +188,7 @@ export default function SuppliersPage() {
   const handleDelete = async (s) => {
     if (!window.confirm(`¿Eliminar "${s.name}"?\nEsto fallará si tiene productos asociados.`)) return
     try { await deleteSupplier.mutateAsync(s.id) }
-    catch (err) { alert(err?.response?.data?.message ?? 'Error al eliminar') }
+    catch (err) { alert(getErrorMessage(err)) }
   }
 
   return (

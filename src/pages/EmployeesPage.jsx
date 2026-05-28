@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useEmployees, useCreateEmployee, useToggleEmployee } from '../hooks/useEmployees'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
+import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -111,7 +112,7 @@ function PermissionsPanel({ targetUser, onClose }) {
           )}
           {patch.isError && (
             <p className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-              {patch.error?.response?.data?.message ?? 'Error al actualizar permisos'}
+              {getErrorMessage(patch.error)}
             </p>
           )}
         </div>
@@ -131,7 +132,7 @@ const schema = z.object({
 
 function CreateEmployeeModal({ businessName, onClose }) {
   const createEmployee = useCreateEmployee()
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, setError, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ firstName, lastName, email, password }) => {
     try {
@@ -140,7 +141,12 @@ function CreateEmployeeModal({ businessName, onClose }) {
       })
       toast.success(`Empleado ${employee.name} creado`)
       onClose()
-    } catch { /* error shown in form */ }
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['email', 'password'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
+    }
   }
 
   return (
@@ -193,7 +199,7 @@ function CreateEmployeeModal({ businessName, onClose }) {
 
             {createEmployee.isError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {createEmployee.error?.response?.data?.message ?? 'Error al crear el empleado'}
+                {getErrorMessage(createEmployee.error)}
               </p>
             )}
           </div>

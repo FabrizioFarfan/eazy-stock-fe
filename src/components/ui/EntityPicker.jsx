@@ -1,12 +1,18 @@
 import { useState } from 'react'
-import { Plus, X, Check, Search, Loader2 } from 'lucide-react'
+import { Plus, X, Check, Search, Loader2, AlertTriangle } from 'lucide-react'
+import { getErrorMessage } from '../../utils/handleApiError'
 
 /**
  * Horizontal scrollable chip picker with inline quick-add form.
- * Parent handles the actual mutation; this component is pure UI.
+ * Parent handles the actual mutation; este componente solo muestra el resultado.
+ *
+ * Errores de la mutación inline: si onCreate rechaza, mostramos el mensaje
+ * dentro del propio sub-form para que el usuario tenga feedback sin que
+ * el modal padre se quede en estado roto.
  */
 export default function EntityPicker({
   label,
+  helperText,
   items = [],
   value,
   onChange,
@@ -14,12 +20,16 @@ export default function EntityPicker({
   extraFields = [],
   placeholder = 'Buscar...',
   createLabel = 'Nuevo',
+  createButtonLabel = 'Crear',
+  newNamePlaceholder = 'Nombre *',
+  warnIfLikely,
   isCreating = false,
 }) {
   const [search, setSearch]     = useState('')
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName]   = useState('')
   const [extra, setExtra]       = useState({})
+  const [createError, setCreateError] = useState(null)
 
   const filtered = items.filter((i) =>
     i.name.toLowerCase().includes(search.toLowerCase()),
@@ -27,17 +37,29 @@ export default function EntityPicker({
 
   const selectedItem = items.find((i) => i.id === value)
 
+  // Warning UX opcional: si la palabra que el usuario escribió huele a un tipo
+  // distinto (ej. nombre de un proveedor cuando estamos creando categoría).
+  const warning = warnIfLikely ? warnIfLikely(newName) : null
+
   const handleCreate = async () => {
     if (!newName.trim()) return
+    setCreateError(null)
     try {
       await onCreate(newName.trim(), extra)
       setNewName('')
       setExtra({})
       setShowForm(false)
       setSearch('')
-    } catch {
-      // Parent already logged
+    } catch (err) {
+      setCreateError(getErrorMessage(err))
     }
+  }
+
+  const cancelForm = () => {
+    setShowForm(false)
+    setNewName('')
+    setExtra({})
+    setCreateError(null)
   }
 
   return (
@@ -56,6 +78,9 @@ export default function EntityPicker({
           </button>
         )}
       </div>
+      {helperText && (
+        <p className="-mt-0.5 text-xs text-gray-400">{helperText}</p>
+      )}
 
       {/* Selected badge */}
       {selectedItem && (
@@ -118,10 +143,16 @@ export default function EntityPicker({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreate())}
-            placeholder="Nombre *"
+            placeholder={newNamePlaceholder}
             autoFocus
             className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
           />
+          {warning && (
+            <div className="flex items-start gap-1.5 rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-700 ring-1 ring-amber-200">
+              <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
+              <span>{warning}</span>
+            </div>
+          )}
           {extraFields.map((f) => (
             <input
               key={f.name}
@@ -132,6 +163,11 @@ export default function EntityPicker({
               className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
             />
           ))}
+          {createError && (
+            <p className="rounded-md bg-red-50 px-2 py-1.5 text-xs text-red-600 ring-1 ring-red-200">
+              {createError}
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               type="button"
@@ -140,11 +176,11 @@ export default function EntityPicker({
               className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isCreating ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-              Crear
+              {createButtonLabel}
             </button>
             <button
               type="button"
-              onClick={() => { setShowForm(false); setNewName(''); setExtra({}) }}
+              onClick={cancelForm}
               className="rounded-md px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100"
             >
               Cancelar

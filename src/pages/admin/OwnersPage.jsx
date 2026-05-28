@@ -6,6 +6,7 @@ import { UserPlus, X, Loader2, ChevronLeft, ChevronRight, Search, Pencil } from 
 import { useOwners, useCreateOwner } from '../../hooks/useOwners'
 import { useBusinesses } from '../../hooks/useBusinesses'
 import EditUserModal from '../../components/EditUserModal'
+import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ function CreateOwnerModal({ onClose }) {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) })
 
@@ -87,8 +89,11 @@ function CreateOwnerModal({ onClose }) {
         businessId,
       })
       onClose()
-    } catch {
-      // error shown via createOwner.isError
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['email', 'password', 'businessId'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
     }
   }
 
@@ -185,7 +190,7 @@ function CreateOwnerModal({ onClose }) {
 
             {createOwner.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {createOwner.error?.response?.data?.message ?? 'Error al crear el owner'}
+                {getErrorMessage(createOwner.error)}
               </p>
             )}
           </div>

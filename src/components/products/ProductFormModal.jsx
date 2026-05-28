@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, Loader2, Camera, CameraOff, Plus, FolderOpen } from 'lucide-react'
@@ -9,6 +9,8 @@ import { useBrands, useCreateBrand } from '../../hooks/useBrands'
 import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
+import MoneyInput from '../ui/MoneyInput'
+import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 const schema = z.object({
   name:          z.string().min(2, 'Mínimo 2 caracteres'),
@@ -34,6 +36,30 @@ function Field({ label, required, error, children }) {
 
 const inputCls =
   'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
+
+// Devuelve una función para detectar si el nombre que el usuario está escribiendo
+// como "nueva categoría" coincide con un proveedor o marca ya cargado — caso
+// real que vimos con un cliente que escribió el nombre de un proveedor en el
+// campo "nueva categoría".
+function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
+  return (raw) => {
+    const name = (raw || '').trim()
+    if (name.length === 0) return null
+    if (name.length > 30) {
+      return '¿Seguro? El nombre es muy largo para una categoría (>30 caracteres).'
+    }
+    const lower = name.toLowerCase()
+    const supplierHit = suppliers.find((s) => s.name.toLowerCase() === lower)
+    if (supplierHit) {
+      return `"${supplierHit.name}" ya existe como proveedor. ¿Querías seleccionarlo como proveedor en vez de crear una categoría?`
+    }
+    const brandHit = brands.find((b) => b.name.toLowerCase() === lower)
+    if (brandHit) {
+      return `"${brandHit.name}" ya existe como marca. ¿Querías seleccionarla como marca en vez de crear una categoría?`
+    }
+    return null
+  }
+}
 
 export default function ProductFormModal({ product, onClose }) {
   const isEdit = !!product
@@ -150,9 +176,11 @@ export default function ProductFormModal({ product, onClose }) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -202,6 +230,8 @@ export default function ProductFormModal({ product, onClose }) {
   }
 
   const handleCreateCategory = async (name) => {
+    // Si createCategory falla, la excepción se propaga al EntityPicker que
+    // muestra el mensaje sin romper el estado del modal padre.
     const newCategory = await createCategory.mutateAsync({ name })
     setCategoryId(newCategory.id)
   }
@@ -258,7 +288,12 @@ export default function ProductFormModal({ product, onClose }) {
       }
       onClose()
     } catch (err) {
-      console.error(err)
+      const field = getErrorField(err)
+      const known = ['name', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
+      if (field && known.includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
+      // Banner global queda en `mutation.isError` con `getErrorMessage(mutation.error)`.
     }
   }
 
@@ -323,13 +358,17 @@ export default function ProductFormModal({ product, onClose }) {
 
             {/* Category picker */}
             <EntityPicker
-              label="Categoría"
+              label="Categoría del producto"
+              helperText="Ej: Clavos, Tornillos, Cemento, Pinturas"
               items={categories}
               value={categoryId}
               onChange={setCategoryId}
               onCreate={handleCreateCategory}
               placeholder="Buscar categoría..."
               createLabel="Nueva categoría"
+              createButtonLabel="Crear categoría"
+              newNamePlaceholder="Nombre de la nueva categoría (ej: Líquidos, Pinturas)"
+              warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands)}
               isCreating={createCategory.isPending}
             />
 
@@ -451,13 +490,40 @@ export default function ProductFormModal({ product, onClose }) {
               </div>
             </div>
 
-            {/* Precios + Stock mínimo */}
+            {/* Precios + Stock mínimo
+                Los precios usan MoneyInput: el usuario tipea sólo dígitos
+                (ej. "1150") y el masking lo muestra como "11.50". El stock
+                es entero, va con <input type="number"> normal. */}
             <div className="grid grid-cols-3 gap-3">
               <Field label="P. compra" required error={errors.purchasePrice?.message}>
-                <input {...register('purchasePrice')} type="number" step="0.01" min="0" placeholder="0.00" className={inputCls} />
+                <Controller
+                  control={control}
+                  name="purchasePrice"
+                  render={({ field }) => (
+                    <MoneyInput
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={inputCls}
+                    />
+                  )}
+                />
               </Field>
               <Field label="P. venta" required error={errors.salePrice?.message}>
-                <input {...register('salePrice')} type="number" step="0.01" min="0" placeholder="0.00" className={inputCls} />
+                <Controller
+                  control={control}
+                  name="salePrice"
+                  render={({ field }) => (
+                    <MoneyInput
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={inputCls}
+                    />
+                  )}
+                />
               </Field>
               <Field label="Stock mín." required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step="1" min="0" placeholder="0" className={inputCls} />
@@ -466,7 +532,7 @@ export default function ProductFormModal({ product, onClose }) {
 
             {mutation.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {mutation.error?.response?.data?.message ?? 'Error al guardar el producto'}
+                {getErrorMessage(mutation.error)}
               </p>
             )}
           </div>

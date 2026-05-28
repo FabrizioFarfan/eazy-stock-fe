@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useBrands, useCreateBrand, useUpdateBrand, useDeleteBrand } from '../hooks/useBrands'
 import { useDebounce } from '../hooks/useDebounce'
+import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 
 const schema = z.object({
   name:  z.string().min(2, 'Mínimo 2 caracteres'),
@@ -36,7 +37,7 @@ function BrandModal({ brand, onClose }) {
   const update   = useUpdateBrand()
   const mutation = isEdit ? update : create
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit ? { name: brand.name, notes: brand.notes ?? '' } : {},
   })
@@ -46,7 +47,12 @@ function BrandModal({ brand, onClose }) {
       if (isEdit) await update.mutateAsync({ id: brand.id, data: values })
       else await create.mutateAsync(values)
       onClose()
-    } catch (_) {}
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['name', 'notes'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
+    }
   }
 
   return (
@@ -76,7 +82,7 @@ function BrandModal({ brand, onClose }) {
             </div>
             {mutation.isError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {mutation.error?.response?.data?.message ?? 'Error al guardar'}
+                {getErrorMessage(mutation.error)}
               </p>
             )}
           </div>
@@ -145,7 +151,7 @@ export default function BrandsPage() {
   const handleDelete = async (b) => {
     if (!window.confirm(`¿Eliminar "${b.name}"?\nEsto fallará si tiene productos asociados.`)) return
     try { await deleteBrand.mutateAsync(b.id) }
-    catch (err) { alert(err?.response?.data?.message ?? 'Error al eliminar') }
+    catch (err) { alert(getErrorMessage(err)) }
   }
 
   return (

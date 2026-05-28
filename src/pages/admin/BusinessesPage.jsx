@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, X, Loader2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useUpdateBusiness } from '../../hooks/useBusinesses'
+import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ function BusinessFormModal({ business, onClose }) {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -88,8 +90,11 @@ function BusinessFormModal({ business, onClose }) {
         await createBiz.mutateAsync(values)
       }
       onClose()
-    } catch {
-      // error shown via mutation.isError
+    } catch (err) {
+      const field = getErrorField(err)
+      if (field && ['name', 'taxId', 'taxIdType', 'countryCode'].includes(field)) {
+        setError(field, { type: 'server', message: getErrorMessage(err) })
+      }
     }
   }
 
@@ -176,7 +181,7 @@ function BusinessFormModal({ business, onClose }) {
 
             {mutation.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {mutation.error?.response?.data?.message ?? 'Error al guardar el negocio'}
+                {getErrorMessage(mutation.error)}
               </p>
             )}
           </div>
