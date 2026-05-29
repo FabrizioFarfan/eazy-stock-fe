@@ -1,4 +1,4 @@
-import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, ChevronRight } from 'lucide-react'
+import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -215,7 +215,7 @@ export default function SettingsPage() {
       <Section title="Ayuda">
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-tutorial'))}
-          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors border-b border-gray-50"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
             <BookOpen size={15} className="text-blue-600" />
@@ -223,6 +223,19 @@ export default function SettingsPage() {
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">Ver tutorial</p>
             <p className="text-xs text-gray-400">Repasa las funciones principales de la app</p>
+          </div>
+          <ChevronRight size={16} className="text-gray-400" />
+        </button>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))}
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50">
+            <Package size={15} className="text-violet-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">Cómo agregar un producto</p>
+            <p className="text-xs text-gray-400">Marca, proveedor, categoría, atributos y precios paso a paso</p>
           </div>
           <ChevronRight size={16} className="text-gray-400" />
         </button>

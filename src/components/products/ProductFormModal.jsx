@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, FolderOpen } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle } from 'lucide-react'
 import { useCreateProduct, useUpdateProduct } from '../../hooks/useProducts'
 import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useBrands, useCreateBrand } from '../../hooks/useBrands'
@@ -10,6 +10,7 @@ import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
 import MoneyInput from '../ui/MoneyInput'
+import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 const schema = z.object({
@@ -61,6 +62,8 @@ function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
   }
 }
 
+const PRODUCT_TUTORIAL_KEY = (userKey) => `eazystock_product_tutorial_seen_${userKey}`
+
 export default function ProductFormModal({ product, onClose }) {
   const isEdit = !!product
   const { user } = useAuth()
@@ -68,6 +71,27 @@ export default function ProductFormModal({ product, onClose }) {
   const update   = useUpdateProduct()
   const mutation = isEdit ? update : create
   const isBusy   = mutation.isPending
+
+  // Tutorial específico de "agregar producto".
+  // Solo auto-aparece la primera vez que se ABRE el modal en modo CREATE
+  // (en edit el usuario ya conoce el formulario, no lo molestamos).
+  const tutorialKey = user ? PRODUCT_TUTORIAL_KEY(user.id ?? user.email) : null
+  const [showTutorial, setShowTutorial] = useState(() => {
+    if (isEdit || !tutorialKey) return false
+    return !localStorage.getItem(tutorialKey)
+  })
+
+  // Listener para abrir desde Ajustes (CustomEvent dispatched from SettingsPage).
+  useEffect(() => {
+    const handler = () => setShowTutorial(true)
+    window.addEventListener('eazystock:show-product-tutorial', handler)
+    return () => window.removeEventListener('eazystock:show-product-tutorial', handler)
+  }, [])
+
+  const closeTutorial = () => {
+    if (tutorialKey) localStorage.setItem(tutorialKey, '1')
+    setShowTutorial(false)
+  }
 
   // Suppliers, brands, categories
   const { data: suppliersData } = useSuppliers({ size: 200 })
@@ -306,12 +330,22 @@ export default function ProductFormModal({ product, onClose }) {
           <h3 className="text-base font-semibold text-gray-900">
             {isEdit ? 'Editar producto' : 'Nuevo producto'}
           </h3>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowTutorial(true)}
+              title="Ver tutorial: cómo agregar un producto"
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+            >
+              <HelpCircle size={18} />
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Body — scrollable */}
@@ -557,6 +591,8 @@ export default function ProductFormModal({ product, onClose }) {
           </div>
         </form>
       </div>
+
+      {showTutorial && <ProductFormTutorial onClose={closeTutorial} />}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { ShoppingCart, Package } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import TutorialModal from '../components/tutorial/TutorialModal'
+import ProductFormTutorial from '../components/tutorial/ProductFormTutorial'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
 
@@ -15,8 +16,9 @@ function formatCurrency(v) {
 export default function AppLayout({ children }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [sidebarOpen,  setSidebarOpen]  = useState(false)
-  const [showTutorial, setShowTutorial] = useState(false)
+  const [sidebarOpen,    setSidebarOpen]    = useState(false)
+  const [showTutorial,   setShowTutorial]   = useState(false)
+  const [showProductTut, setShowProductTut] = useState(false)
 
   // Both OWNER and EMPLOYEE subscribe to real-time business events
   useBusinessSocket(
@@ -80,6 +82,16 @@ export default function AppLayout({ children }) {
     return () => window.removeEventListener('eazystock:show-tutorial', handler)
   }, [])
 
+  // Tutorial específico de "Cómo agregar un producto". El ProductFormModal
+  // también lo monta para auto-mostrarlo la primera vez, pero acá lo
+  // ofrecemos como overlay global para que se pueda abrir desde Ajustes
+  // sin tener que abrir antes el modal de producto.
+  useEffect(() => {
+    const handler = () => setShowProductTut(true)
+    window.addEventListener('eazystock:show-product-tutorial', handler)
+    return () => window.removeEventListener('eazystock:show-product-tutorial', handler)
+  }, [])
+
   const closeTutorial = () => {
     if (tutorialKey) localStorage.setItem(tutorialKey, '1')
     setShowTutorial(false)
@@ -94,7 +106,8 @@ export default function AppLayout({ children }) {
           {children}
         </main>
       </div>
-      {showTutorial && <TutorialModal onClose={closeTutorial} />}
+      {showTutorial   && <TutorialModal       onClose={closeTutorial} />}
+      {showProductTut && <ProductFormTutorial onClose={() => setShowProductTut(false)} />}
     </div>
   )
 }
