@@ -67,7 +67,7 @@ export default function AppLayout({ children }) {
   )
 
   const tutorialKey        = user ? `eazystock_tutorial_seen_${user.id ?? user.email}`         : null
-  const productTutorialKey = user ? `eazystock_product_tutorial_seen_${user.id ?? user.email}` : null
+  const productTutorialKey = user ? `eazystock_product_tutorial_seen_v2_${user.id ?? user.email}` : null
 
   // Show on first visit
   useEffect(() => {

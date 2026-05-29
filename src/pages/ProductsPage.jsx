@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye } from 'lucide-react'
+import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
@@ -56,15 +56,19 @@ export default function ProductsPage() {
   const { user }    = useAuth()
   const isManager   = canMutate(user)
 
-  // La primera vez que un usuario gestor abre Productos disparamos el
-  // tutorial específico del modal. AppLayout escucha el evento global y
-  // persiste el "visto" en localStorage al cerrarlo.
+  // La primera vez que un usuario gestor entra a /productos disparamos el
+  // tutorial del modal. AppLayout escucha el evento y persiste el "visto"
+  // en localStorage al cerrar. La key lleva sufijo _v2 a propósito para
+  // ignorar flags de versiones previas donde el trigger estaba dentro del
+  // modal y podía haber quedado pegado.
   useEffect(() => {
     if (!isManager || !user) return
-    const key = `eazystock_product_tutorial_seen_${user.id ?? user.email}`
-    if (!localStorage.getItem(key)) {
-      window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))
-    }
+    const key = `eazystock_product_tutorial_seen_v2_${user.id ?? user.email}`
+    try {
+      if (!localStorage.getItem(key)) {
+        window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))
+      }
+    } catch { /* localStorage bloqueado (modo incógnito) — al menos no rompemos la página */ }
   }, [isManager, user])
 
   const [search, setSearch]             = useState('')
@@ -118,13 +122,23 @@ export default function ProductsPage() {
           )}
         </div>
         {isManager && (
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
-          >
-            <Plus size={15} />
-            Nuevo producto
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))}
+              title="Ver tutorial: cómo agregar un producto"
+              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+            >
+              <HelpCircle size={14} />
+              Tutorial
+            </button>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
+            >
+              <Plus size={15} />
+              Nuevo producto
+            </button>
+          </div>
         )}
       </div>
 
