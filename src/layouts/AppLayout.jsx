@@ -66,7 +66,8 @@ export default function AppLayout({ children }) {
     },
   )
 
-  const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
+  const tutorialKey        = user ? `eazystock_tutorial_seen_${user.id ?? user.email}`         : null
+  const productTutorialKey = user ? `eazystock_product_tutorial_seen_${user.id ?? user.email}` : null
 
   // Show on first visit
   useEffect(() => {
@@ -97,6 +98,11 @@ export default function AppLayout({ children }) {
     setShowTutorial(false)
   }
 
+  const closeProductTutorial = () => {
+    if (productTutorialKey) localStorage.setItem(productTutorialKey, '1')
+    setShowProductTut(false)
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -107,7 +113,7 @@ export default function AppLayout({ children }) {
         </main>
       </div>
       {showTutorial   && <TutorialModal       onClose={closeTutorial} />}
-      {showProductTut && <ProductFormTutorial onClose={() => setShowProductTut(false)} />}
+      {showProductTut && <ProductFormTutorial onClose={closeProductTutorial} />}
     </div>
   )
 }

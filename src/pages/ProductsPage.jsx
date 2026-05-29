@@ -56,6 +56,17 @@ export default function ProductsPage() {
   const { user }    = useAuth()
   const isManager   = canMutate(user)
 
+  // La primera vez que un usuario gestor abre Productos disparamos el
+  // tutorial específico del modal. AppLayout escucha el evento global y
+  // persiste el "visto" en localStorage al cerrarlo.
+  useEffect(() => {
+    if (!isManager || !user) return
+    const key = `eazystock_product_tutorial_seen_${user.id ?? user.email}`
+    if (!localStorage.getItem(key)) {
+      window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))
+    }
+  }, [isManager, user])
+
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
