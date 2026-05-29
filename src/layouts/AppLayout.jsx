@@ -5,7 +5,6 @@ import { ShoppingCart, Package } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import TutorialModal from '../components/tutorial/TutorialModal'
-import ProductFormTutorial from '../components/tutorial/ProductFormTutorial'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
 
@@ -18,7 +17,6 @@ export default function AppLayout({ children }) {
   const queryClient = useQueryClient()
   const [sidebarOpen,    setSidebarOpen]    = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false)
-  const [showProductTut, setShowProductTut] = useState(false)
 
   // Both OWNER and EMPLOYEE subscribe to real-time business events
   useBusinessSocket(
@@ -66,8 +64,7 @@ export default function AppLayout({ children }) {
     },
   )
 
-  const tutorialKey        = user ? `eazystock_tutorial_seen_${user.id ?? user.email}`         : null
-  const productTutorialKey = user ? `eazystock_product_tutorial_seen_v2_${user.id ?? user.email}` : null
+  const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
 
   // Show on first visit
   useEffect(() => {
@@ -83,24 +80,9 @@ export default function AppLayout({ children }) {
     return () => window.removeEventListener('eazystock:show-tutorial', handler)
   }, [])
 
-  // Tutorial específico de "Cómo agregar un producto". El ProductFormModal
-  // también lo monta para auto-mostrarlo la primera vez, pero acá lo
-  // ofrecemos como overlay global para que se pueda abrir desde Ajustes
-  // sin tener que abrir antes el modal de producto.
-  useEffect(() => {
-    const handler = () => setShowProductTut(true)
-    window.addEventListener('eazystock:show-product-tutorial', handler)
-    return () => window.removeEventListener('eazystock:show-product-tutorial', handler)
-  }, [])
-
   const closeTutorial = () => {
     if (tutorialKey) localStorage.setItem(tutorialKey, '1')
     setShowTutorial(false)
-  }
-
-  const closeProductTutorial = () => {
-    if (productTutorialKey) localStorage.setItem(productTutorialKey, '1')
-    setShowProductTut(false)
   }
 
   return (
@@ -112,8 +94,7 @@ export default function AppLayout({ children }) {
           {children}
         </main>
       </div>
-      {showTutorial   && <TutorialModal       onClose={closeTutorial} />}
-      {showProductTut && <ProductFormTutorial onClose={closeProductTutorial} />}
+      {showTutorial && <TutorialModal onClose={closeTutorial} />}
     </div>
   )
 }

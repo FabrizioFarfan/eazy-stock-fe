@@ -56,20 +56,49 @@ export default function ProductsPage() {
   const { user }    = useAuth()
   const isManager   = canMutate(user)
 
-  // La primera vez que un usuario gestor entra a /productos disparamos el
-  // tutorial del modal. AppLayout escucha el evento y persiste el "visto"
-  // en localStorage al cerrar. La key lleva sufijo _v2 a propósito para
-  // ignorar flags de versiones previas donde el trigger estaba dentro del
-  // modal y podía haber quedado pegado.
+  // Tutorial interactivo del modal "Nuevo producto".
+  //
+  // Disparadores:
+  //  - Primera visita a /productos (flag _v3 en localStorage)
+  //  - Bandera sessionStorage seteada desde Ajustes
+  //  - Evento `eazystock:show-product-tutorial` (botón "Tutorial" en header)
+  //
+  // En todos los casos: abrimos el modal en modo CREATE con tutorial=true.
+  // El modal monta el overlay interactivo (spotlight + cartelito).
+  // Persistimos el "visto" en localStorage solo cuando el modal se cierra
+  // tras un disparo automático de primera visita.
+  const FIRST_VISIT_KEY = user ? `eazystock_product_tutorial_seen_v3_${user.id ?? user.email}` : null
+  const SESSION_FLAG    = 'eazystock_product_tutorial_pending'
+
   useEffect(() => {
     if (!isManager || !user) return
-    const key = `eazystock_product_tutorial_seen_v2_${user.id ?? user.email}`
+
+    // Trigger desde Ajustes: bandera de sesión
     try {
-      if (!localStorage.getItem(key)) {
-        window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))
+      if (sessionStorage.getItem(SESSION_FLAG) === '1') {
+        sessionStorage.removeItem(SESSION_FLAG)
+        openCreateWithTour()
+        return
       }
-    } catch { /* localStorage bloqueado (modo incógnito) — al menos no rompemos la página */ }
+    } catch { /* sessionStorage bloqueado */ }
+
+    // Auto-show de primera visita
+    try {
+      if (FIRST_VISIT_KEY && !localStorage.getItem(FIRST_VISIT_KEY)) {
+        openCreateWithTour()
+        if (FIRST_VISIT_KEY) localStorage.setItem(FIRST_VISIT_KEY, '1')
+      }
+    } catch { /* localStorage bloqueado */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isManager, user])
+
+  // Listener para el botón "Tutorial" en el header (y para cualquier otro
+  // lugar que dispare el evento mientras estamos en /productos).
+  useEffect(() => {
+    const handler = () => openCreateWithTour()
+    window.addEventListener('eazystock:show-product-tutorial', handler)
+    return () => window.removeEventListener('eazystock:show-product-tutorial', handler)
+  }, [])
 
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
@@ -79,7 +108,7 @@ export default function ProductsPage() {
 
   useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter])
 
-  const [formModal,   setFormModal]   = useState({ open: false, product: null })
+  const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
   const [detailModal, setDetailModal] = useState(null)
 
@@ -100,9 +129,10 @@ export default function ProductsPage() {
   const from          = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const to            = Math.min((page + 1) * PAGE_SIZE, totalElements)
 
-  const openCreate = () => setFormModal({ open: true, product: null })
-  const openEdit   = (p) => setFormModal({ open: true, product: p })
-  const closeForm  = () => setFormModal({ open: false, product: null })
+  const openCreate         = () => setFormModal({ open: true, product: null, tutorial: false })
+  const openCreateWithTour = () => setFormModal({ open: true, product: null, tutorial: true  })
+  const openEdit           = (p) => setFormModal({ open: true, product: p,   tutorial: false })
+  const closeForm          = () => setFormModal({ open: false, product: null, tutorial: false })
 
   const handleDeactivate = useCallback((p) => {
     if (!window.confirm(`¿Desactivar "${p.name}"?`)) return
@@ -283,7 +313,13 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {formModal.open && <ProductFormModal product={formModal.product} onClose={closeForm} />}
+      {formModal.open && (
+        <ProductFormModal
+          product={formModal.product}
+          autoTutorial={formModal.tutorial}
+          onClose={closeForm}
+        />
+      )}
       {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}
       {detailModal && <ProductDetailModal product={detailModal} onClose={() => setDetailModal(null)} />}
     </div>

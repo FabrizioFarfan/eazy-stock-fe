@@ -1,4 +1,5 @@
 import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -132,6 +133,15 @@ export default function SettingsPage() {
   const { user, logout, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
   const [loggingOutAll, setLoggingOutAll] = useState(false)
+  const navigate = useNavigate()
+
+  // Lanzar el tutorial del modal de producto: seteamos bandera en
+  // sessionStorage y navegamos a /productos. ProductsPage la lee al
+  // montarse y abre el modal en modo tutorial.
+  const openProductTutorial = () => {
+    try { sessionStorage.setItem('eazystock_product_tutorial_pending', '1') } catch {}
+    navigate('/products')
+  }
 
   const handleLogoutAll = async () => {
     if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return
@@ -227,7 +237,7 @@ export default function SettingsPage() {
           <ChevronRight size={16} className="text-gray-400" />
         </button>
         <button
-          onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))}
+          onClick={openProductTutorial}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50">
@@ -235,7 +245,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">Cómo agregar un producto</p>
-            <p className="text-xs text-gray-400">Marca, proveedor, categoría, atributos y precios paso a paso</p>
+            <p className="text-xs text-gray-400">Tutorial interactivo paso a paso sobre el formulario</p>
           </div>
           <ChevronRight size={16} className="text-gray-400" />
         </button>

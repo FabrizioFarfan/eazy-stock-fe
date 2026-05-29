@@ -10,6 +10,7 @@ import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
 import MoneyInput from '../ui/MoneyInput'
+import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 const schema = z.object({
@@ -61,13 +62,18 @@ function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
   }
 }
 
-export default function ProductFormModal({ product, onClose }) {
+export default function ProductFormModal({ product, onClose, autoTutorial = false }) {
   const isEdit = !!product
   const { user } = useAuth()
   const create   = useCreateProduct()
   const update   = useUpdateProduct()
   const mutation = isEdit ? update : create
   const isBusy   = mutation.isPending
+
+  // Tutorial interactivo encima del modal. Se enciende cuando lo abre la
+  // página (auto-show de primera visita, botón "Tutorial" o trigger desde
+  // Ajustes) y también via el botón "?" del header.
+  const [showTutorial, setShowTutorial] = useState(autoTutorial && !isEdit)
 
   // Suppliers, brands, categories
   const { data: suppliersData } = useSuppliers({ size: 200 })
@@ -309,7 +315,7 @@ export default function ProductFormModal({ product, onClose }) {
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))}
+              onClick={() => setShowTutorial(true)}
               title="Ver tutorial: cómo agregar un producto"
               className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
             >
@@ -329,7 +335,7 @@ export default function ProductFormModal({ product, onClose }) {
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
 
             {/* Nombre + Unidad */}
-            <div className="grid grid-cols-2 gap-3">
+            <div data-tutorial-target="name-unit" className="grid grid-cols-2 gap-3">
               <Field label="Nombre" required error={errors.name?.message}>
                 <input {...register('name')} placeholder="Ej. Aceite 5W30" className={inputCls} />
               </Field>
@@ -339,48 +345,54 @@ export default function ProductFormModal({ product, onClose }) {
             </div>
 
             {/* Brand picker */}
-            <EntityPicker
-              label="Marca"
-              items={brands}
-              value={brandId}
-              onChange={setBrandId}
-              onCreate={handleCreateBrand}
-              placeholder="Buscar marca..."
-              createLabel="Nueva marca"
-              isCreating={createBrand.isPending}
-            />
+            <div data-tutorial-target="brand-picker">
+              <EntityPicker
+                label="Marca"
+                items={brands}
+                value={brandId}
+                onChange={setBrandId}
+                onCreate={handleCreateBrand}
+                placeholder="Buscar marca..."
+                createLabel="Nueva marca"
+                isCreating={createBrand.isPending}
+              />
+            </div>
 
             {/* Supplier picker */}
-            <EntityPicker
-              label="Proveedor"
-              items={suppliers}
-              value={supplierId}
-              onChange={setSupplierId}
-              onCreate={handleCreateSupplier}
-              extraFields={[
-                { name: 'contact', placeholder: 'Contacto (opcional)' },
-                { name: 'phone',   placeholder: 'Teléfono (opcional)'  },
-              ]}
-              placeholder="Buscar proveedor..."
-              createLabel="Nuevo proveedor"
-              isCreating={createSupplier.isPending}
-            />
+            <div data-tutorial-target="supplier-picker">
+              <EntityPicker
+                label="Proveedor"
+                items={suppliers}
+                value={supplierId}
+                onChange={setSupplierId}
+                onCreate={handleCreateSupplier}
+                extraFields={[
+                  { name: 'contact', placeholder: 'Contacto (opcional)' },
+                  { name: 'phone',   placeholder: 'Teléfono (opcional)'  },
+                ]}
+                placeholder="Buscar proveedor..."
+                createLabel="Nuevo proveedor"
+                isCreating={createSupplier.isPending}
+              />
+            </div>
 
             {/* Category picker */}
-            <EntityPicker
-              label="Categoría del producto"
-              helperText="Ej: Clavos, Tornillos, Cemento, Pinturas"
-              items={categories}
-              value={categoryId}
-              onChange={setCategoryId}
-              onCreate={handleCreateCategory}
-              placeholder="Buscar categoría..."
-              createLabel="Nueva categoría"
-              createButtonLabel="Crear categoría"
-              newNamePlaceholder="Nombre de la nueva categoría (ej: Líquidos, Pinturas)"
-              warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands)}
-              isCreating={createCategory.isPending}
-            />
+            <div data-tutorial-target="category-picker">
+              <EntityPicker
+                label="Categoría del producto"
+                helperText="Ej: Clavos, Tornillos, Cemento, Pinturas"
+                items={categories}
+                value={categoryId}
+                onChange={setCategoryId}
+                onCreate={handleCreateCategory}
+                placeholder="Buscar categoría..."
+                createLabel="Nueva categoría"
+                createButtonLabel="Crear categoría"
+                newNamePlaceholder="Nombre de la nueva categoría (ej: Líquidos, Pinturas)"
+                warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands)}
+                isCreating={createCategory.isPending}
+              />
+            </div>
 
             {/* Código proveedor */}
             <Field label="Código proveedor" error={errors.providerCode?.message}>
@@ -428,7 +440,7 @@ export default function ProductFormModal({ product, onClose }) {
             </Field>
 
             {/* Atributos */}
-            <div className="flex flex-col gap-2">
+            <div data-tutorial-target="attributes" className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-700">Atributos</label>
 
               {/* Suggested attribute chips */}
@@ -504,7 +516,7 @@ export default function ProductFormModal({ product, onClose }) {
                 Los precios usan MoneyInput: el usuario tipea sólo dígitos
                 (ej. "1150") y el masking lo muestra como "11.50". El stock
                 es entero, va con <input type="number"> normal. */}
-            <div className="grid grid-cols-3 gap-3">
+            <div data-tutorial-target="prices" className="grid grid-cols-3 gap-3">
               <Field label="P. compra" required error={errors.purchasePrice?.message}>
                 <Controller
                   control={control}
@@ -559,6 +571,7 @@ export default function ProductFormModal({ product, onClose }) {
             <button
               type="submit"
               disabled={isBusy}
+              data-tutorial-target="save-button"
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isBusy && <Loader2 size={14} className="animate-spin" />}
@@ -567,6 +580,8 @@ export default function ProductFormModal({ product, onClose }) {
           </div>
         </form>
       </div>
+
+      {showTutorial && <ProductFormTutorial onClose={() => setShowTutorial(false)} />}
     </div>
   )
 }
