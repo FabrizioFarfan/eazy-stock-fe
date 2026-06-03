@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X, Tag } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
@@ -283,7 +283,24 @@ export default function SalesPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right font-bold text-gray-900">
-                      {formatCurrency(sale.total)}
+                      <div className="flex items-center justify-end gap-2">
+                        {sale.discountAmount > 0 && (
+                          <span
+                            title={
+                              sale.discountType === 'PERCENTAGE'
+                                ? `Descuento: ${sale.discountValue}% (−${formatCurrency(sale.discountAmount)})`
+                                : `Descuento: −${formatCurrency(sale.discountAmount)}`
+                            }
+                            className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700"
+                          >
+                            <Tag size={9} />
+                            {sale.discountType === 'PERCENTAGE'
+                              ? `-${sale.discountValue}%`
+                              : `-${formatCurrency(sale.discountAmount)}`}
+                          </span>
+                        )}
+                        <span>{formatCurrency(sale.total)}</span>
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <button
