@@ -1,11 +1,7 @@
 import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, Hash, QrCode, Tag, Truck, FolderOpen, AlertTriangle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
-
-function formatCurrency(value) {
-  if (value == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
-}
+import { formatPrice } from '../../utils/formatMoney'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -130,8 +126,8 @@ export default function ProductDetailModal({ product, onClose }) {
                 </div>
               )}
             </div>
-            <Row label="P. compra" value={formatCurrency(product.purchasePrice)} />
-            <Row label="P. venta"  value={formatCurrency(product.salePrice)} />
+            <Row label="P. compra" value={formatPrice(product.purchasePrice)} />
+            <Row label="P. venta"  value={formatPrice(product.salePrice)} />
             <Row label="Margen"    value={
               product.purchasePrice && product.salePrice
                 ? `${(((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)}%`

@@ -1,10 +1,11 @@
 import { X, Tag } from 'lucide-react'
 import { useSaleDetail } from '../../hooks/useReports'
+import { formatPrice } from '../../utils/formatMoney'
 
-function formatCurrency(v) {
-  if (v == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
-}
+// Per-line prices may carry up to 6 decimals (extended price precision);
+// aggregates (subtotal/discount/total) are always 2-decimal from the BE.
+// formatPrice adapts to whatever the value actually carries.
+const formatCurrency = formatPrice
 
 function formatDateFull(str) {
   if (!str) return '—'

@@ -8,15 +8,17 @@ import { useCreateSale } from '../hooks/useSales'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
+import PriceInput from '../components/inputs/PriceInput'
+import { formatPrice } from '../utils/formatMoney'
 
-function formatCurrency(value) {
-  if (value == null || Number.isNaN(value)) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
-}
+// Aggregate amounts (sale totals, discount totals) come back rounded to 2
+// decimals from the BE — `formatPrice` falls through to the same formatting.
+const formatCurrency = formatPrice
 
 // Parse a user-entered numeric string into a number, treating empty/invalid as 0.
 function parseNumber(s) {
   if (s == null || s === '') return 0
+  if (typeof s === 'number') return Number.isFinite(s) ? s : 0
   const n = parseFloat(String(s).replace(',', '.'))
   return Number.isFinite(n) ? n : 0
 }
@@ -84,7 +86,7 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
   const { product, quantity, unitPrice } = item
   const numericPrice = parseNumber(unitPrice)
   const subtotal     = quantity * numericPrice
-  const isModified   = Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0001
+  const isModified   = Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0000005
 
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -109,35 +111,25 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-400">S/</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
-            value={unitPrice}
-            disabled={!canApplyDiscount}
-            title={canApplyDiscount ? 'Editar precio de esta línea' : 'Tu administrador no te ha autorizado a modificar precios'}
-            onChange={(e) => onPriceChange(product.id, e.target.value)}
-            className={`w-20 rounded-lg border px-2 py-1 text-right text-sm font-semibold outline-none transition-colors ${
-              isModified
-                ? 'border-orange-300 bg-orange-50 text-orange-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
-                : 'border-gray-200 bg-white text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-            } ${!canApplyDiscount ? 'cursor-not-allowed opacity-70' : ''}`}
-          />
-        </div>
+        <p className="text-sm font-bold text-gray-900">{formatPrice(subtotal)}</p>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
-        {isModified ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+      <div className="mt-2">
+        <PriceInput
+          value={numericPrice}
+          onChange={(v) => onPriceChange(product.id, v)}
+          disabled={!canApplyDiscount}
+          maxDecimals={6}
+        />
+        {!canApplyDiscount ? (
+          <p className="mt-1 text-[10px] text-gray-400">
+            Tu administrador no te ha autorizado a modificar precios
+          </p>
+        ) : isModified ? (
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
             <Tag size={10} />Precio modificado
           </span>
-        ) : (
-          <span /> /* spacer */
-        )}
-        <p className="text-sm font-bold text-gray-900">{formatCurrency(subtotal)}</p>
+        ) : null}
       </div>
     </div>
   )
@@ -248,7 +240,7 @@ export default function NewSalePage() {
   const addToCart = (product) => {
     setCart((prev) => [
       ...prev,
-      { product, quantity: 1, unitPrice: String(product.salePrice ?? 0) },
+      { product, quantity: 1, unitPrice: Number(product.salePrice ?? 0) },
     ])
   }
   const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.product.id !== id))

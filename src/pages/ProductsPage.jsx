@@ -6,11 +6,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
 import QrModal from '../components/products/QrModal'
-
-function formatCurrency(value) {
-  if (value == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
-}
+import { formatPrice } from '../utils/formatMoney'
 
 function SkeletonRow() {
   return (
@@ -257,8 +253,8 @@ export default function ProductsPage() {
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
-                    <td className="px-5 py-3.5 text-right text-gray-600">{formatCurrency(p.purchasePrice)}</td>
-                    <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatCurrency(p.salePrice)}</td>
+                    <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>
+                    <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(p.salePrice)}</td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
                     <td className="px-5 py-3.5 text-center">

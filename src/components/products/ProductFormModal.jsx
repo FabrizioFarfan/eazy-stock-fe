@@ -9,7 +9,7 @@ import { useBrands, useCreateBrand } from '../../hooks/useBrands'
 import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
-import MoneyInput from '../ui/MoneyInput'
+import PriceInput from '../inputs/PriceInput'
 import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
@@ -513,40 +513,34 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </div>
 
             {/* Precios + Stock mínimo
-                Los precios usan MoneyInput: el usuario tipea sólo dígitos
-                (ej. "1150") y el masking lo muestra como "11.50". El stock
-                es entero, va con <input type="number"> normal. */}
+                Los precios usan PriceInput: dos campos separados (enteros + decimales,
+                hasta 6) — el usuario tipea "25" + "50" para 25.50, o "0" + "0357" para
+                un tornillo a 0.0357. Stock sigue siendo entero. */}
             <div data-tutorial-target="prices" className="grid grid-cols-3 gap-3">
-              <Field label="P. compra" required error={errors.purchasePrice?.message}>
-                <Controller
-                  control={control}
-                  name="purchasePrice"
-                  render={({ field }) => (
-                    <MoneyInput
-                      name={field.name}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      className={inputCls}
-                    />
-                  )}
-                />
-              </Field>
-              <Field label="P. venta" required error={errors.salePrice?.message}>
-                <Controller
-                  control={control}
-                  name="salePrice"
-                  render={({ field }) => (
-                    <MoneyInput
-                      name={field.name}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      className={inputCls}
-                    />
-                  )}
-                />
-              </Field>
+              <Controller
+                control={control}
+                name="purchasePrice"
+                render={({ field }) => (
+                  <PriceInput
+                    label={<>P. compra <span className="text-red-500">*</span></>}
+                    value={field.value === '' ? null : field.value}
+                    onChange={(v) => field.onChange(v ?? '')}
+                    error={errors.purchasePrice?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="salePrice"
+                render={({ field }) => (
+                  <PriceInput
+                    label={<>P. venta <span className="text-red-500">*</span></>}
+                    value={field.value === '' ? null : field.value}
+                    onChange={(v) => field.onChange(v ?? '')}
+                    error={errors.salePrice?.message}
+                  />
+                )}
+              />
               <Field label="Stock mín." required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step="1" min="0" placeholder="0" className={inputCls} />
               </Field>
