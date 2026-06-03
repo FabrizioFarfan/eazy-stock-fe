@@ -54,7 +54,12 @@ export default function TopProductsList({ topProducts, isLoading }) {
         {topProducts.map((p, i) => (
           <li key={p.productId} className="flex items-center gap-3 py-2.5">
             <RankBadge position={i + 1} />
-            <span className="flex-1 truncate text-sm text-gray-800">{p.productName}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-gray-800">{p.productName}</p>
+              <p className="truncate font-mono text-[11px] text-gray-400">
+                Cód. proveedor: {p.providerCode || '—'}
+              </p>
+            </div>
             <span className="font-mono text-xs text-gray-500">{p.units} u.</span>
             <span className="text-sm font-semibold text-gray-900">{formatCurrency(p.revenue)}</span>
           </li>

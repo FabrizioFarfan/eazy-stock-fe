@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -224,6 +224,32 @@ function CreateEmployeeModal({ businessName, onClose }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20
+const BANNER_DISMISSED_KEY = 'permissions_banner_dismissed'
+
+function PermissionsBanner({ onDismiss }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
+      <Lightbulb size={20} className="mt-0.5 flex-shrink-0 text-orange-500" />
+      <div className="flex-1 text-sm text-orange-900">
+        <p className="font-semibold">Tip: configurá qué puede hacer cada empleado</p>
+        <p className="mt-0.5 text-orange-800">
+          Hacé click en el botón{' '}
+          <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500 px-1.5 py-0.5 align-middle text-xs font-semibold text-white">
+            <Shield size={11} /> Permisos
+          </span>{' '}
+          al lado de cada empleado para activar o desactivar acciones individuales
+          (vender, modificar stock, aplicar descuentos, ver reportes y más).
+        </p>
+      </div>
+      <button
+        onClick={onDismiss}
+        className="flex-shrink-0 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-orange-600 transition-colors"
+      >
+        Entendido
+      </button>
+    </div>
+  )
+}
 
 export default function EmployeesPage() {
   const { user: currentUser } = useAuth()
@@ -232,6 +258,14 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false)
   const [permTarget, setPermTarget] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem(BANNER_DISMISSED_KEY) === '1',
+  )
+
+  const dismissBanner = () => {
+    localStorage.setItem(BANNER_DISMISSED_KEY, '1')
+    setBannerDismissed(true)
+  }
 
   const { data, isLoading, isFetching } = useEmployees({ page, size: PAGE_SIZE, sort: 'createdAt,desc' })
   const toggleEmployee = useToggleEmployee()
@@ -273,6 +307,10 @@ export default function EmployeesPage() {
         </button>
       </div>
 
+      {currentUser?.role === 'OWNER' && !bannerDismissed && (
+        <PermissionsBanner onDismiss={dismissBanner} />
+      )}
+
       {/* Search */}
       <div className="relative max-w-sm">
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -307,8 +345,20 @@ export default function EmployeesPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-14 text-center text-sm font-medium text-gray-400">
-                    {search ? `Sin resultados para "${search}"` : 'Aún no tenés empleados. Agregá el primero para empezar.'}
+                  <td colSpan={5} className="py-14 text-center text-sm">
+                    {search ? (
+                      <span className="font-medium text-gray-400">
+                        Sin resultados para "{search}"
+                      </span>
+                    ) : (
+                      <div className="mx-auto max-w-md space-y-2">
+                        <p className="font-semibold text-gray-700">Aún no tenés empleados</p>
+                        <p className="text-gray-500">
+                          Creá empleados y asignales permisos individuales: vender,
+                          modificar stock, aplicar descuentos, ver reportes y más.
+                        </p>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -339,12 +389,16 @@ export default function EmployeesPage() {
                       <td className="px-5 py-3.5 text-xs text-gray-400">{formatDate(emp.createdAt)}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => setPermTarget(emp)}
-                            className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
-                            <Shield size={12} />Permisos
+                          <button
+                            onClick={() => setPermTarget(emp)}
+                            title="Configurar permisos"
+                            className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/40 active:scale-[0.97]">
+                            <Shield size={14} />Permisos
                           </button>
-                          <button onClick={() => handleToggle(emp.id)}
+                          <button
+                            onClick={() => handleToggle(emp.id)}
                             disabled={isSelf || isToggling}
+                            title={isSelf ? 'No puedes desactivarte a ti mismo' : emp.active ? 'Desactivar empleado' : 'Activar empleado'}
                             className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                               emp.active
                                 ? 'bg-red-50 text-red-600 hover:bg-red-100'

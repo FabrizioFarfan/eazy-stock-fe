@@ -364,6 +364,7 @@ function TabLowStock({ businessId }) {
                 <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Marca</th>
                 <th className="px-4 py-3">Proveedor</th>
+                <th className="px-4 py-3">Cód. Proveedor</th>
                 <th className="px-4 py-3 text-center">Stock actual</th>
                 <th className="px-4 py-3 text-center">Stock mínimo</th>
                 <th className="px-4 py-3 text-center">Déficit</th>
@@ -376,6 +377,7 @@ function TabLowStock({ businessId }) {
                   <td className="px-4 py-3 font-mono text-xs text-gray-400">{p.productSku}</td>
                   <td className="px-4 py-3 text-gray-600">{p.brand || '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{p.providerName || '—'}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-600">{p.providerCode || '—'}</td>
                   <td className="px-4 py-3 text-center"><span className="font-semibold text-red-600">{p.currentStock}</span></td>
                   <td className="px-4 py-3 text-center text-gray-500">{p.minStock}</td>
                   <td className="px-4 py-3 text-center">
