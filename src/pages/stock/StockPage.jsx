@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { ArrowDownToLine, SlidersHorizontal, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { PackagePlus, SlidersHorizontal, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useMovements } from '../../hooks/useStock'
 import MovementModal from './MovementModal'
+import SupplierReceiptModal from '../../components/stock/SupplierReceiptModal'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -46,11 +47,12 @@ export default function StockPage() {
   const { user }    = useAuth()
   const isManager   = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
 
-  const [typeFilter, setTypeFilter] = useState('')
-  const [from, setFrom]             = useState('')
-  const [to, setTo]                 = useState('')
-  const [page, setPage]             = useState(0)
-  const [modal, setModal]           = useState(null)
+  const [typeFilter, setTypeFilter]     = useState('')
+  const [from, setFrom]                 = useState('')
+  const [to, setTo]                     = useState('')
+  const [page, setPage]                 = useState(0)
+  const [modal, setModal]               = useState(null)        // null | 'ADJUSTMENT'
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
 
   useEffect(() => { setPage(0) }, [typeFilter, from, to])
 
@@ -76,10 +78,10 @@ export default function StockPage() {
         <h2 className="text-2xl font-bold text-gray-900">Movimientos de stock</h2>
         {isManager && (
           <div className="flex gap-2">
-            <button onClick={() => setModal('PURCHASE_ENTRY')}
+            <button onClick={() => setShowReceiptModal(true)}
               className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-[0.98]">
-              <ArrowDownToLine size={15} />
-              Nueva entrada
+              <PackagePlus size={15} />
+              Registrar recepción
             </button>
             <button onClick={() => setModal('ADJUSTMENT')}
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
@@ -195,6 +197,7 @@ export default function StockPage() {
       </div>
 
       {modal && <MovementModal type={modal} onClose={() => setModal(null)} />}
+      {showReceiptModal && <SupplierReceiptModal onClose={() => setShowReceiptModal(false)} />}
     </div>
   )
 }
