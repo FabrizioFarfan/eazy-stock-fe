@@ -68,6 +68,8 @@ const PERMISSION_META = [
   { key: 'canManageEmployees',     label: 'Gestionar empleados' },
   { key: 'canManageSuppliers',     label: 'Gestionar proveedores y marcas' },
   { key: 'canViewAuditLog',        label: 'Ver log de auditoría' },
+  { key: 'canSellOnCredit',        label: 'Vender al fiado' },
+  { key: 'canManageCustomers',     label: 'Gestionar clientes y cuentas por cobrar' },
 ]
 
 // ── PermissionsPanel ──────────────────────────────────────────────────────────

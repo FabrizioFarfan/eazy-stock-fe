@@ -23,13 +23,18 @@ import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
 import StockPage      from '../pages/stock/StockPage'
 import ReportsPage    from '../pages/ReportsPage'
-import EmployeesPage  from '../pages/EmployeesPage'
-import SuppliersPage  from '../pages/SuppliersPage'
-import BrandsPage     from '../pages/BrandsPage'
-import CategoriesPage from '../pages/CategoriesPage'
-import SettingsPage   from '../pages/SettingsPage'
-import BusinessesPage from '../pages/admin/BusinessesPage'
-import OwnersPage     from '../pages/admin/OwnersPage'
+import EmployeesPage       from '../pages/EmployeesPage'
+import SuppliersPage       from '../pages/SuppliersPage'
+import SupplierDetailPage  from '../pages/SupplierDetailPage'
+import BrandsPage          from '../pages/BrandsPage'
+import CategoriesPage      from '../pages/CategoriesPage'
+import CustomersPage       from '../pages/CustomersPage'
+import CustomerDetailPage  from '../pages/CustomerDetailPage'
+import ReceivablesPage     from '../pages/ReceivablesPage'
+import PayablesPage        from '../pages/PayablesPage'
+import SettingsPage        from '../pages/SettingsPage'
+import BusinessesPage      from '../pages/admin/BusinessesPage'
+import OwnersPage          from '../pages/admin/OwnersPage'
 
 export default function AppRouter() {
   return (
@@ -65,11 +70,28 @@ export default function AppRouter() {
       <Route path="/suppliers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SuppliersPage /></ProtectedRoute>
       } />
+      <Route path="/suppliers/:id" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><SupplierDetailPage /></ProtectedRoute>
+      } />
       <Route path="/brands" element={
         <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
       } />
       <Route path="/categories" element={
         <ProtectedRoute allowedRoles={['OWNER']}><CategoriesPage /></ProtectedRoute>
+      } />
+
+      {/* Customers (paso 4) — OWNER y EMPLOYEE con canManageCustomers */}
+      <Route path="/customers" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><CustomersPage /></ProtectedRoute>
+      } />
+      <Route path="/customers/:id" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><CustomerDetailPage /></ProtectedRoute>
+      } />
+      <Route path="/reports/receivables" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ReceivablesPage /></ProtectedRoute>
+      } />
+      <Route path="/reports/payables" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><PayablesPage /></ProtectedRoute>
       } />
       {/* Settings — todos los roles autenticados */}
       <Route path="/settings" element={

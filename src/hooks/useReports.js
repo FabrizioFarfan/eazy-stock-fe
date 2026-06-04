@@ -59,3 +59,19 @@ export function useSaleDetail(saleId, options = {}) {
     ...options,
   })
 }
+
+export function useReceivables(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'receivables', params],
+    queryFn: () => reportsApi.getReceivables(params).then((r) => r.data.data),
+    ...options,
+  })
+}
+
+export function usePayables(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'payables', params],
+    queryFn: () => reportsApi.getPayables(params).then((r) => r.data.data),
+    ...options,
+  })
+}

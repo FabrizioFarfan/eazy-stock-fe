@@ -1,0 +1,91 @@
+import { useNavigate } from 'react-router-dom'
+import { Users, AlertTriangle, Loader2 } from 'lucide-react'
+import { useReceivables } from '../hooks/useReports'
+import { useAuth } from '../context/AuthContext'
+import { formatPrice } from '../utils/formatMoney'
+
+function formatDate(str) {
+  if (!str) return '—'
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
+}
+
+export default function ReceivablesPage() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const params = user?.role === 'SUPER_ADMIN' && user?.businessId
+    ? { businessId: user.businessId }
+    : undefined
+
+  const { data, isLoading, isError } = useReceivables(params)
+  const rows  = data?.rows  ?? []
+  const total = data?.totalReceivable ?? 0
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 className="text-2xl font-bold text-gray-900">Cuentas por cobrar</h2>
+        <div className="text-right">
+          <p className="text-xs uppercase tracking-widest text-gray-400">Total por cobrar</p>
+          <p className="text-2xl font-extrabold text-blue-700">{formatPrice(total)}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/60">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Cliente</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Documento</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Teléfono</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Deuda</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">% Límite</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Último pago</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Días</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={7} className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></td></tr>
+              ) : isError ? (
+                <tr><td colSpan={7} className="py-10 text-center text-sm text-red-500">No pudimos cargar el reporte.</td></tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="flex flex-col items-center gap-3 py-16">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
+                        <Users size={28} className="text-emerald-500" />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-700">Ningún cliente tiene deuda pendiente</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                rows.map((r) => {
+                  const exceeds = r.creditLimit != null && Number(r.currentDebt) > Number(r.creditLimit)
+                  return (
+                    <tr key={r.customerId}
+                      onClick={() => navigate(`/customers/${r.customerId}`)}
+                      className="cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40">
+                      <td className="px-5 py-3.5 font-semibold text-gray-900">{r.name}</td>
+                      <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{r.documentId || '—'}</td>
+                      <td className="px-5 py-3.5 text-gray-600">{r.phone || '—'}</td>
+                      <td className="px-5 py-3.5 text-right font-bold text-gray-900">{formatPrice(r.currentDebt)}</td>
+                      <td className={`px-5 py-3.5 text-right font-semibold ${exceeds ? 'text-red-600' : 'text-gray-700'}`}>
+                        {r.limitUsagePercent != null ? `${Number(r.limitUsagePercent).toFixed(0)}%` : '—'}
+                        {exceeds && <AlertTriangle size={11} className="ml-1 inline" />}
+                      </td>
+                      <td className="px-5 py-3.5 text-right text-xs text-gray-500">{formatDate(r.lastPayment)}</td>
+                      <td className="px-5 py-3.5 text-right text-xs text-gray-500">{r.daysSinceLastPayment != null ? `${r.daysSinceLastPayment}d` : '—'}</td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}

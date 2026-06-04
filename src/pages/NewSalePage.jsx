@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag } from 'lucide-react'
+import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
 import { useCreateSale } from '../hooks/useSales'
+import { useCustomers } from '../hooks/useCustomers'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -209,12 +210,143 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
   )
 }
 
+// ── CreditSection — vender al fiado ───────────────────────────────────────────
+
+function CustomerPicker({ value, onSelect }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen]   = useState(false)
+  const debounced = useDebounce(query, 350)
+
+  const { data, isLoading } = useCustomers(
+    debounced ? { search: debounced, size: 8 } : null,
+    { enabled: !!debounced },
+  )
+  const results = data?.content ?? []
+
+  if (value) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-blue-900">{value.name}</p>
+          <p className="truncate text-xs text-blue-700">
+            {[value.documentId, value.phone].filter(Boolean).join(' · ') || 'Cliente seleccionado'}
+          </p>
+        </div>
+        <button type="button"
+          onClick={() => onSelect(null)}
+          className="flex-shrink-0 rounded-lg p-1 text-blue-600 hover:bg-blue-100">
+          <X size={14} />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+        placeholder="Buscar cliente por nombre, documento o teléfono..."
+        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+      />
+      {open && debounced && (
+        <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+          {isLoading ? (
+            <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+          ) : results.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+          ) : (
+            results.map((c) => (
+              <button key={c.id} type="button"
+                onClick={() => { onSelect(c); setQuery(''); setOpen(false) }}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-gray-900">{c.name}</p>
+                  <p className="truncate text-xs text-gray-400">{[c.documentId, c.phone].filter(Boolean).join(' · ')}</p>
+                </div>
+                <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
+                  {formatPrice(c.currentDebt)}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total }) {
+  const debt   = customer ? Number(customer.currentDebt ?? 0) : 0
+  const limit  = customer && customer.creditLimit != null ? Number(customer.creditLimit) : null
+  const noCredit  = customer && (limit == null || limit <= 0)
+  const projected = debt + total
+  const exceeds   = limit != null && limit > 0 && projected > limit
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <label className="flex items-center justify-between gap-3 cursor-pointer">
+        <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
+          <User size={14} className="text-blue-600" />
+          Vender al fiado
+        </span>
+        <span className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
+          <input type="checkbox" checked={enabled} onChange={(e) => onToggle(e.target.checked)} className="sr-only" />
+          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 mt-0.5 ${enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        </span>
+      </label>
+
+      {enabled && (
+        <div className="mt-3 space-y-3">
+          <CustomerPicker value={customer} onSelect={onSelectCustomer} />
+
+          {customer && (
+            <>
+              {noCredit ? (
+                <p className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-100">
+                  Este cliente no tiene crédito habilitado. Editá su ficha para
+                  habilitarlo o vendé al contado.
+                </p>
+              ) : (
+                <div className="space-y-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-xs">
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>Deuda actual</span>
+                    <span className="font-mono">{formatPrice(debt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-gray-500">
+                    <span>Límite</span>
+                    <span className="font-mono">{formatPrice(limit)}</span>
+                  </div>
+                  <div className="flex items-center justify-between font-semibold text-gray-900">
+                    <span>Después de esta venta</span>
+                    <span className="font-mono">{formatPrice(projected)}</span>
+                  </div>
+                </div>
+              )}
+
+              {exceeds && (
+                <p className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100">
+                  <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
+                  Esta venta dejaría al cliente con {formatPrice(projected)} de deuda,
+                  excediendo su límite de {formatPrice(limit)}. Podés continuar igual.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NewSalePage() {
   const navigate      = useNavigate()
   const { can }       = useAuth()
   const canApplyDiscount = can('canApplyDiscount')
+  const canSellOnCredit  = can('canSellOnCredit')
 
   const createSale    = useCreateSale()
   const cartRef       = useRef(null)
@@ -227,6 +359,8 @@ export default function NewSalePage() {
   const [notes, setNotes]                 = useState('')
   const [discountType, setDiscountType]   = useState('PERCENTAGE')
   const [discountValue, setDiscountValue] = useState('')
+  const [onCredit, setOnCredit]           = useState(false)
+  const [customer, setCustomer]           = useState(null)
 
   useEffect(() => { cartStateRef.current = cart }, [cart])
 
@@ -287,8 +421,22 @@ export default function NewSalePage() {
       : Math.min(subtotal, numericDiscount)
   const total = Math.max(0, subtotal - discountAmount)
 
+  const isFiado = canSellOnCredit && onCredit
+  const fiadoMissingCustomer = isFiado && !customer
+  const fiadoCustomerNoCredit = isFiado && customer && (
+    customer.creditLimit == null || Number(customer.creditLimit) <= 0
+  )
+
   const handleSubmit = async () => {
     if (cart.length === 0) return
+    if (fiadoMissingCustomer) {
+      toast.error('Seleccioná un cliente para la venta al fiado')
+      return
+    }
+    if (fiadoCustomerNoCredit) {
+      toast.error('El cliente no tiene crédito habilitado')
+      return
+    }
     try {
       const items = cart.map((i) => {
         const enteredPrice = parseNumber(i.unitPrice)
@@ -302,14 +450,27 @@ export default function NewSalePage() {
       })
 
       const includeTotalDiscount = canApplyDiscount && numericDiscount > 0
-      await createSale.mutateAsync({
+      const sale = await createSale.mutateAsync({
         items,
         ...(notes.trim() && { notes: notes.trim() }),
         ...(includeTotalDiscount && {
           discountType,
           discountValue: numericDiscount,
         }),
+        ...(isFiado && {
+          isOnCredit: true,
+          customerId: customer.id,
+        }),
       })
+
+      if (sale?.onCredit && sale?.customerName) {
+        toast.success(
+          `Venta al fiado registrada. ${sale.customerName} ahora debe ${formatPrice(sale.customerDebtAfter)}`,
+          sale.exceedsCreditLimit
+            ? { description: 'Excede el límite de crédito configurado.' }
+            : undefined,
+        )
+      }
       navigate('/sales')
     } catch { /* error shown via createSale.isError */ }
   }
@@ -410,6 +571,16 @@ export default function NewSalePage() {
             />
           )}
 
+          {canSellOnCredit && cart.length > 0 && (
+            <CreditSection
+              enabled={onCredit}
+              onToggle={(v) => { setOnCredit(v); if (!v) setCustomer(null) }}
+              customer={customer}
+              onSelectCustomer={setCustomer}
+              total={total}
+            />
+          )}
+
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -448,7 +619,9 @@ export default function NewSalePage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createSale.isPending ? 'Registrando...' : 'Confirmar venta'}
+              {createSale.isPending
+                ? 'Registrando...'
+                : isFiado ? 'Confirmar venta al fiado' : 'Confirmar venta'}
             </button>
           </div>
         </div>
@@ -472,7 +645,9 @@ export default function NewSalePage() {
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}
-              {createSale.isPending ? 'Registrando...' : 'Confirmar venta'}
+              {createSale.isPending
+                ? 'Registrando...'
+                : isFiado ? 'Confirmar venta al fiado' : 'Confirmar venta'}
             </button>
           </div>
         </div>

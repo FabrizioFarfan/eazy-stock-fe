@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings,
+  Wallet, HandCoins,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -14,27 +15,32 @@ const SUPER_ADMIN_NAV = [
 ]
 
 const OWNER_NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',  permission: null },
-  { icon: Package,         label: 'Productos',   path: '/products',   permission: null },
-  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',      permission: null },
-  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',      permission: null },
-  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',  permission: 'canRegisterSale' },
-  { icon: BarChart2,       label: 'Reportes',     path: '/reports',    permission: 'canViewReports' },
-  { icon: Truck,           label: 'Proveedores',  path: '/suppliers',  permission: null },
-  { icon: Tag,             label: 'Marcas',       path: '/brands',     permission: null },
-  { icon: FolderOpen,      label: 'Categorías',   path: '/categories', permission: null },
-  { icon: Users,           label: 'Empleados',    path: '/empleados',  permission: null },
-  { icon: Settings,        label: 'Ajustes',      path: '/settings',   permission: null },
+  { icon: LayoutDashboard, label: 'Dashboard',         path: '/dashboard',           permission: null },
+  { icon: Package,         label: 'Productos',         path: '/products',            permission: null },
+  { icon: ArrowUpDown,     label: 'Stock',             path: '/stock',               permission: null },
+  { icon: ShoppingCart,    label: 'Ventas',            path: '/sales',               permission: null },
+  { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
+  { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
+  { icon: Users,           label: 'Clientes',          path: '/customers',           permission: null },
+  { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+  { icon: HandCoins,       label: 'Cuentas x pagar',   path: '/reports/payables',    permission: null },
+  { icon: Truck,           label: 'Proveedores',       path: '/suppliers',           permission: null },
+  { icon: Tag,             label: 'Marcas',            path: '/brands',              permission: null },
+  { icon: FolderOpen,      label: 'Categorías',        path: '/categories',          permission: null },
+  { icon: Users,           label: 'Empleados',         path: '/empleados',           permission: null },
+  { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
 ]
 
 const EMPLOYEE_NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard',   path: '/dashboard',  permission: null },
-  { icon: Package,         label: 'Productos',   path: '/products',   permission: null },
-  { icon: ArrowUpDown,     label: 'Stock',        path: '/stock',      permission: null },
-  { icon: ShoppingCart,    label: 'Ventas',       path: '/sales',      permission: null },
-  { icon: Plus,            label: 'Nueva Venta', path: '/sales/new',  permission: 'canRegisterSale' },
-  { icon: BarChart2,       label: 'Reportes',     path: '/reports',    permission: 'canViewReports' },
-  { icon: Settings,        label: 'Ajustes',      path: '/settings',   permission: null },
+  { icon: LayoutDashboard, label: 'Dashboard',         path: '/dashboard',           permission: null },
+  { icon: Package,         label: 'Productos',         path: '/products',            permission: null },
+  { icon: ArrowUpDown,     label: 'Stock',             path: '/stock',               permission: null },
+  { icon: ShoppingCart,    label: 'Ventas',            path: '/sales',               permission: null },
+  { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
+  { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
+  { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
+  { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+  { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
 ]
 
 const ROLE_LABEL = {

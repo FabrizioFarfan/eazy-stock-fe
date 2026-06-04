@@ -15,4 +15,8 @@ export const reportsApi = {
 
   // Resurtido por proveedor: params = { supplierId, from, to, businessId? }
   getSupplierRestock: (params) => api.get('/reports/supplier-restock', { params }),
+
+  // Bloque 4 — Paso 4: cuentas por cobrar y cuentas por pagar
+  getReceivables: (params) => api.get('/reports/receivables', { params }),
+  getPayables:    (params) => api.get('/reports/payables',    { params }),
 }
