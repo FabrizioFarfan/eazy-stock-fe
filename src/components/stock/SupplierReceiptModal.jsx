@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  X, Loader2, Plus, Minus, Trash2, Truck, AlertTriangle, PackagePlus,
+  X, Loader2, Plus, Minus, Trash2, Truck, AlertTriangle, PackagePlus, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -14,21 +14,22 @@ import { formatPrice } from '../../utils/formatMoney'
 import { getErrorMessage } from '../../utils/handleApiError'
 
 /**
- * Modal de recepción de mercadería de un proveedor.
+ * Modal de recepción de mercadería — flujo en 2 pasos:
+ *   1. Elegir proveedor (obligatorio antes que cualquier otra cosa).
+ *   2. Cargar productos: el picker se filtra automáticamente por supplierId,
+ *      solo lista productos de ese proveedor. Cada línea pide cantidad y
+ *      precio unitario (default product.purchasePrice, editable).
  *
- *  - Paso 1: elegir proveedor (autocomplete)
- *  - Paso 2: cargar items en el "carrito" (búsqueda + scanner)
- *  - Paso 3: total + modo de pago (CASH | CREDIT) + factura + notas
- *
- * Single endpoint POST /api/suppliers/{id}/receipts → genera 1 receipt + N
- * stock entries + 0..1 supplier transaction.
+ * El total se calcula sum(qty × unitCost) y queda editable arriba para
+ * permitir registrar el monto real de la factura (puede diferir por
+ * descuentos, gastos extra, etc.).
  */
 export default function SupplierReceiptModal({ onClose }) {
   const createReceipt = useCreateSupplierReceipt()
 
-  // Supplier picker state
-  const [supplier, setSupplier]               = useState(null)
-  const [supplierQuery, setSupplierQuery]     = useState('')
+  // ── Paso 1: proveedor ────────────────────────────────────────────────────
+  const [supplier, setSupplier]                 = useState(null)
+  const [supplierQuery, setSupplierQuery]       = useState('')
   const [showSupplierDrop, setShowSupplierDrop] = useState(false)
   const debouncedSupplier = useDebounce(supplierQuery, 350)
   const { data: suppliersData } = useSuppliers(
@@ -37,45 +38,64 @@ export default function SupplierReceiptModal({ onClose }) {
   )
   const supplierResults = suppliersData?.content ?? []
 
-  // Product picker state
+  // ── Paso 2: productos (filtrados por proveedor) ──────────────────────────
   const [productQuery, setProductQuery]           = useState('')
   const [showProductDrop, setShowProductDrop]     = useState(false)
   const scanLockRef = useRef(false)
   const debouncedProduct = useDebounce(productQuery, 350)
   const { data: productsData, isLoading: loadingProducts } = useProducts(
-    debouncedProduct ? { search: debouncedProduct, size: 8, active: true } : null,
-    { enabled: !!debouncedProduct },
+    supplier && debouncedProduct
+      ? { search: debouncedProduct, size: 8, active: true, supplierId: supplier.id }
+      : null,
+    { enabled: !!supplier && !!debouncedProduct },
   )
   const productResults = productsData?.content ?? []
 
-  // Cart of items
-  const [items, setItems] = useState([])   // [{ product: {id, name, sku}, quantity }]
+  // ── Carrito ──────────────────────────────────────────────────────────────
+  // item shape: { product, quantity, unitCost }
+  const [items, setItems] = useState([])
   const itemsRef = useRef([])
-  // Keep ref in sync with state so the async scanCode handler reads the latest
-  // cart without re-binding. Updating inside an effect (not during render).
   useEffect(() => { itemsRef.current = items }, [items])
 
-  // Receipt header
+  // Si el OWNER cambia de proveedor, vaciamos el carrito (productos eran del otro).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setItems([]); setProductQuery('') }, [supplier?.id])
+
+  // ── Receipt header ───────────────────────────────────────────────────────
   const [paymentMode, setPaymentMode]               = useState('CASH')
   const [totalAmount, setTotalAmount]               = useState(null)
+  const [totalTouched, setTotalTouched]             = useState(false)
   const [referenceDocument, setReferenceDocument]   = useState('')
   const [notes, setNotes]                           = useState('')
   const [error, setError]                           = useState(null)
 
-  // Sugerido = sum(qty * product.purchasePrice). El owner puede sobrescribir.
-  const suggestedTotal = useMemo(() => items.reduce(
-    (sum, it) => sum + (Number(it.product.purchasePrice ?? 0) * it.quantity),
+  const computedTotal = useMemo(() => items.reduce(
+    (sum, it) => sum + (Number(it.unitCost ?? 0) * it.quantity),
     0,
   ), [items])
-  const showSuggestion = totalAmount == null && suggestedTotal > 0
 
+  // Mientras el OWNER no toque el campo de total, mantenemos auto-sync con la
+  // suma de líneas. Una vez que tocó el campo, respeta lo que ingresó.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!totalTouched) setTotalAmount(computedTotal > 0 ? computedTotal : null)
+  }, [computedTotal, totalTouched])
+
+  const finalTotal = totalAmount != null ? totalAmount : computedTotal
+
+  // ── Cart actions ─────────────────────────────────────────────────────────
   const addProduct = (p) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === p.id)
       if (existing) {
         return prev.map((i) => i.product.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
       }
-      return [...prev, { product: p, quantity: 1 }]
+      // Default unitCost del purchasePrice del producto, editable por línea.
+      return [...prev, {
+        product: p,
+        quantity: 1,
+        unitCost: Number(p.purchasePrice ?? 0),
+      }]
     })
     setProductQuery('')
     setShowProductDrop(false)
@@ -84,14 +104,21 @@ export default function SupplierReceiptModal({ onClose }) {
     prev.map((i) => i.product.id === id ? { ...i, quantity: i.quantity + 1 } : i))
   const decQty = (id) => setItems((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))
+  const changeUnitCost = (id, value) => setItems((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, unitCost: value } : i))
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.product.id !== id))
 
   const handleScan = async (code) => {
+    if (!supplier) { toast.warning('Elegí primero el proveedor'); return }
     if (scanLockRef.current) return
     scanLockRef.current = true
     try {
       const product = (await productsApi.scanCode(code)).data.data
       if (!product) { toast.error('Producto no encontrado'); return }
+      if (product.supplierId !== supplier.id) {
+        toast.error(`Este producto pertenece a otro proveedor (${product.supplierName ?? '—'})`)
+        return
+      }
       if (itemsRef.current.some((i) => i.product.id === product.id)) {
         incQty(product.id)
         toast.info('Cantidad actualizada')
@@ -106,14 +133,14 @@ export default function SupplierReceiptModal({ onClose }) {
     }
   }
 
+  // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
 
     if (!supplier) { setError('Seleccioná el proveedor'); return }
     if (items.length === 0) { setError('Agregá al menos un producto'); return }
-    const finalAmount = totalAmount != null ? totalAmount : suggestedTotal
-    if (!finalAmount || finalAmount <= 0) {
+    if (!finalTotal || finalTotal <= 0) {
       setError('Ingresá el monto total de la compra')
       return
     }
@@ -122,17 +149,21 @@ export default function SupplierReceiptModal({ onClose }) {
       await createReceipt.mutateAsync({
         supplierId: supplier.id,
         data: {
-          items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
-          totalAmount: finalAmount,
+          items: items.map((i) => ({
+            productId: i.product.id,
+            quantity:  i.quantity,
+            unitCost:  i.unitCost ?? null,
+          })),
+          totalAmount:       finalTotal,
           paymentMode,
           referenceDocument: referenceDocument.trim() || null,
-          notes: notes.trim() || null,
+          notes:             notes.trim() || null,
         },
       })
       toast.success(
         paymentMode === 'CREDIT'
-          ? `Recepción registrada — ${formatPrice(finalAmount)} sumados a la deuda con ${supplier.name}`
-          : `Recepción registrada — ${formatPrice(finalAmount)} pagados al contado a ${supplier.name}`,
+          ? `Recepción registrada — ${formatPrice(finalTotal)} sumados a la deuda con ${supplier.name}`
+          : `Recepción registrada — ${formatPrice(finalTotal)} pagados al contado a ${supplier.name}`,
       )
       onClose()
     } catch (err) {
@@ -142,6 +173,10 @@ export default function SupplierReceiptModal({ onClose }) {
 
   const inputCls = 'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
   const totalItems = items.reduce((s, i) => s + i.quantity, 0)
+  const productsLink = supplier ? `/products?supplierId=${supplier.id}` : '/products'
+
+  // Disable step-2 fields hasta que haya proveedor.
+  const step2Disabled = !supplier
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
@@ -151,7 +186,7 @@ export default function SupplierReceiptModal({ onClose }) {
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-3">
             <PackagePlus size={20} className="text-emerald-600" />
-            <h3 className="text-base font-bold text-gray-900">Registrar recepción</h3>
+            <h3 className="text-base font-bold text-gray-900">Nueva recepción</h3>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100">
             <X size={18} />
@@ -161,24 +196,32 @@ export default function SupplierReceiptModal({ onClose }) {
         <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
 
-            {/* Supplier picker */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Proveedor <span className="text-red-500">*</span>
-              </label>
-              {supplier ? (
-                <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Truck size={16} className="text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-900">{supplier.name}</span>
-                    {supplier.ruc && (
-                      <span className="font-mono text-xs text-blue-700">RUC {supplier.ruc}</span>
-                    )}
-                  </div>
+            {/* ── Paso 1: proveedor ──────────────────────────────────────── */}
+            <section>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-sm font-semibold text-gray-900">
+                  1. Proveedor <span className="text-red-500">*</span>
+                </label>
+                {supplier && (
                   <button type="button" onClick={() => setSupplier(null)}
-                    className="rounded-lg p-1 text-blue-600 hover:bg-blue-100">
-                    <X size={13} />
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                    Cambiar proveedor
                   </button>
+                )}
+              </div>
+
+              {supplier ? (
+                <div className="flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+                  <Truck size={16} className="text-blue-600" />
+                  <span className="flex-1 text-sm font-semibold text-blue-900">{supplier.name}</span>
+                  {supplier.ruc && (
+                    <span className="font-mono text-xs text-blue-700">RUC {supplier.ruc}</span>
+                  )}
+                  {Number(supplier.currentDebt ?? 0) > 0 && (
+                    <span className="text-xs font-mono text-red-600">
+                      Deuda: {formatPrice(supplier.currentDebt)}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="relative">
@@ -214,78 +257,112 @@ export default function SupplierReceiptModal({ onClose }) {
                   )}
                 </div>
               )}
-            </div>
+            </section>
 
-            {/* Product picker */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Productos recibidos <span className="text-red-500">*</span>
+            {/* ── Paso 2: productos ──────────────────────────────────────── */}
+            <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
+              <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                2. Productos recibidos <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <ScannerInput
-                  value={productQuery}
-                  onChange={(v) => { setProductQuery(v); setShowProductDrop(true) }}
-                  onScan={handleScan}
-                  placeholder="Buscar producto o escanear..."
-                />
-                {showProductDrop && debouncedProduct && (
-                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
-                    {loadingProducts ? (
-                      <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
-                    ) : productResults.length === 0 ? (
-                      <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
-                    ) : (
-                      productResults.map((p) => (
-                        <button key={p.id} type="button" onClick={() => addProduct(p)}
-                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
-                          <span className="font-semibold text-gray-900">{p.name}</span>
-                          <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
 
-              {/* Items list */}
-              {items.length === 0 ? (
-                <p className="mt-2 text-xs text-gray-400">
-                  Buscá productos arriba y se irán cargando acá. Podés escanear su código.
+              {step2Disabled ? (
+                <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500 ring-1 ring-gray-100">
+                  Elegí primero el proveedor para continuar.
                 </p>
               ) : (
-                <div className="mt-3 space-y-2">
-                  {items.map((it) => (
-                    <div key={it.product.id} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-gray-900">{it.product.name}</p>
-                        <p className="font-mono text-[10px] text-gray-400">{it.product.sku}</p>
+                <>
+                  <div className="relative">
+                    <ScannerInput
+                      value={productQuery}
+                      onChange={(v) => { setProductQuery(v); setShowProductDrop(true) }}
+                      onScan={handleScan}
+                      placeholder={`Buscar productos de ${supplier.name}...`}
+                    />
+                    {showProductDrop && debouncedProduct && (
+                      <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
+                        {loadingProducts ? (
+                          <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+                        ) : productResults.length === 0 ? (
+                          <div className="px-4 py-3 text-sm">
+                            <p className="text-gray-500">Sin resultados para "{debouncedProduct}"</p>
+                            <a href={productsLink} target="_blank" rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+                              <ExternalLink size={11} />
+                              ¿No encontrás el producto? Asignalo a este proveedor desde Productos
+                            </a>
+                          </div>
+                        ) : (
+                          productResults.map((p) => (
+                            <button key={p.id} type="button" onClick={() => addProduct(p)}
+                              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
+                              <div className="min-w-0">
+                                <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                                <p className="font-mono text-xs text-gray-400">{p.sku}</p>
+                              </div>
+                              <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
+                                {formatPrice(p.purchasePrice)}
+                              </span>
+                            </button>
+                          ))
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => decQty(it.product.id)} disabled={it.quantity === 1}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                          <Minus size={11} />
-                        </button>
-                        <span className="w-8 text-center text-sm font-bold text-gray-900">{it.quantity}</span>
-                        <button type="button" onClick={() => incQty(it.product.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
-                          <Plus size={11} />
-                        </button>
-                      </div>
-                      <button type="button" onClick={() => removeItem(it.product.id)}
-                        className="flex-shrink-0 rounded-lg p-1.5 text-gray-300 hover:bg-white hover:text-red-500">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <p className="text-xs text-gray-400">
-                    {items.length} producto{items.length !== 1 ? 's' : ''} · {totalItems} unidad{totalItems !== 1 ? 'es' : ''}
-                  </p>
-                </div>
-              )}
-            </div>
+                    )}
+                  </div>
 
-            {/* Payment mode */}
-            <div>
+                  {/* Carrito */}
+                  {items.length === 0 ? (
+                    <p className="mt-2 text-xs text-gray-400">
+                      Buscá productos arriba y se irán cargando acá con su precio de compra editable.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {items.map((it) => (
+                        <div key={it.product.id} className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-gray-900">{it.product.name}</p>
+                              <p className="font-mono text-[10px] text-gray-400">{it.product.sku}</p>
+                            </div>
+                            <button type="button" onClick={() => removeItem(it.product.id)}
+                              className="flex-shrink-0 rounded-lg p-1.5 text-gray-300 hover:bg-white hover:text-red-500">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+
+                          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => decQty(it.product.id)} disabled={it.quantity === 1}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                                <Minus size={11} />
+                              </button>
+                              <span className="w-8 text-center text-sm font-bold text-gray-900">{it.quantity}</span>
+                              <button type="button" onClick={() => incQty(it.product.id)}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
+                                <Plus size={11} />
+                              </button>
+                            </div>
+                            <PriceInput
+                              value={it.unitCost}
+                              onChange={(v) => changeUnitCost(it.product.id, v)}
+                              maxDecimals={6}
+                            />
+                            <div className="flex items-center justify-end text-sm font-semibold text-gray-900 sm:justify-end">
+                              {formatPrice(it.quantity * Number(it.unitCost ?? 0))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-xs text-gray-400">
+                        {items.length} producto{items.length !== 1 ? 's' : ''} · {totalItems} unidad{totalItems !== 1 ? 'es' : ''}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+
+            {/* ── Forma de pago + total + factura ────────────────────────── */}
+            <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Forma de pago <span className="text-red-500">*</span>
               </label>
@@ -307,23 +384,23 @@ export default function SupplierReceiptModal({ onClose }) {
                   A crédito (suma deuda)
                 </button>
               </div>
-            </div>
+            </section>
 
-            {/* Total */}
-            <div>
+            <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <PriceInput
                 label={<>Monto total de la compra <span className="text-red-500">*</span></>}
                 value={totalAmount}
-                onChange={setTotalAmount}
+                onChange={(v) => { setTotalAmount(v); setTotalTouched(true) }}
                 maxDecimals={2}
-                helperText={showSuggestion
-                  ? `Sugerido por precio de compra: ${formatPrice(suggestedTotal)} — podés ajustarlo`
-                  : 'Se aplica al stock y, si es a crédito, suma a la cuenta corriente'}
+                helperText={
+                  computedTotal > 0 && totalTouched && Math.abs(computedTotal - (totalAmount ?? 0)) > 0.005
+                    ? `Diferencia con la suma de líneas: ${formatPrice(computedTotal)}`
+                    : 'Se autocalcula desde las líneas — podés sobrescribirlo si la factura cobró distinto'
+                }
               />
-            </div>
+            </section>
 
-            {/* Reference document */}
-            <div>
+            <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Referencia (factura / guía) {paymentMode === 'CREDIT' && <span className="text-gray-400">(recomendado)</span>}
               </label>
@@ -334,9 +411,9 @@ export default function SupplierReceiptModal({ onClose }) {
                 placeholder="Factura 0023-001234"
                 className={inputCls}
               />
-            </div>
+            </section>
 
-            <div>
+            <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">Notas (opcional)</label>
               <textarea
                 value={notes}
@@ -344,18 +421,18 @@ export default function SupplierReceiptModal({ onClose }) {
                 rows={2}
                 className={`${inputCls} resize-none`}
               />
-            </div>
+            </section>
 
-            {/* Preview block */}
-            {supplier && items.length > 0 && totalAmount != null && totalAmount > 0 && (
+            {/* Resumen */}
+            {supplier && items.length > 0 && finalTotal > 0 && (
               <div className="rounded-xl bg-gray-50 px-4 py-3 text-sm ring-1 ring-gray-100">
                 <p className="font-semibold text-gray-800">Resumen</p>
                 <p className="mt-1 text-gray-600">
-                  Vas a registrar {items.length} producto{items.length !== 1 ? 's' : ''} ({totalItems} unidades)
-                  recibidos de <span className="font-semibold">{supplier.name}</span> por{' '}
-                  <span className="font-mono font-semibold">{formatPrice(totalAmount)}</span>{' '}
+                  {items.length} producto{items.length !== 1 ? 's' : ''} ({totalItems} unidades) de{' '}
+                  <span className="font-semibold">{supplier.name}</span> por{' '}
+                  <span className="font-mono font-semibold">{formatPrice(finalTotal)}</span>{' '}
                   {paymentMode === 'CREDIT'
-                    ? <>al <span className="font-semibold text-amber-700">crédito</span>. Se sumará a tu deuda con el proveedor.</>
+                    ? <>al <span className="font-semibold text-amber-700">crédito</span>. Se sumará a la deuda con el proveedor.</>
                     : <>al <span className="font-semibold text-emerald-700">contado</span>. No genera cuenta por pagar.</>}
                 </p>
               </div>

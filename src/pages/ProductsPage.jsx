@@ -99,10 +99,11 @@ export default function ProductsPage() {
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
+  const [orphansOnly, setOrphansOnly]   = useState(false)
   const [page, setPage]                 = useState(0)
   const debouncedSearch                 = useDebounce(search, 400)
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter])
+  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter, orphansOnly])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
@@ -113,6 +114,7 @@ export default function ProductsPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(lowStock && { lowStock: true }),
     ...(statusFilter !== 'all' && { active: statusFilter === 'active' }),
+    ...(orphansOnly && { placeholderOnly: true }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -185,6 +187,13 @@ export default function ProductsPage() {
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors select-none">
           <input type="checkbox" checked={lowStock} onChange={(e) => setLowStock(e.target.checked)} className="accent-blue-600" />
           <span className="text-gray-600 font-medium">Stock bajo</span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm hover:bg-amber-100 transition-colors select-none"
+          title="Productos vinculados al placeholder 'Sin proveedor asignado' — data legacy a reasignar">
+          <input type="checkbox" checked={orphansOnly}
+            onChange={(e) => setOrphansOnly(e.target.checked)} className="accent-amber-600" />
+          <span className="text-amber-700 font-semibold">Sin proveedor real</span>
         </label>
 
         <select

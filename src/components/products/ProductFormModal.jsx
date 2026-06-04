@@ -266,11 +266,18 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     }
   }
 
+  const [supplierError, setSupplierError] = useState(null)
+
   const onSubmit = async (values) => {
+    setSupplierError(null)
+    if (!supplierId) {
+      setSupplierError('Elegí un proveedor para este producto')
+      return
+    }
     try {
       const payload = {
         ...values,
-        supplierId:  supplierId  || null,
+        supplierId,
         brandId:     brandId     || null,
         categoryId:  categoryId  || null,
         attributes:  Object.keys(attributes).length > 0 ? attributes : null,
@@ -281,9 +288,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           id: product.id,
           data: {
             ...payload,
-            clearSupplierId:  !supplierId,
-            clearBrandId:     !brandId,
-            clearCategoryId:  !categoryId,
+            // supplier ya no se "clearea" — el campo es obligatorio. Brand y
+            // category siguen siendo opcionales.
+            clearBrandId:    !brandId,
+            clearCategoryId: !categoryId,
           },
         })
       } else {
@@ -298,6 +306,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       const known = ['name', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
       if (field && known.includes(field)) {
         setError(field, { type: 'server', message: getErrorMessage(err) })
+      } else if (field === 'supplierId') {
+        setSupplierError(getErrorMessage(err))
       }
       // Banner global queda en `mutation.isError` con `getErrorMessage(mutation.error)`.
     }
@@ -358,13 +368,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               />
             </div>
 
-            {/* Supplier picker */}
+            {/* Supplier picker — obligatorio */}
             <div data-tutorial-target="supplier-picker">
               <EntityPicker
-                label="Proveedor"
+                label={<>Proveedor <span className="text-red-500">*</span></>}
                 items={suppliers}
                 value={supplierId}
-                onChange={setSupplierId}
+                onChange={(v) => { setSupplierId(v); setSupplierError(null) }}
                 onCreate={handleCreateSupplier}
                 extraFields={[
                   { name: 'contact', placeholder: 'Contacto (opcional)' },
@@ -374,6 +384,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 createLabel="Nuevo proveedor"
                 isCreating={createSupplier.isPending}
               />
+              {supplierError && (
+                <p className="mt-1 text-xs text-red-500">{supplierError}</p>
+              )}
+              {/* Pista cuando el producto está vinculado al placeholder */}
+              {isEdit && suppliers.find((s) => s.id === supplierId)?.placeholderForUnassigned && (
+                <p className="mt-1 text-xs text-amber-700">
+                  Este producto está sin proveedor real asignado. Cambialo al proveedor correspondiente.
+                </p>
+              )}
             </div>
 
             {/* Category picker */}
