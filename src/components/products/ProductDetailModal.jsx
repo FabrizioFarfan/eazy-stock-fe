@@ -97,7 +97,22 @@ export default function ProductDetailModal({ product, onClose }) {
             <Row label="Código proveedor" value={product.providerCode} mono />
             <Row label="QR sistema"       value={product.qrCodeSystem} mono />
             <Row label="Unidad"           value={product.unit} />
+            {product.presentation && (
+              <Row label="Presentación"   value={product.presentation} />
+            )}
           </Section>
+
+          {/* Notas de importación — si hubo issues durante el bulk import */}
+          {product.importNotes && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                Notas de importación
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                {product.importNotes}
+              </p>
+            </div>
+          )}
 
           {/* Comercial */}
           <Section title="Comercial">
@@ -127,9 +142,15 @@ export default function ProductDetailModal({ product, onClose }) {
               )}
             </div>
             <Row label="P. compra" value={formatPrice(product.purchasePrice)} />
-            <Row label="P. venta"  value={formatPrice(product.salePrice)} />
+            <Row label="P. venta"  value={
+              product.priceIsVariable ? (
+                <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                  Variable
+                </span>
+              ) : formatPrice(product.salePrice)
+            } />
             <Row label="Margen"    value={
-              product.purchasePrice && product.salePrice
+              !product.priceIsVariable && product.purchasePrice && product.salePrice
                 ? `${(((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)}%`
                 : null
             } />

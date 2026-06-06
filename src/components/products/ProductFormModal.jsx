@@ -13,14 +13,29 @@ import PriceInput from '../inputs/PriceInput'
 import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
+const UNIT_OPTIONS = ['unidad', 'metro', 'kilo', 'litro', 'otro']
+
 const schema = z.object({
   name:          z.string().min(2, 'Mínimo 2 caracteres'),
-  unit:          z.string().min(1, 'Requerido'),
+  unit:          z.string().optional(),
+  unitCustom:    z.string().optional(),
+  presentation:  z.string().optional(),
+  priceIsVariable: z.boolean().optional(),
   description:   z.string().optional(),
   providerCode:  z.string().optional(),
   purchasePrice: z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
-  salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
+  // salePrice se valida condicionalmente: si priceIsVariable=true, no se exige > 0
+  salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'No puede ser negativo').optional(),
   minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).int().min(0, 'Mínimo 0'),
+}).superRefine((data, ctx) => {
+  // salePrice obligatorio sólo si NO es variable
+  if (!data.priceIsVariable && (data.salePrice == null || data.salePrice <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['salePrice'],
+      message: 'Debe ser mayor a 0',
+    })
+  }
 })
 
 function Field({ label, required, error, children }) {
@@ -180,12 +195,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     finally { isOpeningRef.current = false }
   }
 
+  // Si la unidad guardada no es una de las opciones standard, mostramos "otro" + input custom
+  const initialUnit = product?.unit ?? 'unidad'
+  const initialUnitIsStandard = UNIT_OPTIONS.slice(0, -1).includes(initialUnit)
+
   const {
     register,
     control,
     handleSubmit,
     reset,
     setValue,
+    watch,
     setError,
     formState: { errors },
   } = useForm({
@@ -193,25 +213,36 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     defaultValues: isEdit
       ? {
           name:          product.name          ?? '',
-          unit:          product.unit          ?? '',
+          unit:          initialUnitIsStandard ? initialUnit : 'otro',
+          unitCustom:    initialUnitIsStandard ? '' : initialUnit,
+          presentation:  product.presentation  ?? '',
+          priceIsVariable: !!product.priceIsVariable,
           description:   product.description   ?? '',
           providerCode:  product.providerCode  ?? '',
           purchasePrice: product.purchasePrice ?? '',
-          salePrice:     product.salePrice     ?? '',
+          salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
           minStock:      product.minStock      ?? 0,
         }
-      : { minStock: 0 },
+      : { minStock: 0, unit: 'unidad', priceIsVariable: false },
   })
+
+  const unitValue = watch('unit')
+  const priceIsVariable = watch('priceIsVariable')
 
   useEffect(() => {
     if (isEdit) {
+      const u = product.unit ?? 'unidad'
+      const isStd = UNIT_OPTIONS.slice(0, -1).includes(u)
       reset({
         name:          product.name          ?? '',
-        unit:          product.unit          ?? '',
+        unit:          isStd ? u : 'otro',
+        unitCustom:    isStd ? '' : u,
+        presentation:  product.presentation  ?? '',
+        priceIsVariable: !!product.priceIsVariable,
         description:   product.description   ?? '',
         providerCode:  product.providerCode  ?? '',
         purchasePrice: product.purchasePrice ?? '',
-        salePrice:     product.salePrice     ?? '',
+        salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
         minStock:      product.minStock      ?? 0,
       })
       setBrandId(product.brandId       ?? null)
@@ -275,8 +306,19 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       return
     }
     try {
+      // Resolve unit: if "otro" → use unitCustom, else use the standard option
+      const effectiveUnit = values.unit === 'otro'
+        ? (values.unitCustom?.trim() || 'unidad')
+        : (values.unit || 'unidad')
+      const presentation = values.presentation?.trim() || null
+
+      const { unitCustom, ...rest } = values
       const payload = {
-        ...values,
+        ...rest,
+        unit: effectiveUnit,
+        presentation,
+        priceIsVariable: !!values.priceIsVariable,
+        salePrice: values.priceIsVariable ? 0 : values.salePrice,
         supplierId,
         brandId:     brandId     || null,
         categoryId:  categoryId  || null,
@@ -289,9 +331,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           data: {
             ...payload,
             // supplier ya no se "clearea" — el campo es obligatorio. Brand y
-            // category siguen siendo opcionales.
+            // category siguen siendo opcionales. Presentation se borra explícito.
             clearBrandId:    !brandId,
             clearCategoryId: !categoryId,
+            clearPresentation: !presentation,
           },
         })
       } else {
@@ -344,15 +387,39 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
 
-            {/* Nombre + Unidad */}
+            {/* Nombre + Unidad + Presentación */}
             <div data-tutorial-target="name-unit" className="grid grid-cols-2 gap-3">
               <Field label="Nombre" required error={errors.name?.message}>
                 <input {...register('name')} placeholder="Ej. Aceite 5W30" className={inputCls} />
               </Field>
-              <Field label="Unidad" required error={errors.unit?.message}>
-                <input {...register('unit')} placeholder="litros, kg, unid." className={inputCls} />
+              <Field label="Unidad" error={errors.unit?.message}>
+                <select {...register('unit')} className={inputCls}>
+                  <option value="unidad">unidad</option>
+                  <option value="metro">metro</option>
+                  <option value="kilo">kilo</option>
+                  <option value="litro">litro</option>
+                  <option value="otro">otro...</option>
+                </select>
+                {unitValue === 'otro' && (
+                  <input
+                    {...register('unitCustom')}
+                    placeholder="Especificá la unidad (ej. galón, par)"
+                    className={`${inputCls} mt-1.5`}
+                  />
+                )}
               </Field>
             </div>
+
+            <Field label="Presentación" error={errors.presentation?.message}>
+              <input
+                {...register('presentation')}
+                placeholder="Ej: Saco de 25kg, Caja de 100, Rollo de 50m"
+                className={inputCls}
+              />
+              <p className="text-xs text-gray-400 mt-0.5">
+                Opcional · Cómo viene presentado el producto. No afecta cómo se vende.
+              </p>
+            </Field>
 
             {/* Brand picker */}
             <div data-tutorial-target="brand-picker">
@@ -531,10 +598,23 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               </div>
             </div>
 
-            {/* Precios + Stock mínimo
-                Los precios usan PriceInput: dos campos separados (enteros + decimales,
-                hasta 6) — el usuario tipea "25" + "50" para 25.50, o "0" + "0357" para
-                un tornillo a 0.0357. Stock sigue siendo entero. */}
+            {/* Checkbox precio variable */}
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+              <input
+                type="checkbox"
+                {...register('priceIsVariable')}
+                className="mt-0.5 accent-blue-600"
+              />
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Precio variable</p>
+                <p className="text-xs text-gray-500">
+                  El precio se define al momento de vender (se negocia con el cliente).
+                  En el POS pedirá un precio obligatorio antes de cobrar.
+                </p>
+              </div>
+            </label>
+
+            {/* Precios + Stock mínimo */}
             <div data-tutorial-target="prices" className="grid grid-cols-3 gap-3">
               <Controller
                 control={control}
@@ -553,10 +633,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 name="salePrice"
                 render={({ field }) => (
                   <PriceInput
-                    label={<>P. venta <span className="text-red-500">*</span></>}
-                    value={field.value === '' ? null : field.value}
+                    label={priceIsVariable
+                      ? <span className="text-gray-400">P. venta (variable)</span>
+                      : <>P. venta <span className="text-red-500">*</span></>}
+                    value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
                     onChange={(v) => field.onChange(v ?? '')}
                     error={errors.salePrice?.message}
+                    disabled={priceIsVariable}
                   />
                 )}
               />

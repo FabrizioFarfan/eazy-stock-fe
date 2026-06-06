@@ -38,6 +38,9 @@ function ProductCard({ product, inCart, onAdd }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-gray-900">{product.name}</p>
+          {product.presentation && (
+            <p className="truncate text-xs text-gray-400">{product.presentation}</p>
+          )}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-500">
               {product.sku}
@@ -59,7 +62,13 @@ function ProductCard({ product, inCart, onAdd }) {
               {product.currentStock} uds.
             </span>
           </p>
-          <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
+          {product.priceIsVariable ? (
+            <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+              Precio variable
+            </span>
+          ) : (
+            <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
+          )}
         </div>
 
         {inCart ? (
@@ -85,12 +94,22 @@ function ProductCard({ product, inCart, onAdd }) {
 
 function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, onPriceChange }) {
   const { product, quantity, unitPrice } = item
+  const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
   const subtotal     = quantity * numericPrice
-  const isModified   = Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0000005
+  const isModified   = !isVariable && Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0000005
+  const variableMissing = isVariable && (unitPrice === '' || unitPrice == null || numericPrice <= 0)
+
+  // Si es variable, el input de precio está habilitado siempre (no es un override:
+  // es el único precio). Autofoco al montar para que el cajero lo defina rápido.
+  const priceInputDisabled = isVariable ? false : !canApplyDiscount
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+    <div className={`rounded-xl border p-3 ${
+      variableMissing
+        ? 'border-orange-300 bg-orange-50/70 ring-1 ring-orange-200'
+        : 'border-gray-100 bg-gray-50/60'
+    }`}>
       <div className="flex items-start justify-between gap-2">
         <p className="flex-1 text-sm font-semibold leading-snug text-gray-900">{product.name}</p>
         <button onClick={() => onRemove(product.id)}
@@ -117,12 +136,25 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
 
       <div className="mt-2">
         <PriceInput
-          value={numericPrice}
+          value={isVariable && (unitPrice === '' || unitPrice == null) ? null : numericPrice}
           onChange={(v) => onPriceChange(product.id, v)}
-          disabled={!canApplyDiscount}
+          disabled={priceInputDisabled}
           maxDecimals={6}
+          autoFocus={isVariable && variableMissing}
+          placeholderWhole={isVariable ? 'Definir' : '0'}
+          placeholderDecimals={isVariable ? '00' : '00'}
         />
-        {!canApplyDiscount ? (
+        {isVariable ? (
+          variableMissing ? (
+            <p className="mt-1 text-[11px] font-medium text-orange-700">
+              Este producto tiene precio variable — definir antes de cobrar
+            </p>
+          ) : (
+            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+              <Tag size={10} />Precio definido en la venta
+            </span>
+          )
+        ) : !canApplyDiscount ? (
           <p className="mt-1 text-[10px] text-gray-400">
             Tu administrador no te ha autorizado a modificar precios
           </p>
@@ -374,7 +406,12 @@ export default function NewSalePage() {
   const addToCart = (product) => {
     setCart((prev) => [
       ...prev,
-      { product, quantity: 1, unitPrice: Number(product.salePrice ?? 0) },
+      {
+        product,
+        quantity: 1,
+        // Precio variable arranca vacío para forzar al cajero a definirlo
+        unitPrice: product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
+      },
     ])
   }
   const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.product.id !== id))
@@ -427,8 +464,18 @@ export default function NewSalePage() {
     customer.creditLimit == null || Number(customer.creditLimit) <= 0
   )
 
+  // Productos variables sin precio definido — bloquean la confirmación
+  const variableWithoutPrice = cart.filter((i) =>
+    i.product.priceIsVariable && parseNumber(i.unitPrice) <= 0,
+  )
+  const hasVariableWithoutPrice = variableWithoutPrice.length > 0
+
   const handleSubmit = async () => {
     if (cart.length === 0) return
+    if (hasVariableWithoutPrice) {
+      toast.error('Definí el precio de los productos variables antes de cobrar')
+      return
+    }
     if (fiadoMissingCustomer) {
       toast.error('Seleccioná un cliente para la venta al fiado')
       return
@@ -441,7 +488,10 @@ export default function NewSalePage() {
       const items = cart.map((i) => {
         const enteredPrice = parseNumber(i.unitPrice)
         const original     = Number(i.product.salePrice ?? 0)
-        const overrideUsed = canApplyDiscount && Math.abs(enteredPrice - original) > 0.0001
+        // Para precio variable, el override SIEMPRE viaja — es el único precio.
+        // Para precio fijo, sólo si el cajero lo cambió y tiene permiso.
+        const overrideUsed = i.product.priceIsVariable
+          || (canApplyDiscount && Math.abs(enteredPrice - original) > 0.0001)
         return {
           productId: i.product.id,
           quantity: i.quantity,
@@ -615,7 +665,7 @@ export default function NewSalePage() {
 
             <button
               onClick={handleSubmit}
-              disabled={cart.length === 0 || createSale.isPending}
+              disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
@@ -641,7 +691,7 @@ export default function NewSalePage() {
             </div>
             <button
               onClick={handleSubmit}
-              disabled={createSale.isPending}
+              disabled={createSale.isPending || hasVariableWithoutPrice}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}

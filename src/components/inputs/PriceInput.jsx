@@ -34,6 +34,7 @@ const PriceInput = forwardRef(function PriceInput(
     placeholderWhole = '0',
     placeholderDecimals = '00',
     className = '',
+    autoFocus = false,
   },
   ref,
 ) {
@@ -46,6 +47,17 @@ const PriceInput = forwardRef(function PriceInput(
     if (typeof ref === 'function') ref(wholeRef.current)
     else if (ref) ref.current = wholeRef.current
   }, [ref])
+
+  // Autofoco al montar — usado por el POS para productos con precio variable
+  // recién agregados al carrito.
+  useEffect(() => {
+    if (autoFocus && !disabled && wholeRef.current) {
+      // Pequeño delay para evitar pisar focos del flow de teclado externo.
+      const id = setTimeout(() => wholeRef.current?.focus(), 0)
+      return () => clearTimeout(id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Local string state — keeps the user's exact typing (e.g. "0357" stays "0357",
   // not collapsed to "357"). We re-sync from `value` only when it changes from

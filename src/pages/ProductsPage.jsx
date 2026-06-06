@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle, FileSpreadsheet } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
@@ -159,6 +160,14 @@ export default function ProductsPage() {
               <HelpCircle size={14} />
               Tutorial
             </button>
+            <Link
+              to="/products/import"
+              title="Importar productos desde un Excel o CSV"
+              className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+            >
+              <FileSpreadsheet size={14} />
+              Importar desde Excel
+            </Link>
             <button
               onClick={openCreate}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
@@ -258,12 +267,25 @@ export default function ProductsPage() {
                 products.map((p) => (
                   <tr key={p.id} className={`border-b border-gray-50 transition-colors hover:bg-gray-50/70 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
-                    <td className="max-w-[160px] truncate px-5 py-3.5 font-semibold text-gray-900">{p.name}</td>
+                    <td className="max-w-[180px] truncate px-5 py-3.5">
+                      <p className="font-semibold text-gray-900">{p.name}</p>
+                      {p.presentation && (
+                        <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
                     <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>
-                    <td className="px-5 py-3.5 text-right font-semibold text-gray-900">{formatPrice(p.salePrice)}</td>
+                    <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
+                      {p.priceIsVariable ? (
+                        <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                          Variable
+                        </span>
+                      ) : (
+                        formatPrice(p.salePrice)
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
                     <td className="px-5 py-3.5 text-center">
