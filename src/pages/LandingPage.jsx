@@ -1,118 +1,231 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import {
   Package, BarChart2, ShoppingCart, ArrowUpDown,
   Shield, QrCode, Bell, FileSpreadsheet,
   MessageCircle, Smartphone, Globe, Zap,
   Check, ChevronRight, Star, Users,
+  Truck, Receipt, CreditCard, Sparkles,
+  Wallet, Boxes, ScanLine, TrendingUp,
+  ArrowRight, PlayCircle, Quote, Wrench,
+  Tag, FolderOpen, ClipboardCheck, AlertTriangle,
 } from 'lucide-react'
 
-// ─── Navbar ──────────────────────────────────────────────────────────────────
-function Navbar() {
+// ═══════════════════════════════════════════════════════════════════════════
+//  Background patterns — used by hero + section dividers
+// ═══════════════════════════════════════════════════════════════════════════
+
+function GridPattern() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#111827]/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-        <div className="flex items-center gap-2.5">
+    <div
+      aria-hidden
+      className="absolute inset-0 opacity-[0.08]"
+      style={{
+        backgroundImage:
+          'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
+        backgroundSize: '36px 36px',
+        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+      }}
+    />
+  )
+}
+
+function GlowOrbs() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-600/30 blur-[120px]" />
+      <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]" />
+      <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-[140px]" />
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Navbar — sticky con efecto scroll
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      scrolled
+        ? 'border-b border-white/10 bg-[#0a0e1a]/85 backdrop-blur-xl'
+        : 'border-b border-transparent bg-transparent'
+    }`}>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+        <Link to="/" className="flex items-center gap-2.5">
           <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
-        </div>
-        <nav className="hidden items-center gap-7 md:flex">
-          <a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Funciones</a>
-          <a href="#how"      className="text-sm text-slate-400 hover:text-white transition-colors">Cómo funciona</a>
-          <a href="#roadmap"  className="text-sm text-slate-400 hover:text-white transition-colors">Roadmap</a>
+        </Link>
+        <nav className="hidden items-center gap-8 md:flex">
+          <a href="#features"  className="text-sm text-slate-400 hover:text-white transition-colors">Funciones</a>
+          <a href="#showcase"  className="text-sm text-slate-400 hover:text-white transition-colors">Producto</a>
+          <a href="#industries" className="text-sm text-slate-400 hover:text-white transition-colors">Para quién</a>
+          <a href="#roadmap"   className="text-sm text-slate-400 hover:text-white transition-colors">Roadmap</a>
         </nav>
         <Link
           to="/login"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          className="group flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a0e1a] hover:bg-blue-100 transition-all"
         >
           Iniciar sesión
+          <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
     </header>
   )
 }
 
-// ─── App Mockup ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  App mockup — dashboard preview en el hero
+// ═══════════════════════════════════════════════════════════════════════════
+
 function AppMockup() {
   return (
-    <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#1e293b] shadow-2xl shadow-black/50">
-      {/* Window dots */}
-      <div className="flex items-center gap-1.5 border-b border-white/5 px-4 py-2.5">
-        <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-        <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-        <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-        <span className="ml-2 text-xs text-slate-500">eazy-stock.com/products</span>
-      </div>
+    <div className="relative w-full max-w-2xl">
+      {/* Halo decoration */}
+      <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-emerald-500/20 blur-2xl" />
 
-      <div className="flex">
-        {/* Mini sidebar */}
-        <div className="flex w-44 flex-shrink-0 flex-col gap-1 border-r border-white/5 bg-[#111827] p-3">
-          <div className="mb-2 flex items-center gap-2 px-2 py-1">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600">
-              <Package size={11} className="text-white" />
-            </div>
-            <span className="text-xs font-bold text-white">Eazy Stock</span>
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-blue-900/40">
+        {/* Window chrome */}
+        <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#0a0e1a] px-4 py-2.5">
+          <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+          <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+          <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+          <div className="ml-3 flex h-5 flex-1 items-center gap-1 rounded bg-white/5 px-2 text-[10px] text-slate-500">
+            <span className="text-emerald-400">●</span> eazy-stock.com/dashboard
           </div>
-          {[
-            { icon: BarChart2,   label: 'Dashboard',  active: false },
-            { icon: Package,     label: 'Productos',   active: true  },
-            { icon: ShoppingCart,label: 'Ventas',      active: false },
-            { icon: ArrowUpDown, label: 'Stock',       active: false },
-            { icon: BarChart2,   label: 'Reportes',    active: false },
-          ].map(({ icon: Icon, label, active }) => (
-            <div key={label} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${active ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
-              <Icon size={12} />
-              {label}
-            </div>
-          ))}
         </div>
 
-        {/* Content area */}
-        <div className="flex-1 p-4">
-          {/* Stats row */}
-          <div className="mb-3 grid grid-cols-3 gap-2">
+        <div className="flex">
+          {/* Sidebar */}
+          <div className="hidden w-44 flex-shrink-0 flex-col gap-1 border-r border-white/5 bg-[#0a0e1a] p-3 sm:flex">
+            <div className="mb-2 flex items-center gap-2 px-2 py-1">
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-blue-500 to-indigo-600">
+                <Package size={11} className="text-white" />
+              </div>
+              <span className="text-xs font-bold text-white">Eazy Stock</span>
+            </div>
             {[
-              { label: 'Productos', value: '148' },
-              { label: 'Ventas hoy', value: 'S/ 2,430' },
-              { label: 'Stock bajo', value: '3' },
-            ].map(({ label, value }) => (
-              <div key={label} className="rounded-lg bg-[#1e293b] p-2.5 border border-white/5">
-                <p className="text-[10px] text-slate-500">{label}</p>
-                <p className="text-sm font-bold text-white">{value}</p>
+              { icon: BarChart2,   label: 'Dashboard',  active: true },
+              { icon: Package,     label: 'Productos',   badge: '148' },
+              { icon: ShoppingCart,label: 'Ventas' },
+              { icon: ArrowUpDown, label: 'Stock' },
+              { icon: Users,       label: 'Clientes' },
+              { icon: Truck,       label: 'Proveedores' },
+              { icon: BarChart2,   label: 'Reportes' },
+            ].map(({ icon: Icon, label, active, badge }) => (
+              <div key={label} className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
+                active ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/50' : 'text-slate-400'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <Icon size={11} />
+                  {label}
+                </div>
+                {badge && <span className="rounded bg-white/10 px-1 text-[9px]">{badge}</span>}
               </div>
             ))}
           </div>
 
-          {/* Table header */}
-          <div className="grid grid-cols-4 gap-2 rounded-t-lg bg-[#111827] px-3 py-1.5">
-            {['SKU', 'Producto', 'Stock', 'Precio'].map((h) => (
-              <span key={h} className="text-[9px] font-semibold uppercase text-slate-500">{h}</span>
-            ))}
-          </div>
-
-          {/* Table rows */}
-          {[
-            { sku: 'ACE-A4F2', name: 'Aceite 5W30', stock: 24, price: 'S/ 45.00', low: false },
-            { sku: 'FIL-B8D1', name: 'Filtro aceite', stock: 3, price: 'S/ 12.50', low: true },
-            { sku: 'BUJ-C2E9', name: 'Bujías NGK', stock: 18, price: 'S/ 8.90', low: false },
-            { sku: 'LLA-D7A3', name: 'Llanta 185/65', stock: 6, price: 'S/ 280.00', low: false },
-          ].map((row) => (
-            <div key={row.sku} className="grid grid-cols-4 gap-2 border-b border-white/5 px-3 py-2">
-              <span className="font-mono text-[9px] text-slate-500">{row.sku}</span>
-              <span className="text-[9px] font-medium text-white truncate">{row.name}</span>
-              <span className={`text-[9px] font-semibold ${row.low ? 'text-red-400' : 'text-green-400'}`}>{row.stock}</span>
-              <span className="text-[9px] text-slate-300">{row.price}</span>
+          {/* Content area */}
+          <div className="flex-1 p-4">
+            {/* Stats row */}
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              {[
+                { label: 'Ventas hoy', value: 'S/ 2,430', delta: '+18%', color: 'text-emerald-400' },
+                { label: 'Stock bajo', value: '3', delta: '↑ 2', color: 'text-amber-400' },
+                { label: 'Cobrar',     value: 'S/ 4,820', delta: '7 clientes', color: 'text-blue-400' },
+              ].map(({ label, value, delta, color }) => (
+                <div key={label} className="rounded-lg border border-white/5 bg-white/[0.03] p-2.5">
+                  <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
+                  <p className="mt-0.5 text-sm font-bold text-white">{value}</p>
+                  <p className={`text-[9px] ${color}`}>{delta}</p>
+                </div>
+              ))}
             </div>
-          ))}
 
-          {/* Badge */}
-          <div className="mt-3 flex items-center gap-1.5">
-            <span className="flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-[9px] font-semibold text-green-400">
-              <div className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-              En tiempo real
-            </span>
-            <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-[9px] font-semibold text-blue-500">
-              3 productos con stock bajo
-            </span>
+            {/* Chart strip */}
+            <div className="mb-3 flex h-12 items-end gap-1 rounded-lg border border-white/5 bg-white/[0.03] p-2">
+              {[35, 50, 28, 65, 40, 80, 55, 70, 45, 60, 90, 75, 50, 88].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-sm bg-gradient-to-t from-blue-700 to-blue-400"
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+
+            {/* Table header */}
+            <div className="grid grid-cols-12 gap-2 rounded-t bg-white/[0.03] px-3 py-1.5">
+              <span className="col-span-2 text-[9px] font-semibold uppercase text-slate-500">SKU</span>
+              <span className="col-span-5 text-[9px] font-semibold uppercase text-slate-500">Producto</span>
+              <span className="col-span-2 text-[9px] font-semibold uppercase text-slate-500">Stock</span>
+              <span className="col-span-3 text-right text-[9px] font-semibold uppercase text-slate-500">Precio</span>
+            </div>
+
+            {/* Table rows */}
+            {[
+              { sku: 'F03', name: 'Abrazadera 1/2 S/Fin', sub: 'Saco de 25kg', stock: 23, price: 'S/ 0.40', low: false, variable: false },
+              { sku: 'F121', name: 'Cemento Frontera', sub: null, stock: 100, price: 'S/ 25.50', low: false, variable: false },
+              { sku: 'F87', name: 'Filtro aceite K&N', sub: null, stock: 3, price: 'S/ 12.50', low: true, variable: false },
+              { sku: 'F250', name: 'Tornillo 1/4 × 2"', sub: null, stock: 524, price: 'Variable', low: false, variable: true },
+            ].map((row) => (
+              <div key={row.sku} className="grid grid-cols-12 gap-2 border-b border-white/5 px-3 py-2">
+                <span className="col-span-2 font-mono text-[9px] text-slate-500">{row.sku}</span>
+                <div className="col-span-5 min-w-0">
+                  <p className="truncate text-[10px] font-medium text-white">{row.name}</p>
+                  {row.sub && <p className="truncate text-[9px] text-slate-500">{row.sub}</p>}
+                </div>
+                <span className="col-span-2 self-center">
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+                    row.low ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'
+                  }`}>
+                    {row.low ? '↓ ' : ''}{row.stock}
+                  </span>
+                </span>
+                <span className="col-span-3 self-center text-right text-[10px]">
+                  {row.variable ? (
+                    <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-orange-400">
+                      Variable
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">{row.price}</span>
+                  )}
+                </span>
+              </div>
+            ))}
+
+            {/* Footer badges */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                En vivo · WebSocket
+              </span>
+              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
+                3 alertas
+              </span>
+              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-400">
+                7 clientes al fiado
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating notification */}
+      <div className="absolute -bottom-4 -right-4 hidden max-w-[220px] rounded-xl border border-white/10 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
+        <div className="flex items-start gap-2">
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
+            <AlertTriangle size={13} className="text-amber-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-white">Stock bajo</p>
+            <p className="mt-0.5 text-[9px] text-slate-400">"Filtro aceite K&N" — solo quedan 3 unidades</p>
           </div>
         </div>
       </div>
@@ -120,50 +233,65 @@ function AppMockup() {
   )
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  Hero
+// ═══════════════════════════════════════════════════════════════════════════
+
 function Hero() {
   return (
-    <section className="bg-[#111827] pb-20 pt-32">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-start lg:gap-16">
+    <section className="relative overflow-hidden bg-[#0a0e1a] pb-24 pt-32 sm:pb-32 sm:pt-40">
+      <GlowOrbs />
+      <GridPattern />
+
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="flex flex-col items-center gap-14 lg:flex-row lg:items-center lg:gap-12">
           {/* Text */}
           <div className="flex-1 text-center lg:text-left">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-600/30 bg-blue-600/10 px-3 py-1.5 text-xs font-medium text-blue-500">
-              <Zap size={12} />
-              Gestión de inventario para PYMEs
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 backdrop-blur">
+              <Sparkles size={12} />
+              Nuevo · Import masivo desde Excel ya disponible
             </div>
-            <h1 className="mb-5 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
-              Tu inventario,{' '}
-              <span className="bg-gradient-to-r from-blue-500 to-blue-700 bg-clip-text text-transparent">
-                bajo control.
+
+            <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Vendé, controlá stock y cobrá<br />
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-300 bg-clip-text text-transparent">
+                desde un solo lugar.
               </span>
-              <br />
-              Siempre.
             </h1>
-            <p className="mb-8 max-w-lg text-base leading-relaxed text-slate-400">
-              EazyStock es el sistema de inventario y ventas diseñado para ferreterías, distribuidoras y tiendas en Latinoamérica. Simple, rápido y accesible desde cualquier dispositivo.
+
+            <p className="mb-9 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg">
+              Eazy Stock es el sistema de inventario, ventas, fiado y cuentas
+              corrientes para ferreterías, distribuidoras y tiendas en
+              Latinoamérica. Simple, rápido, y diseñado con clientes reales.
             </p>
-            <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start">
+
+            <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start lg:justify-start">
               <Link
                 to="/login"
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 transition-colors"
+                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:shadow-xl hover:shadow-blue-900/60 hover:scale-[1.02]"
               >
                 Empezar ahora — es gratis
-                <ChevronRight size={16} />
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
-                href="#how"
-                className="rounded-xl border border-white/10 px-6 py-3 text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors"
+                href="#showcase"
+                className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/10"
               >
-                Ver cómo funciona
+                <PlayCircle size={16} />
+                Ver el producto
               </a>
             </div>
 
-            {/* Trust indicators */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
-              {['Sin tarjeta requerida', 'Acceso inmediato', 'Soporte incluido'].map((t) => (
-                <div key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <Check size={12} className="text-green-400" />
+            {/* Trust strip */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 lg:justify-start">
+              {[
+                'Sin tarjeta requerida',
+                'Multi-usuario incluido',
+                '11 permisos granulares',
+                'Soporte en español',
+              ].map((t) => (
+                <div key={t} className="flex items-center gap-1.5">
+                  <Check size={12} className="text-emerald-400" />
                   {t}
                 </div>
               ))}
@@ -180,22 +308,26 @@ function Hero() {
   )
 }
 
-// ─── Stats ────────────────────────────────────────────────────────────────────
-function Stats() {
-  const stats = [
-    { value: '10,000+', label: 'Productos gestionados' },
-    { value: '99.9%',   label: 'Uptime garantizado' },
-    { value: '< 1s',    label: 'Tiempo de respuesta' },
-    { value: '24/7',    label: 'Disponibilidad' },
-  ]
+// ═══════════════════════════════════════════════════════════════════════════
+//  Customer logos strip — "trusted by"
+// ═══════════════════════════════════════════════════════════════════════════
+
+function CustomersStrip() {
   return (
-    <section className="border-b border-gray-100 bg-white py-10">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {stats.map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <p className="text-2xl font-extrabold text-gray-900 sm:text-3xl">{value}</p>
-              <p className="mt-1 text-sm text-gray-500">{label}</p>
+    <section className="border-y border-gray-100 bg-white py-10">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400">
+          Usado por negocios reales en Perú
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+          {[
+            { name: 'Ferretería Femaco', sub: 'Lima · 3,400+ productos' },
+            { name: 'En piloto privado',  sub: 'Más clientes onboarding' },
+            { name: 'Tu negocio',         sub: 'Próximo en la lista' },
+          ].map((c) => (
+            <div key={c.name} className="text-center">
+              <p className="text-sm font-bold text-gray-700">{c.name}</p>
+              <p className="text-xs text-gray-400">{c.sub}</p>
             </div>
           ))}
         </div>
@@ -204,79 +336,139 @@ function Stats() {
   )
 }
 
-// ─── Features ─────────────────────────────────────────────────────────────────
-const FEATURES = [
+// ═══════════════════════════════════════════════════════════════════════════
+//  Stats
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Stats() {
+  const stats = [
+    { value: '3,400+', label: 'Productos por negocio', sub: 'Probado con catálogos reales' },
+    { value: '< 200ms', label: 'Búsqueda en vivo',     sub: 'Search-as-you-type indexado' },
+    { value: '11',      label: 'Permisos granulares',  sub: 'Control fino por empleado' },
+    { value: '6',       label: 'Decimales en precios', sub: 'Para tornillos a S/ 0.0357' },
+  ]
+  return (
+    <section className="bg-gradient-to-b from-white to-gray-50 py-14">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {stats.map(({ value, label, sub }) => (
+            <div key={label} className="text-center">
+              <p className="bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
+                {value}
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-gray-900">{label}</p>
+              <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Features — agrupado por categoría
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FEATURE_GROUPS = [
   {
-    icon: Package,
-    color: 'bg-blue-100 text-blue-700',
-    title: 'Inventario en tiempo real',
-    desc: 'SKU único, precios de compra y venta, stock mínimo con alertas automáticas. Todo actualizado al instante.',
+    title: 'Inventario inteligente',
+    desc: 'Todo lo que necesitás para que tu catálogo viva ordenado.',
+    color: 'from-blue-500 to-indigo-600',
+    items: [
+      { icon: Boxes,      title: 'Productos con SKU único',          desc: 'Cada producto con código generado, QR y código de barras Code 128.' },
+      { icon: Tag,        title: 'Marcas, categorías, atributos',    desc: 'Modelo flexible — agregá los atributos custom que necesites por categoría.' },
+      { icon: Truck,      title: 'Proveedores',                      desc: 'Asociá productos a proveedores con código interno propio y dedupe de duplicados.' },
+      { icon: ScanLine,   title: 'Precio variable',                  desc: 'Para productos que se negocian en el momento — el POS lo pide al cobrar.' },
+      { icon: Package,    title: 'Presentación informativa',         desc: '"Saco de 25kg", "Caja de 100", "Rollo de 50m" — al lado del nombre.' },
+      { icon: AlertTriangle, title: 'Stock mínimo + alertas',        desc: 'Notificaciones automáticas cuando un producto cae bajo el mínimo.' },
+    ],
   },
   {
-    icon: QrCode,
-    color: 'bg-blue-100 text-blue-600',
-    title: 'Escáner QR integrado',
-    desc: 'Genera códigos QR para cada producto y escanéalos con la cámara para agregar al carrito en segundos.',
+    title: 'POS y ventas rápidas',
+    desc: 'El cajero abre el POS y vende. Punto.',
+    color: 'from-emerald-500 to-teal-600',
+    items: [
+      { icon: ShoppingCart, title: 'Búsqueda instantánea',           desc: 'Por nombre, SKU, código de proveedor o QR — debounce a 400ms.' },
+      { icon: QrCode,       title: 'Cámara como escáner',            desc: 'BarcodeDetector nativo + ZXing fallback. Sin app, sin lector externo.' },
+      { icon: TrendingUp,   title: 'Descuentos flexibles',           desc: 'Porcentaje o monto fijo, por venta o por item. Permiso aparte para aplicar.' },
+      { icon: Wallet,       title: 'Override de precio',             desc: 'El cajero puede ajustar precio por item — con permiso y queda flageado.' },
+      { icon: CreditCard,   title: 'Venta al fiado',                 desc: 'Asociá la venta a un cliente con línea de crédito; el sistema actualiza la deuda.' },
+      { icon: Receipt,      title: 'Precios con 6 decimales',        desc: 'Para tornillos a S/ 0.0357 — los aggregates se redondean a 2 decimales al cobrar.' },
+    ],
   },
   {
-    icon: ShoppingCart,
-    color: 'bg-green-100 text-green-600',
-    title: 'Ventas en un clic',
-    desc: 'Registra ventas rápido con búsqueda por nombre, SKU o QR. El stock se descuenta automáticamente.',
+    title: 'Cuentas corrientes',
+    desc: 'Cuánto te deben y cuánto debés — siempre en vivo.',
+    color: 'from-violet-500 to-fuchsia-600',
+    items: [
+      { icon: Users,         title: 'Clientes y crédito',            desc: 'Ficha completa con documento, límite de crédito y deuda actual.' },
+      { icon: CreditCard,    title: 'Pagos y ajustes',               desc: 'Registrá pagos parciales o ajustes manuales — todo audit-loggeado.' },
+      { icon: Truck,         title: 'Proveedores con deuda',         desc: 'Recepciones multi-producto → entran al stock y suman a la deuda con el proveedor.' },
+      { icon: ClipboardCheck,title: 'Recepción multi-producto',      desc: 'Un solo recibo, varios productos — el stock se actualiza por línea.' },
+      { icon: BarChart2,     title: 'Reportes de cobranza',          desc: 'Cuentas por cobrar (clientes) y por pagar (proveedores) listas para revisar.' },
+      { icon: Wallet,        title: 'Pagos parciales',               desc: 'Soporta abonos parciales que reducen la deuda gradualmente.' },
+    ],
   },
   {
-    icon: BarChart2,
-    color: 'bg-purple-100 text-purple-600',
-    title: 'Reportes y analytics',
-    desc: 'Ingresos por día, top productos más vendidos, análisis por proveedor y empleado. Todo filtrable.',
-  },
-  {
-    icon: Shield,
-    color: 'bg-rose-100 text-rose-600',
-    title: 'Permisos granulares',
-    desc: '11 permisos individuales por empleado: quién puede vender, recibir mercadería, ver reportes y más.',
-  },
-  {
-    icon: Bell,
-    color: 'bg-yellow-100 text-yellow-600',
-    title: 'Alertas instantáneas',
-    desc: 'Notificaciones en tiempo real cuando el stock de cualquier producto cae por debajo del mínimo.',
-  },
-  {
-    icon: Users,
-    color: 'bg-teal-100 text-teal-600',
-    title: 'Multi-usuario',
-    desc: 'Un dueño, múltiples empleados. Cada uno con su acceso y permisos personalizados.',
-  },
-  {
-    icon: Star,
-    color: 'bg-indigo-100 text-indigo-600',
-    title: 'Auditoría completa',
-    desc: 'Historial de cada cambio: quién creó, editó o eliminó cada producto, venta o movimiento de stock.',
+    title: 'Operaciones y control',
+    desc: 'Seguridad, auditoría y herramientas para escalar.',
+    color: 'from-amber-500 to-orange-600',
+    items: [
+      { icon: Shield,        title: 'Permisos granulares',           desc: '11 permisos individuales por empleado: vender, cancelar, ver reportes, etc.' },
+      { icon: ClipboardCheck,title: 'Auditoría completa',            desc: 'Cada CREATE/UPDATE/DELETE queda registrado con quién, cuándo, antes y después.' },
+      { icon: Bell,          title: 'Notificaciones en vivo',        desc: 'WebSocket + STOMP — alertas de stock bajo se ven en el acto.' },
+      { icon: Users,         title: 'Multi-usuario',                 desc: 'Dueño + empleados con roles claros. Cada uno ve solo lo que le toca.' },
+      { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Subí tu inventario actual (3,000+ filas) y empezá a operar en minutos.' },
+      { icon: Globe,         title: 'Multi-tenant + multi-moneda',   desc: 'Cada negocio aislado. Soporta PEN, USD, EUR, PLN out-of-the-box.' },
+    ],
   },
 ]
 
 function Features() {
   return (
-    <section id="features" className="bg-gray-50 py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Funcionalidades</p>
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Todo lo que tu negocio necesita
+    <section id="features" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="mb-16 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Funcionalidades</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            Todo lo que tu negocio necesita,<br />
+            en una sola plataforma
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
-            Sin complicaciones, sin costos ocultos. EazyStock cubre desde el primer producto hasta el último reporte.
+          <p className="mx-auto mt-5 max-w-2xl text-base text-gray-500">
+            Diseñado y probado con ferreterías reales en Lima. Cada feature
+            resuelve un problema que vimos en vivo — no funciones de catálogo.
           </p>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, color, title, desc }) => (
-            <div key={title} className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
-              <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
-                <Icon size={20} />
+
+        <div className="space-y-16">
+          {FEATURE_GROUPS.map((group) => (
+            <div key={group.title}>
+              <div className="mb-6 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className={`mb-3 inline-block h-1 w-12 rounded-full bg-gradient-to-r ${group.color}`} />
+                  <h3 className="text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl">{group.title}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{group.desc}</p>
+                </div>
               </div>
-              <h3 className="mb-2 text-sm font-bold text-gray-900">{title}</h3>
-              <p className="text-xs leading-relaxed text-gray-500">{desc}</p>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {group.items.map(({ icon: Icon, title, desc }) => (
+                  <div
+                    key={title}
+                    className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50"
+                  >
+                    <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${group.color} opacity-0 blur-2xl transition-opacity group-hover:opacity-20`} />
+                    <div className="relative">
+                      <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${group.color} text-white shadow-md`}>
+                        <Icon size={18} />
+                      </div>
+                      <h4 className="mb-1.5 text-sm font-bold text-gray-900">{title}</h4>
+                      <p className="text-xs leading-relaxed text-gray-500">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -285,50 +477,397 @@ function Features() {
   )
 }
 
-// ─── How it works ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  Showcase — Excel import (feature destacada nueva)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ImportShowcase() {
+  return (
+    <section id="showcase" className="bg-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              <Sparkles size={12} />
+              Nuevo — Junio 2026
+            </div>
+            <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Migrá tu inventario en <span className="text-emerald-600">10 minutos</span>,
+              no en 3 semanas.
+            </h2>
+            <p className="mb-8 text-base leading-relaxed text-gray-600">
+              Subí el Excel que ya tenés. El sistema detecta tus columnas
+              automáticamente, limpia el encoding roto, deduplica proveedores
+              por capitalización, extrae códigos de proveedor pegados al
+              nombre, y te muestra fila por fila qué se va a importar antes
+              de tocar nada.
+            </p>
+
+            <ul className="mb-8 space-y-3">
+              {[
+                'Acepta .xlsx y .csv hasta 10MB',
+                'Auto-mapeo inteligente por nombre de columna',
+                'Limpia mojibake (Ã¡ → á, Ã± → ñ) automáticamente',
+                'Detecta SKUs duplicados antes de importar',
+                'Reporte Excel descargable del resultado por fila',
+                'Procesa fila por fila — un error no aborta todo el import',
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2 text-sm text-gray-700">
+                  <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-500" />
+                  {t}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
+            >
+              Importá tu Excel ahora
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {/* Mockup: import wizard preview */}
+          <div className="relative">
+            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-emerald-200/40 to-blue-200/40 blur-2xl" />
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+              {/* Stepper */}
+              <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
+                {[
+                  { num: 1, label: 'Subir', done: true },
+                  { num: 2, label: 'Mapear', done: true },
+                  { num: 3, label: 'Revisar', active: true },
+                  { num: 4, label: 'Importar', done: false },
+                ].map((s) => (
+                  <div key={s.num} className="flex items-center gap-1.5">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                      s.done    ? 'bg-emerald-500 text-white' :
+                      s.active  ? 'bg-blue-600 text-white' :
+                                  'bg-gray-200 text-gray-500'
+                    }`}>
+                      {s.done ? '✓' : s.num}
+                    </div>
+                    <span className={`text-[11px] font-medium ${
+                      s.active ? 'text-gray-900' : s.done ? 'text-emerald-700' : 'text-gray-400'
+                    }`}>
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Counters */}
+              <div className="grid grid-cols-4 gap-2 border-b border-gray-100 px-5 py-3">
+                {[
+                  { label: 'Totales',  value: '3,435',  color: 'text-gray-900' },
+                  { label: 'Listas',   value: '3,429',  color: 'text-emerald-600' },
+                  { label: 'Warnings', value: '742',    color: 'text-amber-600' },
+                  { label: 'Errores',  value: '0',      color: 'text-red-600' },
+                ].map((c) => (
+                  <div key={c.label} className="rounded-lg border border-gray-100 bg-white p-2 text-center">
+                    <p className="text-[9px] uppercase tracking-widest text-gray-400">{c.label}</p>
+                    <p className={`text-base font-extrabold ${c.color}`}>{c.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Rows */}
+              <div className="space-y-px">
+                {[
+                  { n: 1,  name: 'Abrazadera 1/2 S/Fin',          sku: 'F03',  cls: 'emerald', issue: '—' },
+                  { n: 2,  name: 'Cemento Frontera',               sku: 'F121', cls: 'emerald', issue: '—' },
+                  { n: 3,  name: 'Abasto 1/2 × 1/2',               sku: 'F47',  cls: 'amber',   issue: 'Encoding corregido' },
+                  { n: 4,  name: 'Tornillo 1/4 × 2"',              sku: 'F250', cls: 'amber',   issue: 'Precio variable' },
+                  { n: 5,  name: 'Filtro K&N',                     sku: 'F89',  cls: 'amber',   issue: 'Stock −5 ajustado a 0' },
+                ].map((r) => {
+                  const bg = r.cls === 'emerald' ? 'bg-emerald-50' : 'bg-amber-50'
+                  const txt = r.cls === 'emerald' ? 'text-emerald-700' : 'text-amber-700'
+                  return (
+                    <div key={r.n} className={`grid grid-cols-12 gap-2 px-5 py-2 text-[11px] ${bg}`}>
+                      <span className="col-span-1 font-mono text-gray-400">{r.n}</span>
+                      <span className="col-span-5 truncate text-gray-900">{r.name}</span>
+                      <span className="col-span-2 font-mono text-gray-500">{r.sku}</span>
+                      <span className={`col-span-4 truncate text-right ${txt}`}>{r.issue}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Showcase — Fiado + Cuentas
+// ═══════════════════════════════════════════════════════════════════════════
+
+function FiadoShowcase() {
+  return (
+    <section className="bg-gradient-to-b from-gray-50 to-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Mockup */}
+          <div className="relative order-2 lg:order-1">
+            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-violet-200/40 to-blue-200/40 blur-2xl" />
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+              {/* Customer card */}
+              <div className="bg-gradient-to-br from-violet-50 to-blue-50 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">Cliente</p>
+                    <p className="mt-1 text-lg font-bold text-gray-900">Juan Quispe</p>
+                    <p className="text-xs text-gray-500">DNI 12345678 · Cel +51 987 654 321</p>
+                  </div>
+                  <span className="rounded-full bg-violet-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                    Activo
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Deuda actual', value: 'S/ 580', color: 'text-amber-600' },
+                    { label: 'Límite',       value: 'S/ 1,000', color: 'text-gray-900' },
+                    { label: 'Disponible',   value: 'S/ 420',   color: 'text-emerald-600' },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-lg border border-white/60 bg-white p-3">
+                      <p className="text-[9px] uppercase tracking-widest text-gray-400">{s.label}</p>
+                      <p className={`mt-0.5 font-mono text-sm font-extrabold ${s.color}`}>{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transactions */}
+              <div className="divide-y divide-gray-100">
+                <p className="px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                  Historial reciente
+                </p>
+                {[
+                  { type: 'SALE',    label: 'Venta',  amount: '+S/ 250', date: 'Hoy 14:30', color: 'text-amber-600' },
+                  { type: 'PAYMENT', label: 'Pago',   amount: '−S/ 200', date: 'Ayer',      color: 'text-emerald-600' },
+                  { type: 'SALE',    label: 'Venta',  amount: '+S/ 530', date: '2 jun',      color: 'text-amber-600' },
+                ].map((t, i) => (
+                  <div key={i} className="flex items-center justify-between px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                        t.type === 'SALE' ? 'bg-amber-50' : 'bg-emerald-50'
+                      }`}>
+                        {t.type === 'SALE'
+                          ? <ShoppingCart size={13} className="text-amber-600" />
+                          : <Wallet size={13} className="text-emerald-600" />}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900">{t.label}</p>
+                        <p className="text-[10px] text-gray-400">{t.date}</p>
+                      </div>
+                    </div>
+                    <span className={`font-mono text-sm font-bold ${t.color}`}>{t.amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Text */}
+          <div className="order-1 lg:order-2">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
+              <CreditCard size={12} />
+              Cuentas corrientes
+            </div>
+            <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Vendé al fiado sin perder el control.
+            </h2>
+            <p className="mb-8 text-base leading-relaxed text-gray-600">
+              Cada cliente tiene su línea de crédito, su deuda actual y su
+              historial de pagos. Cuando el cajero registra una venta al
+              fiado, el sistema valida el límite, suma a la deuda y deja todo
+              auditado. Cuando el cliente paga, se actualiza al instante.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                { icon: Users,      title: 'Ficha completa', desc: 'Documento, contacto, dirección, deuda y límite.' },
+                { icon: AlertTriangle, title: 'Validación de límite', desc: 'Avisa si la venta excede el crédito.' },
+                { icon: Wallet,     title: 'Pagos parciales', desc: 'Abonos que reducen la deuda gradualmente.' },
+                { icon: ClipboardCheck, title: 'Audit log', desc: 'Cada movimiento queda registrado con quién y cuándo.' },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="rounded-xl border border-gray-100 bg-white p-4">
+                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
+                    <Icon size={15} className="text-violet-600" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">{title}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Industries — Para quién
+// ═══════════════════════════════════════════════════════════════════════════
+
+const INDUSTRIES = [
+  {
+    icon: Wrench,
+    title: 'Ferreterías',
+    desc: 'Miles de SKUs, proveedores múltiples, precios pequeños (S/ 0.05 el tornillo) y clientes habituales al fiado.',
+    color: 'from-orange-500 to-red-500',
+  },
+  {
+    icon: Truck,
+    title: 'Distribuidoras',
+    desc: 'Recepciones masivas multi-producto, cuentas con proveedores, márgenes ajustados por categoría.',
+    color: 'from-blue-500 to-indigo-600',
+  },
+  {
+    icon: Boxes,
+    title: 'Tiendas mayoristas',
+    desc: 'Catálogos grandes, descuentos por volumen, ventas al fiado a comerciantes con línea de crédito.',
+    color: 'from-emerald-500 to-teal-600',
+  },
+  {
+    icon: Tag,
+    title: 'Boutiques y minoristas',
+    desc: 'Atributos custom por categoría (talla, color, material), control fino del stock por presentación.',
+    color: 'from-violet-500 to-fuchsia-600',
+  },
+]
+
+function Industries() {
+  return (
+    <section id="industries" className="bg-[#0a0e1a] py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="mb-12 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-400">Diseñado para</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            Hecho para negocios que venden de verdad
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
+            Cada feature salió de problemas reales que vimos en ferreterías
+            de Lima. No te vendemos un ERP — te damos lo que necesitás.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {INDUSTRIES.map(({ icon: Icon, title, desc, color }) => (
+            <div
+              key={title}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
+            >
+              <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${color} opacity-30 blur-2xl transition-opacity group-hover:opacity-50`} />
+              <div className="relative">
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
+                  <Icon size={22} className="text-white" />
+                </div>
+                <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-400">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Testimonial — William / Femaco
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Testimonial() {
+  return (
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-8 sm:p-12">
+          <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
+
+          <div className="relative">
+            <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
+              "Antes anotaba en cuaderno y se nos pasaban ventas al fiado.
+              Con Eazy Stock subimos los <span className="font-bold text-blue-700">3,400 productos</span> en
+              una tarde y mis hijos ya pueden cobrar desde el celular —
+              hasta los precios que se negocian quedan registrados."
+            </p>
+
+            <div className="mt-8 flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-lg font-extrabold text-white shadow-lg">
+                W
+              </div>
+              <div>
+                <p className="text-base font-bold text-gray-900">William</p>
+                <p className="text-sm text-gray-500">Ferretería Femaco · Lima, Perú</p>
+              </div>
+              <div className="ml-auto hidden flex-col items-end sm:flex">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} size={16} className="fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Cliente desde abril 2026</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  How it works
+// ═══════════════════════════════════════════════════════════════════════════
+
 function HowItWorks() {
   const steps = [
     {
       num: '01',
       icon: Users,
-      title: 'Registra tu negocio',
-      desc: 'Crea tu cuenta, agrega el nombre de tu negocio e invita a tus empleados. Listo en menos de 2 minutos.',
+      title: 'Registrá tu negocio',
+      desc: 'Crea tu cuenta, agrega el nombre del negocio e invitá a tus empleados con permisos a medida.',
     },
     {
       num: '02',
-      icon: Package,
-      title: 'Carga tus productos',
-      desc: 'Agrega tus productos con precio, stock y proveedor. Importa masivamente o usa el formulario intuitivo.',
+      icon: FileSpreadsheet,
+      title: 'Subí tu Excel actual',
+      desc: 'O cargá productos uno por uno desde el formulario. El sistema detecta columnas y limpia data sucia.',
     },
     {
       num: '03',
       icon: ShoppingCart,
-      title: 'Vende y controla',
-      desc: 'Registra ventas, monitorea el stock en tiempo real y toma decisiones con los reportes automatizados.',
+      title: 'Empezá a vender',
+      desc: 'POS listo desde el primer día. Stock en vivo, ventas al fiado, descuentos y reportes.',
     },
   ]
   return (
-    <section id="how" className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Proceso</p>
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Arranca en 3 pasos simples
+    <section id="how" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="mb-16 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Proceso</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            Arrancá en 3 pasos
           </h2>
         </div>
-        <div className="relative grid gap-8 md:grid-cols-3">
-          {/* Connector line */}
-          <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-blue-200 via-blue-500 to-blue-200 md:block" />
+        <div className="relative grid gap-10 md:grid-cols-3">
+          <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent md:block" />
 
           {steps.map(({ num, icon: Icon, title, desc }) => (
             <div key={num} className="relative flex flex-col items-center text-center">
-              <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
-                <Icon size={36} className="text-white" />
-                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-extrabold text-blue-500">
+              <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xl shadow-blue-200">
+                <Icon size={34} className="text-white" />
+                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-gray-50">
                   {num}
                 </span>
               </div>
-              <h3 className="mb-2 text-base font-bold text-gray-900">{title}</h3>
+              <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
               <p className="text-sm leading-relaxed text-gray-500">{desc}</p>
             </div>
           ))}
@@ -338,140 +877,52 @@ function HowItWorks() {
   )
 }
 
-// ─── Roadmap ──────────────────────────────────────────────────────────────────
-const ROADMAP = [
-  {
-    period: 'Disponible ahora',
-    status: 'done',
-    items: [
-      'Gestión de productos con QR codes',
-      'Ventas y control de stock en tiempo real',
-      'Reportes y analytics',
-      'Permisos granulares por empleado',
-      'Auditoría completa de cambios',
-      'Marcas y proveedores',
-    ],
-  },
-  {
-    period: 'Q3 2026',
-    status: 'next',
-    items: [
-      'Integración WhatsApp — alertas de stock bajo y asistente de ventas con IA',
-      'Exportar/Importar — descarga en Excel/CSV, carga masiva de productos',
-    ],
-  },
-  {
-    period: 'Q4 2026',
-    status: 'planned',
-    items: [
-      'App móvil nativa — iOS y Android',
-      'Facturación electrónica — integración con SUNAT, SRI y AFIP',
-    ],
-  },
-  {
-    period: '2027',
-    status: 'future',
-    items: [
-      'Multi-sucursal — gestión de múltiples tiendas desde un panel',
-      'API pública — conecta con tu e-commerce o sistema externo',
-      'Modo offline / PWA — sigue vendiendo sin internet',
-    ],
-  },
-]
+// ═══════════════════════════════════════════════════════════════════════════
+//  WhatsApp Highlight
+// ═══════════════════════════════════════════════════════════════════════════
 
-const STATUS_STYLE = {
-  done:    { dot: 'bg-green-500', badge: 'bg-green-100 text-green-700',  border: 'border-green-200' },
-  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-100 text-blue-700', border: 'border-blue-200' },
-  planned: { dot: 'bg-blue-400',  badge: 'bg-blue-100 text-blue-700',   border: 'border-blue-200'  },
-  future:  { dot: 'bg-gray-300',  badge: 'bg-gray-100 text-gray-500',   border: 'border-gray-200'  },
-}
-
-const STATUS_LABEL = {
-  done: 'Disponible', next: 'Próximamente', planned: 'Planificado', future: 'Futuro',
-}
-
-function Roadmap() {
-  return (
-    <section id="roadmap" className="bg-gray-50 py-20">
-      <div className="mx-auto max-w-4xl px-5">
-        <div className="mb-12 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">Roadmap</p>
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Lo que viene
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-base text-gray-500">
-            Construimos EazyStock junto a nuestros usuarios. Estas son las próximas funciones que estamos desarrollando.
-          </p>
-        </div>
-
-        <div className="relative space-y-5 pl-6">
-          {/* Vertical line */}
-          <div className="absolute bottom-0 left-2 top-2 w-0.5 bg-gray-200" />
-
-          {ROADMAP.map(({ period, status, items }) => {
-            const s = STATUS_STYLE[status]
-            return (
-              <div key={period} className="relative">
-                {/* Dot on timeline */}
-                <div className={`absolute -left-6 top-5 h-4 w-4 rounded-full border-2 border-white shadow ${s.dot}`} />
-
-                <div className={`rounded-xl border bg-white p-5 ${s.border}`}>
-                  <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <h3 className="text-base font-bold text-gray-900">{period}</h3>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.badge}`}>
-                      {STATUS_LABEL[status]}
-                    </span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {items.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm text-gray-600">
-                        <Check size={14} className={`mt-0.5 flex-shrink-0 ${status === 'done' ? 'text-green-500' : 'text-gray-300'}`} />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── WhatsApp Feature Highlight ───────────────────────────────────────────────
 function WhatsAppHighlight() {
   return (
-    <section className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#111827] to-[#1e293b]">
-          <div className="flex flex-col items-center gap-10 p-8 md:flex-row md:p-12">
-            {/* Text */}
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0e1a] via-[#0f172a] to-[#0a0e1a]">
+          <div aria-hidden className="absolute inset-0 opacity-30">
+            <div className="absolute -left-20 top-1/4 h-60 w-60 rounded-full bg-emerald-500/40 blur-3xl" />
+            <div className="absolute -right-20 bottom-1/4 h-60 w-60 rounded-full bg-green-400/30 blur-3xl" />
+          </div>
+
+          <div className="relative flex flex-col items-center gap-10 p-8 md:flex-row md:p-14">
             <div className="flex-1 text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1.5 text-xs font-semibold text-green-400">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1.5 text-xs font-semibold text-green-300">
                 <MessageCircle size={12} />
-                Próximamente — Q3 2026
+                Próximamente · Q3 2026
               </div>
-              <h2 className="mb-4 text-2xl font-extrabold text-white sm:text-3xl">
+              <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                 Tu stock habla por{' '}
-                <span className="text-green-400">WhatsApp</span>
+                <span className="bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text text-transparent">
+                  WhatsApp
+                </span>
               </h2>
-              <p className="mb-6 text-sm leading-relaxed text-slate-400">
-                Recibe alertas automáticas en WhatsApp cuando un producto se agote. Pregúntale al asistente cuánto vendiste hoy, cuáles son tus productos más populares o qué productos están por acabarse — todo desde tu chat.
+              <p className="mb-7 text-base leading-relaxed text-slate-300">
+                Recibí alertas en WhatsApp cuando un producto se agota.
+                Preguntale al asistente IA cuánto vendiste, qué productos
+                están vendiendo más, o cuáles necesitás reponer — todo desde
+                tu chat.
               </p>
-              <div className="flex flex-col gap-2 text-sm sm:flex-row">
+              <div className="flex flex-wrap gap-2 text-sm">
                 {[
-                  '🔔 Alertas de stock en tiempo real',
-                  '🤖 Asistente IA de ventas',
-                  '📊 Consulta reportes por chat',
+                  '🔔 Alertas de stock en vivo',
+                  '🤖 Asistente IA',
+                  '📊 Reportes por chat',
+                  '👥 Mensajes a clientes deudores',
                 ].map((f) => (
-                  <span key={f} className="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-300">{f}</span>
+                  <span key={f} className="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-200 backdrop-blur">
+                    {f}
+                  </span>
                 ))}
               </div>
             </div>
 
-            {/* WhatsApp mockup */}
             <div className="w-full max-w-xs flex-shrink-0">
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#111b21] shadow-2xl">
                 <div className="flex items-center gap-3 border-b border-white/10 bg-[#202c33] px-4 py-3">
@@ -483,12 +934,16 @@ function WhatsAppHighlight() {
                 </div>
                 <div className="space-y-3 p-4">
                   {[
-                    { text: '⚠️ Stock bajo: Filtro de aceite (3 unid. restantes)', bot: true },
-                    { text: '¿Cuánto vendí hoy?', bot: false },
-                    { text: '📊 Hoy llevas S/ 2,430 en 18 ventas. Tu producto más vendido: Aceite 5W30 (12 unid.)', bot: true },
+                    { text: '⚠️ Stock bajo: Filtro K&N (3 unid.)',                                bot: true },
+                    { text: '¿Cuánto vendí hoy?',                                                  bot: false },
+                    { text: '📊 S/ 2,430 en 18 ventas. Top: Aceite 5W30 (12 unid.)',              bot: true },
+                    { text: 'Mandale recordatorio de pago a Juan',                                  bot: false },
+                    { text: '✅ Listo. Le envié un mensaje recordando su deuda de S/ 580.',         bot: true },
                   ].map(({ text, bot }, i) => (
                     <div key={i} className={`flex ${bot ? 'justify-start' : 'justify-end'}`}>
-                      <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs text-white ${bot ? 'bg-[#202c33]' : 'bg-[#005c4b]'}`}>
+                      <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
+                        bot ? 'bg-[#202c33] text-white' : 'bg-[#005c4b] text-white'
+                      }`}>
                         {text}
                       </div>
                     </div>
@@ -503,82 +958,209 @@ function WhatsAppHighlight() {
   )
 }
 
-// ─── Import/Export Highlight ──────────────────────────────────────────────────
-function ImportExportHighlight() {
+// ═══════════════════════════════════════════════════════════════════════════
+//  Roadmap
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ROADMAP = [
+  {
+    period: 'Disponible hoy',
+    status: 'done',
+    items: [
+      'Productos con SKU/QR/barcode, marcas, categorías, proveedores',
+      'POS con búsqueda, escáner de cámara, descuentos y override de precio',
+      'Precio variable + presentación informativa',
+      'Ventas al fiado con líneas de crédito',
+      'Recepciones multi-producto + cuentas con proveedores',
+      'Reportes (ventas por día, top productos, cuentas por cobrar/pagar)',
+      'Notificaciones en vivo (WebSocket)',
+      'Permisos granulares + auditoría completa',
+      'Import masivo desde Excel/CSV (3,400+ filas)',
+    ],
+  },
+  {
+    period: 'Q3 2026',
+    status: 'next',
+    items: [
+      'Integración WhatsApp — alertas + asistente IA + cobranza automatizada',
+      'Export masivo — descarga de ventas/inventario/reportes en Excel',
+      'App móvil nativa — iOS y Android',
+    ],
+  },
+  {
+    period: 'Q4 2026',
+    status: 'planned',
+    items: [
+      'Facturación electrónica — SUNAT (Perú), SRI (Ecuador), AFIP (Argentina)',
+      'Compras con orden de pedido + sugerencia de reposición',
+      'Modo offline / PWA — seguí vendiendo sin internet',
+    ],
+  },
+  {
+    period: '2027',
+    status: 'future',
+    items: [
+      'Multi-sucursal — gestión centralizada de N tiendas',
+      'API pública — conectá tu e-commerce o sistema externo',
+      'Marketplace de integraciones — pagos, envíos, contabilidad',
+    ],
+  },
+]
+
+const STATUS_STYLE = {
+  done:    { dot: 'bg-emerald-500',           badge: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
+  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-100 text-blue-700',       border: 'border-blue-200'    },
+  planned: { dot: 'bg-blue-400',              badge: 'bg-blue-100 text-blue-700',       border: 'border-blue-200'    },
+  future:  { dot: 'bg-gray-300',              badge: 'bg-gray-100 text-gray-500',       border: 'border-gray-200'    },
+}
+
+const STATUS_LABEL = {
+  done: 'Disponible', next: 'Próximamente', planned: 'En diseño', future: 'Futuro',
+}
+
+function Roadmap() {
   return (
-    <section className="bg-gray-50 py-16">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
-            <FileSpreadsheet size={28} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-500">Próximamente</p>
-            <h2 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
-              Importa y exporta tus datos
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm text-gray-500">
-              Carga cientos de productos desde Excel en segundos. Exporta tus ventas, reportes o inventario completo a CSV o Excel cuando lo necesites.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {[
-              '📥 Importar productos desde Excel',
-              '📤 Exportar ventas a CSV',
-              '📊 Reportes descargables',
-              '🔄 Sincronización con hojas de cálculo',
-            ].map((f) => (
-              <span key={f} className="rounded-full border border-blue-200 bg-white px-4 py-2 text-xs font-medium text-gray-700">
-                {f}
-              </span>
-            ))}
-          </div>
+    <section id="roadmap" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <div className="mb-14 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Roadmap</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            Lo que viene
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
+            Construimos junto a clientes reales — cada feature sale de algo
+            que vimos en ferreterías de Lima. Sin features de catálogo.
+          </p>
+        </div>
+
+        <div className="relative space-y-6 pl-8">
+          <div className="absolute bottom-0 left-2 top-2 w-0.5 bg-gradient-to-b from-emerald-300 via-blue-300 to-gray-200" />
+
+          {ROADMAP.map(({ period, status, items }) => {
+            const s = STATUS_STYLE[status]
+            return (
+              <div key={period} className="relative">
+                <div className={`absolute -left-7 top-5 h-4 w-4 rounded-full border-2 border-white shadow ${s.dot}`} />
+
+                <div className={`rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg ${s.border}`}>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <h3 className="text-lg font-extrabold text-gray-900">{period}</h3>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.badge}`}>
+                      {STATUS_LABEL[status]}
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {items.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-sm text-gray-600">
+                        <Check size={15} className={`mt-0.5 flex-shrink-0 ${status === 'done' ? 'text-emerald-500' : 'text-gray-300'}`} />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </section>
   )
 }
 
-// ─── CTA Banner ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  CTA banner
+// ═══════════════════════════════════════════════════════════════════════════
+
 function CtaBanner() {
   return (
-    <section className="bg-blue-600 py-16">
-      <div className="mx-auto max-w-3xl px-5 text-center">
-        <h2 className="mb-3 text-2xl font-extrabold text-white sm:text-3xl">
-          ¿Listo para tener tu inventario bajo control?
+    <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 py-20">
+      <div aria-hidden className="absolute inset-0 opacity-30">
+        <div className="absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-white/30 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
+        <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          Probalo gratis hoy.
         </h2>
-        <p className="mb-8 text-blue-100">
-          Únete a los negocios que ya gestionan su inventario con EazyStock. Sin complicaciones, sin costos ocultos.
+        <p className="mb-9 text-base text-blue-100 sm:text-lg">
+          Sin tarjeta, sin compromiso. Empezá a operar en minutos —
+          si no te convence, no nos debés nada.
         </p>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-lg hover:bg-blue-50 transition-colors"
-        >
-          Empezar ahora — es gratis
-          <ChevronRight size={16} />
-        </Link>
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Link
+            to="/login"
+            className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-2xl shadow-blue-900/30 transition-all hover:scale-[1.02]"
+          >
+            Crear cuenta gratis
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <a
+            href="#features"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/20"
+          >
+            Volver a explorar
+          </a>
+        </div>
       </div>
     </section>
   )
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  Footer
+// ═══════════════════════════════════════════════════════════════════════════
+
 function Footer() {
   return (
-    <footer className="bg-[#111827] py-12">
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
-          <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
-            <span className="text-base font-bold text-white">Eazy Stock</span>
+    <footer className="bg-[#0a0e1a] py-16">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="grid gap-8 md:grid-cols-4">
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-lg object-contain" />
+              <span className="text-lg font-bold text-white">Eazy Stock</span>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-slate-500">
+              Sistema de inventario, ventas y cuentas corrientes para PYMEs
+              latinoamericanas. Construido con clientes reales.
+            </p>
           </div>
-          <p className="text-sm text-slate-500">
-            © 2026 Eazy Stock. Gestión de inventario para PYMEs latinoamericanas.
+
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Producto</p>
+            <ul className="space-y-2 text-sm">
+              <li><a href="#features"   className="text-slate-500 hover:text-white transition-colors">Funciones</a></li>
+              <li><a href="#showcase"   className="text-slate-500 hover:text-white transition-colors">Excel import</a></li>
+              <li><a href="#industries" className="text-slate-500 hover:text-white transition-colors">Para quién</a></li>
+              <li><a href="#roadmap"    className="text-slate-500 hover:text-white transition-colors">Roadmap</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Empezar</p>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/login" className="text-slate-500 hover:text-white transition-colors">Iniciar sesión</Link></li>
+              <li><Link to="/login" className="text-slate-500 hover:text-white transition-colors">Crear cuenta</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Soporte</p>
+            <ul className="space-y-2 text-sm">
+              <li className="text-slate-500">Documentación</li>
+              <li className="text-slate-500">Contacto · soporte@eazylife.com</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 md:flex-row">
+          <p className="text-xs text-slate-500">
+            © 2026 Eazy Stock — by EazyLife. Hecho en Latinoamérica.
           </p>
-          <div className="flex items-center gap-5">
-            <a href="#features" className="text-sm text-slate-500 hover:text-white transition-colors">Funciones</a>
-            <a href="#roadmap"  className="text-sm text-slate-500 hover:text-white transition-colors">Roadmap</a>
-            <Link to="/login"   className="text-sm text-slate-500 hover:text-white transition-colors">Acceder</Link>
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+            Todos los sistemas operativos
           </div>
         </div>
       </div>
@@ -586,17 +1168,24 @@ function Footer() {
   )
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  Main export
+// ═══════════════════════════════════════════════════════════════════════════
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <Hero />
+      <CustomersStrip />
       <Stats />
       <Features />
+      <ImportShowcase />
+      <FiadoShowcase />
+      <Industries />
+      <Testimonial />
       <HowItWorks />
       <WhatsAppHighlight />
-      <ImportExportHighlight />
       <Roadmap />
       <CtaBanner />
       <Footer />
