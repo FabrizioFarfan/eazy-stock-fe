@@ -10,6 +10,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
+import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import { formatPrice } from '../utils/formatMoney'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
@@ -92,7 +93,7 @@ function ProductCard({ product, inCart, onAdd }) {
 
 // ── CartItem ──────────────────────────────────────────────────────────────────
 
-function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, onPriceChange }) {
+function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, onPriceChange, onQuantityChange }) {
   const { product, quantity, unitPrice } = item
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
@@ -103,6 +104,27 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
   // Si es variable, el input de precio está habilitado siempre (no es un override:
   // es el único precio). Autofoco al montar para que el cajero lo defina rápido.
   const priceInputDisabled = isVariable ? false : !canApplyDiscount
+
+  // Cantidad editable a mano, además de los +/- — para vender 50 uds sin 50 clicks.
+  // El borrador local permite dejar el campo vacío mientras se tipea; al confirmar
+  // se reporta al carrito (que lo limita a [1, stock]).
+  const [qtyDraft, setQtyDraft] = useState(String(quantity))
+  // Re-sincroniza el borrador cuando la cantidad cambia desde afuera (botones +/-
+  // o el tope de stock), sin un efecto — patrón "ajustar estado en el render".
+  const [prevQty, setPrevQty] = useState(quantity)
+  if (quantity !== prevQty) {
+    setPrevQty(quantity)
+    setQtyDraft(String(quantity))
+  }
+
+  const handleQuantityChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '')
+    setQtyDraft(digits)
+    if (digits !== '') onQuantityChange(product.id, parseInt(digits, 10))
+  }
+  const handleQuantityBlur = () => {
+    if (qtyDraft === '' || parseInt(qtyDraft, 10) < 1) setQtyDraft(String(quantity))
+  }
 
   return (
     <div className={`rounded-xl border p-3 ${
@@ -124,7 +146,17 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
             className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-40">
             <Minus size={11} />
           </button>
-          <span className="w-7 text-center text-sm font-bold text-gray-900">{quantity}</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={qtyDraft}
+            onChange={handleQuantityChange}
+            onBlur={handleQuantityBlur}
+            onFocus={(e) => e.target.select()}
+            aria-label="Cantidad"
+            className="h-7 w-10 rounded-lg border border-gray-200 bg-white text-center text-sm font-bold text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+          />
           <button onClick={() => onIncrease(product.id)} disabled={quantity >= product.currentStock}
             className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-40">
             <Plus size={11} />
@@ -421,6 +453,9 @@ export default function NewSalePage() {
   const decrease = (id) => setCart((prev) =>
     prev.map((i) => i.product.id === id
       ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))
+  const changeQuantity = (id, n) => setCart((prev) =>
+    prev.map((i) => i.product.id === id
+      ? { ...i, quantity: Math.max(1, Math.min(n, i.product.currentStock)) } : i))
   const changePrice = (id, raw) => setCart((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, unitPrice: raw } : i))
 
@@ -596,6 +631,10 @@ export default function NewSalePage() {
               </div>
             ) : (
               <div className="space-y-2">
+                <div className="flex items-center justify-end gap-2 pb-0.5">
+                  <span className="text-[11px] text-gray-400">Formato de precio</span>
+                  <PriceInputModeToggle />
+                </div>
                 {cart.map((item) => (
                   <CartItem
                     key={item.product.id}
@@ -605,6 +644,7 @@ export default function NewSalePage() {
                     onDecrease={decrease}
                     onRemove={removeFromCart}
                     onPriceChange={changePrice}
+                    onQuantityChange={changeQuantity}
                   />
                 ))}
               </div>
