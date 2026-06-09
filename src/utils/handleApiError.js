@@ -5,6 +5,7 @@ const MESSAGE_BY_CODE = {
   DUPLICATE_RUC:           'Ya existe un proveedor con ese RUC',
   DUPLICATE_NAME:          'Ya existe un registro con ese nombre',
   DUPLICATE_SKU:           'Ya existe un producto con ese código',
+  DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER: 'Ya existe un producto con ese código de proveedor',
   DUPLICATE_EMAIL:         'Ese email ya está registrado',
   DUPLICATE_TAX_ID:        'Ya existe un negocio con ese tax ID',
   INVALID_RUC_FORMAT:      'El RUC debe tener 11 dígitos',

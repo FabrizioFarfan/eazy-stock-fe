@@ -10,8 +10,9 @@ import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
 import PriceInput from '../inputs/PriceInput'
+import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import ProductFormTutorial from '../tutorial/ProductFormTutorial'
-import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
+import { getErrorMessage, getErrorField, getErrorCode } from '../../utils/handleApiError'
 
 const UNIT_OPTIONS = ['unidad', 'metro', 'kilo', 'litro', 'otro']
 
@@ -346,8 +347,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       onClose()
     } catch (err) {
       const field = getErrorField(err)
+      const code  = getErrorCode(err)
       const known = ['name', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
-      if (field && known.includes(field)) {
+      if (code === 'DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER') {
+        // El BE ya nombra el producto existente; sumamos la acción a seguir.
+        setError('providerCode', {
+          type: 'server',
+          message: `${getErrorMessage(err)}. Cámbialo o edita el producto existente.`,
+        })
+      } else if (field && known.includes(field)) {
         setError(field, { type: 'server', message: getErrorMessage(err) })
       } else if (field === 'supplierId') {
         setSupplierError(getErrorMessage(err))
@@ -486,7 +494,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 <input
                   {...register('providerCode')}
                   placeholder="Código externo (opcional)"
-                  className={`${inputCls} flex-1`}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                    errors.providerCode
+                      ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                      : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                  }`}
                 />
                 {hasCameraSupport && (
                   <button
@@ -615,7 +627,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </label>
 
             {/* Precios + Stock mínimo */}
-            <div data-tutorial-target="prices" className="grid grid-cols-3 gap-3">
+            <div data-tutorial-target="prices">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-gray-700">Precios y stock</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-gray-400">Formato del precio</span>
+                  <PriceInputModeToggle />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
               <Controller
                 control={control}
                 name="purchasePrice"
@@ -646,6 +666,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               <Field label="Stock mín." required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step="1" min="0" placeholder="0" className={inputCls} />
               </Field>
+              </div>
             </div>
 
             {mutation.isError && (
