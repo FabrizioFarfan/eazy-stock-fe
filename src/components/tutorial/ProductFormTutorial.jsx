@@ -16,47 +16,47 @@ const STEPS = [
   {
     target: null,
     title: '¡Vamos a cargar tu primer producto!',
-    desc: 'Te voy a ir señalando con rojo cada parte del formulario y te explico qué va. Si querés saltarlo, tocá la X arriba a la derecha. Podés volver desde Ajustes cuando quieras.',
+    desc: 'Te voy a señalar en rojo cada parte del formulario y te explico qué va en cada una. Si quieres saltarlo, haz clic en la X de arriba a la derecha. Puedes volver a abrirlo desde Ajustes cuando quieras.',
   },
   {
     target: 'name-unit',
     title: '1. Nombre y unidad',
-    desc: 'Empezá por acá. El nombre va a aparecer en tu catálogo (ej. "Aceite 5W30"). La unidad es cómo lo vendés: litros, kg, metros, unidad, galón. Los dos son obligatorios.',
+    desc: 'Empieza por aquí. El nombre aparecerá en tu catálogo (ej. "Aceite 5W30"). La unidad es cómo lo vendes: litros, kg, metros, unidad, galón. Ambos son obligatorios.',
   },
   {
     target: 'brand-picker',
     title: '2. Marca: el fabricante',
-    desc: 'Acá va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Escribí en el buscador. Si no aparece, tocá "Nueva marca" y lo creás al toque.',
+    desc: 'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Escribe en el buscador y haz clic en la marca para seleccionarla. Si no aparece, haz clic en "Nueva marca" y se crea al instante.',
   },
   {
     target: 'supplier-picker',
-    title: '3. Proveedor: a quién le comprás',
-    desc: 'Distinto a la marca. El proveedor es de dónde sacás vos el producto (ej. "Distribuidora Lima SAC", "Ferreconstruye"). Mismo patrón: buscás o tocás "Nuevo proveedor".',
+    title: '3. Proveedor: a quién le compras',
+    desc: 'Es distinto a la marca. El proveedor es a quién le compras el producto (ej. "Distribuidora Lima SAC", "Ferreconstruye"). Mismo patrón: búscalo y haz clic para seleccionarlo, o haz clic en "Nuevo proveedor" para crearlo.',
   },
   {
     target: 'category-picker',
     title: '4. Categoría: tipo de producto',
-    desc: 'Cómo agrupás el producto: Tornillería, Pinturas, Plomería, Herramientas. OJO: no es una marca ni un proveedor. Si tu negocio es ferretería, ya tenés 9 categorías default cargadas.',
+    desc: 'Es cómo agrupas el producto: Tornillería, Pinturas, Plomería, Herramientas. Ojo: no es una marca ni un proveedor. Búscala y haz clic para seleccionarla. Si tu negocio es ferretería, ya tienes 9 categorías cargadas por defecto.',
   },
   {
     target: 'attributes',
     title: '5. Atributos: lo que distingue al producto',
-    desc: 'Esto es opcional pero re útil. Acá ponés lo que diferencia a este producto del resto: color, tamaño, material, peso, voltaje... lo que quieras. Tocá los chips grises para sumar uno, o agregá tuyos.',
+    desc: 'Esto es opcional pero muy útil. Aquí pones lo que diferencia a este producto del resto: color, tamaño, material, peso, voltaje... lo que quieras. Haz clic en los chips grises para sumar uno, o agrega los tuyos.',
   },
   {
     target: 'prices',
-    title: '6. Precios y stock mínimo',
-    desc: 'P. compra es lo que pagás. P. venta es lo que cobrás. Truco: tipeá solo dígitos, "1150" se muestra "11.50" solo. Stock mínimo dispara una alerta cuando se acerca a esa cantidad.',
+    title: '6. Precios, formato y stock mínimo',
+    desc: 'P. compra es lo que pagas; P. venta es lo que cobras. Con el botón "Formato del precio" eliges cómo escribirlo: "2 decimales" es estilo calculadora (escribes 1150 y se muestra 11.50, siempre 2 decimales); "hasta 6 dec." te deja escribir la parte entera y hasta 6 decimales por separado, útil para precios al detalle (ej. 0.0357). Stock mínimo dispara una alerta cuando el stock baja a esa cantidad.',
   },
   {
     target: 'save-button',
     title: '7. Guardar',
-    desc: 'Cuando termines, tocá Guardar. El sistema le asigna un código (SKU) automáticamente y lo agrega a tu catálogo. Ya está, listo para vender.',
+    desc: 'Cuando termines, haz clic en Guardar. El sistema le asigna un código (SKU) automáticamente y lo agrega a tu catálogo. Listo para vender.',
   },
   {
     target: null,
     title: '¡Listo!',
-    desc: 'Ya conocés todas las partes del formulario. Si te trabás en algo, este tutorial está siempre en Ajustes → Ayuda. ¡A cargar productos!',
+    desc: 'Ya conoces todas las partes del formulario. Si te atascas en algo, este tutorial siempre está en Ajustes → Ayuda. ¡A cargar productos!',
     intro: false,
   },
 ]

@@ -40,7 +40,7 @@ function Field({ label, required, error, children }) {
   )
 }
 
-export default function CustomerFormModal({ customer, onClose }) {
+export default function CustomerFormModal({ customer, onClose, onCreated, initialName }) {
   const isEdit = !!customer
   const create = useCreateCustomer()
   const update = useUpdateCustomer()
@@ -59,7 +59,7 @@ export default function CustomerFormModal({ customer, onClose }) {
       address:     customer.address     ?? '',
       creditLimit: customer.creditLimit ?? '',
       notes:       customer.notes       ?? '',
-    } : {},
+    } : { name: initialName ?? '' },
   })
 
   useEffect(() => {
@@ -86,8 +86,9 @@ export default function CustomerFormModal({ customer, onClose }) {
         await update.mutateAsync({ id: customer.id, data: payload })
         toast.success('Cliente actualizado')
       } else {
-        await create.mutateAsync(payload)
+        const created = await create.mutateAsync(payload)
         toast.success('Cliente creado')
+        onCreated?.(created)
       }
       onClose()
     } catch (err) {

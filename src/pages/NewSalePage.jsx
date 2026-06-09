@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle } from 'lucide-react'
+import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, UserPlus, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
@@ -11,6 +11,7 @@ import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
+import CustomerFormModal from '../components/customers/CustomerFormModal'
 import { formatPrice } from '../utils/formatMoney'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
@@ -276,7 +277,7 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
 
 // ── CreditSection — vender al fiado ───────────────────────────────────────────
 
-function CustomerPicker({ value, onSelect }) {
+function CustomerPicker({ value, onSelect, onRequestCreate }) {
   const [query, setQuery] = useState('')
   const [open, setOpen]   = useState(false)
   const debounced = useDebounce(query, 350)
@@ -314,12 +315,25 @@ function CustomerPicker({ value, onSelect }) {
         placeholder="Buscar cliente por nombre, documento o teléfono..."
         className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
       />
+      <button
+        type="button"
+        onClick={() => onRequestCreate(query.trim())}
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+      >
+        <UserPlus size={13} />
+        Registrar nuevo cliente
+      </button>
       {open && debounced && (
         <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
           {isLoading ? (
             <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
           ) : results.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+            <button type="button"
+              onClick={() => onRequestCreate(query.trim())}
+              className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm text-blue-700 hover:bg-blue-50">
+              <UserPlus size={14} />
+              <span>Sin resultados — registrar <strong>{debounced}</strong> como nuevo cliente</span>
+            </button>
           ) : (
             results.map((c) => (
               <button key={c.id} type="button"
@@ -341,7 +355,7 @@ function CustomerPicker({ value, onSelect }) {
   )
 }
 
-function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total }) {
+function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onRequestNewCustomer, total }) {
   const debt   = customer ? Number(customer.currentDebt ?? 0) : 0
   const limit  = customer && customer.creditLimit != null ? Number(customer.creditLimit) : null
   const noCredit  = customer && (limit == null || limit <= 0)
@@ -363,7 +377,7 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total })
 
       {enabled && (
         <div className="mt-3 space-y-3">
-          <CustomerPicker value={customer} onSelect={onSelectCustomer} />
+          <CustomerPicker value={customer} onSelect={onSelectCustomer} onRequestCreate={onRequestNewCustomer} />
 
           {customer && (
             <>
@@ -425,8 +439,25 @@ export default function NewSalePage() {
   const [discountValue, setDiscountValue] = useState('')
   const [onCredit, setOnCredit]           = useState(false)
   const [customer, setCustomer]           = useState(null)
+  // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
+  const [newCustomerName, setNewCustomerName] = useState(null)
+  const [pendingLeave, setPendingLeave]       = useState(false)
 
   useEffect(() => { cartStateRef.current = cart }, [cart])
+
+  // Avisar antes de cerrar/recargar la pestaña con una venta en proceso.
+  useEffect(() => {
+    if (cart.length === 0) return
+    const handler = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [cart.length])
+
+  // Salir de la venta: si hay productos cargados, confirmar antes de descartar.
+  const requestLeave = () => {
+    if (cart.length > 0) setPendingLeave(true)
+    else navigate('/sales')
+  }
 
   const { data: productsData, isLoading: loadingProducts } = useProducts(
     debouncedSearch ? { search: debouncedSearch, size: 10, active: true } : null,
@@ -564,7 +595,7 @@ export default function NewSalePage() {
     <div className="flex flex-col gap-4 pb-24">
 
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/sales')}
+        <button onClick={requestLeave}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">Volver</span>
@@ -667,6 +698,7 @@ export default function NewSalePage() {
               onToggle={(v) => { setOnCredit(v); if (!v) setCustomer(null) }}
               customer={customer}
               onSelectCustomer={setCustomer}
+              onRequestNewCustomer={(name) => setNewCustomerName(name ?? '')}
               total={total}
             />
           )}
@@ -742,6 +774,58 @@ export default function NewSalePage() {
           </div>
         </div>
       )}
+
+      {newCustomerName !== null && (
+        <CustomerFormModal
+          initialName={newCustomerName}
+          onClose={() => setNewCustomerName(null)}
+          onCreated={(c) => setCustomer(c)}
+        />
+      )}
+
+      {pendingLeave && (
+        <ConfirmLeaveModal
+          onStay={() => setPendingLeave(false)}
+          onLeave={() => { setPendingLeave(false); navigate('/sales') }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── ConfirmLeaveModal — evita perder una venta en proceso por error ───────────
+
+function ConfirmLeaveModal({ onStay, onLeave }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-100">
+            <AlertTriangle size={18} className="text-orange-600" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-bold text-gray-900">¿Salir de la venta?</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Tienes productos cargados en el carrito. Si sales ahora, se perderán
+              y la venta no quedará registrada.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            onClick={onStay}
+            className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+          >
+            Seguir con la venta
+          </button>
+          <button
+            onClick={onLeave}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+          >
+            Salir y descartar
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
