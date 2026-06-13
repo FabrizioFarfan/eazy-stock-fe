@@ -27,13 +27,19 @@ const schema = z.object({
   purchasePrice: z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
   // salePrice se valida condicionalmente: si priceIsVariable=true, no se exige > 0
   salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'No puede ser negativo').optional(),
-  // minStock admite decimales para productos por peso/medida; "unidad" exige entero (refine abajo).
+  // minStock e initialStock admiten decimales para productos por peso/medida;
+  // "unidad" exige entero (refine abajo).
   minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0'),
+  initialStock:  z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0').optional(),
 }).superRefine((data, ctx) => {
-  // minStock entero si el producto no es divisible (unidad)
+  // minStock / initialStock enteros si el producto no es divisible (unidad)
   const effectiveUnit = data.unit === 'otro' ? (data.unitCustom?.trim() || 'unidad') : (data.unit || 'unidad')
-  if (effectiveUnit.toLowerCase() === 'unidad' && data.minStock != null && !Number.isInteger(data.minStock)) {
+  const indivisible = effectiveUnit.toLowerCase() === 'unidad'
+  if (indivisible && data.minStock != null && !Number.isInteger(data.minStock)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['minStock'], message: 'Debe ser entero para productos por unidad' })
+  }
+  if (indivisible && data.initialStock != null && !Number.isInteger(data.initialStock)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['initialStock'], message: 'Debe ser entero para productos por unidad' })
   }
   // salePrice obligatorio sólo si NO es variable
   if (!data.priceIsVariable && (data.salePrice == null || data.salePrice <= 0)) {
@@ -230,7 +236,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
           minStock:      product.minStock      ?? 0,
         }
-      : { minStock: 0, unit: 'unidad', priceIsVariable: false },
+      : { minStock: 0, initialStock: 0, unit: 'unidad', priceIsVariable: false },
   })
 
   const unitValue = watch('unit')
@@ -319,7 +325,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         : (values.unit || 'unidad')
       const presentation = values.presentation?.trim() || null
 
-      const { unitCustom, ...rest } = values
+      // initialStock es solo para alta; no viaja en update.
+      const { unitCustom, initialStock, ...rest } = values
       const payload = {
         ...rest,
         unit: effectiveUnit,
@@ -345,9 +352,12 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           },
         })
       } else {
-        const finalPayload = user.role === 'SUPER_ADMIN'
-          ? { ...payload, businessId: user.businessId }
+        const withInitial = initialStock && Number(initialStock) > 0
+          ? { ...payload, initialStock: Number(initialStock) }
           : payload
+        const finalPayload = user.role === 'SUPER_ADMIN'
+          ? { ...withInitial, businessId: user.businessId }
+          : withInitial
         await create.mutateAsync(finalPayload)
       }
       onClose()
@@ -672,6 +682,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               <Field label="Stock mín." required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
               </Field>
+              {!isEdit && (
+                <Field label="Stock inicial" error={errors.initialStock?.message}>
+                  <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
+                </Field>
+              )}
               </div>
             </div>
 
