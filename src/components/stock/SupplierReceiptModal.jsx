@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  X, Loader2, Plus, Minus, Trash2, Truck, AlertTriangle, PackagePlus, ExternalLink,
+  X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -10,7 +10,9 @@ import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
 import PriceInput from '../inputs/PriceInput'
+import QuantityInput from '../inputs/QuantityInput'
 import { formatPrice } from '../../utils/formatMoney'
+import { formatQty, isDivisibleUnit } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
 
 /**
@@ -70,7 +72,7 @@ export default function SupplierReceiptModal({ onClose }) {
   const [error, setError]                           = useState(null)
 
   const computedTotal = useMemo(() => items.reduce(
-    (sum, it) => sum + (Number(it.unitCost ?? 0) * it.quantity),
+    (sum, it) => sum + (Number(it.unitCost ?? 0) * (Number(it.quantity) || 0)),
     0,
   ), [items])
 
@@ -100,10 +102,12 @@ export default function SupplierReceiptModal({ onClose }) {
     setProductQuery('')
     setShowProductDrop(false)
   }
-  const incQty = (id) => setItems((prev) =>
-    prev.map((i) => i.product.id === id ? { ...i, quantity: i.quantity + 1 } : i))
-  const decQty = (id) => setItems((prev) =>
-    prev.map((i) => i.product.id === id ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))
+  // Cantidad escribible directa (incl. decimales para productos divisibles).
+  const changeQty = (id, value) => setItems((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, quantity: value } : i))
+  // Al re-escanear un producto ya agregado: suma 1.
+  const bumpQty = (id) => setItems((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, quantity: (Number(i.quantity) || 0) + 1 } : i))
   const changeUnitCost = (id, value) => setItems((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, unitCost: value } : i))
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.product.id !== id))
@@ -120,7 +124,7 @@ export default function SupplierReceiptModal({ onClose }) {
         return
       }
       if (itemsRef.current.some((i) => i.product.id === product.id)) {
-        incQty(product.id)
+        bumpQty(product.id)
         toast.info('Cantidad actualizada')
         return
       }
@@ -140,6 +144,16 @@ export default function SupplierReceiptModal({ onClose }) {
 
     if (!supplier) { setError('Seleccioná el proveedor'); return }
     if (items.length === 0) { setError('Agregá al menos un producto'); return }
+    const badQty = items.find((i) => {
+      const q = Number(i.quantity)
+      if (!Number.isFinite(q) || q <= 0) return true
+      if (!isDivisibleUnit(i.product.unit) && !Number.isInteger(q)) return true
+      return false
+    })
+    if (badQty) {
+      setError(`Revisá la cantidad de "${badQty.product.name}"`)
+      return
+    }
     if (!finalTotal || finalTotal <= 0) {
       setError('Ingresá el monto total de la compra')
       return
@@ -172,7 +186,7 @@ export default function SupplierReceiptModal({ onClose }) {
   }
 
   const inputCls = 'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0)
+  const totalItems = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0)
   const productsLink = supplier ? `/products?supplierId=${supplier.id}` : '/products'
 
   // Disable step-2 fields hasta que haya proveedor.
@@ -330,30 +344,25 @@ export default function SupplierReceiptModal({ onClose }) {
                           </div>
 
                           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => decQty(it.product.id)} disabled={it.quantity === 1}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                                <Minus size={11} />
-                              </button>
-                              <span className="w-8 text-center text-sm font-bold text-gray-900">{it.quantity}</span>
-                              <button type="button" onClick={() => incQty(it.product.id)}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50">
-                                <Plus size={11} />
-                              </button>
-                            </div>
+                            <QuantityInput
+                              value={it.quantity}
+                              onChange={(v) => changeQty(it.product.id, v)}
+                              unit={it.product.unit || 'unidad'}
+                              maxDecimals={3}
+                            />
                             <PriceInput
                               value={it.unitCost}
                               onChange={(v) => changeUnitCost(it.product.id, v)}
                               maxDecimals={6}
                             />
                             <div className="flex items-center justify-end text-sm font-semibold text-gray-900 sm:justify-end">
-                              {formatPrice(it.quantity * Number(it.unitCost ?? 0))}
+                              {formatPrice((Number(it.quantity) || 0) * Number(it.unitCost ?? 0))}
                             </div>
                           </div>
                         </div>
                       ))}
                       <p className="text-xs text-gray-400">
-                        {items.length} producto{items.length !== 1 ? 's' : ''} · {totalItems} unidad{totalItems !== 1 ? 'es' : ''}
+                        {items.length} producto{items.length !== 1 ? 's' : ''} · {formatQty(totalItems)} ítem{totalItems !== 1 ? 's' : ''}
                       </p>
                     </div>
                   )}

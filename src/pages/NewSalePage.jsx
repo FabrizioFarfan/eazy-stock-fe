@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Minus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, UserPlus, AlertTriangle } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, UserPlus, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
@@ -10,9 +10,11 @@ import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
+import QuantityInput from '../components/inputs/QuantityInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
 import { formatPrice } from '../utils/formatMoney'
+import { isDivisibleUnit, formatQty } from '../utils/quantity'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
 // decimals from the BE — `formatPrice` falls through to the same formatting.
@@ -61,7 +63,7 @@ function ProductCard({ product, inCart, onAdd }) {
           <p className="text-xs text-gray-400">
             Stock:{' '}
             <span className={`font-bold ${noStock ? 'text-red-500' : 'text-gray-700'}`}>
-              {product.currentStock} uds.
+              {formatQty(product.currentStock)} {product.unit || 'unidad'}
             </span>
           </p>
           {product.priceIsVariable ? (
@@ -94,38 +96,17 @@ function ProductCard({ product, inCart, onAdd }) {
 
 // ── CartItem ──────────────────────────────────────────────────────────────────
 
-function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, onPriceChange, onQuantityChange }) {
+function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange }) {
   const { product, quantity, unitPrice } = item
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
-  const subtotal     = quantity * numericPrice
+  const subtotal     = (Number(quantity) || 0) * numericPrice
   const isModified   = !isVariable && Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0000005
   const variableMissing = isVariable && (unitPrice === '' || unitPrice == null || numericPrice <= 0)
 
   // Si es variable, el input de precio está habilitado siempre (no es un override:
   // es el único precio). Autofoco al montar para que el cajero lo defina rápido.
   const priceInputDisabled = isVariable ? false : !canApplyDiscount
-
-  // Cantidad editable a mano, además de los +/- — para vender 50 uds sin 50 clicks.
-  // El borrador local permite dejar el campo vacío mientras se tipea; al confirmar
-  // se reporta al carrito (que lo limita a [1, stock]).
-  const [qtyDraft, setQtyDraft] = useState(String(quantity))
-  // Re-sincroniza el borrador cuando la cantidad cambia desde afuera (botones +/-
-  // o el tope de stock), sin un efecto — patrón "ajustar estado en el render".
-  const [prevQty, setPrevQty] = useState(quantity)
-  if (quantity !== prevQty) {
-    setPrevQty(quantity)
-    setQtyDraft(String(quantity))
-  }
-
-  const handleQuantityChange = (e) => {
-    const digits = e.target.value.replace(/\D/g, '')
-    setQtyDraft(digits)
-    if (digits !== '') onQuantityChange(product.id, parseInt(digits, 10))
-  }
-  const handleQuantityBlur = () => {
-    if (qtyDraft === '' || parseInt(qtyDraft, 10) < 1) setQtyDraft(String(quantity))
-  }
 
   return (
     <div className={`rounded-xl border p-3 ${
@@ -141,30 +122,17 @@ function CartItem({ item, canApplyDiscount, onIncrease, onDecrease, onRemove, on
         </button>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => onDecrease(product.id)} disabled={quantity === 1}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-40">
-            <Minus size={11} />
-          </button>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={qtyDraft}
-            onChange={handleQuantityChange}
-            onBlur={handleQuantityBlur}
-            onFocus={(e) => e.target.select()}
-            aria-label="Cantidad"
-            className="h-7 w-10 rounded-lg border border-gray-200 bg-white text-center text-sm font-bold text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
-          />
-          <button onClick={() => onIncrease(product.id)} disabled={quantity >= product.currentStock}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-40">
-            <Plus size={11} />
-          </button>
-        </div>
-
-        <p className="text-sm font-bold text-gray-900">{formatPrice(subtotal)}</p>
+      <div className="mt-2.5 flex items-end justify-between gap-2">
+        <QuantityInput
+          value={quantity}
+          onChange={(v) => onQtyChange(product.id, v)}
+          unit={product.unit || 'unidad'}
+          max={product.currentStock}
+          maxDecimals={3}
+          className="w-36"
+          label="Cantidad"
+        />
+        <p className="pb-2 text-sm font-bold text-gray-900">{formatPrice(subtotal)}</p>
       </div>
 
       <div className="mt-2">
@@ -478,15 +446,13 @@ export default function NewSalePage() {
     ])
   }
   const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.product.id !== id))
-  const increase = (id) => setCart((prev) =>
+  // Cantidad escribible directa (incl. decimales para productos divisibles).
+  const changeQty = (id, value) => setCart((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, quantity: value } : i))
+  // Al re-escanear un producto ya en el carrito: suma 1 (tope = stock disponible).
+  const bumpQty = (id) => setCart((prev) =>
     prev.map((i) => i.product.id === id
-      ? { ...i, quantity: Math.min(i.quantity + 1, i.product.currentStock) } : i))
-  const decrease = (id) => setCart((prev) =>
-    prev.map((i) => i.product.id === id
-      ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))
-  const changeQuantity = (id, n) => setCart((prev) =>
-    prev.map((i) => i.product.id === id
-      ? { ...i, quantity: Math.max(1, Math.min(n, i.product.currentStock)) } : i))
+      ? { ...i, quantity: Math.min((Number(i.quantity) || 0) + 1, i.product.currentStock) } : i))
   const changePrice = (id, raw) => setCart((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, unitPrice: raw } : i))
 
@@ -498,7 +464,7 @@ export default function NewSalePage() {
       if (!product)                   { toast.error('Producto no encontrado'); return }
       if (product.currentStock === 0) { toast.warning('Sin stock disponible'); return }
       if (cartStateRef.current.some((i) => i.product.id === product.id)) {
-        increase(product.id)
+        bumpQty(product.id)
         toast.info('Cantidad actualizada')
         return
       }
@@ -536,10 +502,23 @@ export default function NewSalePage() {
   )
   const hasVariableWithoutPrice = variableWithoutPrice.length > 0
 
+  // Cantidades inválidas: vacías/0, sobre stock, o con decimales en productos por unidad.
+  const invalidQtyItem = cart.find((i) => {
+    const q = Number(i.quantity)
+    if (!Number.isFinite(q) || q <= 0) return true
+    if (q > Number(i.product.currentStock ?? 0) + 1e-9) return true
+    if (!isDivisibleUnit(i.product.unit) && !Number.isInteger(q)) return true
+    return false
+  })
+
   const handleSubmit = async () => {
     if (cart.length === 0) return
     if (hasVariableWithoutPrice) {
       toast.error('Definí el precio de los productos variables antes de cobrar')
+      return
+    }
+    if (invalidQtyItem) {
+      toast.error(`Revisá la cantidad de "${invalidQtyItem.product.name}"`)
       return
     }
     if (fiadoMissingCustomer) {
@@ -671,11 +650,9 @@ export default function NewSalePage() {
                     key={item.product.id}
                     item={item}
                     canApplyDiscount={canApplyDiscount}
-                    onIncrease={increase}
-                    onDecrease={decrease}
+                    onQtyChange={changeQty}
                     onRemove={removeFromCart}
                     onPriceChange={changePrice}
-                    onQuantityChange={changeQuantity}
                   />
                 ))}
               </div>
@@ -737,7 +714,7 @@ export default function NewSalePage() {
 
             <button
               onClick={handleSubmit}
-              disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice}
+              disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
@@ -763,7 +740,7 @@ export default function NewSalePage() {
             </div>
             <button
               onClick={handleSubmit}
-              disabled={createSale.isPending || hasVariableWithoutPrice}
+              disabled={createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}

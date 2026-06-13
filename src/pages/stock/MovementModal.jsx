@@ -8,14 +8,17 @@ import { useCreateMovement } from '../../hooks/useStock'
 import { useDebounce } from '../../hooks/useDebounce'
 import ScannerInput from '../../components/ScannerInput'
 import { productsApi } from '../../services/endpoints/products'
+import { formatQty, isDivisibleUnit, isKiloUnit, gramsEquivalent } from '../../utils/quantity'
 
+// Las cantidades admiten decimales (venta/recepción por peso). La restricción de
+// "entero para productos por unidad" se valida en onSubmit con la unidad del producto.
 const entrySchema = z.object({
-  quantity: z.coerce.number().int('Debe ser entero').positive('Debe ser mayor a 0'),
+  quantity: z.coerce.number().positive('Debe ser mayor a 0'),
   notes: z.string().optional(),
 })
 
 const adjustSchema = z.object({
-  quantity: z.coerce.number().int('Debe ser entero').refine((v) => v !== 0, 'No puede ser 0'),
+  quantity: z.coerce.number().refine((v) => v !== 0, 'No puede ser 0'),
   notes: z.string().optional(),
 })
 
@@ -47,7 +50,13 @@ export default function MovementModal({ type, onClose }) {
   const createMovement                        = useCreateMovement()
 
   const schema = type === 'PURCHASE_ENTRY' ? entrySchema : adjustSchema
-  const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, setError, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
+
+  const divisible   = selectedProduct ? isDivisibleUnit(selectedProduct.unit) : true
+  const unitLabel   = selectedProduct?.unit || 'unidad'
+  const qtyWatch    = watch('quantity')
+  const gramsHint   = selectedProduct && isKiloUnit(selectedProduct.unit)
+    ? gramsEquivalent(qtyWatch) : null
 
   const { data: productsData, isLoading: loadingProducts } = useProducts(
     debouncedSearch ? { search: debouncedSearch, size: 8, active: true } : null,
@@ -78,6 +87,11 @@ export default function MovementModal({ type, onClose }) {
 
   const onSubmit = async ({ quantity, notes }) => {
     if (!selectedProduct) return
+    // Productos por unidad: solo enteros.
+    if (!isDivisibleUnit(selectedProduct.unit) && !Number.isInteger(Number(quantity))) {
+      setError('quantity', { message: `"${selectedProduct.name}" se mide por unidad: usá un número entero` })
+      return
+    }
     try {
       await createMovement.mutateAsync({
         productId: selectedProduct.id,
@@ -147,7 +161,9 @@ export default function MovementModal({ type, onClose }) {
                 <div className="mt-2 flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-2.5">
                   <div>
                     <span className="text-xs text-gray-500">Stock actual: </span>
-                    <span className="text-sm font-bold text-gray-900">{selectedProduct.currentStock} uds.</span>
+                    <span className="text-sm font-bold text-gray-900">
+                      {formatQty(selectedProduct.currentStock)} {unitLabel}
+                    </span>
                   </div>
                   <span className="font-mono text-xs text-gray-400">{selectedProduct.sku}</span>
                 </div>
@@ -159,10 +175,18 @@ export default function MovementModal({ type, onClose }) {
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
                 Cantidad <span className="text-red-400">*</span>
               </label>
-              <input {...register('quantity')} type="number" step="1"
-                placeholder={type === 'ADJUSTMENT' ? 'Ej. -5 o +10' : 'Ej. 50'}
-                className={inputCls} />
+              <div className="flex items-center gap-2">
+                <input {...register('quantity')} type="number" step={divisible ? '0.001' : '1'}
+                  placeholder={type === 'ADJUSTMENT' ? 'Ej. -5 o +10' : 'Ej. 50'}
+                  className={inputCls} />
+                {selectedProduct && (
+                  <span className="flex-shrink-0 text-sm font-medium text-gray-400">{unitLabel}</span>
+                )}
+              </div>
               {errors.quantity && <p className="mt-1 text-xs text-red-500">{errors.quantity.message}</p>}
+              {!errors.quantity && gramsHint && (
+                <p className="mt-1 text-xs text-gray-400">= {gramsHint}</p>
+              )}
               {type === 'ADJUSTMENT' && (
                 <p className="mt-1 text-xs text-gray-400">Positivo para agregar, negativo para reducir</p>
               )}
