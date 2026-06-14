@@ -12,6 +12,11 @@ export const productsApi = {
 
   deactivate: (id) => api.delete(`/products/${id}`),
 
+  // Borrado masivo por rango de fecha de creación (from/to en formato YYYY-MM-DD)
+  bulkDeletePreview: (from, to) =>
+    api.get('/products/bulk-delete/preview', { params: { from, to } }),
+  bulkDelete: (from, to) => api.post('/products/bulk-delete', { from, to }),
+
   getQr:      (id) => api.get(`/products/${id}/qr`,      { responseType: 'blob' }),
   getBarcode: (id) => api.get(`/products/${id}/barcode`, { responseType: 'blob' }),
 

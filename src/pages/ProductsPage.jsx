@@ -6,6 +6,7 @@ import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
+import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import QrModal from '../components/products/QrModal'
 import { formatPrice } from '../utils/formatMoney'
 
@@ -109,6 +110,7 @@ export default function ProductsPage() {
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
   const [detailModal, setDetailModal] = useState(null)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const params = {
     page, size: PAGE_SIZE,
@@ -168,6 +170,14 @@ export default function ProductsPage() {
               <FileSpreadsheet size={14} />
               Importar desde Excel
             </Link>
+            <button
+              onClick={() => setBulkDeleteOpen(true)}
+              title="Borrar productos en masa por fecha de creación (ej. deshacer un import)"
+              className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
+            >
+              <Trash2 size={14} />
+              Borrar en masa
+            </button>
             <button
               onClick={openCreate}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
@@ -349,6 +359,7 @@ export default function ProductsPage() {
       )}
       {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}
       {detailModal && <ProductDetailModal product={detailModal} onClose={() => setDetailModal(null)} />}
+      {bulkDeleteOpen && <BulkDeleteModal onClose={() => setBulkDeleteOpen(false)} />}
     </div>
   )
 }

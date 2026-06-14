@@ -36,3 +36,12 @@ export function useDeactivateProduct() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
   })
 }
+
+/** Borrado masivo por rango de fecha de creación. */
+export function useBulkDeleteProducts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ from, to }) => productsApi.bulkDelete(from, to).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+  })
+}
