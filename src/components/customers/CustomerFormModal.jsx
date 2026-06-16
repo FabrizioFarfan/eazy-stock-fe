@@ -6,6 +6,7 @@ import { X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers'
 import PriceInput from '../inputs/PriceInput'
+import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 
 // Teléfono opcional: 9 dígitos (formato Lima) si se ingresa.
@@ -19,10 +20,14 @@ const schema = z.object({
   phone:       peruvianPhone,
   email:       z.string().email('Email inválido').optional().or(z.literal('')),
   address:     z.string().max(500).optional().or(z.literal('')),
-  creditLimit: z.coerce.number({ invalid_type_error: 'Número inválido' })
-                .min(0, 'No puede ser negativo')
-                .optional()
-                .or(z.literal('')),
+  // Obligatorio: 0 es válido (significa "no se le fía"), pero no puede quedar vacío.
+  creditLimit: z.preprocess(
+                (v) => (v === '' || v == null ? undefined : v),
+                z.coerce.number({
+                  invalid_type_error: 'Número inválido',
+                  required_error: 'El límite de crédito es obligatorio',
+                }).min(0, 'No puede ser negativo'),
+              ),
   notes:       z.string().optional(),
 })
 
@@ -137,20 +142,30 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
               <input {...register('address')} placeholder="Av. siempre viva 742" className={inputCls} />
             </Field>
 
-            <Controller
-              control={control}
-              name="creditLimit"
-              render={({ field }) => (
-                <PriceInput
-                  label="Límite de crédito"
-                  helperText="Vacío o 0 → el cliente existe pero no puede operar al fiado."
-                  value={field.value === '' ? null : field.value}
-                  onChange={(v) => field.onChange(v ?? '')}
-                  error={errors.creditLimit?.message}
-                  maxDecimals={2}
-                />
-              )}
-            />
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Límite de crédito<span className="ml-0.5 text-red-500">*</span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-gray-400">Formato del precio</span>
+                  <PriceInputModeToggle />
+                </div>
+              </div>
+              <Controller
+                control={control}
+                name="creditLimit"
+                render={({ field }) => (
+                  <PriceInput
+                    helperText="0 → el cliente existe pero no puede operar al fiado."
+                    value={field.value === '' ? null : field.value}
+                    onChange={(v) => field.onChange(v ?? '')}
+                    error={errors.creditLimit?.message}
+                    maxDecimals={2}
+                  />
+                )}
+              />
+            </div>
 
             <Field label="Notas" error={errors.notes?.message}>
               <textarea {...register('notes')} rows={2} placeholder="Notas (opcional)..."

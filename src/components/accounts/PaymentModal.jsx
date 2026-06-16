@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import PriceInput from '../inputs/PriceInput'
+import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import { formatPrice } from '../../utils/formatMoney'
 import { getErrorMessage } from '../../utils/handleApiError'
 
@@ -73,12 +74,20 @@ export default function PaymentModal({ entity, mutation, onClose, mode = 'custom
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
 
-          <PriceInput
-            label="Monto del pago"
-            value={amount}
-            onChange={setAmount}
-            maxDecimals={2}
-          />
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-gray-700">Monto del pago</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-gray-400">Formato del precio</span>
+                <PriceInputModeToggle />
+              </div>
+            </div>
+            <PriceInput
+              value={amount}
+              onChange={setAmount}
+              maxDecimals={2}
+            />
+          </div>
 
           {isSupplier && (
             <div className="flex flex-col gap-1">
