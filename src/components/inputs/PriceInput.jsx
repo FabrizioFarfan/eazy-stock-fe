@@ -57,16 +57,15 @@ const PriceInput = forwardRef(function PriceInput(
         <label className="text-sm font-medium text-gray-700">{label}</label>
       )}
 
-      <div
-        className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 ring-2 ring-transparent transition-colors focus-within:ring-2 ${borderCls} ${
-          disabled ? 'cursor-not-allowed bg-gray-50 opacity-70' : ''
-        }`}
-      >
-        <span className="font-mono text-sm font-semibold text-gray-400 select-none">
-          {symbol}
-        </span>
-
-        {mode === 'calculator' ? (
+      {mode === 'calculator' ? (
+        <div
+          className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 ring-2 ring-transparent transition-colors focus-within:ring-2 ${borderCls} ${
+            disabled ? 'cursor-not-allowed bg-gray-50 opacity-70' : ''
+          }`}
+        >
+          <span className="font-mono text-sm font-semibold text-gray-400 select-none">
+            {symbol}
+          </span>
           <CalculatorBody
             ref={ref}
             value={value}
@@ -76,20 +75,22 @@ const PriceInput = forwardRef(function PriceInput(
             placeholder={`${placeholderWhole}.${placeholderDecimals}`}
             label={label}
           />
-        ) : (
-          <SplitBody
-            ref={ref}
-            value={value}
-            onChange={onChange}
-            disabled={disabled}
-            maxDecimals={maxDecimals}
-            autoFocus={autoFocus}
-            placeholderWhole={placeholderWhole}
-            placeholderDecimals={placeholderDecimals}
-            label={label}
-          />
-        )}
-      </div>
+        </div>
+      ) : (
+        <SplitBody
+          ref={ref}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          maxDecimals={maxDecimals}
+          autoFocus={autoFocus}
+          placeholderWhole={placeholderWhole}
+          placeholderDecimals={placeholderDecimals}
+          label={label}
+          symbol={symbol}
+          error={error}
+        />
+      )}
 
       {error && <p className="text-xs text-red-500">{error}</p>}
       {!error && helperText && <p className="text-xs text-gray-400">{helperText}</p>}
@@ -111,6 +112,8 @@ const SplitBody = forwardRef(function SplitBody(
     placeholderWhole,
     placeholderDecimals,
     label,
+    symbol,
+    error,
   },
   ref,
 ) {
@@ -170,40 +173,63 @@ const SplitBody = forwardRef(function SplitBody(
     }
   }
 
+  // Cada casilla con su propio borde para que se vea CLARÍSIMO que enteros y
+  // decimales son campos distintos (el usuario tendía a tipear todo en uno solo
+  // y poner el punto a mano). Rótulos chiquitos debajo refuerzan la separación.
+  const boxBorder = error
+    ? 'border-red-300 focus:border-red-500 focus:ring-red-500/30'
+    : 'border-gray-300 focus:border-blue-600 focus:ring-blue-600/25'
+  const boxBase = `w-full rounded-lg border-2 bg-white px-2.5 py-2 text-sm font-semibold text-gray-900 outline-none ring-2 ring-transparent transition-colors focus:ring-2 placeholder-gray-300 disabled:cursor-not-allowed disabled:bg-gray-50 ${boxBorder}`
+  const caption = 'mt-1 text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400 select-none'
+
   return (
-    <>
-      <input
-        ref={wholeRef}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="off"
-        disabled={disabled}
-        value={whole}
-        placeholder={placeholderWhole}
-        onChange={handleWholeChange}
-        onKeyDown={handleWholeKeyDown}
-        onFocus={(e) => e.target.select()}
-        className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-gray-900 outline-none placeholder-gray-300 disabled:cursor-not-allowed"
-        aria-label={label ? `${label} — parte entera` : 'Parte entera'}
-      />
-      <span className="select-none text-base font-bold text-gray-400">.</span>
-      <input
-        ref={decimalRef}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        autoComplete="off"
-        disabled={disabled}
-        value={decimals}
-        placeholder={placeholderDecimals}
-        maxLength={maxDecimals}
-        onChange={handleDecimalChange}
-        onFocus={(e) => e.target.select()}
-        className="min-w-0 w-20 bg-transparent text-left text-sm font-semibold text-gray-900 outline-none placeholder-gray-300 disabled:cursor-not-allowed"
-        aria-label={label ? `${label} — decimales` : 'Decimales'}
-      />
-    </>
+    <div className="flex items-start gap-2">
+      {symbol && (
+        <span className="pt-2.5 font-mono text-sm font-semibold text-gray-400 select-none">
+          {symbol}
+        </span>
+      )}
+
+      <div className="flex flex-1 flex-col">
+        <input
+          ref={wholeRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          disabled={disabled}
+          value={whole}
+          placeholder={placeholderWhole}
+          onChange={handleWholeChange}
+          onKeyDown={handleWholeKeyDown}
+          onFocus={(e) => e.target.select()}
+          className={`${boxBase} text-right`}
+          aria-label={label ? `${label} — parte entera` : 'Parte entera'}
+        />
+        <span className={caption}>Enteros</span>
+      </div>
+
+      <span className="select-none pt-1.5 text-2xl font-bold leading-none text-gray-400">.</span>
+
+      <div className="flex flex-1 flex-col">
+        <input
+          ref={decimalRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          disabled={disabled}
+          value={decimals}
+          placeholder={placeholderDecimals}
+          maxLength={maxDecimals}
+          onChange={handleDecimalChange}
+          onFocus={(e) => e.target.select()}
+          className={`${boxBase} text-left`}
+          aria-label={label ? `${label} — decimales` : 'Decimales'}
+        />
+        <span className={caption}>Decimales</span>
+      </div>
+    </div>
   )
 })
 

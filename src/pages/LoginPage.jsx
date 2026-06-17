@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -40,10 +40,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* Brand panel — desktop only */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between bg-[#111827] px-14 py-12 xl:px-20">
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
           <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-xl object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
-        </div>
+        </Link>
 
         <div>
           <h1 className="text-5xl font-extrabold leading-tight text-white">
@@ -77,7 +77,9 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <img src="/logo.png" alt="Eazy Stock" className="h-16 w-16 rounded-2xl object-contain" />
+            <Link to="/" className="transition-opacity hover:opacity-80">
+              <img src="/logo.png" alt="Eazy Stock" className="h-16 w-16 rounded-2xl object-contain" />
+            </Link>
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-900">Eazy Stock</h2>
               <p className="mt-1 text-sm text-gray-500">Ingresa a tu cuenta</p>
