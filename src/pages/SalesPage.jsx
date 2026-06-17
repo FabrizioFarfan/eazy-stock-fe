@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X, Tag } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X, Tag, FileText } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
@@ -130,13 +130,23 @@ export default function SalesPage() {
           )}
         </div>
         {canCreate && (
-          <button
-            onClick={() => navigate('/sales/new')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
-          >
-            <Plus size={15} />
-            Nueva venta
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/cotizaciones')}
+              title="Crear una cotización (presupuesto) para un cliente"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <FileText size={15} />
+              Cotización
+            </button>
+            <button
+              onClick={() => navigate('/sales/new')}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
+            >
+              <Plus size={15} />
+              Nueva venta
+            </button>
+          </div>
         )}
       </div>
 
@@ -284,6 +294,14 @@ export default function SalesPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right font-bold text-gray-900">
                       <div className="flex items-center justify-end gap-2">
+                        {sale.onCredit && (
+                          <span
+                            title={`Venta al fiado${sale.customerName ? ' — ' + sale.customerName : ''} (cobro pendiente)`}
+                            className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700"
+                          >
+                            Fiado
+                          </span>
+                        )}
                         {sale.discountAmount > 0 && (
                           <span
                             title={

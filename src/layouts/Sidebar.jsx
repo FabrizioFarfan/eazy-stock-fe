@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings,
-  Wallet, HandCoins,
+  Wallet, HandCoins, FileText,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -20,6 +20,7 @@ const OWNER_NAV = [
   { icon: ArrowUpDown,     label: 'Stock',             path: '/stock',               permission: null },
   { icon: ShoppingCart,    label: 'Ventas',            path: '/sales',               permission: null },
   { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
+  { icon: FileText,        label: 'Cotización',        path: '/cotizaciones',        permission: 'canRegisterSale' },
   { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: null },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
@@ -37,6 +38,7 @@ const EMPLOYEE_NAV = [
   { icon: ArrowUpDown,     label: 'Stock',             path: '/stock',               permission: null },
   { icon: ShoppingCart,    label: 'Ventas',            path: '/sales',               permission: null },
   { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
+  { icon: FileText,        label: 'Cotización',        path: '/cotizaciones',        permission: 'canRegisterSale' },
   { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
