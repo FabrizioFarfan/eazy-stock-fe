@@ -20,6 +20,7 @@ function LandingRoute() {
 import DashboardPage  from '../pages/DashboardPage'
 import ProductsPage   from '../pages/ProductsPage'
 import ProductImportPage from '../pages/ProductImportPage'
+import ProductExportPage from '../pages/ProductExportPage'
 import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
 import StockPage      from '../pages/stock/StockPage'
@@ -53,6 +54,9 @@ export default function AppRouter() {
       } />
       <Route path="/products/import" element={
         <ProtectedRoute allowedRoles={['OWNER', 'SUPER_ADMIN']}><ProductImportPage /></ProtectedRoute>
+      } />
+      <Route path="/products/export" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE', 'SUPER_ADMIN']}><ProductExportPage /></ProtectedRoute>
       } />
       <Route path="/sales" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><SalesPage /></ProtectedRoute>

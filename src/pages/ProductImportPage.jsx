@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { importsApi } from '../services/endpoints/imports'
 import { useAuth } from '../context/AuthContext'
 import { getErrorMessage } from '../utils/handleApiError'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const STEP_LABELS = [
   'Subir archivo',
@@ -695,6 +696,69 @@ function SkuList({ title, skus }) {
   )
 }
 
+// ── Ayuda contextual por paso ─────────────────────────────────────────────────
+
+const STEP_HELP_TITLES = [
+  'Subir el archivo',
+  'Mapear las columnas',
+  'Revisar antes de importar',
+  'Resultado del import',
+]
+
+function StepHelp({ step }) {
+  if (step === 0) return (
+    <p>
+      Subí tu archivo Excel (.xlsx) o CSV con la lista de productos. El sistema lo va a leer y en
+      el siguiente paso vas a mapear las columnas a los campos del sistema. Si tu archivo viene
+      del sistema viejo de inventario, asegurate de tenerlo a la mano antes de empezar.
+    </p>
+  )
+  if (step === 1) return (
+    <p>
+      Cada columna de tu archivo se mapea a un campo del sistema. Auto-detectamos los nombres
+      comunes (NOMBRE → Nombre, PRECIO → Precio de venta, etc.) pero podés ajustar manualmente.
+      Si una columna de tu archivo no la querés importar, elegí "No importar esta columna". Los
+      campos obligatorios son: <span className="font-semibold">Nombre</span> y{' '}
+      <span className="font-semibold">SKU</span>. El resto son opcionales.
+    </p>
+  )
+  if (step === 2) return (
+    <>
+      <p>Acá ves cómo van a quedar los productos antes de importar. Cada fila tiene un color:</p>
+      <ul className="ml-1 space-y-1">
+        <li><span className="font-semibold text-emerald-700">Verde</span>: la fila se va a importar sin problemas.</li>
+        <li><span className="font-semibold text-amber-700">Amarillo</span>: la fila se va a importar pero con una observación que te recomendamos revisar después.</li>
+        <li><span className="font-semibold text-red-700">Rojo</span>: la fila NO se va a importar porque le falta información obligatoria.</li>
+      </ul>
+      <p>
+        Los amarillos son OK — el sistema importa el producto y le agrega una nota para que después
+        lo revises desde la página de Productos. Los rojos sí los tenés que arreglar en tu archivo
+        o ya no importarlos.
+      </p>
+      <p className="font-semibold text-gray-800">Observaciones comunes:</p>
+      <ul className="ml-1 space-y-1.5">
+        <li><span className="font-semibold">Sin proveedor</span>: el producto se importa pero queda con proveedor "Sin proveedor asignado". Después podés asignar el proveedor real desde la edición del producto.</li>
+        <li><span className="font-semibold">Costo en 0</span>: el sistema te avisa para que actualices el costo cuando recibas la próxima compra.</li>
+        <li><span className="font-semibold">Stock negativo</span>: como el sistema no permite stock negativo, se guarda como 0 y te queda una nota.</li>
+        <li><span className="font-semibold">Costo mayor al precio de venta</span>: probablemente un error de carga, te lo señalamos para que lo revises.</li>
+        <li><span className="font-semibold">Precio variable</span>: tu producto se guarda con el flag "Precio variable" y cada vez que lo vendas, te pedimos el precio en el momento.</li>
+        <li><span className="font-semibold">Caracteres corregidos</span>: tu archivo tenía caracteres mal codificados (como "Ã±" en vez de "ñ") y los corregimos automáticamente.</li>
+      </ul>
+    </>
+  )
+  return (
+    <>
+      <p>Listo. Estos son los resultados del import:</p>
+      <ul className="ml-1 space-y-1">
+        <li>Cuántos productos se importaron.</li>
+        <li>Cuántos proveedores nuevos se crearon.</li>
+        <li>Cuántas filas con observaciones (revisalas después en Productos, vas a ver cada una con su nota).</li>
+      </ul>
+      <p>Si querés ver el detalle por fila, descargá el reporte completo en Excel.</p>
+    </>
+  )
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function ProductImportPage() {
@@ -712,13 +776,18 @@ export default function ProductImportPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/products')}
-          className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          <ArrowLeft size={14} />
-          <span className="hidden sm:inline">Volver</span>
-        </button>
-        <h2 className="text-2xl font-bold text-gray-900">Importar productos desde Excel</h2>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/products')}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <ArrowLeft size={14} />
+            <span className="hidden sm:inline">Volver</span>
+          </button>
+          <h2 className="text-2xl font-bold text-gray-900">Importar productos desde Excel</h2>
+        </div>
+        <HelpDrawer title={STEP_HELP_TITLES[step]}>
+          <StepHelp step={step} />
+        </HelpDrawer>
       </div>
 
       <Stepper current={step} />

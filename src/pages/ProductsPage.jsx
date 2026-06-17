@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle, FileSpreadsheet } from 'lucide-react'
+import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
@@ -169,6 +169,14 @@ export default function ProductsPage() {
             >
               <FileSpreadsheet size={14} />
               Importar desde Excel
+            </Link>
+            <Link
+              to="/products/export"
+              title="Exportar productos a un Excel o CSV (re-importable)"
+              className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+            >
+              <Download size={14} />
+              Exportar a Excel
             </Link>
             <button
               onClick={() => setBulkDeleteOpen(true)}
