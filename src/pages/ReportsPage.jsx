@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck,
+  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -29,6 +29,68 @@ function firstOfMonth() {
 function formatCurrency(v) {
   if (v == null) return '—'
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+
+/**
+ * Imprime la lista de resurtido de un proveedor en una ventana aparte (lista de
+ * "productos a pedir"). Resaltamos los que están en/bajo el mínimo. No tocamos
+ * el CSS de la app: armamos un documento HTML limpio y llamamos a print().
+ */
+function printSupplierRestock(supplierName, from, to, rows) {
+  const win = window.open('', '_blank')
+  if (!win) return
+
+  const body = rows.map((r) => {
+    const suggested = Math.max(r.sold, Math.max(0, r.minStock - r.currentStock))
+    const low = r.currentStock <= r.minStock
+    return `<tr${low ? ' class="low"' : ''}>
+      <td>${escapeHtml(r.productName)}</td>
+      <td class="mono">${escapeHtml(r.sku ?? '')}</td>
+      <td class="c">${r.received}</td>
+      <td class="c">${r.sold}</td>
+      <td class="c">${r.currentStock}</td>
+      <td class="c">${r.minStock}</td>
+      <td class="c strong">${suggested > 0 ? `${suggested} ${escapeHtml(r.unit ?? '')}` : '—'}</td>
+    </tr>`
+  }).join('')
+
+  const generated = new Date().toLocaleString('es-PE')
+  win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <title>Resurtido — ${escapeHtml(supplierName)}</title>
+    <style>
+      * { font-family: Arial, Helvetica, sans-serif; }
+      body { margin: 24px; color: #111827; }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      .meta { font-size: 12px; color: #6b7280; margin: 0 0 16px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; }
+      th { background: #f3f4f6; text-transform: uppercase; font-size: 10px; letter-spacing: .04em; }
+      td.c, th.c { text-align: center; }
+      td.mono { font-family: monospace; color: #6b7280; }
+      td.strong { font-weight: 700; }
+      tr.low td { background: #fef2f2; }
+      @media print { body { margin: 0; } }
+    </style></head><body>
+    <h1>Productos a pedir — ${escapeHtml(supplierName)}</h1>
+    <p class="meta">Periodo ${escapeHtml(from)} a ${escapeHtml(to)} · Generado: ${escapeHtml(generated)} · ${rows.length} producto(s)</p>
+    <table>
+      <thead><tr>
+        <th>Producto</th><th>Código</th>
+        <th class="c">Recibido</th><th class="c">Vendido</th>
+        <th class="c">Stock actual</th><th class="c">Stock mínimo</th><th class="c">Sugerido pedir</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+  </body></html>`)
+  win.document.close()
+  win.focus()
+  win.print()
 }
 function formatDate(str) {
   if (!str) return '—'
@@ -410,6 +472,12 @@ function TabSupplierRestock({ businessId }) {
 
   const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
+  const supplierName = suppliers.find((s) => s.id === supplierId)?.name ?? ''
+
+  const handlePrint = () => {
+    printSupplierRestock(supplierName, from, to, rows)
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -431,6 +499,17 @@ function TabSupplierRestock({ businessId }) {
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hasta</label>
           <input type="date" value={to} min={from} max={todayStr} onChange={(e) => setTo(e.target.value)} className={inputCls} />
         </div>
+        {supplierId && rows.length > 0 && (
+          <button
+            type="button"
+            onClick={handlePrint}
+            title="Imprimir la lista de productos a pedir de este proveedor"
+            className="ml-auto flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            <Printer size={15} />
+            Imprimir
+          </button>
+        )}
       </div>
 
       {/* Empty state — no supplier selected */}
@@ -464,6 +543,7 @@ function TabSupplierRestock({ businessId }) {
                 <th className="px-4 py-3 text-center">Recibido</th>
                 <th className="px-4 py-3 text-center">Vendido</th>
                 <th className="px-4 py-3 text-center">Stock actual</th>
+                <th className="px-4 py-3 text-center">Stock mínimo</th>
                 <th className="px-4 py-3 text-center">Sugerido pedir</th>
               </tr>
             </thead>
@@ -482,6 +562,7 @@ function TabSupplierRestock({ businessId }) {
                         {r.currentStock}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-center text-gray-500">{r.minStock}</td>
                     <td className="px-4 py-3 text-center">
                       {suggested > 0 ? (
                         <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
