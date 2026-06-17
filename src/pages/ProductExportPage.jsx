@@ -18,6 +18,7 @@ const STEP_LABELS = ['Configurar', 'Descargar']
 const COLUMN_OPTIONS = [
   { key: 'sku',             label: 'SKU',                            def: true },
   { key: 'name',            label: 'Nombre',                         def: true },
+  { key: 'nameWithSku',     label: 'Nombre + código (SKU) juntos',   def: false },
   { key: 'providerCode',    label: 'Código del proveedor',           def: true },
   { key: 'supplierName',    label: 'Proveedor',                      def: true },
   { key: 'brandName',       label: 'Marca',                          def: false },
@@ -105,7 +106,7 @@ function ConfigureStep({ onStarted }) {
 
   const handleGenerate = async () => {
     if (selectedKeys.length === 0) {
-      toast.error('Elegí al menos una columna para exportar')
+      toast.error('Elige al menos una columna para exportar')
       return
     }
     try {
@@ -132,7 +133,7 @@ function ConfigureStep({ onStarted }) {
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h3 className="text-sm font-bold text-gray-900">Filtros (opcionales)</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Elegí qué productos exportar. Por defecto se exportan los activos.
+          Elige qué productos exportar. Por defecto se exportan los activos.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
@@ -168,7 +169,7 @@ function ConfigureStep({ onStarted }) {
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h3 className="text-sm font-bold text-gray-900">Columnas a incluir</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Si vas a editar el archivo y volver a subirlo, dejá tildadas SKU, Nombre y
+          Si vas a editar el archivo y volver a subirlo, deja marcadas SKU, Nombre y
           Código del proveedor — son las que el sistema usa para identificar cada producto.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -248,6 +249,13 @@ function DownloadStep({ jobId, onRestart }) {
 
   const isDone = status?.status === 'COMPLETED'
   const isFailed = status?.status === 'FAILED'
+  const total = status?.totalProducts ?? 0
+  const processed = status?.processedRows ?? 0
+  const pct = isDone
+    ? 100
+    : total > 0
+      ? Math.min(99, Math.round((processed / total) * 100))
+      : (status ? 8 : 0) // PENDING / total aún desconocido
 
   const handleDownload = async () => {
     try {
@@ -269,35 +277,42 @@ function DownloadStep({ jobId, onRestart }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-        {!isDone && !isFailed && (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <Loader2 size={32} className="animate-spin text-blue-600" />
-            <p className="text-sm font-semibold text-gray-700">Generando tu archivo...</p>
-            <p className="text-xs text-gray-400">Esto puede tardar unos segundos con muchos productos.</p>
-          </div>
-        )}
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        {!isFailed && (
+          <>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900">
+                {isDone ? '¡Tu archivo está listo!' : 'Generando tu archivo...'}
+              </h3>
+              {!isDone
+                ? <Loader2 size={16} className="animate-spin text-blue-600" />
+                : <CheckCircle2 size={18} className="text-emerald-600" />}
+            </div>
 
-        {isDone && (
-          <div className="flex flex-col items-center gap-4 py-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
-              <CheckCircle2 size={32} className="text-emerald-600" />
+            <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className={`h-full transition-all duration-300 ${isDone ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                style={{ width: `${pct}%` }}
+              />
             </div>
-            <div>
-              <p className="text-base font-semibold text-gray-900">¡Tu archivo está listo!</p>
-              <p className="mt-1 text-sm text-gray-500">
-                Se exportaron <span className="font-bold text-gray-900">{status.totalProducts}</span> producto(s)
-                {' '}en formato {status.format === 'CSV' ? 'CSV' : 'Excel'}.
-              </p>
-            </div>
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
-              {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-              Descargar archivo
-            </button>
-          </div>
+            <p className="mt-2 text-xs text-gray-500">
+              {isDone
+                ? <>Se exportaron <span className="font-semibold text-gray-700">{total}</span> producto(s) en formato {status.format === 'CSV' ? 'CSV' : 'Excel'}.</>
+                : <>{processed} / {total || '...'} filas · {pct}%</>}
+            </p>
+
+            {isDone && (
+              <div className="mt-5 flex justify-center">
+                <button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
+                  {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  Descargar archivo
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {isFailed && (
@@ -307,6 +322,35 @@ function DownloadStep({ jobId, onRestart }) {
           </div>
         )}
       </div>
+
+      {/* Vista previa de lo que se generó */}
+      {isDone && status?.previewHeaders?.length > 0 && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Vista previa {total > status.previewRows.length && <>(primeras {status.previewRows.length} de {total} filas)</>}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/60 text-xs uppercase tracking-wide text-gray-400">
+                  {status.previewHeaders.map((h, i) => (
+                    <th key={i} className="whitespace-nowrap px-3 py-2 text-left font-semibold">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {status.previewRows.map((row, ri) => (
+                  <tr key={ri} className="border-b border-gray-50">
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="max-w-[220px] truncate whitespace-nowrap px-3 py-2 text-gray-700">{cell || '—'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {(isDone || isFailed) && (
         <div className="flex flex-wrap justify-end gap-2">
@@ -327,25 +371,49 @@ function DownloadStep({ jobId, onRestart }) {
 
 // ── Help content per step ─────────────────────────────────────────────────────
 
+function HelpSection({ title, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <div className="space-y-2">{children}</div>
+    </div>
+  )
+}
+
 function ConfigureHelp() {
   return (
     <>
       <p>
-        Elegí qué productos exportar (podés filtrar por proveedor, estado y stock) y qué
-        columnas incluir.
+        Exportar te permite bajar tu inventario a un archivo Excel o CSV: para tener un respaldo,
+        compartirlo, o editarlo y volver a subirlo en lote.
       </p>
-      <p>
-        <span className="font-semibold text-gray-800">Tip:</span> si vas a editar el archivo y
-        volver a subirlo, dejá las columnas <span className="font-semibold">SKU</span>,{' '}
-        <span className="font-semibold">Nombre</span> y{' '}
-        <span className="font-semibold">Código del proveedor</span> — son las que el sistema usa
-        para identificar cada producto al re-importar.
-      </p>
-      <p>
-        El formato <span className="font-semibold">Excel</span> es mejor para abrir en la
-        computadora; <span className="font-semibold">CSV</span> es mejor si vas a usarlo en otros
-        programas.
-      </p>
+      <HelpSection title="Filtros">
+        <p>
+          Eliges qué productos entran al archivo: por proveedor, por estado (activos/inactivos) y
+          por stock (con stock, sin stock, o bajo el mínimo). Si no tocas nada, se exportan los
+          productos activos.
+        </p>
+      </HelpSection>
+      <HelpSection title="Columnas">
+        <p>
+          Marcas qué datos quieres incluir. Si solo necesitas una lista para imprimir, con Nombre y
+          precio alcanza. Si vas a editar y volver a subir, conviene incluir{' '}
+          <span className="font-semibold">SKU</span>, <span className="font-semibold">Nombre</span> y{' '}
+          <span className="font-semibold">Código del proveedor</span>: son las que el sistema usa
+          para reconocer cada producto al re-importar.
+        </p>
+        <p>
+          La columna <span className="font-semibold">"Nombre + código (SKU) juntos"</span> combina el
+          nombre y el código interno en una sola celda — útil para listados rápidos o etiquetas.
+        </p>
+      </HelpSection>
+      <HelpSection title="Formato">
+        <p>
+          <span className="font-semibold">Excel (.xlsx)</span>: ideal para abrir y editar en la
+          computadora. <span className="font-semibold">CSV</span>: más simple, ideal para pasarlo a
+          otros programas o sistemas.
+        </p>
+      </HelpSection>
     </>
   )
 }
@@ -353,12 +421,26 @@ function ConfigureHelp() {
 function DownloadHelp() {
   return (
     <>
-      <p>Tu archivo está listo para descargar.</p>
       <p>
-        Si lo modificás y querés volver a subirlo, usá la función de{' '}
-        <span className="font-semibold">Importar</span> — el sistema reconoce los nombres de las
-        columnas automáticamente, así que no hace falta que cambies los encabezados.
+        Tu archivo está listo. Antes de descargarlo te mostramos una vista previa con las primeras
+        filas, para que confirmes que salió lo que esperabas.
       </p>
+      <HelpSection title="Editar y volver a subir">
+        <p>
+          Si modificas el archivo y quieres volver a cargarlo, usa la función de{' '}
+          <span className="font-semibold">Importar</span>. El sistema reconoce los nombres de las
+          columnas automáticamente, así que no necesitas cambiar los encabezados: bajas, editas y
+          subes.
+        </p>
+      </HelpSection>
+      <HelpSection title="Si exportaste la columna combinada">
+        <p>
+          Cuando vuelvas a importar un archivo con la columna "Nombre + código (SKU)", asígnala a{' '}
+          <span className="font-semibold">Nombre</span> y activa, en Opciones avanzadas del import,
+          "El nombre trae el código pegado al final": el sistema separa el nombre y el SKU
+          automáticamente.
+        </p>
+      </HelpSection>
     </>
   )
 }

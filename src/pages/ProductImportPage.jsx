@@ -85,7 +85,7 @@ function UploadStep({ onUploaded }) {
     const isXlsx = file.name.toLowerCase().endsWith('.xlsx')
     const isCsv  = file.name.toLowerCase().endsWith('.csv')
     if (!isXlsx && !isCsv) {
-      toast.error('Formato no soportado. Usá .xlsx o .csv.')
+      toast.error('Formato no soportado. Usa .xlsx o .csv.')
       return
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -122,7 +122,7 @@ function UploadStep({ onUploaded }) {
         </div>
         <div className="text-center">
           <p className="text-base font-semibold text-gray-900">
-            Arrastrá un Excel o CSV
+            Arrastra un Excel o CSV
           </p>
           <p className="mt-1 text-sm text-gray-500">
             Formatos .xlsx o .csv hasta 10MB · El sistema detecta columnas automáticamente
@@ -153,9 +153,10 @@ function UploadStep({ onUploaded }) {
 
 function MappingStep({ upload, onSaved, onBack }) {
   const [mapping, setMapping] = useState(upload.suggestedMapping ?? {})
-  const [extractFromName, setExtractFromName] = useState(
-    upload.extractProviderCodeSuggested ?? false,
-  )
+  // Siempre desactivado por defecto: casi ningún Excel trae el código pegado al
+  // nombre. Es una opción avanzada manual (sobre todo para re-importar un export
+  // con la columna "Nombre + código (SKU)").
+  const [extractFromName, setExtractFromName] = useState(false)
   const [duplicateStrategy, setDuplicateStrategy] = useState('SKIP')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -197,7 +198,7 @@ function MappingStep({ upload, onSaved, onBack }) {
         <h3 className="text-sm font-bold text-gray-900">Mapear columnas del archivo</h3>
         <p className="mt-1 text-xs text-gray-500">
           Detectamos {upload.headers.length} columna{upload.headers.length !== 1 ? 's' : ''}.
-          Asociá cada una con un campo del producto (o elegí "No importar esta columna" si no aplica).
+          Asocia cada una con un campo del producto (o elige "No importar esta columna" si no aplica).
           Nombre y SKU son obligatorios.
         </p>
 
@@ -254,7 +255,7 @@ function MappingStep({ upload, onSaved, onBack }) {
             Si el SKU ya existe en tu inventario
           </p>
           <p className="text-xs text-gray-500">
-            Elegí qué hacer cuando una fila del archivo coincide con un producto que ya tenés.
+            Elige qué hacer cuando una fila del archivo coincide con un producto que ya tienes.
           </p>
           <div className="mt-2 space-y-2">
             {[
@@ -306,13 +307,14 @@ function MappingStep({ upload, onSaved, onBack }) {
               />
               <div>
                 <p className="text-sm font-semibold text-gray-900">
-                  Extraer el código del proveedor del nombre
+                  El nombre trae el código pegado al final
                 </p>
                 <p className="text-xs text-gray-500">
-                  Sólo si tu columna de Nombre trae el código pegado al final, separado por
-                  doble espacio (ej. "Abrazadera 1/2 S/Fin   10915"). Lo separamos
-                  automáticamente. Si tu archivo ya tiene una columna aparte para el código
-                  del proveedor, dejá esto desactivado.
+                  Actívalo solo si tu columna de Nombre incluye el código al final, separado por
+                  doble espacio (por ejemplo "Abrazadera 1/2 S/Fin  10915"). Lo separamos
+                  automáticamente: si no mapeaste una columna de SKU, ese código se usa como SKU
+                  (así vuelves a importar un archivo exportado con la columna "Nombre + código (SKU)").
+                  Si tu archivo ya tiene columnas separadas, déjalo desactivado.
                 </p>
               </div>
             </label>
@@ -705,56 +707,119 @@ const STEP_HELP_TITLES = [
   'Resultado del import',
 ]
 
+function HelpSection({ title, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <div className="space-y-2">{children}</div>
+    </div>
+  )
+}
+
 function StepHelp({ step }) {
   if (step === 0) return (
-    <p>
-      Subí tu archivo Excel (.xlsx) o CSV con la lista de productos. El sistema lo va a leer y en
-      el siguiente paso vas a mapear las columnas a los campos del sistema. Si tu archivo viene
-      del sistema viejo de inventario, asegurate de tenerlo a la mano antes de empezar.
-    </p>
+    <>
+      <p>
+        Este es el primer paso para cargar muchos productos de una sola vez, en lugar de
+        crearlos uno por uno.
+      </p>
+      <HelpSection title="Qué hacer">
+        <p>
+          Arrastra (o selecciona) tu archivo <span className="font-semibold">Excel (.xlsx)</span> o{' '}
+          <span className="font-semibold">CSV</span> con la lista de productos. Pesa hasta 10 MB.
+          El sistema lo lee al instante y en el siguiente paso eliges qué columna corresponde a
+          qué campo.
+        </p>
+      </HelpSection>
+      <HelpSection title="Antes de empezar">
+        <p>
+          Si el archivo viene de tu sistema anterior de inventario, tenlo a la mano. No necesitas
+          darle ningún formato especial: el sistema reconoce los encabezados más comunes y tú
+          ajustas el resto en el paso siguiente.
+        </p>
+      </HelpSection>
+      <p className="text-xs text-gray-400">
+        Tranquilo: nada se guarda todavía. Recién al final, después de revisar, decides importar.
+      </p>
+    </>
   )
   if (step === 1) return (
-    <p>
-      Cada columna de tu archivo se mapea a un campo del sistema. Auto-detectamos los nombres
-      comunes (NOMBRE → Nombre, PRECIO → Precio de venta, etc.) pero podés ajustar manualmente.
-      Si una columna de tu archivo no la querés importar, elegí "No importar esta columna". Los
-      campos obligatorios son: <span className="font-semibold">Nombre</span> y{' '}
-      <span className="font-semibold">SKU</span>. El resto son opcionales.
-    </p>
+    <>
+      <p>
+        Cada columna de tu archivo se conecta con un campo del producto. El sistema ya intentó
+        adivinar las más comunes (por ejemplo NOMBRE → Nombre, PRECIO → Precio de venta), pero
+        puedes corregir cualquiera a mano.
+      </p>
+      <HelpSection title="Campos obligatorios">
+        <p>
+          Solo dos: <span className="font-semibold">Nombre</span> y{' '}
+          <span className="font-semibold">SKU</span> (el código interno con el que identificas el
+          producto). El resto —precio, costo, stock, proveedor, código del proveedor— son
+          opcionales: si no los tienes, no pasa nada.
+        </p>
+      </HelpSection>
+      <HelpSection title="Columnas que no quieres importar">
+        <p>
+          Elige <span className="font-semibold">"No importar esta columna"</span> y esa columna se
+          ignora por completo. Útil para columnas internas que no aplican al sistema.
+        </p>
+      </HelpSection>
+      <HelpSection title="Opciones avanzadas">
+        <p>
+          Solo si tu columna de Nombre trae el código pegado al final (caso poco común). Lo normal
+          es dejarlas como están.
+        </p>
+      </HelpSection>
+    </>
   )
   if (step === 2) return (
     <>
-      <p>Acá ves cómo van a quedar los productos antes de importar. Cada fila tiene un color:</p>
-      <ul className="ml-1 space-y-1">
-        <li><span className="font-semibold text-emerald-700">Verde</span>: la fila se va a importar sin problemas.</li>
-        <li><span className="font-semibold text-amber-700">Amarillo</span>: la fila se va a importar pero con una observación que te recomendamos revisar después.</li>
-        <li><span className="font-semibold text-red-700">Rojo</span>: la fila NO se va a importar porque le falta información obligatoria.</li>
-      </ul>
       <p>
-        Los amarillos son OK — el sistema importa el producto y le agrega una nota para que después
-        lo revises desde la página de Productos. Los rojos sí los tenés que arreglar en tu archivo
-        o ya no importarlos.
+        Aquí ves exactamente cómo quedará cada producto <span className="font-semibold">antes</span>{' '}
+        de guardarlo. Cada fila tiene un color según su estado:
       </p>
-      <p className="font-semibold text-gray-800">Observaciones comunes:</p>
-      <ul className="ml-1 space-y-1.5">
-        <li><span className="font-semibold">Sin proveedor</span>: el producto se importa pero queda con proveedor "Sin proveedor asignado". Después podés asignar el proveedor real desde la edición del producto.</li>
-        <li><span className="font-semibold">Costo en 0</span>: el sistema te avisa para que actualices el costo cuando recibas la próxima compra.</li>
-        <li><span className="font-semibold">Stock negativo</span>: como el sistema no permite stock negativo, se guarda como 0 y te queda una nota.</li>
-        <li><span className="font-semibold">Costo mayor al precio de venta</span>: probablemente un error de carga, te lo señalamos para que lo revises.</li>
-        <li><span className="font-semibold">Precio variable</span>: tu producto se guarda con el flag "Precio variable" y cada vez que lo vendas, te pedimos el precio en el momento.</li>
-        <li><span className="font-semibold">Caracteres corregidos</span>: tu archivo tenía caracteres mal codificados (como "Ã±" en vez de "ñ") y los corregimos automáticamente.</li>
-      </ul>
+      <HelpSection title="Qué significa cada color">
+        <ul className="space-y-1.5">
+          <li>🟢 <span className="font-semibold text-emerald-700">Verde</span>: se importa sin problemas.</li>
+          <li>🟡 <span className="font-semibold text-amber-700">Amarillo</span>: se importa igual, pero con una observación que conviene revisar después.</li>
+          <li>🔴 <span className="font-semibold text-red-700">Rojo</span>: NO se importa porque le falta información obligatoria (nombre o SKU).</li>
+        </ul>
+      </HelpSection>
+      <p>
+        Lo importante: <span className="font-semibold">los amarillos están bien</span>. El sistema
+        guarda el producto y le deja una nota para que lo revises con calma desde la página de
+        Productos. Los rojos sí debes corregirlos en tu archivo (o no importarlos).
+      </p>
+      <HelpSection title="Observaciones más comunes (amarillas)">
+        <ul className="space-y-2">
+          <li><span className="font-semibold">Sin proveedor</span>: el producto se importa con el proveedor "Sin proveedor asignado". Luego le asignas el real desde la edición del producto.</li>
+          <li><span className="font-semibold">Costo en 0</span>: te avisamos para que actualices el costo cuando recibas la próxima compra.</li>
+          <li><span className="font-semibold">Stock negativo</span>: como no se permite stock negativo, se guarda en 0 y te queda la nota.</li>
+          <li><span className="font-semibold">Costo mayor al precio de venta</span>: suele ser un error de carga; te lo marcamos para que lo revises y no vendas a pérdida.</li>
+          <li><span className="font-semibold">Precio variable</span>: el producto queda marcado como "Precio variable"; cada vez que lo vendas te pediremos el precio en el momento.</li>
+          <li><span className="font-semibold">Caracteres corregidos</span>: tu archivo traía caracteres mal codificados (como "Ã±" en vez de "ñ") y los arreglamos automáticamente.</li>
+        </ul>
+      </HelpSection>
     </>
   )
   return (
     <>
-      <p>Listo. Estos son los resultados del import:</p>
-      <ul className="ml-1 space-y-1">
-        <li>Cuántos productos se importaron.</li>
-        <li>Cuántos proveedores nuevos se crearon.</li>
-        <li>Cuántas filas con observaciones (revisalas después en Productos, vas a ver cada una con su nota).</li>
-      </ul>
-      <p>Si querés ver el detalle por fila, descargá el reporte completo en Excel.</p>
+      <p>¡Listo! El import terminó. En el resumen ves:</p>
+      <HelpSection title="Qué muestra el resumen">
+        <ul className="space-y-1">
+          <li>Cuántos productos se crearon, actualizaron o saltaron.</li>
+          <li>Cuántos proveedores nuevos se crearon automáticamente.</li>
+          <li>Cuántas filas quedaron con observaciones para revisar.</li>
+        </ul>
+      </HelpSection>
+      <HelpSection title="Tus próximos pasos">
+        <p>
+          Las filas con observación quedaron en Productos con su nota; revísalas cuando puedas.
+          Si quieres el detalle fila por fila, descarga el{' '}
+          <span className="font-semibold">reporte completo en Excel</span>: cada producto aparece con
+          su color y el motivo de la observación, ideal como lista de pendientes.
+        </p>
+      </HelpSection>
     </>
   )
 }
