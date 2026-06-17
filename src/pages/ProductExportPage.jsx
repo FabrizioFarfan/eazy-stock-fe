@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Download, Loader2, CheckCircle2, ChevronRight, FileSpreadsheet, RotateCcw,
+  ArrowLeft, Download, Loader2, CheckCircle2, ChevronRight, FileSpreadsheet, RotateCcw, AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { exportsApi } from '../services/endpoints/exports'
@@ -102,11 +102,19 @@ function ConfigureStep({ onStarted }) {
     [columns],
   )
 
+  // Para que el archivo se pueda volver a importar tiene que poder identificar
+  // cada producto: SKU + Nombre por separado, o la columna combinada.
+  const reimportable = (columns.sku && columns.name) || columns.nameWithSku
+
   const toggleColumn = (key) => setColumns((c) => ({ ...c, [key]: !c[key] }))
 
   const handleGenerate = async () => {
     if (selectedKeys.length === 0) {
       toast.error('Elige al menos una columna para exportar')
+      return
+    }
+    if (!reimportable) {
+      toast.error('Incluye SKU y Nombre, o la columna "Nombre + código (SKU)", para que el archivo se pueda volver a importar')
       return
     }
     try {
@@ -183,6 +191,16 @@ function ConfigureStep({ onStarted }) {
             </label>
           ))}
         </div>
+
+        {!reimportable && (
+          <p className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
+            <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
+            Para que este archivo se pueda volver a importar, incluye{' '}
+            <span className="font-semibold">SKU y Nombre</span>, o la columna{' '}
+            <span className="font-semibold">"Nombre + código (SKU) juntos"</span>. Si no, el sistema
+            no podrá identificar cada producto al subirlo de nuevo.
+          </p>
+        )}
       </div>
 
       {/* Formato */}
@@ -212,7 +230,7 @@ function ConfigureStep({ onStarted }) {
       <div className="flex justify-end">
         <button
           onClick={handleGenerate}
-          disabled={starting || selectedKeys.length === 0}
+          disabled={starting || selectedKeys.length === 0 || !reimportable}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
           {starting ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
           {starting ? 'Generando...' : 'Generar export'}

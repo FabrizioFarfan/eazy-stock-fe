@@ -165,7 +165,13 @@ function MappingStep({ upload, onSaved, onBack }) {
     () => Object.values(mapping).filter(Boolean),
     [mapping],
   )
-  const missingRequired = REQUIRED_FIELDS.filter((f) => !mappedFields.includes(f))
+  // El SKU puede venir embebido en el Nombre: si está activa la opción avanzada
+  // y hay una columna mapeada a Nombre, el SKU se extrae de ahí → requisito cumplido.
+  const skuFromName = extractFromName && mappedFields.includes('name')
+  const missingRequired = REQUIRED_FIELDS.filter((f) => {
+    if (f === 'sku' && skuFromName) return false
+    return !mappedFields.includes(f)
+  })
   const dupFields = useMemo(() => {
     const counts = {}
     mappedFields.forEach((f) => { counts[f] = (counts[f] || 0) + 1 })
@@ -234,10 +240,19 @@ function MappingStep({ upload, onSaved, onBack }) {
         </div>
 
         {missingRequired.length > 0 && (
-          <p className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
-            <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-            Faltan campos obligatorios: {missingRequired.map((f) => FIELD_LABELS[f] ?? f).join(', ')}
-          </p>
+          <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
+            <p className="flex items-start gap-2">
+              <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
+              Faltan campos obligatorios: {missingRequired.map((f) => FIELD_LABELS[f] ?? f).join(', ')}
+            </p>
+            {missingRequired.includes('sku') && mappedFields.includes('name') && (
+              <p className="mt-1.5 pl-5 text-amber-700">
+                ¿Tu columna de Nombre ya incluye el código (SKU) al final? Mapéala a "Nombre del
+                producto" y activa <span className="font-semibold">"El nombre trae el código pegado
+                al final"</span> en Opciones avanzadas — así el SKU se toma de ahí.
+              </p>
+            )}
+          </div>
         )}
         {dupFields.length > 0 && (
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
@@ -307,15 +322,27 @@ function MappingStep({ upload, onSaved, onBack }) {
               />
               <div>
                 <p className="text-sm font-semibold text-gray-900">
-                  El nombre trae el código pegado al final
+                  El nombre trae el código (SKU) pegado al final
                 </p>
                 <p className="text-xs text-gray-500">
-                  Actívalo solo si tu columna de Nombre incluye el código al final, separado por
-                  doble espacio (por ejemplo "Abrazadera 1/2 S/Fin  10915"). Lo separamos
-                  automáticamente: si no mapeaste una columna de SKU, ese código se usa como SKU
-                  (así vuelves a importar un archivo exportado con la columna "Nombre + código (SKU)").
-                  Si tu archivo ya tiene columnas separadas, déjalo desactivado.
+                  Actívalo si tu columna de Nombre incluye el código al final, separado por doble
+                  espacio (por ejemplo "Abrazadera 1/2 S/Fin  10915"). Es el caso típico al
+                  re-importar un archivo que exportaste con la columna "Nombre + código (SKU)".
                 </p>
+                <p className="mt-1 text-xs font-medium text-blue-700">
+                  Con esta opción activada basta con mapear la columna de Nombre: el código del
+                  final se usa como SKU, así que NO necesitas una columna de SKU aparte.
+                </p>
+                {extractFromName && skuFromName && (
+                  <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                    <CheckCircle2 size={12} /> Listo: el SKU se tomará del nombre. Ya no falta nada por mapear.
+                  </p>
+                )}
+                {extractFromName && !mappedFields.includes('name') && (
+                  <p className="mt-1.5 text-xs font-semibold text-amber-700">
+                    Falta mapear una columna a "Nombre del producto" para poder extraer el SKU.
+                  </p>
+                )}
               </div>
             </label>
           )}
@@ -356,12 +383,13 @@ function PreviewStep({ jobId, onExecute, onBack }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
+  const [filter, setFilter] = useState(null) // null | 'YELLOW' | 'RED'
   const [executing, setExecuting] = useState(false)
 
-  const load = useCallback(async (p) => {
+  const load = useCallback(async (p, f) => {
     setLoading(true)
     try {
-      const res = await importsApi.preview(jobId, { page: p, size: 50 })
+      const res = await importsApi.preview(jobId, { page: p, size: 50, ...(f && { filter: f }) })
       setData(res.data.data)
     } catch (err) {
       toast.error(getErrorMessage(err))
@@ -371,8 +399,11 @@ function PreviewStep({ jobId, onExecute, onBack }) {
   }, [jobId])
 
   useEffect(() => {
-    load(page)
-  }, [page, load])
+    load(page, filter)
+  }, [page, filter, load])
+
+  // Cambiar de filtro siempre vuelve a la primera página (la paginación es del backend).
+  const changeFilter = (f) => { setPage(0); setFilter(f) }
 
   const totals = data ?? { totalRows: 0, greenCount: 0, yellowCount: 0, redCount: 0 }
   const rows = data?.rows?.content ?? []
@@ -394,19 +425,36 @@ function PreviewStep({ jobId, onExecute, onBack }) {
 
   return (
     <div className="space-y-4">
-      {/* Counters */}
+      {/* Counters — Advertencias y Errores filtran la tabla; Totales la limpia */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Counter label="Totales"      value={totals.totalRows}   color="gray" />
+        <Counter label="Totales"      value={totals.totalRows} color="gray"
+          onClick={() => changeFilter(null)} active={filter === null}
+          hint="Ver todas las filas" />
         <Counter label="Listas"       value={totals.greenCount + totals.yellowCount} color="emerald" />
-        <Counter label="Advertencias" value={totals.yellowCount} color="amber" />
-        <Counter label="Errores"      value={totals.redCount}    color="red" />
+        <Counter label="Advertencias" value={totals.yellowCount} color="amber"
+          onClick={() => changeFilter('YELLOW')} active={filter === 'YELLOW'}
+          hint="Ver solo las filas con advertencias" />
+        <Counter label="Errores"      value={totals.redCount} color="red"
+          onClick={() => changeFilter('RED')} active={filter === 'RED'}
+          hint="Ver solo las filas con errores" />
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-        <p className="px-2 py-1 text-xs text-gray-500">
-          Las filas con error (rojo) NO se importarán. Las filas con warnings (amarillo)
-          se importan pero quedan flageadas con una nota para que las revises.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1">
+          <p className="text-xs text-gray-500">
+            Las filas con error (rojo) NO se importarán. Las filas con advertencia (amarillo)
+            se importan pero quedan marcadas con una nota para que las revises.
+          </p>
+          {filter && (
+            <button
+              type="button"
+              onClick={() => changeFilter(null)}
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
+            >
+              Mostrando solo {filter === 'YELLOW' ? 'advertencias' : 'errores'} · Ver todas ✕
+            </button>
+          )}
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -436,7 +484,9 @@ function PreviewStep({ jobId, onExecute, onBack }) {
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-3 py-8 text-center text-sm text-gray-400">
-                    Sin filas
+                    {filter === 'YELLOW' ? 'No hay filas con advertencias 🎉'
+                      : filter === 'RED' ? 'No hay filas con errores 🎉'
+                      : 'Sin filas'}
                   </td>
                 </tr>
               ) : (
@@ -506,18 +556,33 @@ function PreviewStep({ jobId, onExecute, onBack }) {
   )
 }
 
-function Counter({ label, value, color }) {
+function Counter({ label, value, color, onClick, active, hint }) {
   const colorMap = {
     gray:    'border-gray-200 text-gray-900',
     emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900',
     amber:   'border-amber-200 bg-amber-50 text-amber-900',
     red:     'border-red-200 bg-red-50 text-red-900',
   }
+  const ringMap = {
+    gray:    'ring-gray-400',
+    emerald: 'ring-emerald-500',
+    amber:   'ring-amber-500',
+    red:     'ring-red-500',
+  }
+  const clickable = typeof onClick === 'function'
   return (
-    <div className={`rounded-2xl border bg-white px-4 py-3 shadow-sm ${colorMap[color]}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!clickable}
+      title={hint}
+      className={`rounded-2xl border bg-white px-4 py-3 text-left shadow-sm transition ${colorMap[color]} ${
+        clickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default'
+      } ${active ? `ring-2 ${ringMap[color]}` : ''}`}
+    >
       <p className="text-xs font-semibold uppercase tracking-widest opacity-70">{label}</p>
       <p className="mt-1 text-2xl font-extrabold">{value}</p>
-    </div>
+    </button>
   )
 }
 
