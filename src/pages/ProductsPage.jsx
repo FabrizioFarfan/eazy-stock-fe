@@ -13,7 +13,7 @@ import { formatPrice } from '../utils/formatMoney'
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 10 }).map((_, i) => (
+      {Array.from({ length: 11 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -196,7 +196,7 @@ export default function ProductsPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por nombre o código..."
+            placeholder="Buscar por nombre, SKU o código de proveedor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
@@ -237,6 +237,7 @@ export default function ProductsPage() {
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Categoría</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Marca</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Cód. proveedor</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Compra</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Venta</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
@@ -250,7 +251,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={isManager ? 11 : 10}>
+                  <td colSpan={isManager ? 12 : 11}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -286,6 +287,7 @@ export default function ProductsPage() {
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
+                    <td className="px-5 py-3.5 font-mono text-xs text-gray-600">{p.providerCode || '—'}</td>
                     <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>
                     <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
                       {p.priceIsVariable ? (

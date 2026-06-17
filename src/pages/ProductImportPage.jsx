@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Upload, FileSpreadsheet, AlertTriangle, Loader2, CheckCircle2,
-  ChevronRight, Download, RotateCcw,
+  ChevronRight, ChevronDown, Download, RotateCcw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { importsApi } from '../services/endpoints/imports'
@@ -17,15 +17,26 @@ const STEP_LABELS = [
 ]
 
 const FIELD_OPTIONS = [
-  { value: '',             label: '— Ignorar columna' },
-  { value: 'name',         label: 'Nombre' },
-  { value: 'sku',          label: 'SKU' },
-  { value: 'salePrice',    label: 'Precio venta' },
-  { value: 'purchasePrice',label: 'Costo' },
+  { value: '',             label: 'No importar esta columna' },
+  { value: 'name',         label: 'Nombre del producto (obligatorio)' },
+  { value: 'sku',          label: 'Código interno / SKU (obligatorio)' },
+  { value: 'providerCode', label: 'Código del proveedor (el del catálogo del proveedor)' },
+  { value: 'salePrice',    label: 'Precio de venta' },
+  { value: 'purchasePrice',label: 'Costo de compra' },
   { value: 'currentStock', label: 'Stock actual' },
   { value: 'supplierName', label: 'Proveedor' },
-  { value: 'providerCode', label: 'Código proveedor' },
 ]
+
+// Nombres legibles para los mensajes de validación (no mostrar las claves crudas).
+const FIELD_LABELS = {
+  name:         'Nombre del producto',
+  sku:          'Código interno / SKU',
+  providerCode: 'Código del proveedor',
+  salePrice:    'Precio de venta',
+  purchasePrice:'Costo de compra',
+  currentStock: 'Stock actual',
+  supplierName: 'Proveedor',
+}
 
 const REQUIRED_FIELDS = ['name', 'sku']
 
@@ -145,6 +156,7 @@ function MappingStep({ upload, onSaved, onBack }) {
     upload.extractProviderCodeSuggested ?? false,
   )
   const [duplicateStrategy, setDuplicateStrategy] = useState('SKIP')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const mappedFields = useMemo(
@@ -184,7 +196,7 @@ function MappingStep({ upload, onSaved, onBack }) {
         <h3 className="text-sm font-bold text-gray-900">Mapear columnas del archivo</h3>
         <p className="mt-1 text-xs text-gray-500">
           Detectamos {upload.headers.length} columna{upload.headers.length !== 1 ? 's' : ''}.
-          Asociá cada una con un campo del producto (o dejá "Ignorar columna" si no aplica).
+          Asociá cada una con un campo del producto (o elegí "No importar esta columna" si no aplica).
           Nombre y SKU son obligatorios.
         </p>
 
@@ -222,13 +234,13 @@ function MappingStep({ upload, onSaved, onBack }) {
         {missingRequired.length > 0 && (
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
             <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-            Faltan campos obligatorios: {missingRequired.join(', ')}
+            Faltan campos obligatorios: {missingRequired.map((f) => FIELD_LABELS[f] ?? f).join(', ')}
           </p>
         )}
         {dupFields.length > 0 && (
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
             <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-            Campos duplicados: {dupFields.join(', ')}. Cada campo solo puede asignarse a una columna.
+            Campos duplicados: {dupFields.map((f) => FIELD_LABELS[f] ?? f).join(', ')}. Cada campo solo puede asignarse a una columna.
           </p>
         )}
       </div>
@@ -236,25 +248,7 @@ function MappingStep({ upload, onSaved, onBack }) {
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h3 className="text-sm font-bold text-gray-900">Opciones</h3>
 
-        <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2.5 hover:bg-gray-50">
-          <input
-            type="checkbox"
-            checked={extractFromName}
-            onChange={(e) => setExtractFromName(e.target.checked)}
-            className="mt-0.5 accent-blue-600"
-          />
-          <div>
-            <p className="text-sm font-semibold text-gray-900">
-              Extraer código del proveedor del nombre
-            </p>
-            <p className="text-xs text-gray-500">
-              Si la columna Nombre lleva al final un código separado por doble espacio
-              (ej. "Abrazadera 1/2 S/Fin   10915"), lo separamos automáticamente.
-            </p>
-          </div>
-        </label>
-
-        <div className="mt-4">
+        <div className="mt-3">
           <p className="text-sm font-semibold text-gray-900">
             Si el SKU ya existe en tu inventario
           </p>
@@ -288,6 +282,40 @@ function MappingStep({ upload, onSaved, onBack }) {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Opciones avanzadas — colapsadas por defecto. Sólo casos raros. */}
+        <div className="mt-4 border-t border-gray-100 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700"
+          >
+            <ChevronDown size={14} className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+            Opciones avanzadas
+          </button>
+
+          {showAdvanced && (
+            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2.5 hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={extractFromName}
+                onChange={(e) => setExtractFromName(e.target.checked)}
+                className="mt-0.5 accent-blue-600"
+              />
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Extraer el código del proveedor del nombre
+                </p>
+                <p className="text-xs text-gray-500">
+                  Sólo si tu columna de Nombre trae el código pegado al final, separado por
+                  doble espacio (ej. "Abrazadera 1/2 S/Fin   10915"). Lo separamos
+                  automáticamente. Si tu archivo ya tiene una columna aparte para el código
+                  del proveedor, dejá esto desactivado.
+                </p>
+              </div>
+            </label>
+          )}
         </div>
       </div>
 
@@ -365,10 +393,10 @@ function PreviewStep({ jobId, onExecute, onBack }) {
     <div className="space-y-4">
       {/* Counters */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Counter label="Totales"   value={totals.totalRows}   color="gray" />
-        <Counter label="Listas"    value={totals.greenCount + totals.yellowCount} color="emerald" />
-        <Counter label="Warnings"  value={totals.yellowCount} color="amber" />
-        <Counter label="Errores"   value={totals.redCount}    color="red" />
+        <Counter label="Totales"      value={totals.totalRows}   color="gray" />
+        <Counter label="Listas"       value={totals.greenCount + totals.yellowCount} color="emerald" />
+        <Counter label="Advertencias" value={totals.yellowCount} color="amber" />
+        <Counter label="Errores"      value={totals.redCount}    color="red" />
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
@@ -388,7 +416,7 @@ function PreviewStep({ jobId, onExecute, onBack }) {
                 <th className="px-3 py-2 text-right">Costo</th>
                 <th className="px-3 py-2 text-right">Stock</th>
                 <th className="px-3 py-2 text-left">Proveedor</th>
-                <th className="px-3 py-2 text-left">Issues</th>
+                <th className="px-3 py-2 text-left">Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -554,8 +582,8 @@ function ImportingStep({ jobId, onDone, onRestart }) {
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-gray-900">
-            {isDone   ? '¡Import completado!' :
-             isFailed ? 'El import falló' :
+            {isDone   ? '¡Importación completada!' :
+             isFailed ? 'La importación falló' :
              'Importando productos...'}
           </h3>
           {!isDone && !isFailed && <Loader2 size={16} className="animate-spin text-blue-600" />}
@@ -569,8 +597,8 @@ function ImportingStep({ jobId, onDone, onRestart }) {
         </div>
         <p className="mt-2 text-xs text-gray-500">
           {status?.processedRows ?? 0} / {status?.totalRows ?? 0} filas ·{' '}
-          <span className="text-emerald-600">{status?.successCount ?? 0} ok</span> ·{' '}
-          <span className="text-amber-600">{status?.warningCount ?? 0} warnings</span> ·{' '}
+          <span className="text-emerald-600">{status?.successCount ?? 0} correctas</span> ·{' '}
+          <span className="text-amber-600">{status?.warningCount ?? 0} advertencias</span> ·{' '}
           <span className="text-red-600">{status?.errorCount ?? 0} errores</span>
         </p>
       </div>
@@ -586,7 +614,7 @@ function ImportingStep({ jobId, onDone, onRestart }) {
             <SummaryRow label="Proveedores nuevos creados"   value={summary.suppliersCreated} />
             <SummaryRow label="Proveedores deduplicados"     value={summary.suppliersDeduplicated}
               hint="Mismo nombre con distinta capitalización" />
-            <SummaryRow label="Encoding corregido"           value={summary.encodingCleaned} />
+            <SummaryRow label="Caracteres corregidos"        value={summary.encodingCleaned} />
             <SummaryRow label="Stock negativo normalizado"   value={summary.negativeStockNormalized} />
             <SummaryRow label="Productos con precio variable" value={summary.variablePrice} />
             <SummaryRow label="Productos con costo en 0"     value={summary.zeroPurchasePrice} />
@@ -607,7 +635,7 @@ function ImportingStep({ jobId, onDone, onRestart }) {
 
       {isFailed && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          <p className="font-semibold">El import no pudo completarse.</p>
+          <p className="font-semibold">La importación no pudo completarse.</p>
           <p className="mt-1 text-xs">
             {summary?.error ?? 'Error desconocido. Revisá los logs del servidor.'}
           </p>
