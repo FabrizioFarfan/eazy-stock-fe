@@ -253,7 +253,7 @@ function Hero() {
             </div>
 
             <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Vendé, controlá stock y cobrá<br />
+              Vende, controla stock y cobra<br />
               <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-300 bg-clip-text text-transparent">
                 desde un solo lugar.
               </span>
@@ -321,7 +321,7 @@ function CustomersStrip() {
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
           {[
-            { name: 'Ferretería Femaco', sub: 'Lima · 3,400+ productos' },
+            { name: 'Ferretería en Lima', sub: 'Catálogo de miles de productos' },
             { name: 'En piloto privado',  sub: 'Más clientes onboarding' },
             { name: 'Tu negocio',         sub: 'Próximo en la lista' },
           ].map((c) => (
@@ -342,7 +342,7 @@ function CustomersStrip() {
 
 function Stats() {
   const stats = [
-    { value: '3,400+', label: 'Productos por negocio', sub: 'Probado con catálogos reales' },
+    { value: 'Miles', label: 'Productos por catálogo', sub: 'Probado con catálogos grandes' },
     { value: '< 200ms', label: 'Búsqueda en vivo',     sub: 'Search-as-you-type indexado' },
     { value: '11',      label: 'Permisos granulares',  sub: 'Control fino por empleado' },
     { value: '6',       label: 'Decimales en precios', sub: 'Para tornillos a S/ 0.0357' },
@@ -373,12 +373,12 @@ function Stats() {
 const FEATURE_GROUPS = [
   {
     title: 'Inventario inteligente',
-    desc: 'Todo lo que necesitás para que tu catálogo viva ordenado.',
+    desc: 'Todo lo que necesitas para que tu catálogo viva ordenado.',
     color: 'from-blue-500 to-indigo-600',
     items: [
       { icon: Boxes,      title: 'Productos con SKU único',          desc: 'Cada producto con código generado, QR y código de barras Code 128.' },
-      { icon: Tag,        title: 'Marcas, categorías, atributos',    desc: 'Modelo flexible — agregá los atributos custom que necesites por categoría.' },
-      { icon: Truck,      title: 'Proveedores',                      desc: 'Asociá productos a proveedores con código interno propio y dedupe de duplicados.' },
+      { icon: Tag,        title: 'Marcas, categorías, atributos',    desc: 'Modelo flexible — agrega los atributos personalizados que necesites por categoría.' },
+      { icon: Truck,      title: 'Proveedores',                      desc: 'Asocia productos a proveedores con código interno propio y dedupe de duplicados.' },
       { icon: ScanLine,   title: 'Precio variable',                  desc: 'Para productos que se negocian en el momento — el POS lo pide al cobrar.' },
       { icon: Package,    title: 'Presentación informativa',         desc: '"Saco de 25kg", "Caja de 100", "Rollo de 50m" — al lado del nombre.' },
       { icon: AlertTriangle, title: 'Stock mínimo + alertas',        desc: 'Notificaciones automáticas cuando un producto cae bajo el mínimo.' },
@@ -393,17 +393,17 @@ const FEATURE_GROUPS = [
       { icon: QrCode,       title: 'Cámara como escáner',            desc: 'BarcodeDetector nativo + ZXing fallback. Sin app, sin lector externo.' },
       { icon: TrendingUp,   title: 'Descuentos flexibles',           desc: 'Porcentaje o monto fijo, por venta o por item. Permiso aparte para aplicar.' },
       { icon: Wallet,       title: 'Override de precio',             desc: 'El cajero puede ajustar precio por item — con permiso y queda flageado.' },
-      { icon: CreditCard,   title: 'Venta al fiado',                 desc: 'Asociá la venta a un cliente con línea de crédito; el sistema actualiza la deuda.' },
+      { icon: CreditCard,   title: 'Venta al fiado',                 desc: 'Asocia la venta a un cliente con línea de crédito; el sistema actualiza la deuda.' },
       { icon: Receipt,      title: 'Precios con 6 decimales',        desc: 'Para tornillos a S/ 0.0357 — los aggregates se redondean a 2 decimales al cobrar.' },
     ],
   },
   {
     title: 'Cuentas corrientes',
-    desc: 'Cuánto te deben y cuánto debés — siempre en vivo.',
+    desc: 'Cuánto te deben y cuánto debes — siempre en vivo.',
     color: 'from-violet-500 to-fuchsia-600',
     items: [
       { icon: Users,         title: 'Clientes y crédito',            desc: 'Ficha completa con documento, límite de crédito y deuda actual.' },
-      { icon: CreditCard,    title: 'Pagos y ajustes',               desc: 'Registrá pagos parciales o ajustes manuales — todo audit-loggeado.' },
+      { icon: CreditCard,    title: 'Pagos y ajustes',               desc: 'Registra pagos parciales o ajustes manuales — todo audit-loggeado.' },
       { icon: Truck,         title: 'Proveedores con deuda',         desc: 'Recepciones multi-producto → entran al stock y suman a la deuda con el proveedor.' },
       { icon: ClipboardCheck,title: 'Recepción multi-producto',      desc: 'Un solo recibo, varios productos — el stock se actualiza por línea.' },
       { icon: BarChart2,     title: 'Reportes de cobranza',          desc: 'Cuentas por cobrar (clientes) y por pagar (proveedores) listas para revisar.' },
@@ -419,7 +419,7 @@ const FEATURE_GROUPS = [
       { icon: ClipboardCheck,title: 'Auditoría completa',            desc: 'Cada CREATE/UPDATE/DELETE queda registrado con quién, cuándo, antes y después.' },
       { icon: Bell,          title: 'Notificaciones en vivo',        desc: 'WebSocket + STOMP — alertas de stock bajo se ven en el acto.' },
       { icon: Users,         title: 'Multi-usuario',                 desc: 'Dueño + empleados con roles claros. Cada uno ve solo lo que le toca.' },
-      { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Subí tu inventario actual (3,000+ filas) y empezá a operar en minutos.' },
+      { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Sube tu inventario actual (3,000+ filas) y empieza a operar en minutos.' },
       { icon: Globe,         title: 'Multi-tenant + multi-moneda',   desc: 'Cada negocio aislado. Soporta PEN, USD, EUR, PLN out-of-the-box.' },
     ],
   },
@@ -492,11 +492,11 @@ function ImportShowcase() {
               Nuevo — Junio 2026
             </div>
             <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Migrá tu inventario en <span className="text-emerald-600">10 minutos</span>,
+              Migra tu inventario en <span className="text-emerald-600">10 minutos</span>,
               no en 3 semanas.
             </h2>
             <p className="mb-8 text-base leading-relaxed text-gray-600">
-              Subí el Excel que ya tenés. El sistema detecta tus columnas
+              Sube el Excel que ya tienes. El sistema detecta tus columnas
               automáticamente, limpia el encoding roto, deduplica proveedores
               por capitalización, extrae códigos de proveedor pegados al
               nombre, y te muestra fila por fila qué se va a importar antes
@@ -523,7 +523,7 @@ function ImportShowcase() {
               to="/login"
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
             >
-              Importá tu Excel ahora
+              Importa tu Excel ahora
               <ArrowRight size={14} />
             </Link>
           </div>
@@ -679,7 +679,7 @@ function FiadoShowcase() {
               Cuentas corrientes
             </div>
             <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Vendé al fiado sin perder el control.
+              Vende al fiado sin perder el control.
             </h2>
             <p className="mb-8 text-base leading-relaxed text-gray-600">
               Cada cliente tiene su línea de crédito, su deuda actual y su
@@ -753,7 +753,7 @@ function Industries() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
             Cada feature salió de problemas reales que vimos en ferreterías
-            de Lima. No te vendemos un ERP — te damos lo que necesitás.
+            de Lima. No te vendemos un ERP — te damos lo que necesitas.
           </p>
         </div>
 
@@ -780,7 +780,7 @@ function Industries() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Testimonial — William / Femaco
+//  Testimonial — reseña anónima (sin datos de cliente)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Testimonial() {
@@ -793,18 +793,18 @@ function Testimonial() {
           <div className="relative">
             <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
               "Antes anotaba en cuaderno y se nos pasaban ventas al fiado.
-              Con Eazy Stock subimos los <span className="font-bold text-blue-700">3,400 productos</span> en
+              Con Eazy Stock subimos <span className="font-bold text-blue-700">todo el catálogo</span> en
               una tarde y mis hijos ya pueden cobrar desde el celular —
               hasta los precios que se negocian quedan registrados."
             </p>
 
             <div className="mt-8 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-lg font-extrabold text-white shadow-lg">
-                W
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                <Wrench size={22} />
               </div>
               <div>
-                <p className="text-base font-bold text-gray-900">William</p>
-                <p className="text-sm text-gray-500">Ferretería Femaco · Lima, Perú</p>
+                <p className="text-base font-bold text-gray-900">Dueño de ferretería</p>
+                <p className="text-sm text-gray-500">Lima, Perú</p>
               </div>
               <div className="ml-auto hidden flex-col items-end sm:flex">
                 <div className="flex gap-0.5">
@@ -812,7 +812,7 @@ function Testimonial() {
                     <Star key={s} size={16} className="fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Cliente desde abril 2026</p>
+                <p className="mt-1 text-xs text-gray-500">Cliente verificado</p>
               </div>
             </div>
           </div>
@@ -831,19 +831,19 @@ function HowItWorks() {
     {
       num: '01',
       icon: Users,
-      title: 'Registrá tu negocio',
-      desc: 'Crea tu cuenta, agrega el nombre del negocio e invitá a tus empleados con permisos a medida.',
+      title: 'Registra tu negocio',
+      desc: 'Crea tu cuenta, agrega el nombre del negocio e invita a tus empleados con permisos a medida.',
     },
     {
       num: '02',
       icon: FileSpreadsheet,
-      title: 'Subí tu Excel actual',
-      desc: 'O cargá productos uno por uno desde el formulario. El sistema detecta columnas y limpia data sucia.',
+      title: 'Sube tu Excel actual',
+      desc: 'O carga productos uno por uno desde el formulario. El sistema detecta columnas y limpia data sucia.',
     },
     {
       num: '03',
       icon: ShoppingCart,
-      title: 'Empezá a vender',
+      title: 'Empieza a vender',
       desc: 'POS listo desde el primer día. Stock en vivo, ventas al fiado, descuentos y reportes.',
     },
   ]
@@ -904,9 +904,9 @@ function WhatsAppHighlight() {
                 </span>
               </h2>
               <p className="mb-7 text-base leading-relaxed text-slate-300">
-                Recibí alertas en WhatsApp cuando un producto se agota.
-                Preguntale al asistente IA cuánto vendiste, qué productos
-                están vendiendo más, o cuáles necesitás reponer — todo desde
+                Recibe alertas en WhatsApp cuando un producto se agota.
+                Pregúntale al asistente IA cuánto vendiste, qué productos
+                están vendiendo más, o cuáles necesitas reponer — todo desde
                 tu chat.
               </p>
               <div className="flex flex-wrap gap-2 text-sm">
@@ -937,7 +937,7 @@ function WhatsAppHighlight() {
                     { text: '⚠️ Stock bajo: Filtro K&N (3 unid.)',                                bot: true },
                     { text: '¿Cuánto vendí hoy?',                                                  bot: false },
                     { text: '📊 S/ 2,430 en 18 ventas. Top: Aceite 5W30 (12 unid.)',              bot: true },
-                    { text: 'Mandale recordatorio de pago a Juan',                                  bot: false },
+                    { text: 'Envíale recordatorio de pago a Juan',                                  bot: false },
                     { text: '✅ Listo. Le envié un mensaje recordando su deuda de S/ 580.',         bot: true },
                   ].map(({ text, bot }, i) => (
                     <div key={i} className={`flex ${bot ? 'justify-start' : 'justify-end'}`}>
@@ -975,7 +975,7 @@ const ROADMAP = [
       'Reportes (ventas por día, top productos, cuentas por cobrar/pagar)',
       'Notificaciones en vivo (WebSocket)',
       'Permisos granulares + auditoría completa',
-      'Import masivo desde Excel/CSV (3,400+ filas)',
+      'Import masivo desde Excel/CSV (miles de filas)',
     ],
   },
   {
@@ -993,7 +993,7 @@ const ROADMAP = [
     items: [
       'Facturación electrónica — SUNAT (Perú), SRI (Ecuador), AFIP (Argentina)',
       'Compras con orden de pedido + sugerencia de reposición',
-      'Modo offline / PWA — seguí vendiendo sin internet',
+      'Modo offline / PWA — sigue vendiendo sin internet',
     ],
   },
   {
@@ -1081,11 +1081,11 @@ function CtaBanner() {
 
       <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
         <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          Probalo gratis hoy.
+          Pruébalo gratis hoy.
         </h2>
         <p className="mb-9 text-base text-blue-100 sm:text-lg">
-          Sin tarjeta, sin compromiso. Empezá a operar en minutos —
-          si no te convence, no nos debés nada.
+          Sin tarjeta, sin compromiso. Empieza a operar en minutos —
+          si no te convence, no nos debes nada.
         </p>
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
