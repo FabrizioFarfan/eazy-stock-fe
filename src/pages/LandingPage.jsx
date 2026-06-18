@@ -9,6 +9,7 @@ import {
   Wallet, Boxes, ScanLine, TrendingUp,
   ArrowRight, PlayCircle, Quote, Wrench,
   Tag, FolderOpen, ClipboardCheck, AlertTriangle,
+  FileText, Trophy,
 } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -395,6 +396,7 @@ const FEATURE_GROUPS = [
       { icon: Wallet,       title: 'Override de precio',             desc: 'El cajero puede ajustar precio por item — con permiso y queda flageado.' },
       { icon: CreditCard,   title: 'Venta al fiado',                 desc: 'Asocia la venta a un cliente con línea de crédito; el sistema actualiza la deuda.' },
       { icon: Receipt,      title: 'Precios con 6 decimales',        desc: 'Para tornillos a S/ 0.0357 — los aggregates se redondean a 2 decimales al cobrar.' },
+      { icon: FileText,     title: 'Presupuestos en PDF',            desc: 'Arma una cotización y expórtala en PDF para enviarla por WhatsApp o correo — sin tocar el stock.' },
     ],
   },
   {
@@ -421,6 +423,7 @@ const FEATURE_GROUPS = [
       { icon: Users,         title: 'Multi-usuario',                 desc: 'Dueño + empleados con roles claros. Cada uno ve solo lo que le toca.' },
       { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Sube tu inventario actual (3,000+ filas) y empieza a operar en minutos.' },
       { icon: Globe,         title: 'Multi-tenant + multi-moneda',   desc: 'Cada negocio aislado. Soporta PEN, USD, EUR, PLN out-of-the-box.' },
+      { icon: Trophy,        title: 'Rendimiento de vendedores',     desc: 'El dueño ve quién vendió más y cuánto exactamente cada día, con ranking y desglose diario.' },
     ],
   },
 ]
@@ -803,7 +806,7 @@ function Testimonial() {
                 <Wrench size={22} />
               </div>
               <div>
-                <p className="text-base font-bold text-gray-900">Dueño de ferretería</p>
+                <p className="text-base font-bold text-gray-900">Ferretería</p>
                 <p className="text-sm text-gray-500">Lima, Perú</p>
               </div>
               <div className="ml-auto hidden flex-col items-end sm:flex">
@@ -969,6 +972,8 @@ const ROADMAP = [
     items: [
       'Productos con SKU/QR/barcode, marcas, categorías, proveedores',
       'POS con búsqueda, escáner de cámara, descuentos y override de precio',
+      'Presupuestos / cotizaciones en PDF para enviar por WhatsApp o correo',
+      'Rendimiento de vendedores — ranking y desglose diario por vendedor',
       'Precio variable + presentación informativa',
       'Ventas al fiado con líneas de crédito',
       'Recepciones multi-producto + cuentas con proveedores',

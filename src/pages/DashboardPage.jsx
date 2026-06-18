@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Package, TrendingUp, ArrowUpDown,
   AlertTriangle, Building2, Users, CheckCircle2,
+  FileText, Trophy, ArrowRight, Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDailySummary, useReportsLowStock } from '../hooks/useReports'
@@ -195,6 +196,7 @@ const TYPE_CLS   = {
 }
 
 function OwnerDashboard({ name, businessId }) {
+  const navigate    = useNavigate()
   const scopeParams = businessId ? { businessId } : {}
 
   const { data: summary,      isLoading: loadingSummary } = useDailySummary(scopeParams)
@@ -218,6 +220,63 @@ function OwnerDashboard({ name, businessId }) {
             <StatCard icon={ArrowUpDown}  label="Movimientos de hoy"  value={movements.length}                           iconBg="bg-amber-50"  iconColor="text-amber-500" />
           </>
         )}
+      </div>
+
+      {/* Presupuestos — feature destacada */}
+      <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md">
+              <FileText size={22} />
+            </div>
+            <div>
+              <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                <Sparkles size={10} /> Nuevo
+              </div>
+              <h3 className="text-base font-bold text-gray-900">Crea presupuestos para tus clientes</h3>
+              <p className="mt-0.5 text-sm text-gray-500">
+                Arma una cotización en segundos y expórtala en PDF para enviarla por WhatsApp o correo.
+                No descuenta stock ni registra una venta.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/cotizaciones')}
+            className="group flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
+          >
+            <FileText size={15} />
+            Crear presupuesto
+            <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Acciones rápidas */}
+      <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
+        <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => navigate('/sales/new')}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
+          >
+            <ShoppingCart size={15} />
+            Nueva venta
+          </button>
+          <button
+            onClick={() => navigate('/cotizaciones')}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <FileText size={15} />
+            Nuevo presupuesto
+          </button>
+          <button
+            onClick={() => navigate('/reports/sellers')}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <Trophy size={15} />
+            Rendimiento de vendedores
+          </button>
+        </div>
       </div>
 
       {/* Low-stock alerts */}
@@ -328,6 +387,7 @@ function OwnerDashboard({ name, businessId }) {
 
 function EmployeeDashboard({ name }) {
   const navigate = useNavigate()
+  const { can }  = useAuth()
   const today    = todayStr()
 
   const { data: salesPage,  isLoading: loadingSales }    = useSales({ from: today, to: today })
@@ -354,13 +414,24 @@ function EmployeeDashboard({ name }) {
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
-        <button
-          onClick={() => navigate('/sales/new')}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
-        >
-          <ShoppingCart size={15} />
-          Nueva venta
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => navigate('/sales/new')}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
+          >
+            <ShoppingCart size={15} />
+            Nueva venta
+          </button>
+          {can('canRegisterSale') && (
+            <button
+              onClick={() => navigate('/cotizaciones')}
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <FileText size={15} />
+              Nuevo presupuesto
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
