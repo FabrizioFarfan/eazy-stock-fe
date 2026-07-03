@@ -1,19 +1,66 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
   TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Mail, MapPin,
+  FileDown, MessageCircle,
 } from 'lucide-react'
 import {
   useCustomer, useCustomerTransactions,
   useRegisterCustomerPayment, useAdjustCustomerDebt,
 } from '../hooks/useCustomers'
+import { customersApi } from '../services/endpoints/customers'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
+import { downloadDebtStatementPdf } from '../utils/debtStatementPdf'
+import { reminderWhatsAppUrl } from '../utils/debtReminder'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
 import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
+import HelpDrawer from '../components/common/HelpDrawer'
+
+function HelpBlock({ title, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  )
+}
+
+function CustomerHelp() {
+  return (
+    <>
+      <p>
+        Esta es la ficha del cliente: su deuda actual, su historial completo y las herramientas
+        para <span className="font-semibold">cobrarle con delicadeza</span>.
+      </p>
+      <HelpBlock title="PDF de deuda (para entregar al cliente)">
+        <p>
+          El botón <span className="font-semibold">"PDF de deuda"</span> genera una carta cordial a
+          nombre del cliente con el detalle de sus compras al fiado — producto por producto —, los
+          pagos que ya hizo y el saldo pendiente. Descárgalo y mándaselo por WhatsApp o correo, o
+          imprímelo y entrégaselo en mano.
+        </p>
+      </HelpBlock>
+      <HelpBlock title="Recordatorio por WhatsApp">
+        <p>
+          El botón verde <span className="font-semibold">"WhatsApp"</span> abre el chat del cliente
+          con un mensaje de recordatorio ya escrito. Puedes mandar primero el mensaje y adjuntar
+          después el PDF en el mismo chat. Aparece solo si el cliente tiene teléfono guardado.
+        </p>
+      </HelpBlock>
+      <HelpBlock title="Cuando te pague">
+        <p>
+          Usa <span className="font-semibold">"Registrar pago"</span> con el monto recibido: la
+          deuda baja al instante y queda asentado en el historial de abajo.
+        </p>
+      </HelpBlock>
+    </>
+  )
+}
 
 function formatDate(str) {
   if (!str) return '—'
@@ -45,7 +92,7 @@ function StatCard({ label, value, tone = 'default' }) {
 export default function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { can } = useAuth()
+  const { can, user } = useAuth()
   const canManage = can('canManageCustomers')
 
   const { data: customer, isLoading, isError } = useCustomer(id)
@@ -57,6 +104,19 @@ export default function CustomerDetailPage() {
   const [showPayment, setShowPayment]     = useState(false)
   const [showAdjustment, setShowAdjustment] = useState(false)
   const [openSaleId, setOpenSaleId]       = useState(null)
+  const [generatingPdf, setGeneratingPdf] = useState(false)
+
+  const handleDownloadPdf = async () => {
+    try {
+      setGeneratingPdf(true)
+      const statement = (await customersApi.getStatement(id)).data.data
+      downloadDebtStatementPdf(statement)
+    } catch {
+      toast.error('No pudimos generar el PDF. Intenta de nuevo.')
+    } finally {
+      setGeneratingPdf(false)
+    }
+  }
 
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 size={28} className="animate-spin text-gray-400" /></div>
@@ -86,22 +146,45 @@ export default function CustomerDetailPage() {
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
           <ArrowLeft size={14} />Volver
         </button>
-        {canManage && (
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
-              <DollarSign size={14} />Registrar pago
-            </button>
-            <button onClick={() => setShowAdjustment(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-              <Sliders size={14} />Ajustar deuda
-            </button>
-            <button onClick={() => setShowEdit(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-              <Edit size={14} />Editar
-            </button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {debt > 0 && (
+            <>
+              <button onClick={handleDownloadPdf} disabled={generatingPdf}
+                title="Descargar la carta de deuda en PDF con el detalle de productos, para enviársela al cliente"
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+                {generatingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                PDF de deuda
+              </button>
+              {reminderWhatsAppUrl(user?.businessName, customer) && (
+                <a href={reminderWhatsAppUrl(user?.businessName, customer)}
+                  target="_blank" rel="noopener noreferrer"
+                  title="Enviar recordatorio de deuda por WhatsApp"
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600">
+                  <MessageCircle size={14} />WhatsApp
+                </a>
+              )}
+            </>
+          )}
+          {canManage && (
+            <>
+              <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
+                <DollarSign size={14} />Registrar pago
+              </button>
+              <button onClick={() => setShowAdjustment(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+                <Sliders size={14} />Ajustar deuda
+              </button>
+              <button onClick={() => setShowEdit(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                <Edit size={14} />Editar
+              </button>
+            </>
+          )}
+          <HelpDrawer title="Cómo cobrarle a este cliente" autoOpenKey="eazystock_customer_help_v1">
+            <CustomerHelp />
+          </HelpDrawer>
+        </div>
       </div>
 
       {/* Header */}

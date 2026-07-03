@@ -1,72 +1,58 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, AlertTriangle, Loader2, FileDown, MessageCircle, Wallet } from 'lucide-react'
+import { Users, AlertTriangle, Loader2, MessageCircle, Wallet } from 'lucide-react'
 import PageTitle from '../components/common/PageTitle'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import HelpDrawer from '../components/common/HelpDrawer'
 import { useReceivables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
+import { waPhone, reminderMessage } from '../utils/debtReminder'
 
 function formatDate(str) {
   if (!str) return '—'
   return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
 }
 
-/**
- * Normaliza un teléfono peruano para wa.me: solo dígitos y con código de país.
- * "987 654 321" → "51987654321". Si ya trae 51 u otro código, se respeta.
- */
-function waPhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '')
-  if (!digits) return null
-  return digits.length === 9 ? `51${digits}` : digits
-}
-
-function reminderMessage(businessName, customerName, debt) {
-  const amount = formatPrice(debt)
+function HelpBlock({ title, children }) {
   return (
-    `Estimado(a) ${customerName}, le saludamos de ${businessName || 'nuestro negocio'}. ` +
-    `Le recordamos que mantiene una deuda pendiente con nosotros por ${amount}. ` +
-    `Agradecemos de antemano su puntualidad. ¡Muchas gracias!`
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <div className="space-y-1.5">{children}</div>
+    </div>
   )
 }
 
-function downloadPdf(rows, total, businessName) {
-  const doc = new jsPDF()
-  const now = new Intl.DateTimeFormat('es-PE', {
-    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  }).format(new Date())
-
-  doc.setFontSize(16)
-  doc.setFont(undefined, 'bold')
-  doc.text('Cuentas por cobrar', 14, 18)
-  doc.setFontSize(10)
-  doc.setFont(undefined, 'normal')
-  doc.setTextColor(120)
-  doc.text(`${businessName || ''}${businessName ? ' · ' : ''}Generado el ${now}`, 14, 25)
-
-  autoTable(doc, {
-    startY: 31,
-    head: [['Cliente', 'Documento', 'Teléfono', 'Deuda', 'Último pago', 'Días']],
-    body: rows.map((r) => [
-      r.name,
-      r.documentId || '—',
-      r.phone || '—',
-      formatPrice(r.currentDebt),
-      formatDate(r.lastPayment),
-      r.daysSinceLastPayment != null ? `${r.daysSinceLastPayment}d` : '—',
-    ]),
-    foot: [[
-      { content: `Total por cobrar (${rows.length} cliente${rows.length !== 1 ? 's' : ''})`, colSpan: 3 },
-      { content: formatPrice(total), colSpan: 3 },
-    ]],
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [37, 99, 235] },
-    footStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold' },
-    columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
-  })
-
-  doc.save(`cuentas-por-cobrar-${new Date().toISOString().slice(0, 10)}.pdf`)
+function ReceivablesHelp() {
+  return (
+    <>
+      <p>
+        Aquí ves a <span className="font-semibold">todos los clientes que te deben dinero</span>{' '}
+        (por ventas al fiado), cuánto debe cada uno y hace cuánto no paga.
+      </p>
+      <HelpBlock title="Cobrar por WhatsApp (botón verde)">
+        <p>
+          En la columna <span className="font-semibold">"Recordar"</span>, toca el botón verde del
+          cliente: se abre WhatsApp con un recordatorio cordial ya escrito con su nombre y su deuda.
+          Solo revisas y envías. Si en vez del botón ves un guion, es porque ese cliente no tiene
+          teléfono guardado — agrégaselo desde la página Clientes.
+        </p>
+      </HelpBlock>
+      <HelpBlock title="PDF con el detalle de la deuda">
+        <p>
+          <span className="font-semibold">Toca la fila del cliente</span> para entrar a su ficha.
+          Ahí está el botón <span className="font-semibold">"PDF de deuda"</span>: genera una carta
+          con el detalle de todo lo que compró al fiado (producto por producto), los pagos que ya
+          hizo y el saldo pendiente. Ese documento es para imprimirlo o mandárselo al cliente por
+          WhatsApp o correo.
+        </p>
+      </HelpBlock>
+      <HelpBlock title="Cuando el cliente paga">
+        <p>
+          Entra a su ficha y usa <span className="font-semibold">"Registrar pago"</span> — la deuda
+          baja automáticamente y el cliente sale de esta lista cuando llega a cero.
+        </p>
+      </HelpBlock>
+    </>
+  )
 }
 
 export default function ReceivablesPage() {
@@ -86,21 +72,20 @@ export default function ReceivablesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageTitle icon={Wallet} tone="emerald">Cuentas por cobrar</PageTitle>
         <div className="flex items-end gap-4">
-          {rows.length > 0 && (
-            <button
-              onClick={() => downloadPdf(rows, total, user?.businessName)}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <FileDown size={15} />
-              Descargar PDF
-            </button>
-          )}
+          <HelpDrawer title="Cómo cobrar a tus clientes" autoOpenKey="eazystock_receivables_help_v1">
+            <ReceivablesHelp />
+          </HelpDrawer>
           <div className="text-right">
             <p className="text-xs uppercase tracking-widest text-gray-400">Total por cobrar</p>
             <p className="text-2xl font-extrabold text-blue-700">{formatPrice(total)}</p>
           </div>
         </div>
       </div>
+
+      <p className="text-sm text-gray-500">
+        Toca un cliente para ver su ficha, registrar pagos y descargar el{' '}
+        <span className="font-semibold text-gray-700">PDF con el detalle de su deuda</span> para enviárselo.
+      </p>
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="overflow-x-auto">

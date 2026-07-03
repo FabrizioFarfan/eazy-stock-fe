@@ -8,6 +8,8 @@ export const customersApi = {
   remove:   (id)          => api.delete(`/customers/${id}`),
 
   getTransactions: (id, params) => api.get(`/customers/${id}/transactions`, { params }),
+  // Estado de cuenta: cargos con productos, abonos y saldo — fuente del PDF para el deudor
+  getStatement:    (id)         => api.get(`/customers/${id}/statement`),
   payment:         (id, data)   => api.post(`/customers/${id}/transactions/payment`,    data),
   adjustment:      (id, data)   => api.post(`/customers/${id}/transactions/adjustment`, data),
 }
