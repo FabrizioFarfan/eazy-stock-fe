@@ -122,7 +122,7 @@ export default function SalesPage() {
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <PageTitle icon={ShoppingCart} tone="blue">Ventas</PageTitle>
           {!isLoading && (

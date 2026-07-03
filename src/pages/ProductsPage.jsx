@@ -150,8 +150,9 @@ export default function ProductsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — flex-wrap para que en móvil los botones bajen de fila en
+          vez de desbordar; las etiquetas largas se acortan en pantalla chica */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <PageTitle icon={Package} tone="cyan">Productos</PageTitle>
           {!isLoading && (
@@ -161,7 +162,7 @@ export default function ProductsPage() {
           )}
         </div>
         {isManager && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-product-tutorial'))}
               title="Ver tutorial: cómo agregar un producto"
@@ -176,7 +177,7 @@ export default function ProductsPage() {
               className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
             >
               <FileSpreadsheet size={14} />
-              Importar desde Excel
+              Importar<span className="hidden md:inline"> desde Excel</span>
             </Link>
             <Link
               to="/products/export"
@@ -184,7 +185,7 @@ export default function ProductsPage() {
               className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
             >
               <Download size={14} />
-              Exportar a Excel
+              Exportar<span className="hidden md:inline"> a Excel</span>
             </Link>
             <button
               onClick={() => setBulkDeleteOpen(true)}
@@ -192,14 +193,14 @@ export default function ProductsPage() {
               className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
             >
               <Trash2 size={14} />
-              Borrar en masa
+              Borrar<span className="hidden md:inline"> en masa</span>
             </button>
             <button
               onClick={openCreate}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
             >
               <Plus size={15} />
-              Nuevo producto
+              Nuevo<span className="hidden md:inline"> producto</span>
             </button>
           </div>
         )}
@@ -367,7 +368,7 @@ export default function ProductsPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-5 py-3.5">
             <p className="text-sm text-gray-400">
               <span className="font-semibold text-gray-700">{from}–{to}</span> de{' '}
               <span className="font-semibold text-gray-700">{totalElements}</span> productos
