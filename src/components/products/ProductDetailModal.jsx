@@ -1,4 +1,4 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, Hash, QrCode, Tag, Truck, FolderOpen, AlertTriangle } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, Edit, Trash2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
@@ -48,7 +48,12 @@ function MovementTypeBadge({ type }) {
   return <span className="text-xs font-semibold text-blue-500">Ajuste</span>
 }
 
-export default function ProductDetailModal({ product, onClose }) {
+/**
+ * Detalle completo del producto. Si llegan los handlers opcionales
+ * (onEdit / onShowQr / onDeactivate) se muestra la barra de acciones al
+ * pie — las acciones viven acá, no en columnas de la tabla.
+ */
+export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate }) {
   const { data: movementsData, isLoading: loadingMov } = useQuery({
     queryKey: ['stock-movements', 'product', product.id],
     queryFn: () => stockApi.getMovementsByProduct(product.id, { size: 5 })
@@ -235,6 +240,39 @@ export default function ProductDetailModal({ product, onClose }) {
             <span>Actualizado: {formatDate(product.updatedAt)}</span>
           </div>
         </div>
+
+        {/* Acciones */}
+        {(onEdit || onShowQr || onDeactivate) && (
+          <div className="flex flex-shrink-0 flex-wrap justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-6 py-4">
+            {onDeactivate && product.active && (
+              <button
+                onClick={() => onDeactivate(product)}
+                className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={14} />
+                Desactivar
+              </button>
+            )}
+            {onShowQr && (
+              <button
+                onClick={() => onShowQr(product)}
+                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <QrCode size={14} />
+                Código QR
+              </button>
+            )}
+            {onEdit && (
+              <button
+                onClick={() => onEdit(product)}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+              >
+                <Edit size={14} />
+                Editar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

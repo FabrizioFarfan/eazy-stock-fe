@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
@@ -14,7 +14,7 @@ import PageTitle from '../components/common/PageTitle'
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 11 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -278,8 +278,6 @@ export default function ProductsPage() {
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Venta</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Estado</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Ver</th>
-                {isManager && <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -287,7 +285,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={isManager ? 12 : 11}>
+                  <td colSpan={10}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -312,7 +310,10 @@ export default function ProductsPage() {
                 </tr>
               ) : (
                 products.map((p) => (
-                  <tr key={p.id} className={`border-b border-gray-50 transition-colors hover:bg-gray-50/70 ${isFetching ? 'opacity-60' : ''}`}>
+                  <tr key={p.id}
+                    onClick={() => setDetailModal(p)}
+                    title="Ver detalles y opciones del producto"
+                    className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
                     <td className="max-w-[180px] truncate px-5 py-3.5">
                       <p className="font-semibold text-gray-900">{p.name}</p>
@@ -336,30 +337,6 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
-                    <td className="px-5 py-3.5 text-center">
-                      <button onClick={() => setDetailModal(p)} title="Ver detalle"
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-                        <Eye size={14} />
-                      </button>
-                    </td>
-                    {isManager && (
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => openEdit(p)} title="Editar"
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-                            <Edit size={14} />
-                          </button>
-                          <button onClick={() => setQrModal(p)} title="Código QR"
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
-                            <QrCode size={14} />
-                          </button>
-                          <button onClick={() => handleDeactivate(p)} title="Desactivar"
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    )}
                   </tr>
                 ))
               )}
@@ -396,7 +373,15 @@ export default function ProductsPage() {
         />
       )}
       {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}
-      {detailModal && <ProductDetailModal product={detailModal} onClose={() => setDetailModal(null)} />}
+      {detailModal && (
+        <ProductDetailModal
+          product={detailModal}
+          onClose={() => setDetailModal(null)}
+          onEdit={isManager ? (p) => { setDetailModal(null); openEdit(p) } : undefined}
+          onShowQr={isManager ? (p) => { setDetailModal(null); setQrModal(p) } : undefined}
+          onDeactivate={isManager ? (p) => { setDetailModal(null); handleDeactivate(p) } : undefined}
+        />
+      )}
       {bulkDeleteOpen && <BulkDeleteModal onClose={() => setBulkDeleteOpen(false)} />}
     </div>
   )
