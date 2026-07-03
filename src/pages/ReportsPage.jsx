@@ -117,9 +117,10 @@ function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
 }
 
 const TYPE_CONFIG = {
-  PURCHASE_ENTRY: { label: 'Entrada', cls: 'bg-green-100 text-green-700' },
-  SALE:           { label: 'Venta',   cls: 'bg-blue-100  text-blue-700' },
-  ADJUSTMENT:     { label: 'Ajuste',  cls: 'bg-amber-100 text-amber-700' },
+  PURCHASE_ENTRY: { label: 'Entrada',    cls: 'bg-green-100 text-green-700' },
+  SALE:           { label: 'Venta',      cls: 'bg-blue-100  text-blue-700' },
+  ADJUSTMENT:     { label: 'Ajuste',     cls: 'bg-amber-100 text-amber-700' },
+  RETURN:         { label: 'Devolución', cls: 'bg-purple-100 text-purple-700' },
 }
 
 function MovementsTable({ movements }) {

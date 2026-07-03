@@ -22,3 +22,25 @@ export function useCreateSale() {
     },
   })
 }
+
+export function useSaleReturns(saleId, options = {}) {
+  return useQuery({
+    queryKey: [SALES_KEY, saleId, 'returns'],
+    queryFn: () => salesApi.getReturns(saleId).then((r) => r.data.data),
+    enabled: !!saleId,
+    ...options,
+  })
+}
+
+export function useCreateSaleReturn(saleId) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => salesApi.createReturn(saleId, data).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SALES_KEY] })
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }) // el stock se repone
+      qc.invalidateQueries({ queryKey: ['reports'] })    // balances y cuentas cambian
+      qc.invalidateQueries({ queryKey: ['customers'] })  // deuda del cliente puede bajar
+    },
+  })
+}

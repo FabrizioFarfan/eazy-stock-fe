@@ -26,6 +26,7 @@ import NewSalePage    from '../pages/NewSalePage'
 import QuotePage      from '../pages/QuotePage'
 import StockPage      from '../pages/stock/StockPage'
 import ReportsPage    from '../pages/ReportsPage'
+import BalancePage    from '../pages/BalancePage'
 import SellerPerformancePage from '../pages/SellerPerformancePage'
 import EmployeesPage       from '../pages/EmployeesPage'
 import SuppliersPage       from '../pages/SuppliersPage'
@@ -77,6 +78,9 @@ export default function AppRouter() {
       } />
 
       {/* OWNER only */}
+      <Route path="/reports/balance" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><BalancePage /></ProtectedRoute>
+      } />
       <Route path="/reports/sellers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SellerPerformancePage /></ProtectedRoute>
       } />

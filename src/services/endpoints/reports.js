@@ -22,4 +22,14 @@ export const reportsApi = {
   // Bloque 4 — Paso 4: cuentas por cobrar y cuentas por pagar
   getReceivables: (params) => api.get('/reports/receivables', { params }),
   getPayables:    (params) => api.get('/reports/payables',    { params }),
+
+  // Balance de ventas: params = { from?, to?, businessId? }
+  // → { grossSales, discounts, netSales, returns, productCost, profit }
+  getSalesBalance: (params) => api.get('/reports/sales-balance', { params }),
+
+  // Ingresos vs egresos: params = { from?, to?, businessId? }
+  getCashBalance: (params) => api.get('/reports/cash-balance', { params }),
+
+  // Información total del negocio (valorización del inventario actual)
+  getBusinessOverview: (params) => api.get('/reports/business-overview', { params }),
 }

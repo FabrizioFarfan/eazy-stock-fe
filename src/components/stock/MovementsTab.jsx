@@ -13,18 +13,19 @@ function formatDate(str) {
 }
 
 const TYPE_CONFIG = {
-  PURCHASE_ENTRY: { label: 'Entrada', cls: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' },
-  SALE:           { label: 'Venta',   cls: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' },
-  ADJUSTMENT:     { label: 'Ajuste',  cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' },
+  PURCHASE_ENTRY: { label: 'Entrada',    cls: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' },
+  SALE:           { label: 'Venta',      cls: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' },
+  ADJUSTMENT:     { label: 'Ajuste',     cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' },
+  RETURN:         { label: 'Devolución', cls: 'bg-purple-50 text-purple-700 ring-1 ring-purple-100' },
 }
 
 function QuantityCell({ type, quantity }) {
-  const isPositive = type === 'PURCHASE_ENTRY' || (type === 'ADJUSTMENT' && quantity > 0)
+  const isPositive = type === 'PURCHASE_ENTRY' || type === 'RETURN' || (type === 'ADJUSTMENT' && quantity > 0)
   const isNegative = type === 'SALE'           || (type === 'ADJUSTMENT' && quantity < 0)
   const cls = isPositive ? 'font-bold text-emerald-600'
             : isNegative ? 'font-bold text-red-500'
             : 'font-medium text-gray-700'
-  const sign = type === 'PURCHASE_ENTRY' ? '+' : type === 'SALE' ? '-' : quantity > 0 ? '+' : ''
+  const sign = isPositive ? '+' : type === 'SALE' ? '-' : ''
   return <span className={cls}>{sign}{Math.abs(quantity)}</span>
 }
 
@@ -84,6 +85,7 @@ export default function MovementsTab() {
           <option value="PURCHASE_ENTRY">Entradas</option>
           <option value="SALE">Ventas</option>
           <option value="ADJUSTMENT">Ajustes</option>
+          <option value="RETURN">Devoluciones</option>
         </select>
         <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} min-w-48`}>
           <option value="">Todos los proveedores</option>

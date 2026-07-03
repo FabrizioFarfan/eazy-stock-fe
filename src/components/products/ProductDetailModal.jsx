@@ -34,6 +34,7 @@ function Row({ label, value, mono }) {
 function MovementTypeIcon({ type }) {
   if (type === 'SALE') return <TrendingDown size={13} className="text-red-400" />
   if (type === 'PURCHASE_ENTRY') return <TrendingUp size={13} className="text-emerald-500" />
+  if (type === 'RETURN') return <TrendingUp size={13} className="text-purple-500" />
   return <ArrowUpDown size={13} className="text-blue-400" />
 }
 
@@ -42,6 +43,8 @@ function MovementTypeBadge({ type }) {
     return <span className="text-xs font-semibold text-red-500">Venta</span>
   if (type === 'PURCHASE_ENTRY')
     return <span className="text-xs font-semibold text-emerald-600">Entrada</span>
+  if (type === 'RETURN')
+    return <span className="text-xs font-semibold text-purple-600">Devolución</span>
   return <span className="text-xs font-semibold text-blue-500">Ajuste</span>
 }
 

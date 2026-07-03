@@ -188,11 +188,12 @@ function SuperAdminDashboard({ name }) {
 
 // ── Owner ─────────────────────────────────────────────────────────────────────
 
-const TYPE_LABEL = { PURCHASE_ENTRY: 'Entrada', SALE: 'Venta', ADJUSTMENT: 'Ajuste' }
+const TYPE_LABEL = { PURCHASE_ENTRY: 'Entrada', SALE: 'Venta', ADJUSTMENT: 'Ajuste', RETURN: 'Devolución' }
 const TYPE_CLS   = {
   PURCHASE_ENTRY: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
   SALE:           'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
   ADJUSTMENT:     'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
+  RETURN:         'bg-purple-50 text-purple-700 ring-1 ring-purple-100',
 }
 
 function OwnerDashboard({ name, businessId }) {

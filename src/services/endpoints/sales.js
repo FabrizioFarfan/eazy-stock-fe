@@ -12,4 +12,8 @@ export const salesApi = {
 
   create: (data) => api.post('/sales', data),
   // data: { items: [{ productId, quantity }], notes? }
+
+  // Devoluciones (total o parcial): data = { items: [{ saleItemId, quantity }], notes? }
+  createReturn: (saleId, data) => api.post(`/sales/${saleId}/returns`, data),
+  getReturns:   (saleId)       => api.get(`/sales/${saleId}/returns`),
 }

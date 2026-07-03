@@ -84,3 +84,29 @@ export function usePayables(params, options = {}) {
     ...options,
   })
 }
+
+export function useSalesBalance(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'sales-balance', params],
+    queryFn: () => reportsApi.getSalesBalance(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
+export function useCashBalance(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'cash-balance', params],
+    queryFn: () => reportsApi.getCashBalance(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
+export function useBusinessOverview(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'business-overview', params],
+    queryFn: () => reportsApi.getBusinessOverview(params).then((r) => r.data.data),
+    ...options,
+  })
+}

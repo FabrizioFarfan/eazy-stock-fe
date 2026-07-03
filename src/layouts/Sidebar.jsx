@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings,
-  Wallet, HandCoins, FileText, Trophy,
+  Wallet, HandCoins, FileText, Trophy, Scale,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -22,6 +22,7 @@ const OWNER_NAV = [
   { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
   { icon: FileText,        label: 'Cotización',        path: '/cotizaciones',        permission: 'canRegisterSale' },
   { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
+  { icon: Scale,           label: 'Balance',           path: '/reports/balance',     permission: 'canViewReports' },
   { icon: Trophy,          label: 'Vendedores',        path: '/reports/sellers',     permission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: null },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
