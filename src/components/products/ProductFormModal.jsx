@@ -651,7 +651,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   <PriceInputModeToggle />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              {/* 1 columna en móvil, 2 en adelante: el modo "6 decimales" del
+                  PriceInput (dos casillas + punto) necesita ancho — con 3
+                  columnas fijas se rompía el layout. Con 2 columnas los
+                  precios quedan en una fila y los stocks en la siguiente. */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Controller
                 control={control}
                 name="purchasePrice"

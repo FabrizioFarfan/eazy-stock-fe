@@ -111,3 +111,65 @@ html.dark .bg-slate-50   { background-color: #1F2937; }
 
 /* Override gradient banners in SettingsPage etc */
 html.dark .from-\[\#111827\] { --tw-gradient-from: #0f172a; }
+
+/* ── Fondos suaves de chips/badges (detalle de producto, tutoriales, etc.) ── */
+html.dark .bg-gray-50\/50   { background-color: rgb(17 24 39 / 0.5); }
+html.dark .bg-gray-50\/70   { background-color: rgb(17 24 39 / 0.7); }
+html.dark .bg-blue-50\/40   { background-color: rgb(30 58 138 / 0.25); }
+html.dark .bg-purple-50     { background-color: rgb(88 28 135 / 0.3); }
+html.dark .bg-purple-50\/50 { background-color: rgb(88 28 135 / 0.25); }
+html.dark .bg-purple-100    { background-color: rgb(88 28 135 / 0.4); }
+html.dark .bg-violet-50     { background-color: rgb(76 29 149 / 0.35); }
+html.dark .bg-teal-50       { background-color: rgb(19 78 74 / 0.4); }
+html.dark .bg-orange-50     { background-color: rgb(124 45 18 / 0.3); }
+html.dark .bg-orange-100    { background-color: rgb(124 45 18 / 0.4); }
+html.dark .bg-cyan-100      { background-color: rgb(22 78 99 / 0.4); }
+html.dark .bg-rose-100      { background-color: rgb(136 19 55 / 0.4); }
+html.dark .bg-emerald-100   { background-color: rgb(6 78 59 / 0.4); }
+html.dark .bg-amber-100     { background-color: rgb(120 53 15 / 0.4); }
+
+/* Texto de chips/acentos — aclarado para contrastar sobre los fondos oscuros */
+html.dark .text-blue-600    { color: #60A5FA; }
+html.dark .text-blue-700    { color: #93C5FD; }
+html.dark .text-emerald-600 { color: #34D399; }
+html.dark .text-emerald-700 { color: #6EE7B7; }
+html.dark .text-red-600     { color: #F87171; }
+html.dark .text-red-700     { color: #FCA5A5; }
+html.dark .text-violet-700  { color: #C4B5FD; }
+html.dark .text-teal-700    { color: #5EEAD4; }
+html.dark .text-purple-600  { color: #C084FC; }
+html.dark .text-purple-700  { color: #D8B4FE; }
+html.dark .text-orange-600  { color: #FB923C; }
+html.dark .text-orange-700  { color: #FDBA74; }
+html.dark .text-orange-800  { color: #FED7AA; }
+html.dark .text-amber-700   { color: #FCD34D; }
+html.dark .text-amber-800   { color: #FDE68A; }
+html.dark .text-cyan-600    { color: #67E8F9; }
+html.dark .text-rose-600    { color: #FB7185; }
+
+/* Bordes pastel — bajados a tonos oscuros translúcidos */
+html.dark .border-blue-200    { border-color: rgb(30 64 175 / 0.5); }
+html.dark .border-emerald-200 { border-color: rgb(6 95 70 / 0.6); }
+html.dark .border-red-100     { border-color: rgb(153 27 27 / 0.4); }
+html.dark .border-red-200     { border-color: rgb(153 27 27 / 0.6); }
+html.dark .border-amber-200   { border-color: rgb(146 64 14 / 0.6); }
+html.dark .border-orange-200  { border-color: rgb(154 52 18 / 0.6); }
+html.dark .border-purple-100  { border-color: rgb(107 33 168 / 0.5); }
+html.dark .border-purple-200  { border-color: rgb(107 33 168 / 0.6); }
+
+/* Rings de badges de colores */
+html.dark .ring-red-100     { --tw-ring-color: rgb(153 27 27 / 0.5); }
+html.dark .ring-emerald-100 { --tw-ring-color: rgb(6 95 70 / 0.5); }
+html.dark .ring-blue-100    { --tw-ring-color: rgb(30 64 175 / 0.5); }
+html.dark .ring-amber-100   { --tw-ring-color: rgb(146 64 14 / 0.5); }
+
+/* Hovers de filas y botones suaves */
+html.dark .hover\:bg-gray-50\/70:hover  { background-color: rgb(55 65 81 / 0.5); }
+html.dark .hover\:bg-blue-50\/40:hover  { background-color: rgb(30 58 138 / 0.25); }
+html.dark .hover\:bg-blue-50:hover      { background-color: rgb(30 58 138 / 0.3); }
+html.dark .hover\:bg-red-50:hover       { background-color: rgb(127 29 29 / 0.3); }
+html.dark .hover\:bg-blue-100:hover     { background-color: rgb(30 58 138 / 0.5); }
+html.dark .hover\:bg-emerald-100:hover  { background-color: rgb(6 78 59 / 0.5); }
+html.dark .hover\:bg-purple-100:hover   { background-color: rgb(88 28 135 / 0.5); }
+html.dark .hover\:bg-amber-100:hover    { background-color: rgb(120 53 15 / 0.5); }
+html.dark .hover\:bg-orange-100:hover   { background-color: rgb(124 45 18 / 0.5); }
