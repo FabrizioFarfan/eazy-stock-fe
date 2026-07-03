@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, Calendar, X, Tag, FileText } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, X, Tag, FileText } from 'lucide-react'
+import DateRangeQuick from '../components/common/DateRangeQuick'
+import PageTitle from '../components/common/PageTitle'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
@@ -122,7 +124,7 @@ export default function SalesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Ventas</h2>
+          <PageTitle icon={ShoppingCart} tone="blue">Ventas</PageTitle>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}
@@ -154,19 +156,11 @@ export default function SalesPage() {
       <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
 
         {/* Row 1 — Dates */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Calendar size={15} className="flex-shrink-0 text-gray-400" />
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-500">Desde</span>
-            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0) }}
-              className={inputCls} />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-500">Hasta</span>
-            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0) }}
-              className={inputCls} />
-          </div>
-        </div>
+        <DateRangeQuick
+          from={from}
+          to={to}
+          onChange={(r) => { setFrom(r.from ?? ''); setTo(r.to ?? ''); setPage(0) }}
+        />
 
         {/* Row 2 — Product filter */}
         <div className="flex flex-col gap-2">

@@ -39,7 +39,8 @@ const FIELD_LABELS = {
   supplierName: 'Proveedor',
 }
 
-const REQUIRED_FIELDS = ['name', 'sku']
+// Solo el nombre es obligatorio: el SKU se autogenera si el archivo no lo trae.
+const REQUIRED_FIELDS = ['name']
 
 // ── Stepper ─────────────────────────────────────────────────────────────────
 
@@ -205,7 +206,8 @@ function MappingStep({ upload, onSaved, onBack }) {
         <p className="mt-1 text-xs text-gray-500">
           Detectamos {upload.headers.length} columna{upload.headers.length !== 1 ? 's' : ''}.
           Asocia cada una con un campo del producto (o elige "No importar esta columna" si no aplica).
-          Nombre y SKU son obligatorios.
+          Solo el Nombre es obligatorio — si falta el código, proveedor, stock o precio, el sistema
+          los completa automáticamente.
         </p>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-gray-100">
@@ -817,11 +819,15 @@ function StepHelp({ step }) {
       </p>
       <HelpSection title="Campos obligatorios">
         <p>
-          Solo dos: <span className="font-semibold">Nombre</span> y{' '}
-          <span className="font-semibold">SKU</span> (el código interno con el que identificas el
-          producto). El resto —precio, costo, stock, proveedor, código del proveedor— son
-          opcionales: si no los tienes, no pasa nada.
+          Solo uno: <span className="font-semibold">Nombre</span>. Todo lo demás es opcional
+          y las celdas vacías no son problema:
         </p>
+        <ul className="space-y-1">
+          <li>• <span className="font-semibold">Sin código (SKU)</span>: el sistema le genera uno automático.</li>
+          <li>• <span className="font-semibold">Sin proveedor</span>: queda como "Sin proveedor asignado" y lo completas después.</li>
+          <li>• <span className="font-semibold">Sin stock</span>: se guarda con stock 0.</li>
+          <li>• <span className="font-semibold">Sin precio</span> (ej. productos por kilo/gramo): queda como "Precio variable" y el precio se pone al vender.</li>
+        </ul>
       </HelpSection>
       <HelpSection title="Columnas que no quieres importar">
         <p>
@@ -847,7 +853,7 @@ function StepHelp({ step }) {
         <ul className="space-y-1.5">
           <li>🟢 <span className="font-semibold text-emerald-700">Verde</span>: se importa sin problemas.</li>
           <li>🟡 <span className="font-semibold text-amber-700">Amarillo</span>: se importa igual, pero con una observación que conviene revisar después.</li>
-          <li>🔴 <span className="font-semibold text-red-700">Rojo</span>: NO se importa porque le falta información obligatoria (nombre o SKU).</li>
+          <li>🔴 <span className="font-semibold text-red-700">Rojo</span>: NO se importa porque le falta el nombre del producto.</li>
         </ul>
       </HelpSection>
       <p>
@@ -857,6 +863,7 @@ function StepHelp({ step }) {
       </p>
       <HelpSection title="Observaciones más comunes (amarillas)">
         <ul className="space-y-2">
+          <li><span className="font-semibold">Sin código (SKU)</span>: se importa igual y el sistema le genera un código automático.</li>
           <li><span className="font-semibold">Sin proveedor</span>: el producto se importa con el proveedor "Sin proveedor asignado". Luego le asignas el real desde la edición del producto.</li>
           <li><span className="font-semibold">Costo en 0</span>: te avisamos para que actualices el costo cuando recibas la próxima compra.</li>
           <li><span className="font-semibold">Stock negativo</span>: como no se permite stock negativo, se guarda en 0 y te queda la nota.</li>
@@ -915,7 +922,7 @@ export default function ProductImportPage() {
           </button>
           <h2 className="text-2xl font-bold text-gray-900">Importar productos desde Excel</h2>
         </div>
-        <HelpDrawer title={STEP_HELP_TITLES[step]}>
+        <HelpDrawer title={STEP_HELP_TITLES[step]} autoOpenKey={`eazystock_import_help_v1_step${step}`}>
           <StepHelp step={step} />
         </HelpDrawer>
       </div>

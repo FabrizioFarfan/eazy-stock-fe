@@ -164,19 +164,21 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
       {hasCameraSupport && (
         <div className={cameraOpen ? 'block' : 'hidden'}>
           <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-black">
+            {/* En móvil (donde realmente se usa) la cámara ocupa media pantalla
+                para que el código se vea grande y sea fácil de apuntar; en
+                desktop se limita a una altura razonable. */}
             <video
               ref={videoRef}
-              className="w-full"
-              style={{ maxHeight: 220 }}
+              className="h-[50vh] w-full object-cover sm:h-auto sm:max-h-80"
               playsInline
               muted
             />
             {/* Scan-guide overlay */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-32 w-56 rounded border-2 border-blue-500 opacity-80" />
+              <div className="h-44 w-[85%] max-w-md rounded-lg border-2 border-blue-500 opacity-80 sm:h-36 sm:w-64" />
             </div>
           </div>
-          <p className="mt-1 text-center text-xs text-gray-400">
+          <p className="mt-1 text-center text-sm text-gray-500">
             Apunta la cámara al código de barras o QR
           </p>
         </div>

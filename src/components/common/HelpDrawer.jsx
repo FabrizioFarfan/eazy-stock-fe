@@ -7,9 +7,22 @@ import { HelpCircle, X } from 'lucide-react'
  *
  * Uso:
  *   <HelpDrawer title="...">  ...contenido JSX...  </HelpDrawer>
+ *
+ * `autoOpenKey`: si se pasa, el drawer se abre solo la PRIMERA vez que el
+ * usuario llega a este paso (flag en localStorage) — funciona como tutorial
+ * para usuarios que nunca tocarían el botón de ayuda por su cuenta.
  */
-export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLabel = '¿Cómo funciona?', children }) {
-  const [open, setOpen] = useState(false)
+export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLabel = '¿Cómo funciona?', autoOpenKey = null, children }) {
+  const [open, setOpen] = useState(() => {
+    if (!autoOpenKey) return false
+    try {
+      if (localStorage.getItem(autoOpenKey)) return false
+      localStorage.setItem(autoOpenKey, '1')
+      return true
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     if (!open) return

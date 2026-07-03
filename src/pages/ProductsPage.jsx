@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Package, Edit, QrCode, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, Eye, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
@@ -9,6 +9,7 @@ import ProductDetailModal from '../components/products/ProductDetailModal'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import QrModal from '../components/products/QrModal'
 import { formatPrice } from '../utils/formatMoney'
+import PageTitle from '../components/common/PageTitle'
 
 function SkeletonRow() {
   return (
@@ -98,14 +99,19 @@ export default function ProductsPage() {
     return () => window.removeEventListener('eazystock:show-product-tutorial', handler)
   }, [])
 
+  // ?variablePrice=1 en la URL pre-activa el filtro (link desde Balance)
+  const [searchParams] = useSearchParams()
+
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
   const [orphansOnly, setOrphansOnly]   = useState(false)
+  const [variableOnly, setVariableOnly] = useState(searchParams.get('variablePrice') === '1')
+  const [sortBy, setSortBy]             = useState('name,asc')
   const [page, setPage]                 = useState(0)
   const debouncedSearch                 = useDebounce(search, 400)
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter, orphansOnly])
+  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter, orphansOnly, variableOnly, sortBy])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
@@ -114,10 +120,12 @@ export default function ProductsPage() {
 
   const params = {
     page, size: PAGE_SIZE,
+    sort: sortBy,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(lowStock && { lowStock: true }),
     ...(statusFilter !== 'all' && { active: statusFilter === 'active' }),
     ...(orphansOnly && { placeholderOnly: true }),
+    ...(variableOnly && { variablePriceOnly: true }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -145,7 +153,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Productos</h2>
+          <PageTitle icon={Package} tone="cyan">Productos</PageTitle>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}
@@ -223,6 +231,13 @@ export default function ProductsPage() {
           <span className="text-amber-700 font-semibold">Sin proveedor real</span>
         </label>
 
+        <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm hover:bg-orange-100 transition-colors select-none"
+          title="Productos con precio variable: el precio se pide al momento de vender. Edítalos para ponerles un precio fijo.">
+          <input type="checkbox" checked={variableOnly}
+            onChange={(e) => setVariableOnly(e.target.checked)} className="accent-orange-600" />
+          <span className="text-orange-700 font-semibold">Sin precio definido</span>
+        </label>
+
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -231,6 +246,18 @@ export default function ProductsPage() {
           <option value="active">Activos</option>
           <option value="inactive">Inactivos</option>
           <option value="all">Todos</option>
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          title="Ordenar los productos"
+          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white"
+        >
+          <option value="name,asc">Nombre (A–Z)</option>
+          <option value="salePrice,desc">Precio: mayor a menor</option>
+          <option value="salePrice,asc">Precio: menor a mayor</option>
+          <option value="currentStock,desc">Stock: mayor a menor</option>
         </select>
       </div>
 

@@ -21,6 +21,7 @@ const PRESETS = [
       const d = new Date(); d.setDate(d.getDate() - 29); return d.toISOString().slice(0, 10)
     }, to: today },
   { label: 'Este mes',      from: firstOfMonth, to: today },
+  { label: 'Este año',      from: () => `${new Date().getFullYear()}-01-01`, to: today },
 ]
 
 export default function ReportFilters({ businessId }) {
@@ -113,7 +114,7 @@ export default function ReportFilters({ businessId }) {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Custom
+          Elegir fechas
         </button>
       </div>
 

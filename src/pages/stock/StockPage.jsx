@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PackagePlus, SlidersHorizontal } from 'lucide-react'
+import { PackagePlus, SlidersHorizontal, ArrowUpDown } from 'lucide-react'
+import PageTitle from '../../components/common/PageTitle'
 import { useAuth } from '../../context/AuthContext'
 import MovementModal from './MovementModal'
 import SupplierReceiptModal from '../../components/stock/SupplierReceiptModal'
@@ -25,7 +26,7 @@ export default function StockPage() {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900">Stock</h2>
+        <PageTitle icon={ArrowUpDown} tone="amber">Stock</PageTitle>
         {isManager && (
           <div className="flex gap-2">
             <button onClick={() => setShowReceiptModal(true)}

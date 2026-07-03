@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/useSuppliers'
 import { useDebounce } from '../hooks/useDebounce'
+import PageTitle from '../components/common/PageTitle'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 
 const schema = z.object({
@@ -196,7 +197,7 @@ export default function SuppliersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Proveedores</h2>
+          <PageTitle icon={Truck} tone="cyan">Proveedores</PageTitle>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {data?.totalElements ?? 0}

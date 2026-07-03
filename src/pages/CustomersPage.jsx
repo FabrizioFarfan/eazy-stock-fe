@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import PageTitle from '../components/common/PageTitle'
 import { useDebounce } from '../hooks/useDebounce'
 import { useCustomers } from '../hooks/useCustomers'
 import { useAuth } from '../context/AuthContext'
@@ -66,7 +67,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Clientes</h2>
+          <PageTitle icon={Users} tone="purple">Clientes</PageTitle>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}

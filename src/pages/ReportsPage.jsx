@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer,
+  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer, BarChart2,
 } from 'lucide-react'
+import PageTitle from '../components/common/PageTitle'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -13,6 +14,7 @@ import {
 } from '../hooks/useReports'
 import { useSuppliers } from '../hooks/useSuppliers'
 import ReportFilters   from '../components/reports/ReportFilters'
+import DateRangeQuick  from '../components/common/DateRangeQuick'
 import SummaryCards    from '../components/reports/SummaryCards'
 import SalesByDayChart from '../components/reports/SalesByDayChart'
 import TopProductsList from '../components/reports/TopProductsList'
@@ -265,26 +267,17 @@ function TabDaily({ businessId }) {
 // ── Tab: Por producto ─────────────────────────────────────────────────────────
 
 function TabByProduct({ businessId }) {
-  const [from, setFrom]         = useState(firstOfMonth())
-  const [to, setTo]             = useState(today())
+  const [range, setRange] = useState({ from: firstOfMonth(), to: today() })
   const [reportParams, setReportParams] = useState(null)
   const { data, isLoading } = useSalesByProduct(reportParams, { enabled: !!reportParams })
-  const run = () => setReportParams({ from, to, ...(businessId && { businessId }) })
+  const run = () => setReportParams({ ...range, ...(businessId && { businessId }) })
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Desde</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Hasta</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-        </div>
-        <button onClick={run} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+        <button onClick={run} disabled={!range.from || !range.to}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
           Generar reporte
         </button>
       </div>
@@ -335,26 +328,17 @@ function TabByProduct({ businessId }) {
 // ── Tab: Por proveedor ────────────────────────────────────────────────────────
 
 function TabByProvider({ businessId }) {
-  const [from, setFrom]         = useState(firstOfMonth())
-  const [to, setTo]             = useState(today())
+  const [range, setRange] = useState({ from: firstOfMonth(), to: today() })
   const [reportParams, setReportParams] = useState(null)
   const { data, isLoading } = useSalesByProvider(reportParams, { enabled: !!reportParams })
-  const run = () => setReportParams({ from, to, ...(businessId && { businessId }) })
+  const run = () => setReportParams({ ...range, ...(businessId && { businessId }) })
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Desde</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Hasta</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-        </div>
-        <button onClick={run} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+        <button onClick={run} disabled={!range.from || !range.to}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
           Generar reporte
         </button>
       </div>
@@ -459,16 +443,15 @@ function TabLowStock({ businessId }) {
 // ── Tab: Resurtido por proveedor ─────────────────────────────────────────────
 
 function TabSupplierRestock({ businessId }) {
-  const todayStr = today()
   const [supplierId, setSupplierId] = useState('')
-  const [from, setFrom]             = useState(firstOfMonth())
-  const [to,   setTo]               = useState(todayStr)
+  const [range, setRange]           = useState({ from: firstOfMonth(), to: today() })
+  const { from, to } = range
 
   const { data: suppliersData } = useSuppliers({ size: 200, ...(businessId && { businessId }) })
   const suppliers = suppliersData?.content ?? []
 
   const { data: rows = [], isLoading, isFetching } = useSupplierRestock(
-    supplierId ? { supplierId, from, to, ...(businessId && { businessId }) } : null,
+    supplierId && from && to ? { supplierId, from, to, ...(businessId && { businessId }) } : null,
   )
 
   const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
@@ -492,14 +475,7 @@ function TabSupplierRestock({ businessId }) {
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Desde</label>
-          <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hasta</label>
-          <input type="date" value={to} min={from} max={todayStr} onChange={(e) => setTo(e.target.value)} className={inputCls} />
-        </div>
+        <DateRangeQuick from={from} to={to} onChange={setRange} />
         {supplierId && rows.length > 0 && (
           <button
             type="button"
@@ -612,7 +588,7 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-2xl font-bold text-gray-900">Reportes</h2>
+      <PageTitle icon={BarChart2} tone="rose">Reportes</PageTitle>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-100 bg-gray-50 p-1.5 shadow-sm">

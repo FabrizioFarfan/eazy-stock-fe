@@ -1,44 +1,67 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  Scale, TrendingUp, TrendingDown, Loader2, Calendar,
-  Wallet, PackageOpen, PiggyBank, ShoppingCart, Undo2,
+  Scale, TrendingUp, TrendingDown, Loader2,
+  Wallet, PackageOpen, PiggyBank, ShoppingCart, Undo2, AlertTriangle,
 } from 'lucide-react'
 import { useSalesBalance, useCashBalance, useBusinessOverview } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
+import DateRangeQuick from '../components/common/DateRangeQuick'
+import { quickRange } from '../utils/dateRanges'
+import PageTitle from '../components/common/PageTitle'
+import HelpDrawer from '../components/common/HelpDrawer'
 
-const PERIODS = [
-  { key: 'day',    label: 'Hoy' },
-  { key: 'week',   label: 'Semana' },
-  { key: 'month',  label: 'Mes' },
-  { key: 'year',   label: 'Año' },
-  { key: 'custom', label: 'Personalizado' },
-]
-
-function toISODate(d) {
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+function S({ title, children }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  )
 }
 
-/** Rango [from, to] en fechas locales según el período elegido. */
-function rangeFor(period) {
-  const now = new Date()
-  const today = toISODate(now)
-  if (period === 'day') return { from: today, to: today }
-  if (period === 'week') {
-    // Semana de lunes a hoy
-    const day = now.getDay() === 0 ? 6 : now.getDay() - 1
-    const monday = new Date(now)
-    monday.setDate(now.getDate() - day)
-    return { from: toISODate(monday), to: today }
-  }
-  if (period === 'month') {
-    return { from: toISODate(new Date(now.getFullYear(), now.getMonth(), 1)), to: today }
-  }
-  if (period === 'year') {
-    return { from: `${now.getFullYear()}-01-01`, to: today }
-  }
-  return null // custom: lo define el usuario
+function BalanceHelp() {
+  return (
+    <>
+      <p>
+        Esta página te dice, en un vistazo, <span className="font-semibold">cuánto ganó tu
+        negocio</span> en el período que elijas y cuánto vale tu inventario hoy.
+      </p>
+      <S title="1 · Elige el período">
+        <p>
+          Toca <span className="font-semibold">Hoy</span>, <span className="font-semibold">Esta
+          semana</span>, <span className="font-semibold">Este mes</span> o{' '}
+          <span className="font-semibold">Este año</span> y los números se actualizan solos.
+          Con <span className="font-semibold">"Elegir fechas"</span> pones tú el desde y el hasta
+          (por ejemplo, para comparar un mes del año pasado). Mirando el mismo período de meses
+          distintos ves si el negocio está creciendo o bajando.
+        </p>
+      </S>
+      <S title="2 · Balance de ventas — qué significa cada línea">
+        <p><span className="font-semibold">Ventas brutas</span>: todo lo vendido, antes de descuentos.</p>
+        <p><span className="font-semibold">Descuentos</span>: lo que rebajaste sobre el total de las ventas.</p>
+        <p><span className="font-semibold">Devoluciones</span>: el dinero devuelto a clientes (la mercadería vuelve al stock).</p>
+        <p><span className="font-semibold">Costo del producto</span>: lo que a ti te costó la mercadería vendida.</p>
+        <p><span className="font-semibold">Ganancia</span>: lo que te queda después de restar todo lo anterior. Verde = ganaste, rojo = perdiste.</p>
+      </S>
+      <S title="3 · Ingresos y egresos">
+        <p>
+          Compara la plata que entró (ventas) contra la que salió (compras de mercadería a
+          proveedores) en el mismo período. La diferencia es la ganancia operativa.
+        </p>
+      </S>
+      <S title="4 · Información total del negocio">
+        <p><span className="font-semibold">Capital total</span>: cuánto vale todo tu stock a precio de venta.</p>
+        <p><span className="font-semibold">Costo de productos</span>: cuánto pagaste por ese stock.</p>
+        <p><span className="font-semibold">Ganancia potencial</span>: la diferencia — lo que ganarías si vendieras todo hoy.</p>
+        <p className="text-xs text-gray-400">
+          Los productos sin precio definido no entran en estas cuentas. Si aparece un aviso naranja,
+          tócalo para ponerles precio y que se incluyan.
+        </p>
+      </S>
+    </>
+  )
 }
 
 function formatRangeLabel(from, to) {
@@ -81,24 +104,15 @@ function OverviewCard({ icon: Icon, label, value, tone, subtitle }) {
   )
 }
 
-const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
-
 export default function BalancePage() {
   const { user } = useAuth()
-  const [period, setPeriod] = useState('day')
-  const [customFrom, setCustomFrom] = useState('')
-  const [customTo, setCustomTo] = useState('')
+  const [range, setRange] = useState(() => quickRange('day'))
 
-  const range = useMemo(() => {
-    if (period !== 'custom') return rangeFor(period)
-    if (customFrom && customTo) return { from: customFrom, to: customTo }
-    return null
-  }, [period, customFrom, customTo])
-
+  const rangeComplete = !!(range?.from && range?.to)
   const baseParams = user?.role === 'SUPER_ADMIN' && user?.businessId
     ? { businessId: user.businessId }
     : {}
-  const periodParams = range ? { ...baseParams, ...range } : null
+  const periodParams = rangeComplete ? { ...baseParams, ...range } : null
 
   const salesBalance = useSalesBalance(periodParams, { enabled: !!periodParams })
   const cashBalance  = useCashBalance(periodParams,  { enabled: !!periodParams })
@@ -116,48 +130,21 @@ export default function BalancePage() {
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Balance del negocio</h2>
-          {range && (
+          <PageTitle icon={Scale} tone="emerald">Balance del negocio</PageTitle>
+          {rangeComplete && (
             <p className="mt-0.5 text-sm text-gray-400">{formatRangeLabel(range.from, range.to)}</p>
           )}
         </div>
+        <HelpDrawer title="Cómo leer el balance" autoOpenKey="eazystock_balance_help_v1">
+          <BalanceHelp />
+        </HelpDrawer>
       </div>
 
       {/* Selector de período */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setPeriod(p.key)}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
-                period === p.key
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
-                  : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {period === 'custom' && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Calendar size={15} className="flex-shrink-0 text-gray-400" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-500">Desde</span>
-              <input type="date" value={customFrom} max={customTo || undefined}
-                onChange={(e) => setCustomFrom(e.target.value)} className={inputCls} />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-500">Hasta</span>
-              <input type="date" value={customTo} min={customFrom || undefined}
-                onChange={(e) => setCustomTo(e.target.value)} className={inputCls} />
-            </div>
-            {!range && (
-              <span className="text-xs text-gray-400">Elige ambas fechas para ver el balance</span>
-            )}
-          </div>
+      <div className="rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+        <DateRangeQuick from={range?.from} to={range?.to} onChange={setRange} />
+        {!rangeComplete && (
+          <p className="mt-2 text-xs text-gray-400">Elige ambas fechas para ver el balance</p>
         )}
       </div>
 
@@ -255,13 +242,29 @@ export default function BalancePage() {
         ) : overview.isError ? (
           <p className="py-6 text-center text-sm text-red-500">No pudimos cargar la información del negocio.</p>
         ) : ov && (
+          <>
+          {ov.productsWithoutPrice > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+              <AlertTriangle size={15} className="flex-shrink-0" />
+              <span>
+                <strong>{ov.productsWithoutPrice} producto{ov.productsWithoutPrice !== 1 ? 's' : ''} sin precio definido</strong>{' '}
+                no {ov.productsWithoutPrice !== 1 ? 'están incluidos' : 'está incluido'} en estos totales.
+              </span>
+              <Link
+                to="/products?variablePrice=1"
+                className="font-semibold text-orange-700 underline hover:text-orange-900"
+              >
+                Ponerles precio ahora
+              </Link>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-3">
             <OverviewCard
               icon={Wallet}
               label="Capital total"
               value={ov.capitalTotal}
               tone="blue"
-              subtitle={`${ov.productCount} productos en catálogo`}
+              subtitle={`${ov.productCount} productos con precio definido`}
             />
             <OverviewCard
               icon={PackageOpen}
@@ -278,6 +281,7 @@ export default function BalancePage() {
               subtitle="Si se vende todo el stock actual"
             />
           </div>
+          </>
         )}
       </div>
     </div>

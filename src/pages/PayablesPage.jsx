@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Truck, AlertTriangle, Loader2 } from 'lucide-react'
+import { Truck, AlertTriangle, Loader2, HandCoins } from 'lucide-react'
+import PageTitle from '../components/common/PageTitle'
 import { usePayables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
@@ -24,7 +25,7 @@ export default function PayablesPage() {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900">Cuentas por pagar</h2>
+        <PageTitle icon={HandCoins} tone="amber">Cuentas por pagar</PageTitle>
         <div className="text-right">
           <p className="text-xs uppercase tracking-widest text-gray-400">Total por pagar</p>
           <p className="text-2xl font-extrabold text-red-600">{formatPrice(total)}</p>

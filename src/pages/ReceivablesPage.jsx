@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, AlertTriangle, Loader2, FileDown, MessageCircle } from 'lucide-react'
+import { Users, AlertTriangle, Loader2, FileDown, MessageCircle, Wallet } from 'lucide-react'
+import PageTitle from '../components/common/PageTitle'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useReceivables } from '../hooks/useReports'
@@ -83,7 +84,7 @@ export default function ReceivablesPage() {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-2xl font-bold text-gray-900">Cuentas por cobrar</h2>
+        <PageTitle icon={Wallet} tone="emerald">Cuentas por cobrar</PageTitle>
         <div className="flex items-end gap-4">
           {rows.length > 0 && (
             <button
