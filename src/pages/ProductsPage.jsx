@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
+import { productsApi } from '../services/endpoints/products'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
@@ -100,7 +101,7 @@ export default function ProductsPage() {
   }, [])
 
   // ?variablePrice=1 en la URL pre-activa el filtro (link desde Balance)
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
@@ -142,6 +143,23 @@ export default function ProductsPage() {
   const openCreateWithTour = () => setFormModal({ open: true, product: null, tutorial: true  })
   const openEdit           = (p) => setFormModal({ open: true, product: p,   tutorial: false })
   const closeForm          = () => setFormModal({ open: false, product: null, tutorial: false })
+
+  // ?edit=<id> abre directo el modal de edición (link desde Stock). Se quita
+  // el param de la URL para que cerrar el modal no lo re-abra al navegar.
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (!editId) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('edit')
+    setSearchParams(next, { replace: true })
+    productsApi.getById(editId)
+      .then((r) => {
+        const product = r.data.data
+        if (product) setFormModal({ open: true, product, tutorial: false })
+      })
+      .catch(() => { /* producto inexistente: queda la lista normal */ })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleDeactivate = useCallback((p) => {
     if (!window.confirm(`¿Desactivar "${p.name}"?`)) return

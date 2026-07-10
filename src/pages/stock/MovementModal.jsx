@@ -178,6 +178,7 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
               </label>
               <div className="flex items-center gap-2">
                 <input {...register('quantity')} type="number" step={divisible ? '0.001' : '1'}
+                  autoFocus={!!initialProduct}
                   placeholder={type === 'ADJUSTMENT' ? 'Ej. -5 o +10' : 'Ej. 50'}
                   className={inputCls} />
                 {selectedProduct && (

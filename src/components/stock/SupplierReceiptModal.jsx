@@ -25,12 +25,17 @@ import { getErrorMessage } from '../../utils/handleApiError'
  * El total se calcula sum(qty × unitCost) y queda editable arriba para
  * permitir registrar el monto real de la factura (puede diferir por
  * descuentos, gastos extra, etc.).
+ *
+ * `initialSupplier` ({id, name}) e `initialProduct` (producto completo):
+ * prefijan paso 1 y 2 — los usa el detalle de producto en Stock para que
+ * "Registrar entrada" llegue con proveedor elegido y el producto ya en el
+ * carrito; el usuario puede sumar más productos del mismo proveedor.
  */
-export default function SupplierReceiptModal({ onClose }) {
+export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null }) {
   const createReceipt = useCreateSupplierReceipt()
 
   // ── Paso 1: proveedor ────────────────────────────────────────────────────
-  const [supplier, setSupplier]                 = useState(null)
+  const [supplier, setSupplier]                 = useState(initialSupplier)
   const [supplierQuery, setSupplierQuery]       = useState('')
   const [showSupplierDrop, setShowSupplierDrop] = useState(false)
   const debouncedSupplier = useDebounce(supplierQuery, 350)
@@ -55,13 +60,23 @@ export default function SupplierReceiptModal({ onClose }) {
 
   // ── Carrito ──────────────────────────────────────────────────────────────
   // item shape: { product, quantity, unitCost }
-  const [items, setItems] = useState([])
+  const [items, setItems] = useState(() => (
+    initialProduct && initialSupplier
+      ? [{ product: initialProduct, quantity: 1, unitCost: Number(initialProduct.purchasePrice ?? 0) }]
+      : []
+  ))
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = items }, [items])
 
-  // Si el OWNER cambia de proveedor, vaciamos el carrito (productos eran del otro).
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setItems([]); setProductQuery('') }, [supplier?.id])
+  // Si el OWNER cambia de proveedor, vaciamos el carrito (productos eran del
+  // otro). El ref evita vaciar el carrito inicial en el primer render.
+  const prevSupplierIdRef = useRef(supplier?.id)
+  useEffect(() => {
+    if (prevSupplierIdRef.current === supplier?.id) return
+    prevSupplierIdRef.current = supplier?.id
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems([]); setProductQuery('')
+  }, [supplier?.id])
 
   // ── Receipt header ───────────────────────────────────────────────────────
   const [paymentMode, setPaymentMode]               = useState('CASH')

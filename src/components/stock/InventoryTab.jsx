@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import ProductDetailModal from '../products/ProductDetailModal'
 import MovementModal from '../../pages/stock/MovementModal'
+import SupplierReceiptModal from './SupplierReceiptModal'
 import { useAuth } from '../../context/AuthContext'
 import { useProducts } from '../../hooks/useProducts'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -50,7 +51,8 @@ export default function InventoryTab() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [detail, setDetail]     = useState(null)   // producto del modal de detalle
-  const [movement, setMovement] = useState(null)   // { type, product } → MovementModal
+  const [adjusting, setAdjusting] = useState(null) // producto → MovementModal (ajuste)
+  const [receiving, setReceiving] = useState(null) // producto → SupplierReceiptModal prefijado
 
   const search          = searchParams.get('search')         || ''
   const supplierId      = searchParams.get('supplierId')     || ''
@@ -249,19 +251,30 @@ export default function InventoryTab() {
 
       {detail && (
         <ProductDetailModal
-          product={detail}
+          // Tras registrar entrada/ajuste la lista se refresca: tomamos la
+          // versión actualizada del producto para que el stock no quede viejo.
+          product={items.find((i) => i.id === detail.id) ?? detail}
           onClose={() => setDetail(null)}
-          onRegisterEntry={(p) => { setDetail(null); setMovement({ type: 'PURCHASE_ENTRY', product: p }) }}
-          onAdjust={(p) => { setDetail(null); setMovement({ type: 'ADJUSTMENT', product: p }) }}
+          onRegisterEntry={(p) => setReceiving(p)}
+          onAdjust={(p) => setAdjusting(p)}
           onEdit={(p) => navigate(`/products?edit=${p.id}`)}
         />
       )}
 
-      {movement && (
+      {/* Se apilan sobre el detalle: al cerrarlos, el detalle sigue abierto */}
+      {adjusting && (
         <MovementModal
-          type={movement.type}
-          initialProduct={movement.product}
-          onClose={() => setMovement(null)}
+          type="ADJUSTMENT"
+          initialProduct={adjusting}
+          onClose={() => setAdjusting(null)}
+        />
+      )}
+
+      {receiving && (
+        <SupplierReceiptModal
+          initialSupplier={receiving.supplierId ? { id: receiving.supplierId, name: receiving.supplierName } : null}
+          initialProduct={receiving.supplierId ? receiving : null}
+          onClose={() => setReceiving(null)}
         />
       )}
     </div>
