@@ -280,6 +280,8 @@ html.dark .ring-red-100     { --tw-ring-color: rgb(153 27 27 / 0.5); }
 html.dark .ring-emerald-100 { --tw-ring-color: rgb(6 95 70 / 0.5); }
 html.dark .ring-blue-100    { --tw-ring-color: rgb(30 64 175 / 0.5); }
 html.dark .ring-amber-100   { --tw-ring-color: rgb(146 64 14 / 0.5); }
+html.dark .ring-amber-200   { --tw-ring-color: rgb(146 64 14 / 0.6); }
+html.dark .ring-emerald-200 { --tw-ring-color: rgb(6 95 70 / 0.6); }
 
 /* Hovers de filas y botones suaves */
 html.dark .hover\:bg-gray-50\/70:hover  { background-color: rgb(55 65 81 / 0.5); }

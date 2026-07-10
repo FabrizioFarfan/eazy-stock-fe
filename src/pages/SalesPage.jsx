@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, Eye, X, Tag, FileText } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
 import { useAuth } from '../context/AuthContext'
@@ -28,7 +28,7 @@ function formatCurrency(value) {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 5 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -242,7 +242,6 @@ export default function SalesPage() {
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Empleado</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Productos</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Total</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Ver</th>
               </tr>
             </thead>
             <tbody>
@@ -250,7 +249,7 @@ export default function SalesPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={5}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <ShoppingCart size={28} className="text-gray-400" />
@@ -271,7 +270,12 @@ export default function SalesPage() {
                 </tr>
               ) : (
                 sales.map((sale, idx) => (
-                  <tr key={sale.id} className={`border-b border-gray-50 transition-colors hover:bg-gray-50/70 ${isFetching ? 'opacity-60' : ''}`}>
+                  <tr
+                    key={sale.id}
+                    onClick={() => setSelectedSaleId(sale.id)}
+                    title="Ver detalle de la venta"
+                    className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40 ${isFetching ? 'opacity-60' : ''}`}
+                  >
                     <td className="px-5 py-3.5 text-center text-xs font-mono text-gray-400">
                       {page * PAGE_SIZE + idx + 1}
                     </td>
@@ -313,15 +317,6 @@ export default function SalesPage() {
                         )}
                         <span>{formatCurrency(sale.total)}</span>
                       </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-center">
-                      <button
-                        title="Ver detalle"
-                        onClick={() => setSelectedSaleId(sale.id)}
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                      >
-                        <Eye size={14} />
-                      </button>
                     </td>
                   </tr>
                 ))

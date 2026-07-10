@@ -40,9 +40,10 @@ const ACCENT = {
 const inputCls =
   'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 bg-white'
 
-export default function MovementModal({ type, onClose }) {
-  const [search, setSearch]                   = useState('')
-  const [selectedProduct, setSelectedProduct] = useState(null)
+/** `initialProduct`: producto preseleccionado (p. ej. desde el detalle en Stock). */
+export default function MovementModal({ type, onClose, initialProduct = null }) {
+  const [search, setSearch]                   = useState(initialProduct?.name ?? '')
+  const [selectedProduct, setSelectedProduct] = useState(initialProduct)
   const [showDropdown, setShowDropdown]       = useState(false)
   const [scanError, setScanError]             = useState(null)
   const scanLockRef                           = useRef(false)

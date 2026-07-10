@@ -1,4 +1,4 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, Edit, Trash2 } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, Edit, Trash2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
@@ -50,10 +50,12 @@ function MovementTypeBadge({ type }) {
 
 /**
  * Detalle completo del producto. Si llegan los handlers opcionales
- * (onEdit / onShowQr / onDeactivate) se muestra la barra de acciones al
- * pie — las acciones viven acá, no en columnas de la tabla.
+ * (onEdit / onShowQr / onDeactivate / onRegisterEntry / onAdjust) se muestra
+ * la barra de acciones al pie — las acciones viven acá, no en columnas de la
+ * tabla. onRegisterEntry/onAdjust los usa la página Stock para abrir el
+ * MovementModal ya prefijado con este producto.
  */
-export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate }) {
+export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onRegisterEntry, onAdjust }) {
   const { data: movementsData, isLoading: loadingMov } = useQuery({
     queryKey: ['stock-movements', 'product', product.id],
     queryFn: () => stockApi.getMovementsByProduct(product.id, { size: 5 })
@@ -242,8 +244,26 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
         </div>
 
         {/* Acciones */}
-        {(onEdit || onShowQr || onDeactivate) && (
+        {(onEdit || onShowQr || onDeactivate || onRegisterEntry || onAdjust) && (
           <div className="flex flex-shrink-0 flex-wrap justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-6 py-4">
+            {onAdjust && (
+              <button
+                onClick={() => onAdjust(product)}
+                className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors"
+              >
+                <SlidersHorizontal size={14} />
+                Ajustar stock
+              </button>
+            )}
+            {onRegisterEntry && (
+              <button
+                onClick={() => onRegisterEntry(product)}
+                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+              >
+                <ArrowDownToLine size={14} />
+                Registrar entrada
+              </button>
+            )}
             {onDeactivate && product.active && (
               <button
                 onClick={() => onDeactivate(product)}

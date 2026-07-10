@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Package, Edit } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Package } from 'lucide-react'
+import ProductDetailModal from '../products/ProductDetailModal'
+import MovementModal from '../../pages/stock/MovementModal'
 import { useAuth } from '../../context/AuthContext'
 import { useProducts } from '../../hooks/useProducts'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -27,7 +30,7 @@ function StockBadge({ current, min }) {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 9 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <td key={i} className="px-4 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -38,13 +41,16 @@ function SkeletonRow() {
 
 /**
  * Stock-side inventory view: product-centric con filtros combinables y URL
- * persistente. Para edición/QR/desactivación seguimos enviando al user a
- * /products (que ya tiene esos modales). Acá solo es read + filter + jump.
+ * persistente. Click en una fila abre el detalle del producto con acciones
+ * de stock directas (registrar entrada / ajustar, prefijadas con el
+ * producto); la edición completa sigue viviendo en /products.
  */
 export default function InventoryTab() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [detail, setDetail]     = useState(null)   // producto del modal de detalle
+  const [movement, setMovement] = useState(null)   // { type, product } → MovementModal
 
   const search          = searchParams.get('search')         || ''
   const supplierId      = searchParams.get('supplierId')     || ''
@@ -153,7 +159,6 @@ export default function InventoryTab() {
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Mín.</th>
                 <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Último costo</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Estado</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -161,7 +166,7 @@ export default function InventoryTab() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={8}>
                     <div className="flex flex-col items-center gap-3 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -174,13 +179,18 @@ export default function InventoryTab() {
                 items.map((p) => {
                   const isOrphan = p.supplierName === 'Sin proveedor asignado'
                   return (
-                    <tr key={p.id} className={`border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}>
+                    <tr
+                      key={p.id}
+                      onClick={() => setDetail(p)}
+                      title="Ver detalle del producto"
+                      className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}
+                    >
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{p.sku}</td>
                       <td className="max-w-[200px] truncate px-4 py-3.5 font-semibold text-gray-900">{p.name}</td>
                       <td className="px-4 py-3.5">
                         {p.supplierId ? (
                           <button
-                            onClick={() => setParam('supplierId', p.supplierId)}
+                            onClick={(e) => { e.stopPropagation(); setParam('supplierId', p.supplierId) }}
                             className={`rounded-full px-2 py-0.5 text-xs font-semibold transition-colors ${
                               isOrphan
                                 ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -207,14 +217,6 @@ export default function InventoryTab() {
                         }`}>
                           {p.active ? 'Activo' : 'Inactivo'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <button
-                          onClick={() => navigate(`/products?edit=${p.id}`)}
-                          title="Editar en Productos"
-                          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
-                          <Edit size={14} />
-                        </button>
                       </td>
                     </tr>
                   )
@@ -244,6 +246,24 @@ export default function InventoryTab() {
           </div>
         )}
       </div>
+
+      {detail && (
+        <ProductDetailModal
+          product={detail}
+          onClose={() => setDetail(null)}
+          onRegisterEntry={(p) => { setDetail(null); setMovement({ type: 'PURCHASE_ENTRY', product: p }) }}
+          onAdjust={(p) => { setDetail(null); setMovement({ type: 'ADJUSTMENT', product: p }) }}
+          onEdit={(p) => navigate(`/products?edit=${p.id}`)}
+        />
+      )}
+
+      {movement && (
+        <MovementModal
+          type={movement.type}
+          initialProduct={movement.product}
+          onClose={() => setMovement(null)}
+        />
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { X, Tag, Undo2, Loader2 } from 'lucide-react'
+import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSaleDetail } from '../../hooks/useReports'
 import { useSaleReturns, useCreateSaleReturn } from '../../hooks/useSales'
@@ -46,6 +46,10 @@ export default function SaleDetailModal({ saleId, onClose }) {
   }, [returns])
 
   const totalReturned = returns.reduce((acc, r) => acc + Number(r.totalRefund), 0)
+
+  // Fiado: customerDebtAfter es la deuda ACTUAL del cliente al momento de la
+  // consulta. Si llegó a 0, todo lo fiado (de esta y otras ventas) ya se pagó.
+  const debtPending = sale?.onCredit && Number(sale.customerDebtAfter ?? 0) > 0
   const anythingReturnable = (sale?.items || []).some(
     (item) => Number(item.quantity) - (returnedByItem[item.id] ?? 0) > 0,
   )
@@ -94,16 +98,21 @@ export default function SaleDetailModal({ saleId, onClose }) {
     >
       <div className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
-          <div>
-            <h3 className="font-semibold text-gray-900">Detalle de venta</h3>
-            {sale && (
-              <p className="mt-0.5 text-xs text-gray-400">{formatDateFull(sale.createdAt)}</p>
-            )}
+        <div className="flex items-start justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+              <ShoppingCart size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-bold leading-tight text-gray-900">Detalle de venta</h3>
+              {sale && (
+                <p className="mt-0.5 text-xs text-gray-400">{formatDateFull(sale.createdAt)}</p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
+            className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors"
           >
             <X size={18} />
           </button>
@@ -119,10 +128,60 @@ export default function SaleDetailModal({ saleId, onClose }) {
             </div>
           ) : (
             <>
-              {sale?.employeeName && (
-                <p className="mb-4 text-sm text-gray-500">
-                  Vendedor: <span className="font-medium text-gray-800">{sale.employeeName}</span>
-                </p>
+              {/* Chips de contexto: quién vendió, a quién, y condiciones */}
+              <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                {sale?.employeeName && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                    <User size={11} />
+                    {sale.employeeName}
+                  </span>
+                )}
+                {sale?.customerName && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                    <UserRound size={11} />
+                    {sale.customerName}
+                  </span>
+                )}
+                {sale?.onCredit && (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
+                    debtPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    <Wallet size={11} />
+                    {debtPending ? 'Fiado' : 'Fiado · pagado'}
+                  </span>
+                )}
+                {hasDiscount && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-700">
+                    <Tag size={11} />
+                    {sale.discountType === 'PERCENTAGE'
+                      ? `−${sale.discountValue}%`
+                      : `−${formatCurrency(sale.discountAmount)}`}
+                  </span>
+                )}
+              </div>
+
+              {/* Estado del fiado */}
+              {sale?.onCredit && (
+                debtPending ? (
+                  <div className="mb-4 flex items-center gap-2.5 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">
+                    <Wallet size={15} className="flex-shrink-0 text-amber-600" />
+                    <span>
+                      Venta al fiado — cobro pendiente.
+                      {sale.customerName && (
+                        <> Deuda actual de <span className="font-semibold">{sale.customerName}</span>:{' '}
+                        <span className="font-bold">{formatCurrency(sale.customerDebtAfter)}</span></>
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mb-4 flex items-center gap-2.5 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                    <CheckCircle2 size={15} className="flex-shrink-0 text-emerald-600" />
+                    <span>
+                      Fue al fiado y ya está saldado
+                      {sale.customerName && <> — <span className="font-semibold">{sale.customerName}</span> no tiene deuda pendiente</>}.
+                    </span>
+                  </div>
+                )
               )}
               <div className="overflow-x-auto">
               <table className={returnMode ? 'w-full min-w-[30rem] text-sm' : 'w-full min-w-[24rem] text-sm'}>
@@ -244,7 +303,9 @@ export default function SaleDetailModal({ saleId, onClose }) {
               </>
             )}
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-700">Total cobrado</span>
+              <span className="font-semibold text-gray-700">
+                {sale.onCredit && debtPending ? 'Total de la venta' : 'Total cobrado'}
+              </span>
               <span className="text-lg font-bold text-gray-900">{formatCurrency(sale.total)}</span>
             </div>
             {totalReturned > 0 && (
