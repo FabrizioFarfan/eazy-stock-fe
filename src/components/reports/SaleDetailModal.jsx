@@ -89,12 +89,12 @@ export default function SaleDetailModal({ saleId, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
+      <div className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-4 sm:px-6">
           <div>
             <h3 className="font-semibold text-gray-900">Detalle de venta</h3>
             {sale && (
@@ -110,7 +110,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -124,7 +124,8 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   Vendedor: <span className="font-medium text-gray-800">{sale.employeeName}</span>
                 </p>
               )}
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className={returnMode ? 'w-full min-w-[30rem] text-sm' : 'w-full min-w-[24rem] text-sm'}>
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
                     <th className="pb-2">Producto</th>
@@ -168,13 +169,14 @@ export default function SaleDetailModal({ saleId, onClose }) {
                             {remaining > 0 ? (
                               <input
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 max={remaining}
                                 step="any"
                                 value={returnQty[item.id] ?? ''}
                                 onChange={(e) => setQty(item.id, e.target.value)}
                                 placeholder={`máx ${remaining}`}
-                                className="w-24 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                                className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 sm:w-24"
                               />
                             ) : (
                               <span className="text-xs text-gray-300">Devuelto</span>
@@ -186,6 +188,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   })}
                 </tbody>
               </table>
+              </div>
 
               {returnMode && (
                 <div className="mt-4">
@@ -224,7 +227,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
 
         {/* Footer */}
         {sale && (
-          <div className="space-y-1.5 rounded-b-2xl border-t border-gray-200 bg-gray-50 px-6 py-4 text-sm">
+          <div className="space-y-1.5 rounded-b-2xl border-t border-gray-200 bg-gray-50 px-4 py-4 text-sm sm:px-6">
             {hasDiscount && (
               <>
                 <div className="flex items-center justify-between text-gray-500">
@@ -252,7 +255,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
             )}
 
             {can('canCancelSale') && anythingReturnable && (
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                 {returnMode ? (
                   <>
                     <button
@@ -265,7 +268,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     <button
                       onClick={submitReturn}
                       disabled={createReturn.isPending}
-                      className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 disabled:opacity-60 transition-all"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 disabled:opacity-60 transition-all"
                     >
                       {createReturn.isPending
                         ? <Loader2 size={14} className="animate-spin" />
@@ -276,7 +279,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                 ) : (
                   <button
                     onClick={() => setReturnMode(true)}
-                    className="flex items-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-100 transition-colors"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-100 transition-colors"
                   >
                     <Undo2 size={14} />
                     Registrar devolución
