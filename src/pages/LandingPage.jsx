@@ -1,16 +1,74 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Package, BarChart2, ShoppingCart, ArrowUpDown,
   Shield, QrCode, Bell, FileSpreadsheet,
-  MessageCircle, Smartphone, Globe, Zap,
-  Check, ChevronRight, Star, Users,
+  MessageCircle, Smartphone, Globe,
+  Check, Star, Users,
   Truck, Receipt, CreditCard, Sparkles,
   Wallet, Boxes, ScanLine, TrendingUp,
   ArrowRight, PlayCircle, Quote, Wrench,
-  Tag, FolderOpen, ClipboardCheck, AlertTriangle,
-  FileText, Trophy,
+  Tag, ClipboardCheck, AlertTriangle,
+  FileText, Trophy, Pill, BookOpen, ChevronDown,
+  Play, Store, CheckCircle2,
 } from 'lucide-react'
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Reveal — aparición suave al hacer scroll (respeta prefers-reduced-motion)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Reveal({ children, delay = 0, className = '' }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          obs.disconnect()
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ease-out will-change-transform ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+      } ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+// Keyframes locales de la landing (flotación del mockup, etc.)
+function LandingStyles() {
+  return (
+    <style>{`
+      @keyframes floaty {
+        0%, 100% { transform: translateY(0px); }
+        50%      { transform: translateY(-8px); }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .animate-floaty      { animation: floaty 5s ease-in-out infinite; }
+        .animate-floaty-slow { animation: floaty 7s ease-in-out 1.2s infinite; }
+      }
+      html { scroll-behavior: smooth; }
+    `}</style>
+  )
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Background patterns — used by hero + section dividers
@@ -69,6 +127,7 @@ function Navbar() {
           <a href="#showcase"  className="text-sm text-slate-400 hover:text-white transition-colors">Producto</a>
           <a href="#industries" className="text-sm text-slate-400 hover:text-white transition-colors">Para quién</a>
           <a href="#roadmap"   className="text-sm text-slate-400 hover:text-white transition-colors">Roadmap</a>
+          <a href="#faq"       className="text-sm text-slate-400 hover:text-white transition-colors">FAQ</a>
         </nav>
         <Link
           to="/login"
@@ -219,7 +278,7 @@ function AppMockup() {
       </div>
 
       {/* Floating notification */}
-      <div className="absolute -bottom-4 -right-4 hidden max-w-[220px] rounded-xl border border-white/10 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
+      <div className="animate-floaty absolute -bottom-4 -right-4 hidden max-w-[220px] rounded-xl border border-white/10 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
         <div className="flex items-start gap-2">
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
             <AlertTriangle size={13} className="text-amber-400" />
@@ -227,6 +286,19 @@ function AppMockup() {
           <div>
             <p className="text-[10px] font-bold text-white">Stock bajo</p>
             <p className="mt-0.5 text-[9px] text-slate-400">"Filtro aceite K&N" — solo quedan 3 unidades</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating sale toast */}
+      <div className="animate-floaty-slow absolute -left-6 -top-5 hidden max-w-[210px] rounded-xl border border-emerald-400/20 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
+        <div className="flex items-start gap-2">
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/15">
+            <CheckCircle2 size={13} className="text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-white">Venta registrada</p>
+            <p className="mt-0.5 text-[9px] text-slate-400">S/ 45.50 · efectivo — stock actualizado</p>
           </div>
         </div>
       </div>
@@ -262,8 +334,9 @@ function Hero() {
 
             <p className="mb-9 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg">
               Eazy Stock es el sistema de inventario, ventas, fiado y cuentas
-              corrientes para ferreterías, distribuidoras y tiendas en
-              Latinoamérica. Simple, rápido, y diseñado con clientes reales.
+              corrientes para ferreterías, farmacias, bodegas y distribuidoras
+              en Latinoamérica. Tan intuitivo que se aprende solo — con
+              tutorial guiado en cada pantalla.
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start lg:justify-start">
@@ -288,7 +361,7 @@ function Hero() {
               {[
                 'Sin tarjeta requerida',
                 'Multi-usuario incluido',
-                '11 permisos granulares',
+                'Se aprende sin capacitación',
                 'Soporte en español',
               ].map((t) => (
                 <div key={t} className="flex items-center gap-1.5">
@@ -323,7 +396,7 @@ function CustomersStrip() {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
           {[
             { name: 'Ferretería en Lima', sub: 'Catálogo de miles de productos' },
-            { name: 'En piloto privado',  sub: 'Más clientes onboarding' },
+            { name: 'Farmacia en Perú',   sub: 'Recién sumada al piloto' },
             { name: 'Tu negocio',         sub: 'Próximo en la lista' },
           ].map((c) => (
             <div key={c.name} className="text-center">
@@ -352,14 +425,16 @@ function Stats() {
     <section className="bg-gradient-to-b from-white to-gray-50 py-14">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {stats.map(({ value, label, sub }) => (
-            <div key={label} className="text-center">
-              <p className="bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
-                {value}
-              </p>
-              <p className="mt-1.5 text-sm font-semibold text-gray-900">{label}</p>
-              <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
-            </div>
+          {stats.map(({ value, label, sub }, i) => (
+            <Reveal key={label} delay={i * 90}>
+              <div className="text-center">
+                <p className="bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
+                  {value}
+                </p>
+                <p className="mt-1.5 text-sm font-semibold text-gray-900">{label}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -424,6 +499,8 @@ const FEATURE_GROUPS = [
       { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Sube tu inventario actual (3,000+ filas) y empieza a operar en minutos.' },
       { icon: Globe,         title: 'Multi-tenant + multi-moneda',   desc: 'Cada negocio aislado. Soporta PEN, USD, EUR, PLN out-of-the-box.' },
       { icon: Trophy,        title: 'Rendimiento de vendedores',     desc: 'El dueño ve quién vendió más y cuánto exactamente cada día, con ranking y desglose diario.' },
+      { icon: BookOpen,      title: 'Se aprende sola',               desc: 'Tutorial guiado en cada pantalla, se abre solo la primera vez. Tu equipo opera sin capacitación.' },
+      { icon: Smartphone,    title: 'Desde cualquier dispositivo',   desc: 'PC, tablet o celular — sin instalar nada. La cámara del teléfono es tu escáner.' },
     ],
   },
 ]
@@ -432,21 +509,23 @@ function Features() {
   return (
     <section id="features" className="bg-gray-50 py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mb-16 text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Funcionalidades</p>
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-            Todo lo que tu negocio necesita,<br />
-            en una sola plataforma
-          </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-gray-500">
-            Diseñado y probado con ferreterías reales en Lima. Cada feature
-            resuelve un problema que vimos en vivo — no funciones de catálogo.
-          </p>
-        </div>
+        <Reveal>
+          <div className="mb-16 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Funcionalidades</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+              Todo lo que tu negocio necesita,<br />
+              en una sola plataforma
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base text-gray-500">
+              Diseñado y probado con negocios reales en Perú. Cada feature
+              resuelve un problema que vimos en vivo — no funciones de catálogo.
+            </p>
+          </div>
+        </Reveal>
 
         <div className="space-y-16">
           {FEATURE_GROUPS.map((group) => (
-            <div key={group.title}>
+            <Reveal key={group.title}>
               <div className="mb-6 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <div className={`mb-3 inline-block h-1 w-12 rounded-full bg-gradient-to-r ${group.color}`} />
@@ -472,7 +551,7 @@ function Features() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -489,7 +568,7 @@ function ImportShowcase() {
     <section id="showcase" className="bg-white py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
+          <Reveal>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
               <Sparkles size={12} />
               Nuevo — Junio 2026
@@ -529,10 +608,10 @@ function ImportShowcase() {
               Importa tu Excel ahora
               <ArrowRight size={14} />
             </Link>
-          </div>
+          </Reveal>
 
           {/* Mockup: import wizard preview */}
-          <div className="relative">
+          <Reveal delay={150} className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-emerald-200/40 to-blue-200/40 blur-2xl" />
             <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
               {/* Stepper */}
@@ -597,7 +676,7 @@ function ImportShowcase() {
                 })}
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>
@@ -614,7 +693,7 @@ function FiadoShowcase() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Mockup */}
-          <div className="relative order-2 lg:order-1">
+          <Reveal delay={150} className="relative order-2 lg:order-1">
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-violet-200/40 to-blue-200/40 blur-2xl" />
             <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
               {/* Customer card */}
@@ -673,10 +752,10 @@ function FiadoShowcase() {
                 ))}
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* Text */}
-          <div className="order-1 lg:order-2">
+          <Reveal className="order-1 lg:order-2">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
               <CreditCard size={12} />
               Cuentas corrientes
@@ -707,7 +786,7 @@ function FiadoShowcase() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>
@@ -726,6 +805,12 @@ const INDUSTRIES = [
     color: 'from-orange-500 to-red-500',
   },
   {
+    icon: Pill,
+    title: 'Farmacias y boticas',
+    desc: 'Catálogo con presentaciones (caja, blíster, unidad), alertas de stock mínimo y venta rápida escaneando el código de barras.',
+    color: 'from-rose-500 to-pink-600',
+  },
+  {
     icon: Truck,
     title: 'Distribuidoras',
     desc: 'Recepciones masivas multi-producto, cuentas con proveedores, márgenes ajustados por categoría.',
@@ -736,6 +821,12 @@ const INDUSTRIES = [
     title: 'Tiendas mayoristas',
     desc: 'Catálogos grandes, descuentos por volumen, ventas al fiado a comerciantes con línea de crédito.',
     color: 'from-emerald-500 to-teal-600',
+  },
+  {
+    icon: Store,
+    title: 'Bodegas y minimarkets',
+    desc: 'Venta al paso con escáner, fiado del barrio con cuenta al día y control de lo que se acaba.',
+    color: 'from-amber-500 to-orange-600',
   },
   {
     icon: Tag,
@@ -749,21 +840,24 @@ function Industries() {
   return (
     <section id="industries" className="bg-[#0a0e1a] py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mb-12 text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-400">Diseñado para</p>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Hecho para negocios que venden de verdad
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
-            Cada feature salió de problemas reales que vimos en ferreterías
-            de Lima. No te vendemos un ERP — te damos lo que necesitas.
-          </p>
-        </div>
+        <Reveal>
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-400">Diseñado para</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Hecho para negocios que venden de verdad
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
+              Cada feature salió de problemas reales que vimos en negocios
+              de Perú. No te vendemos un ERP — te damos lo que necesitas.
+            </p>
+          </div>
+        </Reveal>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {INDUSTRIES.map(({ icon: Icon, title, desc, color }) => (
-            <div
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {INDUSTRIES.map(({ icon: Icon, title, desc, color }, i) => (
+            <Reveal
               key={title}
+              delay={(i % 3) * 90}
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
             >
               <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${color} opacity-30 blur-2xl transition-opacity group-hover:opacity-50`} />
@@ -774,7 +868,7 @@ function Industries() {
                 <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
                 <p className="text-sm leading-relaxed text-slate-400">{desc}</p>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -790,6 +884,7 @@ function Testimonial() {
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <Reveal>
         <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-8 sm:p-12">
           <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
 
@@ -820,6 +915,150 @@ function Testimonial() {
             </div>
           </div>
         </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Reel teaser — el video se estrena pronto; esta sección le da su lugar
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ReelTeaser() {
+  return (
+    <section id="reel" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0e1a] via-[#101a33] to-[#0a0e1a] shadow-2xl">
+            <GridPattern />
+            <div aria-hidden className="absolute inset-0 opacity-40">
+              <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-600/40 blur-3xl" />
+              <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-emerald-500/30 blur-3xl" />
+            </div>
+
+            <div className="relative flex flex-col items-center px-6 py-16 text-center sm:py-20">
+              {/* Play button con halo */}
+              <div className="relative mb-8">
+                <span className="absolute inset-0 animate-ping rounded-full bg-white/10" />
+                <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition-transform hover:scale-105">
+                  <Play size={30} className="ml-1 fill-white text-white" />
+                </div>
+              </div>
+
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-400/10 px-3 py-1.5 text-xs font-semibold text-blue-300">
+                <Sparkles size={12} />
+                Muy pronto
+              </div>
+              <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Eazy Stock en 60 segundos
+              </h2>
+              <p className="max-w-xl text-base leading-relaxed text-slate-400">
+                Estamos grabando el reel donde te mostramos cómo un negocio
+                real pasa del cuaderno al control total: catálogo, ventas,
+                fiado y reportes. Mientras tanto, la mejor demo es probarlo tú.
+              </p>
+              <Link
+                to="/login"
+                className="group mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0a0e1a] transition-all hover:scale-[1.02]"
+              >
+                Probarlo ahora
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  FAQ
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FAQS = [
+  {
+    q: '¿Cuánto cuesta Eazy Stock?',
+    a: 'Durante el lanzamiento puedes probarlo gratis, sin tarjeta. Pronto lanzaremos planes de suscripción mensual — todos con 14 días de prueba gratis para que decidas con calma.',
+  },
+  {
+    q: '¿Necesito instalar algo?',
+    a: 'No. Eazy Stock corre en el navegador: funciona en tu PC, laptop, tablet o celular. Y la cámara de tu teléfono sirve como escáner de códigos de barras, sin comprar lectores.',
+  },
+  {
+    q: 'Ya tengo mi inventario en Excel, ¿lo pierdo?',
+    a: 'Al contrario: lo subes tal cual está. El importador detecta tus columnas automáticamente, limpia errores de tildes y te muestra fila por fila qué se va a importar antes de tocar nada. Miles de productos en minutos.',
+  },
+  {
+    q: '¿Sirve para mi rubro? No soy ferretería.',
+    a: 'Sí. Farmacias, bodegas, distribuidoras, boutiques, mayoristas… Las categorías y atributos se adaptan a lo que vendas (talla, presentación, laboratorio, lo que necesites).',
+  },
+  {
+    q: '¿Es difícil de aprender? Mi personal no es muy tecnológico.',
+    a: 'Esa es nuestra obsesión: cada pantalla trae un tutorial guiado que se abre solo la primera vez. Nuestros clientes reales operan sin capacitación — si saben usar WhatsApp, saben usar Eazy Stock.',
+  },
+  {
+    q: '¿Mis empleados pueden ver o tocar todo?',
+    a: 'No. Tú decides con permisos individuales qué puede hacer cada uno: vender, aplicar descuentos, ver reportes, recibir mercadería… Y cada acción queda registrada en la auditoría con quién y cuándo.',
+  },
+  {
+    q: '¿Mis datos están seguros?',
+    a: 'Cada negocio vive completamente aislado de los demás, la conexión va cifrada (HTTPS) y toda modificación queda auditada. Tus datos son tuyos.',
+  },
+]
+
+function FaqItem({ faq, open, onToggle }) {
+  return (
+    <div className={`overflow-hidden rounded-2xl border bg-white transition-all ${
+      open ? 'border-blue-200 shadow-lg shadow-blue-50' : 'border-gray-200'
+    }`}>
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+      >
+        <span className="text-sm font-bold text-gray-900 sm:text-base">{faq.q}</span>
+        <ChevronDown
+          size={18}
+          className={`flex-shrink-0 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180 text-blue-600' : ''}`}
+        />
+      </button>
+      <div className={`grid transition-all duration-300 ease-in-out ${
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+      }`}>
+        <div className="overflow-hidden">
+          <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{faq.a}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Faq() {
+  const [openIdx, setOpenIdx] = useState(0)
+  return (
+    <section id="faq" className="bg-white py-24">
+      <div className="mx-auto max-w-3xl px-5 sm:px-8">
+        <Reveal>
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Preguntas frecuentes</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Lo que todos preguntan
+            </h2>
+          </div>
+        </Reveal>
+        <Reveal delay={100}>
+          <div className="space-y-3">
+            {FAQS.map((faq, i) => (
+              <FaqItem
+                key={faq.q}
+                faq={faq}
+                open={openIdx === i}
+                onToggle={() => setOpenIdx(openIdx === i ? -1 : i)}
+              />
+            ))}
+          </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -853,17 +1092,19 @@ function HowItWorks() {
   return (
     <section id="how" className="bg-gray-50 py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="mb-16 text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Proceso</p>
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-            Arrancá en 3 pasos
-          </h2>
-        </div>
+        <Reveal>
+          <div className="mb-16 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Proceso</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+              Arrancá en 3 pasos
+            </h2>
+          </div>
+        </Reveal>
         <div className="relative grid gap-10 md:grid-cols-3">
           <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent md:block" />
 
-          {steps.map(({ num, icon: Icon, title, desc }) => (
-            <div key={num} className="relative flex flex-col items-center text-center">
+          {steps.map(({ num, icon: Icon, title, desc }, i) => (
+            <Reveal key={num} delay={i * 130} className="relative flex flex-col items-center text-center">
               <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xl shadow-blue-200">
                 <Icon size={34} className="text-white" />
                 <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-gray-50">
@@ -872,7 +1113,7 @@ function HowItWorks() {
               </div>
               <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
               <p className="text-sm leading-relaxed text-gray-500">{desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -888,6 +1129,7 @@ function WhatsAppHighlight() {
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0e1a] via-[#0f172a] to-[#0a0e1a]">
           <div aria-hidden className="absolute inset-0 opacity-30">
             <div className="absolute -left-20 top-1/4 h-60 w-60 rounded-full bg-emerald-500/40 blur-3xl" />
@@ -956,6 +1198,7 @@ function WhatsAppHighlight() {
             </div>
           </div>
         </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -996,6 +1239,7 @@ const ROADMAP = [
     period: 'Q4 2026',
     status: 'planned',
     items: [
+      'Vencimientos y lotes — alertas de productos por vencer (farmacias y alimentos)',
       'Facturación electrónica — SUNAT (Perú), SRI (Ecuador), AFIP (Argentina)',
       'Compras con orden de pedido + sugerencia de reposición',
       'Modo offline / PWA — sigue vendiendo sin internet',
@@ -1005,6 +1249,7 @@ const ROADMAP = [
     period: '2027',
     status: 'future',
     items: [
+      'Multi-negocio — gestiona varios negocios desde una sola cuenta',
       'Multi-sucursal — gestión centralizada de N tiendas',
       'API pública — conectá tu e-commerce o sistema externo',
       'Marketplace de integraciones — pagos, envíos, contabilidad',
@@ -1027,16 +1272,18 @@ function Roadmap() {
   return (
     <section id="roadmap" className="bg-gray-50 py-24">
       <div className="mx-auto max-w-4xl px-5 sm:px-8">
-        <div className="mb-14 text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Roadmap</p>
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-            Lo que viene
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
-            Construimos junto a clientes reales — cada feature sale de algo
-            que vimos en ferreterías de Lima. Sin features de catálogo.
-          </p>
-        </div>
+        <Reveal>
+          <div className="mb-14 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Roadmap</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+              Lo que viene
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
+              Construimos junto a clientes reales — cada feature sale de algo
+              que vimos en negocios de Perú. Sin features de catálogo.
+            </p>
+          </div>
+        </Reveal>
 
         <div className="relative space-y-6 pl-8">
           <div className="absolute bottom-0 left-2 top-2 w-0.5 bg-gradient-to-b from-emerald-300 via-blue-300 to-gray-200" />
@@ -1044,7 +1291,7 @@ function Roadmap() {
           {ROADMAP.map(({ period, status, items }) => {
             const s = STATUS_STYLE[status]
             return (
-              <div key={period} className="relative">
+              <Reveal key={period} className="relative">
                 <div className={`absolute -left-7 top-5 h-4 w-4 rounded-full border-2 border-white shadow ${s.dot}`} />
 
                 <div className={`rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg ${s.border}`}>
@@ -1063,7 +1310,7 @@ function Roadmap() {
                     ))}
                   </ul>
                 </div>
-              </div>
+              </Reveal>
             )
           })}
         </div>
@@ -1085,6 +1332,7 @@ function CtaBanner() {
       </div>
 
       <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
+        <Reveal>
         <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
           Pruébalo gratis hoy.
         </h2>
@@ -1107,6 +1355,7 @@ function CtaBanner() {
             Volver a explorar
           </a>
         </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -1139,6 +1388,7 @@ function Footer() {
               <li><a href="#showcase"   className="text-slate-500 hover:text-white transition-colors">Excel import</a></li>
               <li><a href="#industries" className="text-slate-500 hover:text-white transition-colors">Para quién</a></li>
               <li><a href="#roadmap"    className="text-slate-500 hover:text-white transition-colors">Roadmap</a></li>
+              <li><a href="#faq"        className="text-slate-500 hover:text-white transition-colors">Preguntas frecuentes</a></li>
             </ul>
           </div>
 
@@ -1180,6 +1430,7 @@ function Footer() {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      <LandingStyles />
       <Navbar />
       <Hero />
       <CustomersStrip />
@@ -1189,9 +1440,11 @@ export default function LandingPage() {
       <FiadoShowcase />
       <Industries />
       <Testimonial />
+      <ReelTeaser />
       <HowItWorks />
       <WhatsAppHighlight />
       <Roadmap />
+      <Faq />
       <CtaBanner />
       <Footer />
     </div>
