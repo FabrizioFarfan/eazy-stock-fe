@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HelpCircle, X } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 /**
  * Panel lateral de ayuda contextual. Un botón (?) abre un drawer a la derecha
@@ -9,20 +10,23 @@ import { HelpCircle, X } from 'lucide-react'
  *   <HelpDrawer title="...">  ...contenido JSX...  </HelpDrawer>
  *
  * `autoOpenKey`: si se pasa, el drawer se abre solo la PRIMERA vez que el
- * usuario llega a este paso (flag en localStorage) — funciona como tutorial
- * para usuarios que nunca tocarían el botón de ayuda por su cuenta.
+ * usuario llega a este paso. El "visto" se persiste POR USUARIO en el BE
+ * (con migración de los flags viejos de localStorage) — así no se repite
+ * entre dispositivos ni después de un deploy.
  */
 export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLabel = '¿Cómo funciona?', autoOpenKey = null, children }) {
-  const [open, setOpen] = useState(() => {
-    if (!autoOpenKey) return false
-    try {
-      if (localStorage.getItem(autoOpenKey)) return false
-      localStorage.setItem(autoOpenKey, '1')
-      return true
-    } catch {
-      return false
-    }
-  })
+  const { seenTutorials, markTutorialSeen } = useAuth()
+  const [open, setOpen] = useState(false)
+  const autoOpenedRef = useRef(false)
+
+  // Auto-apertura de primera vez: espera a que el set de vistos cargue del BE
+  useEffect(() => {
+    if (!autoOpenKey || autoOpenedRef.current) return
+    if (!seenTutorials || seenTutorials.has(autoOpenKey)) return
+    autoOpenedRef.current = true
+    setOpen(true)
+    markTutorialSeen(autoOpenKey)
+  }, [autoOpenKey, seenTutorials, markTutorialSeen])
 
   useEffect(() => {
     if (!open) return

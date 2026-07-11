@@ -13,7 +13,7 @@ function formatCurrency(v) {
 }
 
 export default function AppLayout({ children }) {
-  const { user } = useAuth()
+  const { user, seenTutorials, markTutorialSeen } = useAuth()
   const queryClient = useQueryClient()
   const [sidebarOpen,    setSidebarOpen]    = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false)
@@ -64,14 +64,14 @@ export default function AppLayout({ children }) {
     },
   )
 
-  const tutorialKey = user ? `eazystock_tutorial_seen_${user.id ?? user.email}` : null
+  // El "visto" del tutorial de bienvenida se persiste por usuario en el BE
+  const WELCOME_TUTORIAL_KEY = 'eazystock_tutorial_seen'
 
-  // Show on first visit
+  // Show on first visit (cuando el set de vistos ya cargó del BE)
   useEffect(() => {
-    if (tutorialKey && !localStorage.getItem(tutorialKey)) {
-      setShowTutorial(true)
-    }
-  }, [tutorialKey])
+    if (!seenTutorials || seenTutorials.has(WELCOME_TUTORIAL_KEY)) return
+    setShowTutorial(true)
+  }, [seenTutorials])
 
   // Listen for manual trigger from SettingsPage
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function AppLayout({ children }) {
   }, [])
 
   const closeTutorial = () => {
-    if (tutorialKey) localStorage.setItem(tutorialKey, '1')
+    markTutorialSeen(WELCOME_TUTORIAL_KEY)
     setShowTutorial(false)
   }
 

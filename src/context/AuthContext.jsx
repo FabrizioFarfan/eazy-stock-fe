@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { getMyPermissions } from "../services/endpoints/permissions";
+import { tutorialsApi } from "../services/endpoints/tutorials";
 
 const AuthContext = createContext(null);
 
@@ -19,11 +20,30 @@ const ALWAYS_ALLOWED = ["OWNER", "SUPER_ADMIN"];
 const normalizeUser = (u) =>
   u && u.role === "BOSS" ? { ...u, role: "SUPER_ADMIN", isBoss: true } : u;
 
+// Flags de tutoriales que antes vivían solo en localStorage. Se migran al BE
+// una vez para que los usuarios existentes no vuelvan a ver todo tras el cambio.
+function collectLegacyTutorialFlags(user) {
+  const found = [];
+  try {
+    const uid = user?.id ?? user?.email;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith("eazystock_")) continue;
+      if (k.includes("_help_v")) found.push(k);
+      else if (uid && k === `eazystock_tutorial_seen_${uid}`) found.push("eazystock_tutorial_seen");
+      else if (uid && k === `eazystock_product_tutorial_seen_v3_${uid}`) found.push("eazystock_product_tutorial_seen_v3");
+    }
+  } catch { /* localStorage bloqueado */ }
+  return found;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [token, setToken]             = useState(() => localStorage.getItem("eazystock_token"));
   const [isLoading, setIsLoading]     = useState(true);
+  // null = aún no cargado del BE; Set<string> = claves de tutoriales ya vistos
+  const [seenTutorials, setSeenTutorials] = useState(null);
   const navigate = useNavigate();
 
   const loadPermissions = useCallback(async () => {
@@ -33,6 +53,35 @@ export function AuthProvider({ children }) {
     } catch {
       setPermissions(null);
     }
+  }, []);
+
+  // Carga los tutoriales vistos del BE y sincroniza los flags legacy de localStorage
+  const loadTutorials = useCallback(async (userData) => {
+    try {
+      const res = await tutorialsApi.getSeen();
+      const remote = new Set(res.data.data ?? res.data ?? []);
+      const legacy = collectLegacyTutorialFlags(userData).filter((k) => !remote.has(k));
+      if (legacy.length > 0) {
+        legacy.forEach((k) => remote.add(k));
+        tutorialsApi.markSeen(legacy).catch(() => {});
+      }
+      setSeenTutorials(remote);
+    } catch {
+      // BE inaccesible: no auto-abrir nada (mejor no repetir tutoriales por error)
+      setSeenTutorials(null);
+    }
+  }, []);
+
+  // Marca un tutorial como visto: optimista en memoria + persistencia en BE
+  const markTutorialSeen = useCallback((key) => {
+    if (!key) return;
+    setSeenTutorials((prev) => {
+      if (prev?.has(key)) return prev;
+      const next = new Set(prev ?? []);
+      next.add(key);
+      return next;
+    });
+    tutorialsApi.markSeen([key]).catch(() => {});
   }, []);
 
   // Rehydrate user on mount — the axios interceptor will silently refresh if needed
@@ -49,7 +98,7 @@ export function AuthProvider({ children }) {
         // Sync access token in case the interceptor refreshed it during /me
         const currentToken = localStorage.getItem("eazystock_token");
         if (currentToken !== token) setToken(currentToken);
-        await loadPermissions();
+        await Promise.all([loadPermissions(), loadTutorials(userData)]);
       })
       .catch(() => {
         localStorage.removeItem("eazystock_token");
@@ -68,7 +117,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("eazystock_refresh_token", refreshToken);
     setToken(accessToken);
     setUser(normalizeUser(userData));
-    await loadPermissions();
+    await Promise.all([loadPermissions(), loadTutorials(userData)]);
 
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
   };
@@ -94,6 +143,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
     setPermissions(null);
+    setSeenTutorials(null);
     navigate("/login");
   };
 
@@ -116,7 +166,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll, refreshUser }}
+      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

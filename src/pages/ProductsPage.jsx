@@ -54,21 +54,19 @@ const PAGE_SIZE = 20
 const canMutate = (u) => u?.role === 'OWNER' || (u?.role === 'SUPER_ADMIN' && !!u?.businessId)
 
 export default function ProductsPage() {
-  const { user }    = useAuth()
+  const { user, seenTutorials, markTutorialSeen } = useAuth()
   const isManager   = canMutate(user)
 
   // Tutorial interactivo del modal "Nuevo producto".
   //
   // Disparadores:
-  //  - Primera visita a /productos (flag _v3 en localStorage)
+  //  - Primera visita a /productos (visto persistido por usuario en el BE)
   //  - Bandera sessionStorage seteada desde Ajustes
   //  - Evento `eazystock:show-product-tutorial` (botón "Tutorial" en header)
   //
   // En todos los casos: abrimos el modal en modo CREATE con tutorial=true.
   // El modal monta el overlay interactivo (spotlight + cartelito).
-  // Persistimos el "visto" en localStorage solo cuando el modal se cierra
-  // tras un disparo automático de primera visita.
-  const FIRST_VISIT_KEY = user ? `eazystock_product_tutorial_seen_v3_${user.id ?? user.email}` : null
+  const FIRST_VISIT_KEY = 'eazystock_product_tutorial_seen_v3'
   const SESSION_FLAG    = 'eazystock_product_tutorial_pending'
 
   useEffect(() => {
@@ -83,15 +81,13 @@ export default function ProductsPage() {
       }
     } catch { /* sessionStorage bloqueado */ }
 
-    // Auto-show de primera visita
-    try {
-      if (FIRST_VISIT_KEY && !localStorage.getItem(FIRST_VISIT_KEY)) {
-        openCreateWithTour()
-        if (FIRST_VISIT_KEY) localStorage.setItem(FIRST_VISIT_KEY, '1')
-      }
-    } catch { /* localStorage bloqueado */ }
+    // Auto-show de primera visita (espera a que los vistos carguen del BE)
+    if (seenTutorials && !seenTutorials.has(FIRST_VISIT_KEY)) {
+      openCreateWithTour()
+      markTutorialSeen(FIRST_VISIT_KEY)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isManager, user])
+  }, [isManager, user, seenTutorials])
 
   // Listener para el botón "Tutorial" en el header (y para cualquier otro
   // lugar que dispare el evento mientras estamos en /productos).
