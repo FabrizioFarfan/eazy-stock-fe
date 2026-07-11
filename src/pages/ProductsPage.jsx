@@ -11,6 +11,7 @@ import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import QrModal from '../components/products/QrModal'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 function SkeletonRow() {
   return (
@@ -173,6 +174,22 @@ export default function ProductsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <PageTitle icon={Package} tone="cyan">Productos</PageTitle>
+          <HelpDrawer title="Cómo usar Productos" autoOpenKey="eazystock_products_help_v1">
+            <p>Este es tu <strong>catálogo</strong>: todo lo que vendes vive acá, con su precio de compra, precio de venta y stock.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">➕ Agregar productos</p>
+              <p className="mt-1">Con <strong>"Nuevo producto"</strong> los cargas uno por uno, o usa <strong>"Importar"</strong> para subir todo tu inventario desde un Excel de una sola vez.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">👆 Click en cualquier fila</p>
+              <p className="mt-1">Se abre el detalle del producto: desde ahí puedes <strong>editarlo, ver su código QR, registrar entradas de stock o desactivarlo</strong>.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🔔 Stock mínimo</p>
+              <p className="mt-1">Si le pones un mínimo a un producto, la app te <strong>avisa sola</strong> cuando está por agotarse (campanita y reporte "Stock bajo").</p>
+            </div>
+            <p className="text-xs text-gray-400">Tip: usa el buscador o escanea el código del producto para encontrarlo al instante.</p>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}

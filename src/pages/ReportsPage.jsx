@@ -19,6 +19,7 @@ import SummaryCards    from '../components/reports/SummaryCards'
 import SalesByDayChart from '../components/reports/SalesByDayChart'
 import TopProductsList from '../components/reports/TopProductsList'
 import SalesTable      from '../components/reports/SalesTable'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -588,7 +589,28 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageTitle icon={BarChart2} tone="rose">Reportes</PageTitle>
+      <div className="flex flex-wrap items-center gap-3">
+        <PageTitle icon={BarChart2} tone="rose">Reportes</PageTitle>
+        <HelpDrawer title="Cómo usar Reportes" autoOpenKey="eazystock_reports_help_v1">
+          <p>Cada pestaña responde una pregunta distinta sobre tu negocio:</p>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">📈 Análisis de ventas</p>
+            <p className="mt-1">Gráfico de ventas por día y tabla filtrable por fechas, empleado, proveedor o marca. <em>"¿Cómo va el negocio?"</em></p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">☀️ Resumen del día</p>
+            <p className="mt-1">Lo vendido <strong>hoy</strong>: total en caja, por forma de pago y por vendedor. <em>"¿Cómo cerró el día?"</em></p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">🏆 Por producto / Por proveedor</p>
+            <p className="mt-1">Qué productos y proveedores te generan más ventas. Útil para decidir <strong>qué reponer y a quién comprarle más</strong>.</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">⚠️ Stock bajo y Resurtido</p>
+            <p className="mt-1">Productos bajo su mínimo y sugerencia de <strong>a qué proveedor pedirle</strong> cada uno. Tu lista de compras lista para usar.</p>
+          </div>
+        </HelpDrawer>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-100 bg-gray-50 p-1.5 shadow-sm">

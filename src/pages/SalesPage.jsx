@@ -11,6 +11,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -125,6 +126,22 @@ export default function SalesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <PageTitle icon={ShoppingCart} tone="blue">Ventas</PageTitle>
+          <HelpDrawer title="Cómo usar Ventas" autoOpenKey="eazystock_sales_help_v1">
+            <p>El <strong>historial de todas tus ventas</strong>, de la más reciente a la más antigua.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">👆 Click en cualquier venta</p>
+              <p className="mt-1">Ves el detalle completo: productos, cantidades, vendedor y forma de pago. Desde ahí también puedes <strong>registrar una devolución</strong>.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">💳 Ventas al fiado</p>
+              <p className="mt-1">Las ventas a crédito muestran un chip con la <strong>deuda pendiente o saldada</strong>. El total por cobrar lo ves en la página Cuentas.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🛒 Botones de arriba</p>
+              <p className="mt-1"><strong>"Nueva venta"</strong> abre el punto de venta. <strong>"Cotización"</strong> crea un presupuesto para un cliente sin descontar stock.</p>
+            </div>
+            <p className="text-xs text-gray-400">Tip: usa el buscador o el escáner para encontrar una venta por producto.</p>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}

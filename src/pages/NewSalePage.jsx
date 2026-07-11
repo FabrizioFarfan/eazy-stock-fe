@@ -15,6 +15,7 @@ import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
 import { formatPrice } from '../utils/formatMoney'
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
 // decimals from the BE — `formatPrice` falls through to the same formatting.
@@ -580,6 +581,22 @@ export default function NewSalePage() {
           <span className="hidden sm:inline">Volver</span>
         </button>
         <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">Nueva venta</h2>
+        <HelpDrawer title="Cómo registrar una venta" autoOpenKey="eazystock_newsale_help_v1">
+          <p>Vender toma <strong>segundos</strong>: busca, agrega y cobra.</p>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">1️⃣ Busca el producto</p>
+            <p className="mt-1">Escribe el nombre, el código, o <strong>escanea el código de barras</strong> con la cámara o tu lector. Click y se agrega al carrito.</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">2️⃣ Ajusta el carrito</p>
+            <p className="mt-1">Cambia cantidades, aplica <strong>descuentos</strong> por producto o al total.</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">3️⃣ Cobra</p>
+            <p className="mt-1">Elige la forma de pago. Si es <strong>al fiado</strong>, selecciona el cliente y la deuda se anota sola en su cuenta.</p>
+          </div>
+          <p className="text-xs text-gray-400">Tip: al confirmar, el stock se descuenta automáticamente — no tienes que tocar nada más.</p>
+        </HelpDrawer>
       </div>
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">

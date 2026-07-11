@@ -7,6 +7,7 @@ import { useCustomers } from '../hooks/useCustomers'
 import { useAuth } from '../context/AuthContext'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
 import { formatPrice } from '../utils/formatMoney'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const PAGE_SIZE = 20
 
@@ -68,6 +69,18 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <PageTitle icon={Users} tone="purple">Clientes</PageTitle>
+          <HelpDrawer title="Cómo usar Clientes" autoOpenKey="eazystock_customers_help_v1">
+            <p>Registra a tus clientes para poder <strong>venderles al fiado</strong> y llevar su cuenta al día.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">👆 Click en un cliente</p>
+              <p className="mt-1">Ves su <strong>estado de cuenta completo</strong>: deuda actual, historial de compras, pagos y ajustes. Desde ahí registras pagos.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">💰 ¿Cómo se genera la deuda?</p>
+              <p className="mt-1">Al hacer una venta al fiado en "Nueva venta", eliges el cliente y la deuda <strong>se anota sola</strong> en su cuenta.</p>
+            </div>
+            <p className="text-xs text-gray-400">Tip: el total que te deben todos tus clientes lo ves junto en Cuentas → Por cobrar.</p>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}

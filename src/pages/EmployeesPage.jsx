@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useEmployees, useCreateEmployee, useToggleEmployee } from '../hooks/useEmployees'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -296,6 +297,21 @@ export default function EmployeesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">Empleados</h2>
+          <HelpDrawer title="Cómo usar Empleados" autoOpenKey="eazystock_employees_help_v1">
+            <p>Crea cuentas para tu equipo: cada uno entra <strong>con su propio usuario</strong> y tú controlas qué puede hacer.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🔐 Permisos</p>
+              <p className="mt-1">En cada empleado defines permisos puntuales: <strong>aplicar descuentos, ver reportes, recibir mercadería…</strong> Lo que no le actives, no lo ve.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📈 Seguimiento</p>
+              <p className="mt-1">Cada venta queda registrada con su vendedor. En "Rendimiento" ves <strong>quién vendió cuánto</strong> cada día.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🚫 Desactivar</p>
+              <p className="mt-1">Si alguien deja de trabajar contigo, desactívalo: pierde el acceso pero <strong>su historial de ventas se conserva</strong>.</p>
+            </div>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {totalElements}

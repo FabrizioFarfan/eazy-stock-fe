@@ -4,6 +4,7 @@ import PageTitle from '../components/common/PageTitle'
 import { usePayables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -25,7 +26,20 @@ export default function PayablesPage() {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageTitle icon={HandCoins} tone="amber">Cuentas por pagar</PageTitle>
+        <div className="flex flex-wrap items-center gap-3">
+          <PageTitle icon={HandCoins} tone="amber">Cuentas por pagar</PageTitle>
+          <HelpDrawer title="Cómo usar Cuentas por pagar" autoOpenKey="eazystock_payables_help_v1">
+            <p>Lo que <strong>le debes a tus proveedores</strong>, todo junto en un solo lugar.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📥 ¿De dónde salen estas deudas?</p>
+              <p className="mt-1">De las <strong>recepciones de mercadería a crédito</strong> que registras en Stock. Cada compra a crédito suma acá.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">💵 Registrar un pago</p>
+              <p className="mt-1">Haz click en el proveedor para ir a su detalle y registrar el pago. La deuda <strong>se actualiza al instante</strong>.</p>
+            </div>
+          </HelpDrawer>
+        </div>
         <div className="text-right">
           <p className="text-xs uppercase tracking-widest text-gray-400">Total por pagar</p>
           <p className="text-2xl font-extrabold text-red-600">{formatPrice(total)}</p>

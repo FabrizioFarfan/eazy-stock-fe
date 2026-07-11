@@ -7,6 +7,7 @@ import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier }
 import { useDebounce } from '../hooks/useDebounce'
 import PageTitle from '../components/common/PageTitle'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const schema = z.object({
   name:    z.string().min(2, 'Mínimo 2 caracteres'),
@@ -198,6 +199,18 @@ export default function SuppliersPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <PageTitle icon={Truck} tone="cyan">Proveedores</PageTitle>
+          <HelpDrawer title="Cómo usar Proveedores" autoOpenKey="eazystock_suppliers_help_v1">
+            <p>Tus proveedores: a quién le compras la mercadería y <strong>cuánto le debes</strong> a cada uno.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">👆 Click en un proveedor</p>
+              <p className="mt-1">Ves su <strong>cuenta corriente</strong>: recepciones de mercadería, pagos que le hiciste y su deuda actual. Desde ahí registras pagos.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🚚 ¿Cómo se genera la deuda?</p>
+              <p className="mt-1">Al registrar una <strong>recepción a crédito</strong> en Stock, el monto se suma solo a la cuenta del proveedor.</p>
+            </div>
+            <p className="text-xs text-gray-400">Tip: asigna proveedor a tus productos para usar el reporte "Resurtido" como lista de compras.</p>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {data?.totalElements ?? 0}

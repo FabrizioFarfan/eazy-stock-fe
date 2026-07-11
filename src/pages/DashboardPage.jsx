@@ -10,6 +10,7 @@ import { useBusinesses } from '../hooks/useBusinesses'
 import { useUsers } from '../hooks/useUsers'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -65,11 +66,24 @@ function StatCardSkeleton() {
 
 function PageHeader({ name }) {
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-gray-900">
-        Bienvenido{name ? `, ${name.split(' ')[0]}` : ''} 👋
-      </h2>
-      <p className="mt-1 text-sm capitalize text-gray-400">{todayLabel()}</p>
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Bienvenido{name ? `, ${name.split(' ')[0]}` : ''} 👋
+        </h2>
+        <p className="mt-1 text-sm capitalize text-gray-400">{todayLabel()}</p>
+      </div>
+      <HelpDrawer title="Qué muestra el Dashboard" autoOpenKey="eazystock_dashboard_help_v1">
+        <p>Tu negocio <strong>de un vistazo</strong>, actualizado en tiempo real.</p>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">📊 Tarjetas de arriba</p>
+          <p className="mt-1">Las ventas de hoy, productos bajo stock y los números clave del día. Es lo primero que conviene mirar al abrir la app.</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">🧭 ¿Y después?</p>
+          <p className="mt-1">Todo lo que ves acá tiene su página completa en el menú de la izquierda: Ventas, Stock, Reportes… Este es solo el resumen.</p>
+        </div>
+      </HelpDrawer>
     </div>
   )
 }

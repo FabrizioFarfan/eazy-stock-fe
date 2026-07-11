@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const schema = z.object({
   name:        z.string().min(2, 'Mínimo 2 caracteres'),
@@ -242,6 +243,17 @@ export default function CategoriesPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">Categorías</h2>
+          <HelpDrawer title="Cómo usar Categorías" autoOpenKey="eazystock_categories_help_v1">
+            <p>Las categorías <strong>ordenan tu catálogo</strong> y hacen que buscar y filtrar sea mucho más rápido.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🏷️ Atributos sugeridos</p>
+              <p className="mt-1">Cada categoría puede sugerir campos al crear un producto (talla, color, presentación…). Así todos los productos de una categoría <strong>quedan completos y parejos</strong>.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">✏️ Editar</p>
+              <p className="mt-1">Click en una categoría para renombrarla o ajustar sus atributos. Los productos existentes no se pierden.</p>
+            </div>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {data?.totalElements ?? 0}

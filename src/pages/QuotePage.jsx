@@ -11,6 +11,7 @@ import PriceInput from '../components/inputs/PriceInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import { formatPrice } from '../utils/formatMoney'
 import { printQuote } from '../utils/printQuote'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const inputCls = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
@@ -110,6 +111,17 @@ export default function QuotePage() {
             <span className="hidden sm:inline">Volver</span>
           </button>
           <h2 className="text-2xl font-bold text-gray-900">Nueva cotización</h2>
+          <HelpDrawer title="Qué es una cotización" autoOpenKey="eazystock_quote_help_v1">
+            <p>Un <strong>presupuesto para tu cliente</strong>: mismos productos y precios que una venta, pero <strong>sin descontar stock ni registrar dinero</strong>.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🖨️ Imprimir o compartir</p>
+              <p className="mt-1">Al terminar puedes imprimirla o guardarla en PDF para enviársela al cliente por WhatsApp.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">✅ Si el cliente acepta</p>
+              <p className="mt-1">Registra la venta normalmente en <strong>"Nueva venta"</strong> — ahí sí se descuenta el stock.</p>
+            </div>
+          </HelpDrawer>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="hidden text-[11px] text-gray-400 sm:inline">Formato del precio</span>

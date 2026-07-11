@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useBrands, useCreateBrand, useUpdateBrand, useDeleteBrand } from '../hooks/useBrands'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 const schema = z.object({
   name:  z.string().min(2, 'Mínimo 2 caracteres'),
@@ -160,6 +161,13 @@ export default function BrandsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">Marcas</h2>
+          <HelpDrawer title="Cómo usar Marcas" autoOpenKey="eazystock_brands_help_v1">
+            <p>Registra las <strong>marcas</strong> de lo que vendes y asígnalas a tus productos.</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🔎 ¿Para qué sirven?</p>
+              <p className="mt-1">Para <strong>filtrar el catálogo</strong> y para los reportes: puedes ver cuánto vendes de cada marca y decidir cuáles te convienen más.</p>
+            </div>
+          </HelpDrawer>
           {!isLoading && (
             <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
               {data?.totalElements ?? 0}

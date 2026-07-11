@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSellerPerformance } from '../hooks/useReports'
+import HelpDrawer from '../components/common/HelpDrawer'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -150,10 +151,23 @@ export default function SellerPerformancePage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <Trophy size={22} className="text-amber-500" />
-            Rendimiento de vendedores
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+              <Trophy size={22} className="text-amber-500" />
+              Rendimiento de vendedores
+            </h2>
+            <HelpDrawer title="Cómo usar Rendimiento" autoOpenKey="eazystock_sellerperf_help_v1">
+              <p>Compara a tu equipo: <strong>quién vendió más y cuánto exactamente</strong>, día por día.</p>
+              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                <p className="font-semibold text-gray-800">📅 Filtra por fechas</p>
+                <p className="mt-1">Elige el rango que quieras (hoy, la semana, el mes) y la tabla se recalcula al instante.</p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                <p className="font-semibold text-gray-800">💡 ¿Para qué sirve?</p>
+                <p className="mt-1">Para premiar al que más vende, detectar días flojos y repartir mejor los turnos.</p>
+              </div>
+            </HelpDrawer>
+          </div>
           <p className="mt-1 text-sm text-gray-400">
             Quién vendió más y cuánto exactamente cada día.
           </p>
