@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, ChevronLeft, ChevronRight, Search, Pencil } from 'lucide-react'
-import { useOwners, useCreateOwner } from '../../hooks/useOwners'
+import { UserPlus, X, Loader2, ChevronLeft, ChevronRight, Search, Pencil, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react'
+import { toast } from 'sonner'
+import { useOwners, useCreateOwner, useDeleteOwner } from '../../hooks/useOwners'
 import { useBusinesses } from '../../hooks/useBusinesses'
 import EditUserModal from '../../components/EditUserModal'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
@@ -218,6 +219,109 @@ function CreateOwnerModal({ onClose }) {
   )
 }
 
+// ── DeleteOwnerModal ──────────────────────────────────────────────────────────
+// Eliminación PERMANENTE con doble seguridad: hay que escribir el email exacto
+// del owner, y el BE la rechaza (409) si el owner ya tiene actividad de negocio.
+
+function DeleteOwnerModal({ owner, onClose }) {
+  const deleteOwner = useDeleteOwner()
+  const [confirmEmail, setConfirmEmail] = useState('')
+
+  const matches = confirmEmail.trim().toLowerCase() === owner.email.toLowerCase()
+
+  const onConfirm = async () => {
+    if (!matches) return
+    try {
+      await deleteOwner.mutateAsync({ id: owner.id, confirmEmail: confirmEmail.trim() })
+      toast.success(`Owner ${owner.name} eliminado permanentemente`)
+      onClose()
+    } catch { /* error mostrado inline */ }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+        {/* Header de peligro */}
+        <div className="flex items-start gap-3 border-b border-red-100 bg-red-50 px-5 py-4">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100">
+            <ShieldAlert size={20} className="text-red-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-red-700">Eliminar owner permanentemente</h3>
+            <p className="mt-0.5 text-xs text-red-500">Esta acción no se puede deshacer.</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-red-300 hover:bg-red-100 hover:text-red-500">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-4 px-5 py-5">
+          {/* Resumen del owner */}
+          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-bold text-gray-900">{owner.name}</p>
+            <p className="text-xs text-gray-500">{owner.email}</p>
+            {owner.businessName && (
+              <p className="mt-1 text-xs text-gray-400">Negocio: {owner.businessName}</p>
+            )}
+          </div>
+
+          <div className="flex gap-2.5 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-700">
+            <AlertTriangle size={15} className="mt-0.5 flex-shrink-0" />
+            <div>
+              <p>La cuenta y sus accesos se borran de forma <strong>definitiva</strong>.</p>
+              <p className="mt-1">
+                Si el owner ya registró ventas, stock o compras, la eliminación se
+                bloquea automáticamente — en ese caso solo puede desactivarse.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              Escribe el email del owner para confirmar
+            </label>
+            <input
+              type="email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              placeholder={owner.email}
+              autoComplete="off"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20 placeholder-gray-300"
+            />
+          </div>
+
+          {deleteOwner.isError && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              {getErrorMessage(deleteOwner.error)}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!matches || deleteOwner.isPending}
+            className="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {deleteOwner.isPending
+              ? <Loader2 size={14} className="animate-spin" />
+              : <Trash2 size={14} />}
+            {deleteOwner.isPending ? 'Eliminando...' : 'Eliminar definitivamente'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── page ──────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20
@@ -226,6 +330,7 @@ export default function OwnersPage() {
   const [page, setPage]           = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const { data, isLoading, isFetching } = useOwners({
     page,
@@ -301,14 +406,23 @@ export default function OwnersPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(u.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => setEditTarget(u)}
-                        title="Editar usuario"
-                        className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
-                      >
-                        <Pencil size={12} />
-                        Editar
-                      </button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          onClick={() => setEditTarget(u)}
+                          title="Editar usuario"
+                          className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                        >
+                          <Pencil size={12} />
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(u)}
+                          title="Eliminar owner permanentemente"
+                          className="inline-flex items-center rounded-lg bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -347,6 +461,9 @@ export default function OwnersPage() {
       {showModal && <CreateOwnerModal onClose={() => setShowModal(false)} />}
       {editTarget && (
         <EditUserModal targetUser={editTarget} onClose={() => setEditTarget(null)} />
+      )}
+      {deleteTarget && (
+        <DeleteOwnerModal owner={deleteTarget} onClose={() => setDeleteTarget(null)} />
       )}
     </div>
   )

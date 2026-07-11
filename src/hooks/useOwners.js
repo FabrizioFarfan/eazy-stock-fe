@@ -19,3 +19,11 @@ export function useCreateOwner() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [OWNERS_KEY] }),
   })
 }
+
+export function useDeleteOwner() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, confirmEmail }) => ownersApi.remove(id, confirmEmail),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [OWNERS_KEY] }),
+  })
+}
