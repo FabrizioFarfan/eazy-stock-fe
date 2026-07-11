@@ -1,6 +1,6 @@
-import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight } from 'lucide-react'
+import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
 import { usersApi } from '../services/endpoints/users'
+import { businessesApi } from '../services/endpoints/businesses'
 
 const ROLE_LABEL = {
   SUPER_ADMIN: 'Super Admin',
@@ -42,14 +43,28 @@ function InfoRow({ icon: Icon, label, value }) {
   )
 }
 
-function Section({ title, children }) {
+function Section({ title, action, children }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="border-b border-gray-50 px-5 py-3.5">
+      <div className="flex items-center justify-between border-b border-gray-50 px-5 py-3.5">
         <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">{title}</h3>
+        {action}
       </div>
       <div className="px-5">{children}</div>
     </div>
+  )
+}
+
+function EditButton({ editing, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+    >
+      <Pencil size={12} />
+      {editing ? 'Cancelar' : 'Editar'}
+    </button>
   )
 }
 
@@ -129,6 +144,217 @@ function ChangePasswordForm() {
   )
 }
 
+// ── Mi perfil (editar nombre / email propios) ──────────────────────────────
+
+const profileSchema = z.object({
+  name:  z.string().min(1, 'Requerido'),
+  email: z.string().email('Email inválido'),
+})
+
+function ProfileSection() {
+  const { user, refreshUser, logout } = useAuth()
+  const [editing, setEditing] = useState(false)
+  const [pending, setPending] = useState(false)
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(profileSchema),
+    values: { name: user?.name ?? '', email: user?.email ?? '' },
+  })
+
+  const onSubmit = async ({ name, email }) => {
+    setPending(true)
+    try {
+      const emailChanged = email.trim().toLowerCase() !== (user?.email ?? '').toLowerCase()
+      await usersApi.updateMe({ name, email })
+      if (emailChanged) {
+        // El JWT usa el email: la sesión actual deja de ser válida
+        toast.success('Email actualizado. Inicia sesión de nuevo con tu nuevo email.')
+        await logout()
+        return
+      }
+      toast.success('Perfil actualizado')
+      await refreshUser()
+      setEditing(false)
+    } catch (err) {
+      toast.error(err?.response?.data?.message ?? 'Error al actualizar el perfil')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const cancel = () => { reset(); setEditing(false) }
+
+  return (
+    <Section
+      title="Mi perfil"
+      action={<EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} />}
+    >
+      {editing ? (
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre</label>
+            <input {...register('name')} type="text" className={inputCls} />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+            <input {...register('email')} type="email" className={inputCls} />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+            <p className="mt-1 text-xs text-gray-400">
+              Si cambias tu email tendrás que iniciar sesión de nuevo.
+            </p>
+          </div>
+          <div className="flex justify-end pt-1">
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {pending && <Loader2 size={14} className="animate-spin" />}
+              {pending ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <InfoRow icon={User}      label="Nombre"   value={user?.name} />
+          <InfoRow icon={Mail}      label="Email"    value={user?.email} />
+          <InfoRow icon={Shield}    label="Rol"      value={ROLE_LABEL[user?.role] ?? user?.role} />
+          <InfoRow icon={Building2} label="Negocio"  value={user?.businessName} />
+        </>
+      )}
+    </Section>
+  )
+}
+
+// ── Mi negocio (OWNER edita los datos de su negocio) ───────────────────────
+
+const COUNTRIES = [
+  ['PE', 'Perú'], ['AR', 'Argentina'], ['BO', 'Bolivia'], ['BR', 'Brasil'],
+  ['CL', 'Chile'], ['CO', 'Colombia'], ['EC', 'Ecuador'], ['MX', 'México'],
+  ['PY', 'Paraguay'], ['UY', 'Uruguay'], ['VE', 'Venezuela'], ['ES', 'España'],
+  ['US', 'Estados Unidos'],
+]
+
+const COUNTRY_NAME = Object.fromEntries(COUNTRIES)
+
+const businessSchema = z.object({
+  name:        z.string().min(1, 'Requerido'),
+  countryCode: z.string().min(2, 'Requerido').max(3),
+  taxIdType:   z.string().min(1, 'Requerido'),
+  taxId:       z.string().min(1, 'Requerido'),
+})
+
+function BusinessSection() {
+  const { user, refreshUser } = useAuth()
+  const [business, setBusiness] = useState(null)
+  const [editing, setEditing]   = useState(false)
+  const [pending, setPending]   = useState(false)
+
+  const isOwner = user?.role === 'OWNER'
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(businessSchema),
+    values: {
+      name:        business?.name ?? '',
+      countryCode: business?.countryCode ?? 'PE',
+      taxIdType:   business?.taxIdType ?? 'RUC',
+      taxId:       business?.taxId ?? '',
+    },
+  })
+
+  useEffect(() => {
+    if (!user?.businessId) return
+    businessesApi.getMine()
+      .then((res) => setBusiness(res.data.data ?? res.data))
+      .catch(() => { /* la sección queda en "Cargando..." */ })
+  }, [user?.businessId])
+
+  if (!user?.businessId) return null
+
+  const onSubmit = async (data) => {
+    setPending(true)
+    try {
+      const res = await businessesApi.updateMine(data)
+      setBusiness(res.data.data ?? res.data)
+      toast.success('Datos del negocio actualizados')
+      await refreshUser() // refresca businessName en el header
+      setEditing(false)
+    } catch (err) {
+      toast.error(err?.response?.data?.message ?? 'Error al actualizar el negocio')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const cancel = () => { reset(); setEditing(false) }
+
+  const countryLabel = business
+    ? (COUNTRY_NAME[business.countryCode] ?? business.countryCode)
+    : null
+
+  return (
+    <Section
+      title="Mi negocio"
+      action={isOwner ? <EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} /> : null}
+    >
+      {editing ? (
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre del negocio</label>
+            <input {...register('name')} type="text" className={inputCls} />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">País</label>
+            <select {...register('countryCode')} className={inputCls}>
+              {business?.countryCode && !COUNTRY_NAME[business.countryCode] && (
+                <option value={business.countryCode}>{business.countryCode}</option>
+              )}
+              {COUNTRIES.map(([code, label]) => (
+                <option key={code} value={code}>{label}</option>
+              ))}
+            </select>
+            {errors.countryCode && <p className="mt-1 text-xs text-red-500">{errors.countryCode.message}</p>}
+          </div>
+          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Tipo de doc.</label>
+              <input {...register('taxIdType')} type="text" placeholder="RUC, CUIT, NIT..." className={inputCls} />
+              {errors.taxIdType && <p className="mt-1 text-xs text-red-500">{errors.taxIdType.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Número</label>
+              <input {...register('taxId')} type="text" className={inputCls} />
+              {errors.taxId && <p className="mt-1 text-xs text-red-500">{errors.taxId.message}</p>}
+            </div>
+          </div>
+          <div className="flex justify-end pt-1">
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {pending && <Loader2 size={14} className="animate-spin" />}
+              {pending ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      ) : business ? (
+        <>
+          <InfoRow icon={Building2} label="Nombre"   value={business.name} />
+          <InfoRow icon={Globe}     label="País"     value={countryLabel} />
+          <InfoRow icon={FileDigit} label={business.taxIdType || 'Documento'} value={business.taxId} />
+        </>
+      ) : (
+        <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
+          <Loader2 size={14} className="animate-spin" /> Cargando...
+        </div>
+      )}
+    </Section>
+  )
+}
+
 export default function SettingsPage() {
   const { user, logout, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
@@ -177,13 +403,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Profile info */}
-      <Section title="Mi perfil">
-        <InfoRow icon={User}      label="Nombre"   value={user?.name} />
-        <InfoRow icon={Mail}      label="Email"    value={user?.email} />
-        <InfoRow icon={Shield}    label="Rol"      value={ROLE_LABEL[user?.role] ?? user?.role} />
-        <InfoRow icon={Building2} label="Negocio"  value={user?.businessName} />
-      </Section>
+      {/* Profile info (editable) */}
+      <ProfileSection />
+
+      {/* Business info (editable por OWNER) */}
+      <BusinessSection />
 
       {/* Appearance */}
       <Section title="Apariencia">

@@ -10,6 +10,9 @@ export const usersApi = {
   update: (id, data) => api.patch(`/users/${id}`, data),
   // body: { name?, email?, password? }
 
+  updateMe: (data) => api.patch('/users/me', data),
+  // body: { name?, email? } — cambiar email invalida la sesión (re-login)
+
   toggleActive: (id) => api.put(`/users/${id}/activate`),
 
   changePassword: (data) => api.put('/users/me/password', data),

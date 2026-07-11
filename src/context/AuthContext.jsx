@@ -91,6 +91,14 @@ export function AuthProvider({ children }) {
     navigate("/login");
   };
 
+  // Re-fetch del perfil (tras editar nombre, negocio, etc.)
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/me");
+      setUser(res.data.data ?? res.data);
+    } catch { /* ignore — la sesión sigue con los datos previos */ }
+  }, []);
+
   const can = useCallback(
     (permission) => {
       if (!user) return false;
@@ -102,7 +110,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll }}
+      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll, refreshUser }}
     >
       {children}
     </AuthContext.Provider>
