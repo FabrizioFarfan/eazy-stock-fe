@@ -4,9 +4,11 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings,
-  Wallet, HandCoins, FileText, Trophy, Scale,
+  Wallet, HandCoins, FileText, Trophy, Scale, Crown,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+
+const BOSS_ITEM = { icon: Crown, label: 'Panel Boss', path: '/boss' }
 
 const SUPER_ADMIN_NAV = [
   { icon: Building2, label: 'Negocios', path: '/admin/businesses' },
@@ -68,7 +70,11 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
     onClose()
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const items = navItemsForRole(user?.role).filter(
+  const baseItems = user?.isBoss
+    ? [BOSS_ITEM, ...SUPER_ADMIN_NAV]
+    : navItemsForRole(user?.role)
+
+  const items = baseItems.filter(
     (item) => !item.permission || can(item.permission),
   )
 
@@ -140,7 +146,9 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
-              <span className="text-xs text-slate-400">{ROLE_LABEL[user?.role] ?? user?.role}</span>
+              <span className="text-xs text-slate-400">
+                {user?.isBoss ? '👑 Boss' : (ROLE_LABEL[user?.role] ?? user?.role)}
+              </span>
             </div>
             <button
               onClick={logout}

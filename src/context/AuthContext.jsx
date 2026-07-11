@@ -6,12 +6,18 @@ import { getMyPermissions } from "../services/endpoints/permissions";
 const AuthContext = createContext(null);
 
 const REDIRECT_BY_ROLE = {
+  BOSS: "/boss",
   SUPER_ADMIN: "/admin/businesses",
   OWNER: "/dashboard",
   EMPLOYEE: "/sales/new",
 };
 
 const ALWAYS_ALLOWED = ["OWNER", "SUPER_ADMIN"];
+
+// BOSS es superset de SUPER_ADMIN: normalizamos el role para que toda la app
+// existente lo trate como admin, y marcamos isBoss para las vistas exclusivas.
+const normalizeUser = (u) =>
+  u && u.role === "BOSS" ? { ...u, role: "SUPER_ADMIN", isBoss: true } : u;
 
 export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
@@ -39,7 +45,7 @@ export function AuthProvider({ children }) {
       .get("/auth/me")
       .then(async (res) => {
         const userData = res.data.data ?? res.data;
-        setUser(userData);
+        setUser(normalizeUser(userData));
         // Sync access token in case the interceptor refreshed it during /me
         const currentToken = localStorage.getItem("eazystock_token");
         if (currentToken !== token) setToken(currentToken);
@@ -61,7 +67,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("eazystock_token", accessToken);
     localStorage.setItem("eazystock_refresh_token", refreshToken);
     setToken(accessToken);
-    setUser(userData);
+    setUser(normalizeUser(userData));
     await loadPermissions();
 
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
@@ -95,7 +101,7 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     try {
       const res = await api.get("/auth/me");
-      setUser(res.data.data ?? res.data);
+      setUser(normalizeUser(res.data.data ?? res.data));
     } catch { /* ignore — la sesión sigue con los datos previos */ }
   }, []);
 

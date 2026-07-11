@@ -11,22 +11,28 @@ import { usersApi } from '../services/endpoints/users'
 import { businessesApi } from '../services/endpoints/businesses'
 
 const ROLE_LABEL = {
+  BOSS: '👑 Boss',
   SUPER_ADMIN: 'Super Admin',
   OWNER: 'Owner',
   EMPLOYEE: 'Empleado',
 }
 
 const ROLE_COLOR = {
+  BOSS:        'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
   SUPER_ADMIN: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100',
   OWNER:       'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
   EMPLOYEE:    'bg-slate-100 text-slate-600',
 }
 
 const AVATAR_GRADIENT = {
+  BOSS:        'from-amber-400 to-orange-600',
   SUPER_ADMIN: 'from-indigo-400 to-indigo-600',
   OWNER:       'from-blue-500 to-blue-700',
   EMPLOYEE:    'from-slate-400 to-slate-600',
 }
+
+// El AuthContext normaliza BOSS → SUPER_ADMIN (+ isBoss); acá recuperamos la etiqueta real
+const displayRole = (user) => (user?.isBoss ? 'BOSS' : user?.role)
 
 function InfoRow({ icon: Icon, label, value }) {
   if (!value) return null
@@ -219,7 +225,7 @@ function ProfileSection() {
         <>
           <InfoRow icon={User}      label="Nombre"   value={user?.name} />
           <InfoRow icon={Mail}      label="Email"    value={user?.email} />
-          <InfoRow icon={Shield}    label="Rol"      value={ROLE_LABEL[user?.role] ?? user?.role} />
+          <InfoRow icon={Shield}    label="Rol"      value={ROLE_LABEL[displayRole(user)] ?? user?.role} />
           <InfoRow icon={Building2} label="Negocio"  value={user?.businessName} />
         </>
       )}
@@ -379,7 +385,7 @@ export default function SettingsPage() {
     ? user.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
     : '?'
 
-  const gradient = AVATAR_GRADIENT[user?.role] ?? 'from-gray-400 to-gray-600'
+  const gradient = AVATAR_GRADIENT[displayRole(user)] ?? 'from-gray-400 to-gray-600'
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
@@ -392,8 +398,8 @@ export default function SettingsPage() {
             <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-xl font-extrabold text-white shadow-lg ring-4 ring-white`}>
               {initials}
             </div>
-            <span className={`mb-1 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[user?.role] ?? 'bg-gray-100 text-gray-600'}`}>
-              {ROLE_LABEL[user?.role] ?? user?.role}
+            <span className={`mb-1 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[displayRole(user)] ?? 'bg-gray-100 text-gray-600'}`}>
+              {ROLE_LABEL[displayRole(user)] ?? user?.role}
             </span>
           </div>
           <div className="mt-3">

@@ -14,7 +14,7 @@ function LandingRoute() {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
     </div>
   )
-  if (token) return <Navigate to={ROLE_HOME[user?.role] ?? '/dashboard'} replace />
+  if (token) return <Navigate to={user?.isBoss ? '/boss' : (ROLE_HOME[user?.role] ?? '/dashboard')} replace />
   return <LandingPage />
 }
 import DashboardPage  from '../pages/DashboardPage'
@@ -40,6 +40,7 @@ import PayablesPage        from '../pages/PayablesPage'
 import SettingsPage        from '../pages/SettingsPage'
 import BusinessesPage      from '../pages/admin/BusinessesPage'
 import OwnersPage          from '../pages/admin/OwnersPage'
+import BossPage            from '../pages/BossPage'
 
 export default function AppRouter() {
   return (
@@ -119,6 +120,11 @@ export default function AppRouter() {
       } />
       {/* Legacy alias — redirect old path */}
       <Route path="/settings/users" element={<Navigate to="/empleados" replace />} />
+
+      {/* BOSS only (el role llega normalizado a SUPER_ADMIN + isBoss) */}
+      <Route path="/boss" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><BossPage /></ProtectedRoute>
+      } />
 
       {/* SUPER_ADMIN only */}
       <Route path="/admin/businesses" element={
