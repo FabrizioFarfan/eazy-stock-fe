@@ -79,7 +79,9 @@ export default function BulkDeleteModal({ onClose }) {
         <div className="space-y-4 px-6 py-5">
           <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-800 ring-1 ring-amber-100">
             Borra los productos <b>creados</b> dentro del rango de fechas (útil para deshacer
-            un import equivocado). Los que ya tienen ventas o recepciones <b>se preservan</b>.
+            un import equivocado). Ojo: cuenta la fecha en que el producto se <b>creó por primera
+            vez</b> — un import que solo actualiza productos existentes no cambia esa fecha.
+            Los que ya tienen ventas o recepciones <b>se preservan</b>.
             Esta acción <b>no se puede deshacer</b>.
           </p>
 
@@ -109,7 +111,11 @@ export default function BulkDeleteModal({ onClose }) {
           {preview && (
             <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
               {preview.total === 0 ? (
-                <p className="text-sm text-gray-500">No hay productos creados en ese rango.</p>
+                <p className="text-sm text-gray-500">
+                  No hay productos <b>creados</b> en ese rango. Si buscás deshacer un import,
+                  revisá en el historial de imports cuántos productos <b>creó</b> (los
+                  actualizados mantienen su fecha de creación original).
+                </p>
               ) : (
                 <>
                   <div className="flex items-start gap-2 text-sm">

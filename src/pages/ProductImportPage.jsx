@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Upload, FileSpreadsheet, AlertTriangle, Loader2, CheckCircle2,
-  ChevronRight, ChevronDown, Download, RotateCcw,
+  ChevronRight, ChevronDown, Download, RotateCcw, History,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { importsApi } from '../services/endpoints/imports'
 import { useAuth } from '../context/AuthContext'
 import { getErrorMessage } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import ImportHistoryModal from '../components/products/ImportHistoryModal'
 
 const STEP_LABELS = [
   'Subir archivo',
@@ -903,6 +904,7 @@ export default function ProductImportPage() {
   const { user } = useAuth()
   const [step, setStep] = useState(0)
   const [upload, setUpload] = useState(null) // { jobId, headers, ... }
+  const [showHistory, setShowHistory] = useState(false)
 
   // EMPLOYEE no debería llegar acá, pero por las dudas redirigir.
   useEffect(() => {
@@ -922,10 +924,22 @@ export default function ProductImportPage() {
           </button>
           <h2 className="text-2xl font-bold text-gray-900">Importar productos desde Excel</h2>
         </div>
-        <HelpDrawer title={STEP_HELP_TITLES[step]} autoOpenKey={`eazystock_import_help_v1_step${step}`}>
-          <StepHelp step={step} />
-        </HelpDrawer>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowHistory(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <History size={14} />
+            <span className="hidden sm:inline">Historial</span>
+          </button>
+          <HelpDrawer title={STEP_HELP_TITLES[step]} autoOpenKey={`eazystock_import_help_v1_step${step}`}>
+            <StepHelp step={step} />
+          </HelpDrawer>
+        </div>
       </div>
+
+      {showHistory && <ImportHistoryModal onClose={() => setShowHistory(false)} />}
 
       <Stepper current={step} />
 

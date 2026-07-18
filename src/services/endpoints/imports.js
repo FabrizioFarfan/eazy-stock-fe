@@ -20,6 +20,9 @@ export const importsApi = {
     })
   },
 
+  // Historial de imports del negocio (últimos 50, más recientes primero)
+  history: () => api.get('/products/import/history'),
+
   submitMapping: (jobId, body) =>
     api.post(`/products/import/${jobId}/mapping`, body),
 
