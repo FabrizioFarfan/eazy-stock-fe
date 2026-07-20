@@ -5,6 +5,7 @@ import ProductDetailModal from '../products/ProductDetailModal'
 import MovementModal from '../../pages/stock/MovementModal'
 import SupplierReceiptModal from './SupplierReceiptModal'
 import ColumnFilter from '../common/ColumnFilter'
+import ExpiryBadge from '../common/ExpiryBadge'
 import { useAuth } from '../../context/AuthContext'
 import { useProducts } from '../../hooks/useProducts'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -21,7 +22,13 @@ const EMPTY_COL_FILTERS = {
   status: 'active',                  // active | inactive | '' (todos)
   purchaseMin: '', purchaseMax: '',
   stockMin: '', stockMax: '',
+  expiryStatus: '',                  // '' | expiring | expired | has_date
 }
+const EXPIRY_OPTS = [
+  { value: 'expiring', label: 'Por vencer' },
+  { value: 'expired',  label: 'Vencidos' },
+  { value: 'has_date', label: 'Con fecha' },
+]
 const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 
 function StockBadge({ current, min }) {
@@ -42,7 +49,7 @@ function StockBadge({ current, min }) {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 9 }).map((_, i) => (
         <td key={i} className="px-4 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -114,6 +121,7 @@ export default function InventoryTab() {
     ...(c.purchaseMax !== '' && { purchaseMax: c.purchaseMax }),
     ...(c.stockMin !== '' && { stockMin: c.stockMin }),
     ...(c.stockMax !== '' && { stockMax: c.stockMax }),
+    ...(c.expiryStatus && { expiryStatus: c.expiryStatus }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
   const { data, isLoading, isFetching } = useProducts(params)
@@ -143,6 +151,8 @@ export default function InventoryTab() {
     activeChips.push({ label: rangeChip(colFilters.stockMin, colFilters.stockMax, 'Stock', false), onRemove: () => clearFields('stockMin', 'stockMax') })
   if (colFilters.status !== 'active')
     activeChips.push({ label: `Estado: ${colFilters.status === 'inactive' ? 'Inactivos' : 'Todos'}`, onRemove: () => clearFields('status') })
+  if (colFilters.expiryStatus)
+    activeChips.push({ label: `Vencimiento: ${EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label}`, onRemove: () => clearFields('expiryStatus') })
 
   const selectCls = 'rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
 
@@ -239,6 +249,10 @@ export default function InventoryTab() {
                   sortState={sortStateFor('purchasePrice')} onSort={onSortBy('purchasePrice')}
                   ascLabel="Menor" descLabel="Mayor"
                   onClear={() => clearFields('purchaseMin', 'purchaseMax')} />
+                <ColumnFilter label="Vence" type="select" align="center"
+                  value={colFilters.expiryStatus} onChange={(v) => setField('expiryStatus', v)}
+                  options={EXPIRY_OPTS} active={!!colFilters.expiryStatus}
+                  onClear={() => clearFields('expiryStatus')} />
                 <ColumnFilter label="Estado" type="select" align="center"
                   value={colFilters.status} onChange={(v) => setField('status', v)}
                   options={[{ value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }]}
@@ -251,7 +265,7 @@ export default function InventoryTab() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={9}>
                     <div className="flex flex-col items-center gap-3 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -294,6 +308,7 @@ export default function InventoryTab() {
                       <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">
                         {formatPrice(p.purchasePrice)}
                       </td>
+                      <td className="px-4 py-3.5 text-center"><ExpiryBadge product={p} dash /></td>
                       <td className="px-4 py-3.5 text-center">
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                           p.active

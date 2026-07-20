@@ -5,6 +5,7 @@ export const reportsApi = {
   getSalesByProvider: (params) => api.get('/reports/sales/by-provider', { params }),
   getDailySummary:    (params) => api.get('/reports/daily-summary',     { params }),
   getLowStock:        (params) => api.get('/reports/low-stock',         { params }),
+  getExpiring:        (params) => api.get('/reports/expiring',          { params }),
 
   // Bloque 4: reporte unificado de ventas con filtros combinables
   // params: { from?, to?, supplierId?, brandId?, employeeId?, businessId?, page?, size? }

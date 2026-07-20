@@ -2,10 +2,11 @@ import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Package, TrendingUp, ArrowUpDown,
   AlertTriangle, Building2, Users, CheckCircle2,
-  FileText, Trophy, ArrowRight, Sparkles,
+  FileText, Trophy, ArrowRight, Sparkles, CalendarClock,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useDailySummary, useReportsLowStock } from '../hooks/useReports'
+import { useDailySummary, useReportsLowStock, useReportsExpiring } from '../hooks/useReports'
+import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useBusinesses } from '../hooks/useBusinesses'
 import { useUsers } from '../hooks/useUsers'
 import { useSales } from '../hooks/useSales'
@@ -216,8 +217,10 @@ function OwnerDashboard({ name, businessId }) {
 
   const { data: summary,      isLoading: loadingSummary } = useDailySummary(scopeParams)
   const { data: lowStockPage, isLoading: loadingLow }     = useReportsLowStock({ size: 10, ...scopeParams })
+  const { data: expiringPage, isLoading: loadingExp }     = useReportsExpiring({ size: 10, ...scopeParams })
 
   const lowStock  = lowStockPage?.content ?? []
+  const expiring  = expiringPage?.content ?? []
   const movements = summary?.movements    ?? []
 
   return (
@@ -357,6 +360,61 @@ function OwnerDashboard({ name, businessId }) {
           </div>
         )}
       </div>
+
+      {/* Expiring alerts — solo se muestra si hay productos con fecha por vencer/vencidos */}
+      {(loadingExp || expiring.length > 0) && (
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
+              <CalendarClock size={15} className="text-amber-500" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900">Productos por vencer</h3>
+            {!loadingExp && expiringPage?.totalElements > 0 && (
+              <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">
+                {expiringPage.totalElements} productos
+              </span>
+            )}
+          </div>
+
+          {loadingExp ? (
+            <div className="space-y-3 p-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-4 animate-pulse rounded-lg bg-gray-100" />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-50 bg-gray-50/60">
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Vence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expiring.map((item) => (
+                    <tr key={item.productId} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+                      <td className="max-w-[200px] truncate px-6 py-3.5 font-medium text-gray-900">{item.productName}</td>
+                      <td className="px-6 py-3.5 font-mono text-xs text-gray-400">{item.productSku}</td>
+                      <td className="px-6 py-3.5 text-center text-gray-700">{item.currentStock}</td>
+                      <td className="px-6 py-3.5 text-center">
+                        <ExpiryBadge product={{
+                          expirationDate: item.expirationDate,
+                          expired: item.expired,
+                          expiringSoon: !item.expired,
+                          daysToExpire: item.daysToExpire,
+                        }} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recent movements */}
       {movements.length > 0 && (

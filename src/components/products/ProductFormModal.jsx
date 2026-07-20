@@ -32,6 +32,7 @@ const schema = z.object({
   // "unidad" exige entero (refine abajo).
   minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0'),
   initialStock:  z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0').optional(),
+  expirationDate: z.string().optional(),
 }).superRefine((data, ctx) => {
   // minStock / initialStock enteros si el producto no es divisible (unidad)
   const effectiveUnit = data.unit === 'otro' ? (data.unitCustom?.trim() || 'unidad') : (data.unit || 'unidad')
@@ -237,8 +238,9 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           purchasePrice: product.purchasePrice ?? '',
           salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
           minStock:      product.minStock      ?? 0,
+          expirationDate: product.expirationDate ?? '',
         }
-      : { minStock: 0, initialStock: 0, unit: 'unidad', priceIsVariable: false },
+      : { minStock: 0, initialStock: 0, unit: 'unidad', priceIsVariable: false, expirationDate: '' },
   })
 
   const unitValue = watch('unit')
@@ -260,6 +262,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         purchasePrice: product.purchasePrice ?? '',
         salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
         minStock:      product.minStock      ?? 0,
+        expirationDate: product.expirationDate ?? '',
       })
       setBrandId(product.brandId       ?? null)
       setSupplierId(product.supplierId ?? null)
@@ -331,11 +334,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       // initialStock es solo para alta; no viaja en update. sku se manda solo
       // si el usuario escribió algo: en alta vacío = autogenerar; en edición
       // vacío = no tocar el código actual.
-      const { unitCustom, initialStock, sku, ...rest } = values
+      const { unitCustom, initialStock, sku, expirationDate, ...rest } = values
       const trimmedSku = sku?.trim() || ''
+      const expDate = expirationDate?.trim() || ''
       const payload = {
         ...rest,
         ...(trimmedSku && { sku: trimmedSku }),
+        ...(expDate && { expirationDate: expDate }),
         unit: effectiveUnit,
         presentation,
         priceIsVariable: !!values.priceIsVariable,
@@ -356,6 +361,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             clearBrandId:    !brandId,
             clearCategoryId: !categoryId,
             clearPresentation: !presentation,
+            clearExpirationDate: !expDate,
           },
         })
       } else {
@@ -721,6 +727,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                 </Field>
               )}
+              </div>
+
+              {/* Fecha de vencimiento (opcional) */}
+              <div className="mt-3">
+                <Field label="Fecha de vencimiento" error={errors.expirationDate?.message}>
+                  <input {...register('expirationDate')} type="date" className={inputCls} />
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Opcional · Para productos que caducan (farmacia, alimentos). La app te
+                    avisa cuando falte poco para que venza.
+                  </p>
+                </Field>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer, BarChart2,
+  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer, BarChart2, CalendarClock,
 } from 'lucide-react'
 import PageTitle from '../components/common/PageTitle'
 import {
@@ -10,8 +10,9 @@ import {
 import { useAuth } from '../context/AuthContext'
 import {
   useDailySummary, useSalesByProduct, useSalesByProvider,
-  useReportsLowStock, useSalesReport, useSupplierRestock,
+  useReportsLowStock, useReportsExpiring, useSalesReport, useSupplierRestock,
 } from '../hooks/useReports'
+import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useSuppliers } from '../hooks/useSuppliers'
 import ReportFilters   from '../components/reports/ReportFilters'
 import DateRangeQuick  from '../components/common/DateRangeQuick'
@@ -441,6 +442,62 @@ function TabLowStock({ businessId }) {
   )
 }
 
+// ── Tab: Por vencer ───────────────────────────────────────────────────────────
+
+function TabExpiring({ businessId }) {
+  const params = { size: 50, ...(businessId && { businessId }) }
+  const { data, isLoading } = useReportsExpiring(params)
+  const items = data?.content ?? []
+
+  return (
+    <div className="space-y-4">
+      {isLoading ? (
+        <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-16">
+          <CalendarClock size={36} className="text-gray-200" />
+          <p className="text-sm text-gray-400">No hay productos por vencer</p>
+          <p className="text-xs text-gray-300">Aparecen aquí los que vencen dentro de 30 días o ya vencieron</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">Código</th>
+                <th className="px-4 py-3">Marca</th>
+                <th className="px-4 py-3">Proveedor</th>
+                <th className="px-4 py-3 text-center">Stock</th>
+                <th className="px-4 py-3 text-center">Vence</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {items.map((p) => (
+                <tr key={p.productId} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium text-gray-900">{p.productName}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-400">{p.productSku}</td>
+                  <td className="px-4 py-3 text-gray-600">{p.brand || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{p.providerName || '—'}</td>
+                  <td className="px-4 py-3 text-center text-gray-700">{p.currentStock}</td>
+                  <td className="px-4 py-3 text-center">
+                    <ExpiryBadge product={{
+                      expirationDate: p.expirationDate,
+                      expired: p.expired,
+                      expiringSoon: !p.expired,
+                      daysToExpire: p.daysToExpire,
+                    }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Tab: Resurtido por proveedor ─────────────────────────────────────────────
 
 function TabSupplierRestock({ businessId }) {
@@ -569,6 +626,7 @@ const TABS = [
   { id: 'by-product',       label: 'Por producto' },
   { id: 'by-provider',      label: 'Por proveedor' },
   { id: 'low-stock',        label: 'Stock bajo' },
+  { id: 'expiring',         label: 'Por vencer' },
   { id: 'supplier-restock', label: 'Resurtido' },
 ]
 
@@ -636,6 +694,7 @@ export default function ReportsPage() {
         {activeTab === 'by-product'       && <TabByProduct        businessId={businessId} />}
         {activeTab === 'by-provider'      && <TabByProvider       businessId={businessId} />}
         {activeTab === 'low-stock'        && <TabLowStock         businessId={businessId} />}
+        {activeTab === 'expiring'         && <TabExpiring         businessId={businessId} />}
         {activeTab === 'supplier-restock' && <TabSupplierRestock  businessId={businessId} />}
       </div>
     </div>

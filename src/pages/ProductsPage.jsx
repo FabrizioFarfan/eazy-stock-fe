@@ -13,6 +13,7 @@ import ProductDetailModal from '../components/products/ProductDetailModal'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
+import ExpiryBadge from '../components/common/ExpiryBadge'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -25,13 +26,19 @@ const EMPTY_COL_FILTERS = {
   purchaseMin: '', purchaseMax: '',
   saleMin: '', saleMax: '',
   stockMin: '', stockMax: '',
+  expiryStatus: '',                  // '' | expiring | expired | has_date
 }
+const EXPIRY_OPTS = [
+  { value: 'expiring', label: 'Por vencer' },
+  { value: 'expired',  label: 'Vencidos' },
+  { value: 'has_date', label: 'Con fecha' },
+]
 const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 10 }).map((_, i) => (
+      {Array.from({ length: 11 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -174,6 +181,7 @@ export default function ProductsPage() {
     ...(c.saleMax !== '' && { saleMax: c.saleMax }),
     ...(c.stockMin !== '' && { stockMin: c.stockMin }),
     ...(c.stockMax !== '' && { stockMax: c.stockMax }),
+    ...(c.expiryStatus && { expiryStatus: c.expiryStatus }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -210,6 +218,8 @@ export default function ProductsPage() {
     activeChips.push({ label: rangeChip(colFilters.stockMin, colFilters.stockMax, 'Stock', false), onRemove: () => clearFields('stockMin', 'stockMax') })
   if (colFilters.status !== 'active')
     activeChips.push({ label: `Estado: ${colFilters.status === 'inactive' ? 'Inactivos' : 'Todos'}`, onRemove: () => clearFields('status') })
+  if (colFilters.expiryStatus)
+    activeChips.push({ label: `Vencimiento: ${EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label}`, onRemove: () => clearFields('expiryStatus') })
 
   const openCreate         = () => setFormModal({ open: true, product: null, tutorial: false })
   const openCreateWithTour = () => setFormModal({ open: true, product: null, tutorial: true  })
@@ -426,6 +436,10 @@ export default function ProductsPage() {
                   sortState={sortStateFor('currentStock')} onSort={onSortBy('currentStock')}
                   ascLabel="Menor" descLabel="Mayor"
                   onClear={() => clearFields('stockMin', 'stockMax')} />
+                <ColumnFilter label="Vence" type="select" align="center"
+                  value={colFilters.expiryStatus} onChange={(v) => setField('expiryStatus', v)}
+                  options={EXPIRY_OPTS} active={!!colFilters.expiryStatus}
+                  onClear={() => clearFields('expiryStatus')} />
                 <ColumnFilter label="Estado" type="select" align="center"
                   value={colFilters.status} onChange={(v) => setField('status', v)}
                   options={[{ value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }]}
@@ -438,7 +452,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={11}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
@@ -489,6 +503,7 @@ export default function ProductsPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
+                    <td className="px-5 py-3.5 text-center"><ExpiryBadge product={p} dash /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
                   </tr>
                 ))

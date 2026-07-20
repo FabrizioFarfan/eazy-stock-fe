@@ -1,7 +1,9 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, Edit, Trash2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
+import ExpiryBadge from '../common/ExpiryBadge'
+import { formatShortDate } from '../../utils/formatDate'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -101,6 +103,20 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
             </div>
           )}
 
+          {/* Expiration warning */}
+          {product.expired && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
+              <CalendarClock size={15} />
+              Producto vencido — venció el {formatShortDate(product.expirationDate)}
+            </div>
+          )}
+          {!product.expired && product.expiringSoon && (
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-100">
+              <CalendarClock size={15} />
+              Por vencer — {product.daysToExpire === 0 ? 'vence hoy' : `en ${product.daysToExpire} días`} ({formatShortDate(product.expirationDate)})
+            </div>
+          )}
+
           {/* Identificación */}
           <Section title="Identificación">
             <Row label="Código (SKU)"     value={product.sku}          mono />
@@ -175,6 +191,8 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
               </span>
             </div>
             <Row label="Stock mínimo" value={product.minStock} />
+            <Row label="Vencimiento"
+              value={product.expirationDate ? <ExpiryBadge product={product} /> : 'Sin fecha'} />
             <Row label="Estado"
               value={
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${

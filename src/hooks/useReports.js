@@ -33,6 +33,14 @@ export function useReportsLowStock(params, options = {}) {
   })
 }
 
+export function useReportsExpiring(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'expiring', params],
+    queryFn: () => reportsApi.getExpiring(params).then((r) => r.data.data),
+    ...options,
+  })
+}
+
 export function useSalesReport(params, options = {}) {
   return useQuery({
     queryKey: ['reports', 'sales', params],
