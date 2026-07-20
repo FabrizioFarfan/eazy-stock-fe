@@ -1,17 +1,32 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
+import { useSuppliers } from '../hooks/useSuppliers'
+import { useBrands } from '../hooks/useBrands'
+import { useCategories } from '../hooks/useCategories'
 import { productsApi } from '../services/endpoints/products'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import QrModal from '../components/products/QrModal'
+import ColumnFilter from '../components/common/ColumnFilter'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
+
+// Estado inicial de los filtros por columna (embudo por encabezado).
+const EMPTY_COL_FILTERS = {
+  sku: '', name: '', providerCode: '',
+  categoryId: '', brandId: '', supplierId: '',
+  status: 'active',                  // active | inactive | all
+  purchaseMin: '', purchaseMax: '',
+  saleMin: '', saleMax: '',
+  stockMin: '', stockMax: '',
+}
+const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 
 function SkeletonRow() {
   return (
@@ -102,28 +117,63 @@ export default function ProductsPage() {
 
   const [search, setSearch]             = useState('')
   const [lowStock, setLowStock]         = useState(false)
-  const [statusFilter, setStatusFilter] = useState('active')
   const [orphansOnly, setOrphansOnly]   = useState(false)
   const [variableOnly, setVariableOnly] = useState(searchParams.get('variablePrice') === '1')
-  const [sortBy, setSortBy]             = useState('name,asc')
+  const [colFilters, setColFilters]     = useState(EMPTY_COL_FILTERS)
+  const [sort, setSort]                 = useState(DEFAULT_SORT)
   const [page, setPage]                 = useState(0)
   const debouncedSearch                 = useDebounce(search, 400)
+  const debouncedCol                    = useDebounce(colFilters, 400)
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, statusFilter, orphansOnly, variableOnly, sortBy])
+  // Catálogos para los filtros tipo "select" de las columnas
+  const { data: suppliersData }  = useSuppliers({ size: 200 })
+  const { data: brandsData }     = useBrands({ size: 200 })
+  const { data: categoriesData } = useCategories({ size: 200 })
+  const supplierOpts  = (suppliersData?.content  ?? []).map((s) => ({ value: s.id, label: s.name }))
+  const brandOpts     = (brandsData?.content     ?? []).map((b) => ({ value: b.id, label: b.name }))
+  const categoryOpts  = (categoriesData?.content ?? []).map((c) => ({ value: c.id, label: c.name }))
+
+  // Helpers de filtros por columna
+  const setField    = (k, v) => setColFilters((f) => ({ ...f, [k]: v }))
+  const setRange    = (minK, maxK) => ({ min, max }) => setColFilters((f) => ({ ...f, [minK]: min, [maxK]: max }))
+  const clearFields = (...keys) => setColFilters((f) => {
+    const next = { ...f }
+    keys.forEach((k) => { next[k] = EMPTY_COL_FILTERS[k] })
+    return next
+  })
+  const sortStateFor = (key) => (sort.key === key ? sort.dir : null)
+  const onSortBy     = (key) => (dir) => setSort(dir ? { key, dir } : DEFAULT_SORT)
+  const sortBy       = `${sort.key},${sort.dir}`
+
+  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, sortBy, debouncedCol])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
   const [detailModal, setDetailModal] = useState(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
+  const c = debouncedCol
   const params = {
     page, size: PAGE_SIZE,
     sort: sortBy,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(lowStock && { lowStock: true }),
-    ...(statusFilter !== 'all' && { active: statusFilter === 'active' }),
     ...(orphansOnly && { placeholderOnly: true }),
     ...(variableOnly && { variablePriceOnly: true }),
+    // Filtros por columna
+    ...(c.name && { name: c.name }),
+    ...(c.sku && { sku: c.sku }),
+    ...(c.providerCode && { providerCode: c.providerCode }),
+    ...(c.categoryId && { categoryId: c.categoryId }),
+    ...(c.brandId && { brandId: c.brandId }),
+    ...(c.supplierId && { supplierId: c.supplierId }),
+    ...(c.status !== '' && { active: c.status === 'active' }),
+    ...(c.purchaseMin !== '' && { purchaseMin: c.purchaseMin }),
+    ...(c.purchaseMax !== '' && { purchaseMax: c.purchaseMax }),
+    ...(c.saleMin !== '' && { saleMin: c.saleMin }),
+    ...(c.saleMax !== '' && { saleMax: c.saleMax }),
+    ...(c.stockMin !== '' && { stockMin: c.stockMin }),
+    ...(c.stockMax !== '' && { stockMax: c.stockMax }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -135,6 +185,31 @@ export default function ProductsPage() {
   const totalPages    = data?.totalPages    ?? 0
   const from          = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const to            = Math.min((page + 1) * PAGE_SIZE, totalElements)
+
+  // Chips de filtros de columna activos (usa el estado en vivo para que quitar
+  // un chip sea inmediato). El "Estado: Activos" por defecto no genera chip.
+  const labelOf = (opts, val) => opts.find((o) => String(o.value) === String(val))?.label ?? val
+  const rangeChip = (min, max, prefix, money) => {
+    const fmt = (v) => (money ? formatPrice(v) : v)
+    if (min !== '' && max !== '') return `${prefix}: ${fmt(min)}–${fmt(max)}`
+    if (min !== '') return `${prefix}: ≥ ${fmt(min)}`
+    return `${prefix}: ≤ ${fmt(max)}`
+  }
+  const activeChips = []
+  if (colFilters.name)         activeChips.push({ label: `Nombre: "${colFilters.name}"`, onRemove: () => clearFields('name') })
+  if (colFilters.sku)          activeChips.push({ label: `Código: "${colFilters.sku}"`, onRemove: () => clearFields('sku') })
+  if (colFilters.categoryId)   activeChips.push({ label: `Categoría: ${labelOf(categoryOpts, colFilters.categoryId)}`, onRemove: () => clearFields('categoryId') })
+  if (colFilters.brandId)      activeChips.push({ label: `Marca: ${labelOf(brandOpts, colFilters.brandId)}`, onRemove: () => clearFields('brandId') })
+  if (colFilters.supplierId)   activeChips.push({ label: `Proveedor: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
+  if (colFilters.providerCode) activeChips.push({ label: `Cód. prov.: "${colFilters.providerCode}"`, onRemove: () => clearFields('providerCode') })
+  if (colFilters.purchaseMin !== '' || colFilters.purchaseMax !== '')
+    activeChips.push({ label: rangeChip(colFilters.purchaseMin, colFilters.purchaseMax, 'P. compra', true), onRemove: () => clearFields('purchaseMin', 'purchaseMax') })
+  if (colFilters.saleMin !== '' || colFilters.saleMax !== '')
+    activeChips.push({ label: rangeChip(colFilters.saleMin, colFilters.saleMax, 'P. venta', true), onRemove: () => clearFields('saleMin', 'saleMax') })
+  if (colFilters.stockMin !== '' || colFilters.stockMax !== '')
+    activeChips.push({ label: rangeChip(colFilters.stockMin, colFilters.stockMax, 'Stock', false), onRemove: () => clearFields('stockMin', 'stockMax') })
+  if (colFilters.status !== 'active')
+    activeChips.push({ label: `Estado: ${colFilters.status === 'inactive' ? 'Inactivos' : 'Todos'}`, onRemove: () => clearFields('status') })
 
   const openCreate         = () => setFormModal({ open: true, product: null, tutorial: false })
   const openCreateWithTour = () => setFormModal({ open: true, product: null, tutorial: true  })
@@ -270,28 +345,33 @@ export default function ProductsPage() {
           <span className="text-orange-700 font-semibold">Sin precio definido</span>
         </label>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white"
-        >
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-          <option value="all">Todos</option>
-        </select>
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          title="Ordenar los productos"
-          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white"
-        >
-          <option value="name,asc">Nombre (A–Z)</option>
-          <option value="salePrice,desc">Precio: mayor a menor</option>
-          <option value="salePrice,asc">Precio: menor a mayor</option>
-          <option value="currentStock,desc">Stock: mayor a menor</option>
-        </select>
+        <span className="hidden text-xs text-gray-400 lg:inline">
+          Filtra y ordena desde el <SlidersHorizontal size={11} className="inline -mt-0.5" /> de cada columna
+        </span>
       </div>
+
+      {/* Chips de filtros de columna activos */}
+      {activeChips.length > 0 && (
+        <div className="-mt-2 flex flex-wrap items-center gap-2">
+          {activeChips.map((chip, i) => (
+            <span key={i}
+              className="flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+              {chip.label}
+              <button onClick={chip.onRemove}
+                title="Quitar filtro"
+                className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={() => setColFilters(EMPTY_COL_FILTERS)}
+            className="text-xs font-medium text-gray-500 hover:text-red-600 transition-colors"
+          >
+            Limpiar todo
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -299,16 +379,58 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Nombre</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Categoría</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Marca</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Cód. proveedor</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Compra</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">P. Venta</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Estado</th>
+                <ColumnFilter label="Código" type="text" align="left"
+                  value={colFilters.sku} onChange={(v) => setField('sku', v)}
+                  placeholder="Buscar código..." active={!!colFilters.sku}
+                  sortState={sortStateFor('sku')} onSort={onSortBy('sku')} ascLabel="A–Z" descLabel="Z–A"
+                  onClear={() => clearFields('sku')} />
+                <ColumnFilter label="Nombre" type="text" align="left"
+                  value={colFilters.name} onChange={(v) => setField('name', v)}
+                  placeholder="Buscar nombre..." active={!!colFilters.name}
+                  sortState={sortStateFor('name')} onSort={onSortBy('name')} ascLabel="A–Z" descLabel="Z–A"
+                  onClear={() => clearFields('name')} />
+                <ColumnFilter label="Categoría" type="select" align="left"
+                  value={colFilters.categoryId} onChange={(v) => setField('categoryId', v)}
+                  options={categoryOpts} active={!!colFilters.categoryId}
+                  onClear={() => clearFields('categoryId')} />
+                <ColumnFilter label="Marca" type="select" align="left"
+                  value={colFilters.brandId} onChange={(v) => setField('brandId', v)}
+                  options={brandOpts} active={!!colFilters.brandId}
+                  onClear={() => clearFields('brandId')} />
+                <ColumnFilter label="Proveedor" type="select" align="left"
+                  value={colFilters.supplierId} onChange={(v) => setField('supplierId', v)}
+                  options={supplierOpts} active={!!colFilters.supplierId}
+                  onClear={() => clearFields('supplierId')} />
+                <ColumnFilter label="Cód. proveedor" type="text" align="left"
+                  value={colFilters.providerCode} onChange={(v) => setField('providerCode', v)}
+                  placeholder="Buscar código..." active={!!colFilters.providerCode}
+                  onClear={() => clearFields('providerCode')} />
+                <ColumnFilter label="P. Compra" type="range" align="right"
+                  rangeMin={colFilters.purchaseMin} rangeMax={colFilters.purchaseMax}
+                  onRangeChange={setRange('purchaseMin', 'purchaseMax')}
+                  active={colFilters.purchaseMin !== '' || colFilters.purchaseMax !== ''}
+                  sortState={sortStateFor('purchasePrice')} onSort={onSortBy('purchasePrice')}
+                  ascLabel="Menor" descLabel="Mayor"
+                  onClear={() => clearFields('purchaseMin', 'purchaseMax')} />
+                <ColumnFilter label="P. Venta" type="range" align="right"
+                  rangeMin={colFilters.saleMin} rangeMax={colFilters.saleMax}
+                  onRangeChange={setRange('saleMin', 'saleMax')}
+                  active={colFilters.saleMin !== '' || colFilters.saleMax !== ''}
+                  sortState={sortStateFor('salePrice')} onSort={onSortBy('salePrice')}
+                  ascLabel="Menor" descLabel="Mayor"
+                  onClear={() => clearFields('saleMin', 'saleMax')} />
+                <ColumnFilter label="Stock" type="range" align="center"
+                  rangeMin={colFilters.stockMin} rangeMax={colFilters.stockMax}
+                  onRangeChange={setRange('stockMin', 'stockMax')}
+                  active={colFilters.stockMin !== '' || colFilters.stockMax !== ''}
+                  sortState={sortStateFor('currentStock')} onSort={onSortBy('currentStock')}
+                  ascLabel="Menor" descLabel="Mayor"
+                  onClear={() => clearFields('stockMin', 'stockMax')} />
+                <ColumnFilter label="Estado" type="select" align="center"
+                  value={colFilters.status} onChange={(v) => setField('status', v)}
+                  options={[{ value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }]}
+                  active={colFilters.status !== 'active'}
+                  onClear={() => clearFields('status')} />
               </tr>
             </thead>
             <tbody>
