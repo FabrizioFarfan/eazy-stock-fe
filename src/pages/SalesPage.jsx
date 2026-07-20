@@ -1,12 +1,14 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
+import ColumnFilter from '../components/common/ColumnFilter'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useProducts } from '../hooks/useProducts'
+import { useEmployees } from '../hooks/useEmployees'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -92,19 +94,41 @@ export default function SalesPage() {
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
+  // ── Column filters (empleado, total) + orden ──────────────────────────────
+  const canFilterEmployee = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  const [employeeId, setEmployeeId] = useState('')
+  const [totalMin, setTotalMin]     = useState('')
+  const [totalMax, setTotalMax]     = useState('')
+  const [sort, setSort]             = useState({ key: 'createdAt', dir: 'desc' })
+  const debTotalMin = useDebounce(totalMin, 350)
+  const debTotalMax = useDebounce(totalMax, 350)
+
+  const { data: employeesData } = useEmployees({ size: 200 }, { enabled: canFilterEmployee })
+  const employeeOpts = (employeesData?.content ?? []).map((e) => ({ value: e.id, label: e.name }))
+
+  const sortStateFor = (key) => (sort.key === key ? sort.dir : null)
+  const onSortBy     = (key) => (dir) => setSort(dir ? { key, dir } : { key: 'createdAt', dir: 'desc' })
+  const sortBy       = `${sort.key},${sort.dir}`
+  const labelOf      = (opts, val) => opts.find((o) => String(o.value) === String(val))?.label ?? val
+
   // ── Pagination ────────────────────────────────────────────────────────────
   const [page, setPage] = useState(0)
   const [selectedSaleId, setSelectedSaleId] = useState(null)
 
-  const hasFilters = from || to || selectedProducts.length > 0 || supplierId
+  const hasFilters = from || to || selectedProducts.length > 0 || supplierId ||
+    employeeId || debTotalMin !== '' || debTotalMax !== ''
 
   const params = {
     page,
     size: PAGE_SIZE,
+    sort: sortBy,
     ...(from && { from }),
     ...(to   && { to }),
     ...(selectedProducts.length > 0 && { productIds: selectedProducts.map((p) => p.id) }),
     ...(supplierId && { supplierId }),
+    ...(employeeId && { employeeId }),
+    ...(debTotalMin !== '' && { totalMin: debTotalMin }),
+    ...(debTotalMax !== '' && { totalMax: debTotalMax }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -116,8 +140,11 @@ export default function SalesPage() {
   const fromRow       = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const toRow         = Math.min((page + 1) * PAGE_SIZE, totalElements)
 
+  useEffect(() => { setPage(0) }, [employeeId, debTotalMin, debTotalMax, sortBy])
+
   const clearAll = () => {
-    setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId(''); setPage(0)
+    setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId('')
+    setEmployeeId(''); setTotalMin(''); setTotalMax(''); setPage(0)
   }
 
   return (
@@ -239,6 +266,25 @@ export default function SalesPage() {
             ))}
           </select>
 
+          {/* Chips de filtros de columna (empleado / total) */}
+          {employeeId && (
+            <span className="flex items-center gap-1 rounded-full bg-blue-50 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+              Empleado: {labelOf(employeeOpts, employeeId)}
+              <button onClick={() => setEmployeeId('')} className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+          {(totalMin !== '' || totalMax !== '') && (
+            <span className="flex items-center gap-1 rounded-full bg-blue-50 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+              Total: {totalMin !== '' && totalMax !== '' ? `${formatCurrency(totalMin)}–${formatCurrency(totalMax)}`
+                : totalMin !== '' ? `≥ ${formatCurrency(totalMin)}` : `≤ ${formatCurrency(totalMax)}`}
+              <button onClick={() => { setTotalMin(''); setTotalMax('') }} className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
+                <X size={10} />
+              </button>
+            </span>
+          )}
+
           {hasFilters && (
             <button onClick={clearAll}
               className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
@@ -255,10 +301,25 @@ export default function SalesPage() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">#</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Fecha</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Empleado</th>
+                <ColumnFilter label="Fecha" align="left"
+                  sortState={sortStateFor('createdAt')} onSort={onSortBy('createdAt')}
+                  ascLabel="Antiguas" descLabel="Recientes" />
+                {canFilterEmployee ? (
+                  <ColumnFilter label="Empleado" type="select" align="left"
+                    value={employeeId} onChange={setEmployeeId}
+                    options={employeeOpts} active={!!employeeId}
+                    onClear={() => setEmployeeId('')} />
+                ) : (
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Empleado</th>
+                )}
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Productos</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Total</th>
+                <ColumnFilter label="Total" type="range" align="right"
+                  rangeMin={totalMin} rangeMax={totalMax}
+                  onRangeChange={({ min, max }) => { setTotalMin(min); setTotalMax(max) }}
+                  active={totalMin !== '' || totalMax !== ''}
+                  sortState={sortStateFor('total')} onSort={onSortBy('total')}
+                  ascLabel="Menor" descLabel="Mayor"
+                  onClear={() => { setTotalMin(''); setTotalMax('') }} />
               </tr>
             </thead>
             <tbody>
