@@ -18,6 +18,7 @@ const UNIT_OPTIONS = ['unidad', 'metro', 'kilo', 'litro', 'otro']
 
 const schema = z.object({
   name:          z.string().min(2, 'Mínimo 2 caracteres'),
+  sku:           z.string().max(60, 'Máximo 60 caracteres').optional(),
   unit:          z.string().optional(),
   unitCustom:    z.string().optional(),
   presentation:  z.string().optional(),
@@ -226,6 +227,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     defaultValues: isEdit
       ? {
           name:          product.name          ?? '',
+          sku:           product.sku           ?? '',
           unit:          initialUnitIsStandard ? initialUnit : 'otro',
           unitCustom:    initialUnitIsStandard ? '' : initialUnit,
           presentation:  product.presentation  ?? '',
@@ -248,6 +250,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       const isStd = UNIT_OPTIONS.slice(0, -1).includes(u)
       reset({
         name:          product.name          ?? '',
+        sku:           product.sku           ?? '',
         unit:          isStd ? u : 'otro',
         unitCustom:    isStd ? '' : u,
         presentation:  product.presentation  ?? '',
@@ -325,10 +328,14 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         : (values.unit || 'unidad')
       const presentation = values.presentation?.trim() || null
 
-      // initialStock es solo para alta; no viaja en update.
-      const { unitCustom, initialStock, ...rest } = values
+      // initialStock es solo para alta; no viaja en update. sku se manda solo
+      // si el usuario escribió algo: en alta vacío = autogenerar; en edición
+      // vacío = no tocar el código actual.
+      const { unitCustom, initialStock, sku, ...rest } = values
+      const trimmedSku = sku?.trim() || ''
       const payload = {
         ...rest,
+        ...(trimmedSku && { sku: trimmedSku }),
         unit: effectiveUnit,
         presentation,
         priceIsVariable: !!values.priceIsVariable,
@@ -364,8 +371,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     } catch (err) {
       const field = getErrorField(err)
       const code  = getErrorCode(err)
-      const known = ['name', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
-      if (code === 'DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER') {
+      const known = ['name', 'sku', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
+      if (code === 'DUPLICATE_SKU') {
+        setError('sku', {
+          type: 'server',
+          message: `${getErrorMessage(err)}. Usa otro código.`,
+        })
+      } else if (code === 'DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER') {
         // El BE ya nombra el producto existente; sumamos la acción a seguir.
         setError('providerCode', {
           type: 'server',
@@ -433,6 +445,24 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 )}
               </Field>
             </div>
+
+            {/* Código del producto (SKU) */}
+            <Field label="Código del producto" error={errors.sku?.message}>
+              <input
+                {...register('sku')}
+                placeholder={isEdit ? 'Código del producto' : 'Se genera automáticamente si lo dejas vacío'}
+                className={`${inputCls} font-mono ${
+                  errors.sku ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
+                }`}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isEdit
+                  ? 'Código interno único. Cámbialo solo si necesitas corregirlo.'
+                  : 'Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.'}
+              </p>
+            </Field>
 
             <Field label="Presentación" error={errors.presentation?.message}>
               <input
