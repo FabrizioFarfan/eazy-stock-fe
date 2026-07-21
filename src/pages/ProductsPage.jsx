@@ -132,10 +132,14 @@ export default function ProductsPage() {
   const debouncedSearch                 = useDebounce(search, 400)
   const debouncedCol                    = useDebounce(colFilters, 400)
 
-  // Catálogos para los filtros tipo "select" de las columnas
-  const { data: suppliersData }  = useSuppliers({ size: 200 })
-  const { data: brandsData }     = useBrands({ size: 200 })
-  const { data: categoriesData } = useCategories({ size: 200 })
+  // Catálogos para los filtros tipo "select" de las columnas. Como SUPER_ADMIN
+  // estos endpoints exigen businessId — sin él responden 400 y los selects
+  // quedarían vacíos.
+  const bizParam = user?.role === 'SUPER_ADMIN' && user?.businessId
+    ? { businessId: user.businessId } : {}
+  const { data: suppliersData }  = useSuppliers({ size: 200, ...bizParam })
+  const { data: brandsData }     = useBrands({ size: 200, ...bizParam })
+  const { data: categoriesData } = useCategories({ size: 200, ...bizParam })
   const supplierOpts  = (suppliersData?.content  ?? []).map((s) => ({ value: s.id, label: s.name }))
   const brandOpts     = (brandsData?.content     ?? []).map((b) => ({ value: b.id, label: b.name }))
   const categoryOpts  = (categoriesData?.content ?? []).map((c) => ({ value: c.id, label: c.name }))

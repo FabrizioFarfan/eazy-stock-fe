@@ -83,9 +83,12 @@ export default function InventoryTab() {
   const debouncedSearch = useDebounce(search, 350)
   const debouncedCol    = useDebounce(colFilters, 350)
 
-  const { data: suppliersData }  = useSuppliers({ size: 200 })
-  const { data: brandsData }     = useBrands({ size: 200 })
-  const { data: categoriesData } = useCategories({ size: 200 })
+  // Como SUPER_ADMIN los catálogos exigen businessId (400 sin él → selects vacíos)
+  const bizParam = user?.role === 'SUPER_ADMIN' && user?.businessId
+    ? { businessId: user.businessId } : {}
+  const { data: suppliersData }  = useSuppliers({ size: 200, ...bizParam })
+  const { data: brandsData }     = useBrands({ size: 200, ...bizParam })
+  const { data: categoriesData } = useCategories({ size: 200, ...bizParam })
   const suppliers     = suppliersData?.content ?? []
   const categories    = categoriesData?.content ?? []
   const supplierOpts  = suppliers.map((s) => ({ value: s.id, label: s.placeholderForUnassigned ? `⚠ ${s.name}` : s.name }))

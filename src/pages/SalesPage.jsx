@@ -103,8 +103,19 @@ export default function SalesPage() {
   const debTotalMin = useDebounce(totalMin, 350)
   const debTotalMax = useDebounce(totalMax, 350)
 
-  const { data: employeesData } = useEmployees({ size: 200 }, { enabled: canFilterEmployee })
-  const employeeOpts = (employeesData?.content ?? []).map((e) => ({ value: e.id, label: e.name }))
+  // Para filtrar ventas importa quién vendió: el dueño (que suele ser quien más
+  // vende) y los empleados dados de baja con ventas históricas también cuentan.
+  const { data: employeesData } = useEmployees({
+    size: 200,
+    sort: 'name,asc',
+    includeOwner: true,
+    includeInactive: true,
+    ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
+  }, { enabled: canFilterEmployee })
+  const employeeOpts = (employeesData?.content ?? []).map((e) => ({
+    value: e.id,
+    label: e.role === 'OWNER' ? `${e.name} (dueño)` : e.active ? e.name : `${e.name} (de baja)`,
+  }))
 
   const sortStateFor = (key) => (sort.key === key ? sort.dir : null)
   const onSortBy     = (key) => (dir) => setSort(dir ? { key, dir } : { key: 'createdAt', dir: 'desc' })
