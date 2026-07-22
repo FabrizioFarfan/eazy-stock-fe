@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useProducts } from '../hooks/useProducts'
+import { toast } from 'sonner'
+import { useProducts, useReactivateProduct } from '../hooks/useProducts'
+import { getErrorMessage } from '../utils/handleApiError'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useBrands } from '../hooks/useBrands'
 import { useCategories } from '../hooks/useCategories'
@@ -157,6 +159,16 @@ export default function ProductsPage() {
   const onSortBy     = (key) => (dir) => setSort(dir ? { key, dir } : DEFAULT_SORT)
   const sortBy       = `${sort.key},${sort.dir}`
 
+  // "Ocultos" es el mismo filtro de la columna Estado, pero a la vista.
+  const showHidden = colFilters.status === 'inactive'
+
+  // Lo dispara el aviso de "producto oculto" para llevar acá de un click.
+  useEffect(() => {
+    const handler = () => setColFilters({ ...EMPTY_COL_FILTERS, status: 'inactive' })
+    window.addEventListener('eazystock:show-hidden-products', handler)
+    return () => window.removeEventListener('eazystock:show-hidden-products', handler)
+  }, [])
+
   useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, sortBy, debouncedCol])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
@@ -164,6 +176,7 @@ export default function ProductsPage() {
   const [detailModal, setDetailModal] = useState(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [removeModal, setRemoveModal] = useState(null)   // producto a ocultar/borrar
+  const reactivate = useReactivateProduct()
 
   const c = debouncedCol
   const params = {
@@ -252,6 +265,16 @@ export default function ProductsPage() {
   // real cuando el producto nunca se usó.
   const handleRemove = (p) => setRemoveModal(p)
 
+  const handleReactivate = async (p) => {
+    try {
+      await reactivate.mutateAsync(p.id)
+      setDetailModal(null)
+      toast.success(`"${p.name}" volvió al catálogo con su código ${p.sku}.`)
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Header — flex-wrap para que en móvil los botones bajen de fila en
@@ -268,6 +291,10 @@ export default function ProductsPage() {
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">👆 Click en cualquier fila</p>
               <p className="mt-1">Se abre el detalle del producto: desde ahí puedes <strong>editarlo, ver su código QR, registrar entradas de stock o desactivarlo</strong>.</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🙈 Productos ocultos</p>
+              <p className="mt-1">Cuando ocultas un producto deja de aparecer acá, pero <strong>no se borra</strong>. Marca el filtro <strong>"Ocultos"</strong> para verlos y desde ahí puedes <strong>reactivarlos</strong> o <strong>borrarlos definitivamente</strong> (esto último libera su código).</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔔 Stock mínimo</p>
@@ -343,6 +370,19 @@ export default function ProductsPage() {
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors select-none">
           <input type="checkbox" checked={lowStock} onChange={(e) => setLowStock(e.target.checked)} className="accent-blue-600" />
           <span className="text-gray-600 font-medium">Stock bajo</span>
+        </label>
+
+        {/* Los ocultos no se ven en el catálogo: sin este atajo el único acceso
+            era el embudo de la última columna, que casi nadie encontraba. */}
+        <label className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors select-none ${
+            showHidden ? 'border-gray-700 bg-gray-700 text-white' : 'border-gray-200 hover:bg-gray-50'
+          }`}
+          title="Los productos ocultos (desactivados) no aparecen en el catálogo ni al vender. Márcalo para verlos, reactivarlos o borrarlos definitivamente.">
+          <input type="checkbox" checked={showHidden}
+            onChange={(e) => setField('status', e.target.checked ? 'inactive' : 'active')}
+            className="accent-gray-700" />
+          <EyeOff size={14} className={showHidden ? 'text-white' : 'text-gray-400'} />
+          <span className={`font-semibold ${showHidden ? 'text-white' : 'text-gray-600'}`}>Ocultos</span>
         </label>
 
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm hover:bg-amber-100 transition-colors select-none"
@@ -459,15 +499,21 @@ export default function ProductsPage() {
                   <td colSpan={11}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
-                        <Package size={28} className="text-gray-400" />
+                        {showHidden
+                          ? <EyeOff size={28} className="text-gray-400" />
+                          : <Package size={28} className="text-gray-400" />}
                       </div>
                       <div className="text-center">
-                        <p className="text-sm font-semibold text-gray-700">No hay productos aún</p>
+                        <p className="text-sm font-semibold text-gray-700">
+                          {showHidden ? 'No hay productos ocultos' : 'No hay productos aún'}
+                        </p>
                         <p className="mt-1 text-xs text-gray-400">
-                          {search ? `Sin resultados para "${search}"` : 'Agrega tu primer producto para empezar'}
+                          {search ? `Sin resultados para "${search}"`
+                            : showHidden ? 'Todo tu catálogo está visible'
+                            : 'Agrega tu primer producto para empezar'}
                         </p>
                       </div>
-                      {isManager && !search && (
+                      {isManager && !search && !showHidden && (
                         <button
                           onClick={openCreate}
                           className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98]"
@@ -552,6 +598,7 @@ export default function ProductsPage() {
           onEdit={isManager ? (p) => { setDetailModal(null); openEdit(p) } : undefined}
           onShowQr={isManager ? (p) => { setDetailModal(null); setQrModal(p) } : undefined}
           onDeactivate={isManager ? (p) => { setDetailModal(null); handleRemove(p) } : undefined}
+          onReactivate={isManager ? handleReactivate : undefined}
         />
       )}
       {removeModal && (

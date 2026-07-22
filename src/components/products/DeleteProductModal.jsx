@@ -40,7 +40,16 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
     try {
       if (choice === 'deactivate') {
         await deactivate.mutateAsync(product.id)
-        toast.success(`"${product.name}" quedó oculto. Su código ${product.sku} sigue reservado.`)
+        // El producto desaparece de la lista: sin decir dónde quedó, el usuario
+        // cree que lo borró y después no lo encuentra para borrarlo de verdad.
+        toast.success(`"${product.name}" quedó oculto. Su código ${product.sku} sigue reservado.`, {
+          description: 'Lo encontrás con el filtro "Ocultos" de Productos.',
+          duration: 8000,
+          action: {
+            label: 'Ver ocultos',
+            onClick: () => window.dispatchEvent(new CustomEvent('eazystock:show-hidden-products')),
+          },
+        })
       } else {
         await deleteForever.mutateAsync(product.id)
         toast.success(`"${product.name}" borrado. El código ${product.sku} volvió a quedar libre.`)
@@ -78,7 +87,8 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
 
           {alreadyHidden && (
             <p className="rounded-xl bg-gray-50 px-3.5 py-2.5 text-xs text-gray-600 ring-1 ring-gray-100">
-              Este producto ya está oculto: su código sigue reservado. Bórralo para liberarlo.
+              Este producto ya está oculto: su código sigue reservado. Bórralo para liberarlo, o
+              cierra y usa <b>"Reactivar"</b> para devolverlo al catálogo.
             </p>
           )}
 
@@ -91,7 +101,8 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
             </div>
             <p className="mt-1 text-xs leading-relaxed text-gray-600">
               Deja de aparecer en la lista, pero se conserva su historial y <b>su código {product.sku} queda
-              reservado</b>: el próximo producto seguirá con el número siguiente.
+              reservado</b>: el próximo producto seguirá con el número siguiente. Después lo encontrás
+              con el filtro <b>"Ocultos"</b>, para reactivarlo o borrarlo.
             </p>
           </button>
           )}

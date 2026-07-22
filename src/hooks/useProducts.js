@@ -37,6 +37,15 @@ export function useDeactivateProduct() {
   })
 }
 
+/** Devuelve al catálogo un producto oculto (con su mismo código). */
+export function useReactivateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productsApi.reactivate(id).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+  })
+}
+
 /**
  * Borrado definitivo de un producto sin uso. Libera su código para que el
  * protocolo del negocio no salte números por productos que nunca se vendieron.

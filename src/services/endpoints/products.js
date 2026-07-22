@@ -12,6 +12,9 @@ export const productsApi = {
 
   deactivate: (id) => api.delete(`/products/${id}`),
 
+  // Camino de vuelta: devuelve al catálogo un producto oculto, con su mismo código
+  reactivate: (id) => api.post(`/products/${id}/reactivate`),
+
   // Borrado definitivo: solo productos sin ventas ni recepciones (409 si tienen historial)
   checkDeletable: (id) => api.get(`/products/${id}/deletable`),
   deletePermanently: (id) => api.delete(`/products/${id}/permanent`),

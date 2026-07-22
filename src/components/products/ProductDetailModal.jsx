@@ -1,4 +1,4 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
@@ -52,12 +52,12 @@ function MovementTypeBadge({ type }) {
 
 /**
  * Detalle completo del producto. Si llegan los handlers opcionales
- * (onEdit / onShowQr / onDeactivate / onRegisterEntry / onAdjust) se muestra
- * la barra de acciones al pie — las acciones viven acá, no en columnas de la
- * tabla. onRegisterEntry/onAdjust los usa la página Stock para abrir el
- * MovementModal ya prefijado con este producto.
+ * (onEdit / onShowQr / onDeactivate / onReactivate / onRegisterEntry / onAdjust)
+ * se muestra la barra de acciones al pie — las acciones viven acá, no en
+ * columnas de la tabla. onRegisterEntry/onAdjust los usa la página Stock para
+ * abrir el MovementModal ya prefijado con este producto.
  */
-export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onRegisterEntry, onAdjust }) {
+export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust }) {
   const { data: movementsData, isLoading: loadingMov } = useQuery({
     queryKey: ['stock-movements', 'product', product.id],
     queryFn: () => stockApi.getMovementsByProduct(product.id, { size: 5 })
@@ -263,7 +263,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
         </div>
 
         {/* Acciones */}
-        {(onEdit || onShowQr || onDeactivate || onRegisterEntry || onAdjust) && (
+        {(onEdit || onShowQr || onDeactivate || onReactivate || onRegisterEntry || onAdjust) && (
           <div className="flex flex-shrink-0 flex-wrap justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-6 py-4">
             {onAdjust && (
               <button
@@ -281,6 +281,17 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
               >
                 <ArrowDownToLine size={14} />
                 Registrar entrada
+              </button>
+            )}
+            {/* Camino de vuelta para lo que se ocultó por error: un producto con
+                ventas no se puede borrar, así que sin esto quedaba atrapado. */}
+            {onReactivate && !product.active && (
+              <button
+                onClick={() => onReactivate(product)}
+                className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors"
+              >
+                <Eye size={14} />
+                Reactivar
               </button>
             )}
             {/* También para productos ya ocultos: desde acá se los borra de
