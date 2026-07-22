@@ -120,6 +120,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           {/* Identificación */}
           <Section title="Identificación">
             <Row label="Código (SKU)"     value={product.sku}          mono />
+            <Row label="Código de barras" value={product.barcode}      mono />
             <Row label="Código proveedor" value={product.providerCode} mono />
             <Row label="QR sistema"       value={product.qrCodeSystem} mono />
             <Row label="Unidad"           value={product.unit} />

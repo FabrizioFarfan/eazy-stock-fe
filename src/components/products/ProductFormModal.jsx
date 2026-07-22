@@ -25,6 +25,7 @@ const schema = z.object({
   priceIsVariable: z.boolean().optional(),
   description:   z.string().optional(),
   providerCode:  z.string().optional(),
+  barcode:       z.string().max(64, 'Máximo 64 caracteres').optional(),
   purchasePrice: z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
   // salePrice se valida condicionalmente: si priceIsVariable=true, no se exige > 0
   salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'No puede ser negativo').optional(),
@@ -184,7 +185,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 firedRef.current = true
                 sessionRef.current++
                 stopCamera()
-                setValue('providerCode', barcodes[0].rawValue)
+                setValue('barcode', barcodes[0].rawValue)
                 return
               }
             } catch { /* frame not ready */ }
@@ -202,7 +203,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             firedRef.current = true
             sessionRef.current++
             stopCamera()
-            setValue('providerCode', result.getText())
+            setValue('barcode', result.getText())
           }
         })
       }
@@ -235,6 +236,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           priceIsVariable: !!product.priceIsVariable,
           description:   product.description   ?? '',
           providerCode:  product.providerCode  ?? '',
+          barcode:       product.barcode       ?? '',
           purchasePrice: product.purchasePrice ?? '',
           salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
           minStock:      product.minStock      ?? 0,
@@ -259,6 +261,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         priceIsVariable: !!product.priceIsVariable,
         description:   product.description   ?? '',
         providerCode:  product.providerCode  ?? '',
+        barcode:       product.barcode       ?? '',
         purchasePrice: product.purchasePrice ?? '',
         salePrice:     product.priceIsVariable ? '' : (product.salePrice ?? ''),
         minStock:      product.minStock      ?? 0,
@@ -362,6 +365,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             clearCategoryId: !categoryId,
             clearPresentation: !presentation,
             clearExpirationDate: !expDate,
+            clearBarcode: !(values.barcode?.trim()),
           },
         })
       } else {
@@ -377,7 +381,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     } catch (err) {
       const field = getErrorField(err)
       const code  = getErrorCode(err)
-      const known = ['name', 'sku', 'unit', 'description', 'providerCode', 'purchasePrice', 'salePrice', 'minStock']
+      const known = ['name', 'sku', 'unit', 'description', 'providerCode', 'barcode', 'purchasePrice', 'salePrice', 'minStock']
       if (code === 'DUPLICATE_SKU') {
         setError('sku', {
           type: 'server',
@@ -540,14 +544,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               />
             </div>
 
-            {/* Código proveedor */}
-            <Field label="Código proveedor" error={errors.providerCode?.message}>
+            {/* Código de barras de fábrica: el EAN impreso en el empaque por el
+                fabricante (Sony pone el código; el distribuidor no lo cambia).
+                Acá vive el escáner — es lo que la pistola/cámara lee. */}
+            <Field label="Código de barras" error={errors.barcode?.message}>
               <div className="flex gap-1.5">
                 <input
-                  {...register('providerCode')}
-                  placeholder="Código externo (opcional)"
+                  {...register('barcode')}
+                  placeholder="EAN del empaque, ej. 7501031311309 (opcional)"
+                  inputMode="numeric"
                   className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
-                    errors.providerCode
+                    errors.barcode
                       ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                       : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
                   }`}
@@ -556,7 +563,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   <button
                     type="button"
                     onClick={cameraOpen ? stopCamera : openCamera}
-                    title={cameraOpen ? 'Cerrar cámara' : 'Escanear'}
+                    title={cameraOpen ? 'Cerrar cámara' : 'Escanear código de barras'}
                     className={`flex items-center rounded-lg px-2.5 transition ${
                       cameraOpen
                         ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
@@ -577,6 +584,19 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </div>
                 </div>
               )}
+            </Field>
+
+            {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
+            <Field label="Código proveedor" error={errors.providerCode?.message}>
+              <input
+                {...register('providerCode')}
+                placeholder="Código interno del proveedor (opcional)"
+                className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                  errors.providerCode
+                    ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                    : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                }`}
+              />
             </Field>
 
             {/* Descripción */}

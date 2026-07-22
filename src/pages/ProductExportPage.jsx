@@ -20,6 +20,7 @@ const COLUMN_OPTIONS = [
   { key: 'name',            label: 'Nombre',                         def: true },
   { key: 'nameWithSku',     label: 'Nombre + código (SKU) juntos',   def: false },
   { key: 'providerCode',    label: 'Código del proveedor',           def: true },
+  { key: 'barcode',         label: 'Código de barras',               def: false },
   { key: 'supplierName',    label: 'Proveedor',                      def: true },
   { key: 'brandName',       label: 'Marca',                          def: false },
   { key: 'categoryName',    label: 'Categoría',                      def: false },
