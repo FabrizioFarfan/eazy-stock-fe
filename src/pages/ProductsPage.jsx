@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useProducts, useDeactivateProduct } from '../hooks/useProducts'
+import { useProducts } from '../hooks/useProducts'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useBrands } from '../hooks/useBrands'
 import { useCategories } from '../hooks/useCategories'
@@ -11,6 +11,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
+import DeleteProductModal from '../components/products/DeleteProductModal'
 import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
@@ -162,6 +163,7 @@ export default function ProductsPage() {
   const [qrModal,     setQrModal]     = useState(null)
   const [detailModal, setDetailModal] = useState(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [removeModal, setRemoveModal] = useState(null)   // producto a ocultar/borrar
 
   const c = debouncedCol
   const params = {
@@ -190,7 +192,6 @@ export default function ProductsPage() {
   }
 
   const { data, isLoading, isFetching } = useProducts(params)
-  const deactivate = useDeactivateProduct()
 
   const products      = data?.content       ?? []
   const totalElements = data?.totalElements ?? 0
@@ -247,10 +248,9 @@ export default function ProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleDeactivate = useCallback((p) => {
-    if (!window.confirm(`¿Desactivar "${p.name}"?`)) return
-    deactivate.mutate(p.id)
-  }, [deactivate])
+  // Ocultar o borrar: el modal explica la diferencia y solo ofrece el borrado
+  // real cuando el producto nunca se usó.
+  const handleRemove = (p) => setRemoveModal(p)
 
   return (
     <div className="flex flex-col gap-5">
@@ -551,8 +551,11 @@ export default function ProductsPage() {
           onClose={() => setDetailModal(null)}
           onEdit={isManager ? (p) => { setDetailModal(null); openEdit(p) } : undefined}
           onShowQr={isManager ? (p) => { setDetailModal(null); setQrModal(p) } : undefined}
-          onDeactivate={isManager ? (p) => { setDetailModal(null); handleDeactivate(p) } : undefined}
+          onDeactivate={isManager ? (p) => { setDetailModal(null); handleRemove(p) } : undefined}
         />
+      )}
+      {removeModal && (
+        <DeleteProductModal product={removeModal} onClose={() => setRemoveModal(null)} />
       )}
       {bulkDeleteOpen && <BulkDeleteModal onClose={() => setBulkDeleteOpen(false)} />}
     </div>

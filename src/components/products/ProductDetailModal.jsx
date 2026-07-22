@@ -283,13 +283,15 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 Registrar entrada
               </button>
             )}
-            {onDeactivate && product.active && (
+            {/* También para productos ya ocultos: desde acá se los borra de
+                verdad y su código vuelve a quedar libre. */}
+            {onDeactivate && (
               <button
                 onClick={() => onDeactivate(product)}
                 className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={14} />
-                Desactivar
+                {product.active ? 'Ocultar o borrar' : 'Borrar definitivamente'}
               </button>
             )}
             {onShowQr && (

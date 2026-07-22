@@ -12,6 +12,10 @@ export const productsApi = {
 
   deactivate: (id) => api.delete(`/products/${id}`),
 
+  // Borrado definitivo: solo productos sin ventas ni recepciones (409 si tienen historial)
+  checkDeletable: (id) => api.get(`/products/${id}/deletable`),
+  deletePermanently: (id) => api.delete(`/products/${id}/permanent`),
+
   // Borrado masivo por rango de fecha de creación (from/to en formato YYYY-MM-DD)
   bulkDeletePreview: (from, to) =>
     api.get('/products/bulk-delete/preview', { params: { from, to } }),

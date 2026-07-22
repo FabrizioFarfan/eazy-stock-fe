@@ -37,6 +37,18 @@ export function useDeactivateProduct() {
   })
 }
 
+/**
+ * Borrado definitivo de un producto sin uso. Libera su código para que el
+ * protocolo del negocio no salte números por productos que nunca se vendieron.
+ */
+export function useDeleteProductPermanently() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productsApi.deletePermanently(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+  })
+}
+
 /** Borrado masivo por rango de fecha de creación. */
 export function useBulkDeleteProducts() {
   const qc = useQueryClient()
