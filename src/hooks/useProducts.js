@@ -58,6 +58,20 @@ export function useDeleteProductPermanently() {
   })
 }
 
+/**
+ * Borrado FORZADO en cascada: borra el producto y TODO lo ligado (ventas, fiado,
+ * devoluciones, recepciones). Para productos de prueba atrapados por tener
+ * historial. Toca muchos dominios (ventas, clientes, proveedores, stock,
+ * reportes), así que invalida todo el cache para reflejar los cambios.
+ */
+export function useForceDeleteProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productsApi.forceDelete(id),
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
 /** Borrado masivo por rango de fecha de creación. */
 export function useBulkDeleteProducts() {
   const qc = useQueryClient()

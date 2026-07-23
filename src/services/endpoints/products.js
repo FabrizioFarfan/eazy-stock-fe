@@ -19,6 +19,11 @@ export const productsApi = {
   checkDeletable: (id) => api.get(`/products/${id}/deletable`),
   deletePermanently: (id) => api.delete(`/products/${id}/permanent`),
 
+  // Borrado FORZADO en cascada: para productos de prueba atrapados por tener historial.
+  // El preview cuenta el impacto (ventas/fiado/recepciones + colateral); force lo ejecuta.
+  forceDeletePreview: (id) => api.get(`/products/${id}/force-delete/preview`),
+  forceDelete: (id) => api.delete(`/products/${id}/force`),
+
   // Borrado masivo por rango de fecha de creación (from/to en formato YYYY-MM-DD)
   bulkDeletePreview: (from, to) =>
     api.get('/products/bulk-delete/preview', { params: { from, to } }),
