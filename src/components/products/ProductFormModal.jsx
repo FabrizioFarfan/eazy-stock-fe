@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle } from 'lucide-react'
-import { useCreateProduct, useUpdateProduct } from '../../hooks/useProducts'
+import { useCreateProduct, useUpdateProduct, useFreeCodes } from '../../hooks/useProducts'
 import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useBrands, useCreateBrand } from '../../hooks/useBrands'
 import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
@@ -69,6 +69,82 @@ function Field({ label, required, error, children }) {
 const inputCls =
   'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
+/**
+ * Sugerencia de códigos libres: huecos que dejó el borrado de productos que
+ * nunca se vendieron ni se recibieron.
+ *
+ * Sugerimos en vez de rellenar solo, a propósito. El código de un producto vive
+ * afuera del sistema (sticker en la góndola, lista impresa), así que quien sabe
+ * de verdad si un hueco se puede reusar es el dueño, no la app. Si no lo elige,
+ * el alta sigue con su numeración normal y el hueco queda ahí, esperando.
+ */
+function FreeCodesHint({ codes, onPick }) {
+  const [dismissed, setDismissed] = useState(false)
+  if (dismissed || !codes?.length) return null
+
+  const fmt = (iso) => {
+    if (!iso) return null
+    const d = new Date(iso)
+    return Number.isNaN(d.getTime())
+      ? null
+      : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+  }
+
+  return (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium text-amber-900">
+          {codes.length === 1
+            ? 'Hay 1 código libre de un producto borrado'
+            : `Hay ${codes.length} códigos libres de productos borrados`}
+        </p>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="shrink-0 text-amber-500 transition hover:text-amber-700"
+          title="Ocultar sugerencia"
+        >
+          <X size={14} />
+        </button>
+      </div>
+
+      <ul className="mt-1.5 flex flex-col gap-1">
+        {codes.slice(0, 5).map((c) => {
+          const when = fmt(c.releasedAt)
+          return (
+            <li key={c.code} className="flex items-center justify-between gap-2">
+              <span className="min-w-0 text-xs text-amber-800">
+                <span className="font-mono font-semibold">{c.code}</span>
+                {c.formerProductName && (
+                  <span className="text-amber-700"> · era "{c.formerProductName}"</span>
+                )}
+                {when && <span className="text-amber-600"> · liberado el {when}</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => onPick(c.code)}
+                className="shrink-0 rounded-md border border-amber-300 bg-white px-2 py-0.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
+              >
+                Usar
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+
+      {codes.length > 5 && (
+        <p className="mt-1 text-[11px] text-amber-600">
+          y {codes.length - 5} más…
+        </p>
+      )}
+      <p className="mt-1.5 text-[11px] leading-snug text-amber-600">
+        Nunca se vendieron ni se recibieron, así que su código no llegó a circular.
+        Si no eliges ninguno, se usa tu numeración normal.
+      </p>
+    </div>
+  )
+}
+
 // Devuelve una función para detectar si el nombre que el usuario está escribiendo
 // como "nueva categoría" coincide con un proveedor o marca ya cargado — caso
 // real que vimos con un cliente que escribió el nombre de un proveedor en el
@@ -117,6 +193,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   const createBrand    = useCreateBrand()
   const createSupplier = useCreateSupplier()
   const createCategory = useCreateCategory()
+
+  // Huecos en la numeración (códigos de productos borrados que nunca se usaron).
+  // Solo en el alta: en la edición el producto ya tiene su código.
+  const { data: freeCodesData } = useFreeCodes({ enabled: !isEdit })
+  const freeCodes = isEdit ? [] : (freeCodesData ?? [])
 
   // Controlled brand/supplier/category (outside RHF schema)
   const [brandId,     setBrandId]     = useState(product?.brandId     ?? null)
@@ -472,6 +553,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   ? 'Código interno único. Cámbialo solo si necesitas corregirlo.'
                   : 'Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.'}
               </p>
+              <FreeCodesHint codes={freeCodes} onPick={(code) => setValue('sku', code)} />
             </Field>
 
             <Field label="Presentación" error={errors.presentation?.message}>

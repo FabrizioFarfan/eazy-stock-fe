@@ -24,6 +24,10 @@ export const productsApi = {
   forceDeletePreview: (id) => api.get(`/products/${id}/force-delete/preview`),
   forceDelete: (id) => api.delete(`/products/${id}/force`),
 
+  // Huecos reutilizables en la numeración: códigos de productos borrados que
+  // nunca tuvieron movimientos. Se sugieren al dar de alta un producto nuevo.
+  freeCodes: () => api.get('/products/free-codes'),
+
   // Borrado masivo por rango de fecha de creación (from/to en formato YYYY-MM-DD)
   bulkDeletePreview: (from, to) =>
     api.get('/products/bulk-delete/preview', { params: { from, to } }),

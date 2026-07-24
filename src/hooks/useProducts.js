@@ -13,11 +13,30 @@ export function useProducts(params, options = {}) {
   })
 }
 
+export const FREE_CODES_KEY = 'product-free-codes'
+
+/**
+ * Huecos reutilizables en la numeración del negocio (códigos de productos
+ * borrados que nunca se vendieron ni se recibieron). Solo trae huecos del
+ * MEDIO: el de la cola se autocura porque el generador es max+1.
+ */
+export function useFreeCodes(options = {}) {
+  return useQuery({
+    queryKey: [FREE_CODES_KEY],
+    queryFn: () => productsApi.freeCodes().then((r) => r.data.data),
+    ...options,
+  })
+}
+
 export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data) => productsApi.create(data).then((r) => r.data.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+      // El alta pudo haber tapado un hueco (elegido a mano o alcanzado por max+1).
+      qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
+    },
   })
 }
 
@@ -54,7 +73,11 @@ export function useDeleteProductPermanently() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id) => productsApi.deletePermanently(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+      // Su código quedó libre: puede aparecer como hueco sugerible.
+      qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
+    },
   })
 }
 
@@ -77,6 +100,9 @@ export function useBulkDeleteProducts() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ from, to }) => productsApi.bulkDelete(from, to).then((r) => r.data.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+      qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
+    },
   })
 }
