@@ -30,11 +30,13 @@ export default function QuotePage() {
   const debounced = useDebounce(query, 350)
   const scanLock  = useRef(false)
 
+  // size alto: con 8 no salían TODOS los matches y parecía que el producto no existía
   const { data: prodData, isLoading: loadingProds } = useProducts(
-    debounced ? { search: debounced, size: 8, active: true } : null,
+    debounced ? { search: debounced, size: 100, active: true } : null,
     { enabled: !!debounced },
   )
   const results = prodData?.content ?? []
+  const totalMatches = prodData?.totalElements ?? 0
 
   // ── Cart ─────────────────────────────────────────────────────────────────────
   const [items, setItems] = useState([]) // [{ productId, name, sku, unit, qty, unitPrice }]
@@ -147,24 +149,31 @@ export default function QuotePage() {
                 placeholder="Buscar producto o escanear código..."
               />
               {showDrop && debounced && (
-                <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+                <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
                   {loadingProds ? (
                     <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
                   ) : results.length === 0 ? (
                     <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
                   ) : (
-                    results.map((p) => (
-                      <button key={p.id} type="button" onClick={() => addProduct(p)}
-                        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                        <span className="font-semibold text-gray-900">{p.name}</span>
-                        <span className="ml-2 flex items-center gap-2 flex-shrink-0">
-                          <span className="font-mono text-xs text-gray-400">{p.sku}</span>
-                          <span className="text-xs font-semibold text-gray-600">
-                            {p.priceIsVariable ? 'Variable' : formatPrice(p.salePrice)}
+                    <>
+                      {results.map((p) => (
+                        <button key={p.id} type="button" onClick={() => addProduct(p)}
+                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                          <span className="font-semibold text-gray-900">{p.name}</span>
+                          <span className="ml-2 flex items-center gap-2 flex-shrink-0">
+                            <span className="font-mono text-xs text-gray-400">{p.sku}</span>
+                            <span className="text-xs font-semibold text-gray-600">
+                              {p.priceIsVariable ? 'Variable' : formatPrice(p.salePrice)}
+                            </span>
                           </span>
-                        </span>
-                      </button>
-                    ))
+                        </button>
+                      ))}
+                      {totalMatches > results.length && (
+                        <p className="px-4 py-2 text-center text-xs text-gray-400">
+                          Mostrando {results.length} de {totalMatches} — escribe más letras para afinar
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               )}

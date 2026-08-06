@@ -252,7 +252,7 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
   const debounced = useDebounce(query, 350)
 
   const { data, isLoading } = useCustomers(
-    debounced ? { search: debounced, size: 8 } : null,
+    debounced ? { search: debounced, size: 50 } : null,
     { enabled: !!debounced },
   )
   const results = data?.content ?? []
@@ -293,7 +293,7 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
         Registrar nuevo cliente
       </button>
       {open && debounced && (
-        <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
           {isLoading ? (
             <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
           ) : results.length === 0 ? (
@@ -428,11 +428,14 @@ export default function NewSalePage() {
     else navigate('/sales')
   }
 
+  // size alto: con 10 el cajero no veía TODOS los matches ("silicona" = 35 en
+  // Ferrefano) y creía que el producto no existía
   const { data: productsData, isLoading: loadingProducts } = useProducts(
-    debouncedSearch ? { search: debouncedSearch, size: 10, active: true } : null,
+    debouncedSearch ? { search: debouncedSearch, size: 100, active: true } : null,
     { enabled: !!debouncedSearch },
   )
   const searchResults = productsData?.content ?? []
+  const totalMatches  = productsData?.totalElements ?? 0
   const cartIds       = new Set(cart.map((i) => i.product.id))
 
   const addToCart = (product) => {
@@ -633,6 +636,11 @@ export default function NewSalePage() {
               {searchResults.map((p) => (
                 <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart} />
               ))}
+              {totalMatches > searchResults.length && (
+                <p className="py-2 text-center text-xs text-gray-400">
+                  Mostrando {searchResults.length} de {totalMatches} — escribe más letras para afinar la búsqueda
+                </p>
+              )}
             </div>
           )}
         </div>
