@@ -21,6 +21,7 @@ import SalesByDayChart from '../components/reports/SalesByDayChart'
 import TopProductsList from '../components/reports/TopProductsList'
 import SalesTable      from '../components/reports/SalesTable'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { printSupplierOrder } from '../utils/printSupplierOrder'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -391,12 +392,69 @@ function TabByProvider({ businessId }) {
 // ── Tab: Stock bajo ───────────────────────────────────────────────────────────
 
 function TabLowStock({ businessId }) {
-  const params = { size: 50, ...(businessId && { businessId }) }
+  const { user } = useAuth()
+  const params = { size: 500, ...(businessId && { businessId }) }
   const { data, isLoading } = useReportsLowStock(params)
   const items = data?.content ?? []
 
+  // Pedido al proveedor: el PDF que se le comparte lleva solo SU información
+  // (código del proveedor, producto, marca, cantidad) — nunca stock ni precios.
+  const [orderSupplier, setOrderSupplier] = useState('')
+  const { data: suppliersData } = useSuppliers({ size: 200, ...(businessId && { businessId }) })
+  const supplierByName = new Map((suppliersData?.content ?? []).map((s) => [s.name, s]))
+
+  const orderableBySupplier = items.reduce((acc, p) => {
+    if (!p.providerName || Number(p.deficit) <= 0) return acc
+    ;(acc[p.providerName] ??= []).push(p)
+    return acc
+  }, {})
+  const supplierNames = Object.keys(orderableBySupplier).sort((a, b) => a.localeCompare(b))
+
+  const handlePrintOrder = () => {
+    const rows = orderableBySupplier[orderSupplier] ?? []
+    if (!rows.length) return
+    const s = supplierByName.get(orderSupplier)
+    printSupplierOrder({
+      businessName: user?.businessName,
+      authorName:   user?.name,
+      supplier: { name: orderSupplier, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
+      items: rows.map((p) => ({
+        productName:  p.productName,
+        providerCode: p.providerCode,
+        brand:        p.brand,
+        qty:          p.deficit,
+        unit:         p.unit,
+      })),
+    })
+  }
+
   return (
     <div className="space-y-4">
+      {supplierNames.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
+            <Printer size={15} />
+            Pedido al proveedor
+          </div>
+          <select value={orderSupplier} onChange={(e) => setOrderSupplier(e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
+            <option value="">Elegir proveedor...</option>
+            {supplierNames.map((name) => (
+              <option key={name} value={name}>
+                {name} — {orderableBySupplier[name].length} producto(s)
+              </option>
+            ))}
+          </select>
+          <button onClick={handlePrintOrder} disabled={!orderSupplier}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50">
+            Generar PDF
+          </button>
+          <p className="basis-full text-xs text-blue-700/70 sm:basis-auto">
+            El documento lista el déficit de cada producto, sin mostrar tu stock actual ni precios.
+          </p>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="h-40 animate-pulse rounded-xl bg-gray-100" />
       ) : items.length === 0 ? (
