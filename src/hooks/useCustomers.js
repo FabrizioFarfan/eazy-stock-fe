@@ -34,7 +34,7 @@ export function useCreateCustomer() {
 export function useUpdateCustomer() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }) => customersApi.update(id, data).then((r) => r.data.data),
+    mutationFn: ({ id, data, params }) => customersApi.update(id, data, params).then((r) => r.data.data),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY] })
       qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY, 'detail', vars.id] })
@@ -45,7 +45,8 @@ export function useUpdateCustomer() {
 export function useDeleteCustomer() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id) => customersApi.remove(id),
+    // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
+    mutationFn: (vars) => (typeof vars === 'object' ? customersApi.remove(vars.id, vars.params) : customersApi.remove(vars)),
     onSuccess: () => qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY] }),
   })
 }

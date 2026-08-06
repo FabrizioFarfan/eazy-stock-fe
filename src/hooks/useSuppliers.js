@@ -23,7 +23,7 @@ export function useCreateSupplier() {
 export function useUpdateSupplier() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }) => suppliersApi.update(id, data).then((r) => r.data.data),
+    mutationFn: ({ id, data, params }) => suppliersApi.update(id, data, params).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: [SUPPLIERS_KEY] }),
   })
 }
@@ -31,7 +31,8 @@ export function useUpdateSupplier() {
 export function useDeleteSupplier() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id) => suppliersApi.remove(id),
+    // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
+    mutationFn: (vars) => (typeof vars === 'object' ? suppliersApi.remove(vars.id, vars.params) : suppliersApi.remove(vars)),
     onSuccess: () => qc.invalidateQueries({ queryKey: [SUPPLIERS_KEY] }),
   })
 }

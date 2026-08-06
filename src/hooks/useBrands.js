@@ -23,7 +23,7 @@ export function useCreateBrand() {
 export function useUpdateBrand() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }) => brandsApi.update(id, data).then((r) => r.data.data),
+    mutationFn: ({ id, data, params }) => brandsApi.update(id, data, params).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: [BRANDS_KEY] }),
   })
 }
@@ -31,7 +31,8 @@ export function useUpdateBrand() {
 export function useDeleteBrand() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id) => brandsApi.remove(id),
+    // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
+    mutationFn: (vars) => (typeof vars === 'object' ? brandsApi.remove(vars.id, vars.params) : brandsApi.remove(vars)),
     onSuccess: () => qc.invalidateQueries({ queryKey: [BRANDS_KEY] }),
   })
 }

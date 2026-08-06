@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/useSuppliers'
+import { useAuth } from '../context/AuthContext'
+import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
 import PageTitle from '../components/common/PageTitle'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
@@ -33,6 +35,7 @@ function Field({ label, error, children }) {
 // ── Supplier modal ────────────────────────────────────────────────────────────
 
 function SupplierModal({ supplier, onClose }) {
+  const { user } = useAuth()
   const isEdit   = !!supplier
   const create   = useCreateSupplier()
   const update   = useUpdateSupplier()
@@ -47,8 +50,8 @@ function SupplierModal({ supplier, onClose }) {
 
   const onSubmit = async (values) => {
     try {
-      if (isEdit) await update.mutateAsync({ id: supplier.id, data: values })
-      else await create.mutateAsync(values)
+      if (isEdit) await update.mutateAsync({ id: supplier.id, data: values, params: adminBizParam(user) })
+      else await create.mutateAsync({ ...values, ...adminBizParam(user) })
       onClose()
     } catch (err) {
       const field = getErrorField(err)
@@ -124,7 +127,8 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
     .join('')
 
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all group">
+    <div className="flex cursor-pointer flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all"
+      onClick={() => onEdit(supplier)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-blue-600">
@@ -137,12 +141,12 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
             )}
           </div>
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={() => onEdit(supplier)}
+        <div className="flex gap-1">
+          <button onClick={(e) => { e.stopPropagation(); onEdit(supplier) }} title="Editar"
             className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
             <Edit size={14} />
           </button>
-          <button onClick={() => onDelete(supplier)}
+          <button onClick={(e) => { e.stopPropagation(); onDelete(supplier) }} title="Eliminar"
             className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
             <Trash2 size={14} />
           </button>
@@ -176,6 +180,7 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SuppliersPage() {
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [modal, setModal]   = useState(null)
   const debouncedSearch     = useDebounce(search, 400)
@@ -183,13 +188,14 @@ export default function SuppliersPage() {
 
   const { data, isLoading } = useSuppliers({
     size: 50,
+    ...adminBizParam(user),
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const suppliers = data?.content ?? []
 
   const handleDelete = async (s) => {
     if (!window.confirm(`¿Eliminar "${s.name}"?\nEsto fallará si tiene productos asociados.`)) return
-    try { await deleteSupplier.mutateAsync(s.id) }
+    try { await deleteSupplier.mutateAsync({ id: s.id, params: adminBizParam(user) }) }
     catch (err) { alert(getErrorMessage(err)) }
   }
 

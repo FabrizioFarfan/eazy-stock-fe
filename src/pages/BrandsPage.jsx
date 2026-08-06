@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useBrands, useCreateBrand, useUpdateBrand, useDeleteBrand } from '../hooks/useBrands'
+import { useAuth } from '../context/AuthContext'
+import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -33,6 +35,7 @@ function brandColor(name = '') {
 // ── Brand modal ───────────────────────────────────────────────────────────────
 
 function BrandModal({ brand, onClose }) {
+  const { user } = useAuth()
   const isEdit   = !!brand
   const create   = useCreateBrand()
   const update   = useUpdateBrand()
@@ -45,8 +48,8 @@ function BrandModal({ brand, onClose }) {
 
   const onSubmit = async (values) => {
     try {
-      if (isEdit) await update.mutateAsync({ id: brand.id, data: values })
-      else await create.mutateAsync(values)
+      if (isEdit) await update.mutateAsync({ id: brand.id, data: values, params: adminBizParam(user) })
+      else await create.mutateAsync({ ...values, ...adminBizParam(user) })
       onClose()
     } catch (err) {
       const field = getErrorField(err)
@@ -111,7 +114,8 @@ function BrandCard({ brand, onEdit, onDelete }) {
   const colorCls = brandColor(brand.name)
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all group">
+    <div className="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all"
+      onClick={() => onEdit(brand)}>
       <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold ${colorCls}`}>
         {initial}
       </div>
@@ -121,12 +125,12 @@ function BrandCard({ brand, onEdit, onDelete }) {
           <p className="mt-0.5 text-xs text-gray-400 truncate">{brand.notes}</p>
         )}
       </div>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={() => onEdit(brand)}
+      <div className="flex gap-1">
+        <button onClick={(e) => { e.stopPropagation(); onEdit(brand) }} title="Editar"
           className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
           <Edit size={14} />
         </button>
-        <button onClick={() => onDelete(brand)}
+        <button onClick={(e) => { e.stopPropagation(); onDelete(brand) }} title="Eliminar"
           className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
           <Trash2 size={14} />
         </button>
@@ -138,6 +142,7 @@ function BrandCard({ brand, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function BrandsPage() {
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [modal, setModal]   = useState(null)
   const debouncedSearch     = useDebounce(search, 400)
@@ -145,13 +150,14 @@ export default function BrandsPage() {
 
   const { data, isLoading } = useBrands({
     size: 50,
+    ...adminBizParam(user),
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const brands = data?.content ?? []
 
   const handleDelete = async (b) => {
     if (!window.confirm(`¿Eliminar "${b.name}"?\nEsto fallará si tiene productos asociados.`)) return
-    try { await deleteBrand.mutateAsync(b.id) }
+    try { await deleteBrand.mutateAsync({ id: b.id, params: adminBizParam(user) }) }
     catch (err) { alert(getErrorMessage(err)) }
   }
 

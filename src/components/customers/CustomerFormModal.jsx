@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers'
+import { useAuth } from '../../context/AuthContext'
+import { adminBizParam } from '../../utils/adminBiz'
 import PriceInput from '../inputs/PriceInput'
 import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
@@ -46,6 +48,7 @@ function Field({ label, required, error, children }) {
 }
 
 export default function CustomerFormModal({ customer, onClose, onCreated, initialName }) {
+  const { user } = useAuth()
   const isEdit = !!customer
   const create = useCreateCustomer()
   const update = useUpdateCustomer()
@@ -88,10 +91,10 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
         creditLimit: values.creditLimit === '' ? null : values.creditLimit,
       }
       if (isEdit) {
-        await update.mutateAsync({ id: customer.id, data: payload })
+        await update.mutateAsync({ id: customer.id, data: payload, params: adminBizParam(user) })
         toast.success('Cliente actualizado')
       } else {
-        const created = await create.mutateAsync(payload)
+        const created = await create.mutateAsync({ ...payload, ...adminBizParam(user) })
         toast.success('Cliente creado')
         onCreated?.(created)
       }

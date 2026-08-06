@@ -5,6 +5,6 @@ export const categoriesApi = {
   getById: (id) => api.get(`/categories/${id}`),
   getSuggestedAttributes: (id) => api.get(`/categories/${id}/suggested-attributes`),
   create: (data) => api.post('/categories', data),
-  update: (id, data) => api.put(`/categories/${id}`, data),
-  delete: (id) => api.delete(`/categories/${id}`),
+  update: (id, data, params) => api.put(`/categories/${id}`, data, { params }),
+  delete: (id, params) => api.delete(`/categories/${id}`, { params }),
 }

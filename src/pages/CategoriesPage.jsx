@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories'
+import { useAuth } from '../context/AuthContext'
+import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -32,6 +34,7 @@ const catColor = (name = '') => CAT_COLORS[(name.charCodeAt(0) || 0) % CAT_COLOR
 // ── Category modal ────────────────────────────────────────────────────────────
 
 function CategoryModal({ category, onClose }) {
+  const { user } = useAuth()
   const isEdit   = !!category
   const create   = useCreateCategory()
   const update   = useUpdateCategory()
@@ -61,8 +64,8 @@ function CategoryModal({ category, onClose }) {
   const onSubmit = async (values) => {
     try {
       const payload = { ...values, suggestedAttributes: suggestedAttrs }
-      if (isEdit) await update.mutateAsync({ id: category.id, data: payload })
-      else        await create.mutateAsync(payload)
+      if (isEdit) await update.mutateAsync({ id: category.id, data: payload, params: adminBizParam(user) })
+      else        await create.mutateAsync({ ...payload, ...adminBizParam(user) })
       onClose()
     } catch (err) {
       const field = getErrorField(err)
@@ -169,7 +172,7 @@ function CategoryCard({ category, onEdit, onDelete }) {
 
   return (
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center gap-4 p-4 group">
+      <div className="flex cursor-pointer items-center gap-4 p-4" onClick={() => onEdit(category)}>
         <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold ${colorCls}`}>
           {initial}
         </div>
@@ -184,21 +187,19 @@ function CategoryCard({ category, onEdit, onDelete }) {
         </div>
         <div className="flex gap-1 items-center">
           {attrs.length > 0 && (
-            <button onClick={() => setExpanded((v) => !v)}
+            <button onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v) }}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
           )}
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(category)}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-              <Edit size={14} />
-            </button>
-            <button onClick={() => onDelete(category)}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-              <Trash2 size={14} />
-            </button>
-          </div>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(category) }} title="Editar"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
+            <Edit size={14} />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onDelete(category) }} title="Eliminar"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
       {expanded && attrs.length > 0 && (
@@ -220,6 +221,7 @@ function CategoryCard({ category, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CategoriesPage() {
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [modal, setModal]   = useState(null)
   const debouncedSearch     = useDebounce(search, 400)
@@ -227,13 +229,14 @@ export default function CategoriesPage() {
 
   const { data, isLoading } = useCategories({
     size: 50,
+    ...adminBizParam(user),
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const categories = data?.content ?? []
 
   const handleDelete = async (c) => {
     if (!window.confirm(`¿Eliminar "${c.name}"?\nEsto fallará si tiene productos asociados.`)) return
-    try { await deleteCategory.mutateAsync(c.id) }
+    try { await deleteCategory.mutateAsync({ id: c.id, params: adminBizParam(user) }) }
     catch (err) { alert(getErrorMessage(err)) }
   }
 

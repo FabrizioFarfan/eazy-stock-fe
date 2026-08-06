@@ -4,8 +4,8 @@ export const customersApi = {
   getAll:   (params)      => api.get('/customers', { params }),
   getById:  (id)          => api.get(`/customers/${id}`),
   create:   (data)        => api.post('/customers', data),
-  update:   (id, data)    => api.put(`/customers/${id}`, data),
-  remove:   (id)          => api.delete(`/customers/${id}`),
+  update:   (id, data, params) => api.put(`/customers/${id}`, data, { params }),
+  remove:   (id, params)  => api.delete(`/customers/${id}`, { params }),
 
   getTransactions: (id, params) => api.get(`/customers/${id}/transactions`, { params }),
   // Estado de cuenta: cargos con productos, abonos y saldo — fuente del PDF para el deudor

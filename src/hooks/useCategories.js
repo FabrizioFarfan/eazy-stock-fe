@@ -32,7 +32,7 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }) => categoriesApi.update(id, data).then((r) => r.data.data),
+    mutationFn: ({ id, data, params }) => categoriesApi.update(id, data, params).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   })
 }
@@ -40,7 +40,8 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id) => categoriesApi.delete(id),
+    // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
+    mutationFn: (vars) => (typeof vars === 'object' ? categoriesApi.delete(vars.id, vars.params) : categoriesApi.delete(vars)),
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   })
 }
