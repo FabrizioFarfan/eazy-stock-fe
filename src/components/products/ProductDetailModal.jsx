@@ -69,7 +69,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
   const attrs = product.attributes ?? {}
   const hasAttrs = Object.keys(attrs).length > 0
 
-  const isLow = product.currentStock <= product.minStock
+  const isLow = product.currentStock < product.minStock
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">

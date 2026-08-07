@@ -3,7 +3,7 @@ import { Plus, X, Check, Search, Loader2, AlertTriangle } from 'lucide-react'
 import { getErrorMessage } from '../../utils/handleApiError'
 
 /**
- * Horizontal scrollable chip picker with inline quick-add form.
+ * Chip picker (los chips envuelven en filas, con scroll vertical) + quick-add inline.
  * Parent handles the actual mutation; este componente solo muestra el resultado.
  *
  * Errores de la mutación inline: si onCreate rechaza, mostramos el mensaje
@@ -102,8 +102,9 @@ export default function EntityPicker({
         />
       </div>
 
-      {/* Horizontal chips */}
-      <div className="flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+      {/* Chips: envuelven en varias filas y scrollean en vertical — en PC no hay
+          gesto natural para arrastrar lateral y obligaba a escribir el nombre entero */}
+      <div className="flex max-h-40 flex-wrap content-start gap-2 overflow-y-auto pb-0.5 pr-1">
         {filtered.length === 0 ? (
           <span className="py-1 text-xs text-gray-400 flex-shrink-0">
             {search ? 'Sin resultados' : 'No hay elementos'}

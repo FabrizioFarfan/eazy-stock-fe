@@ -53,7 +53,7 @@ function printSupplierRestock(supplierName, from, to, rows) {
 
   const body = rows.map((r) => {
     const suggested = Math.max(r.sold, Math.max(0, r.minStock - r.currentStock))
-    const low = r.currentStock <= r.minStock
+    const low = r.currentStock < r.minStock
     return `<tr${low ? ' class="low"' : ''}>
       <td>${escapeHtml(r.productName)}</td>
       <td class="mono">${escapeHtml(r.sku ?? '')}</td>
@@ -643,7 +643,7 @@ function TabSupplierRestock({ businessId }) {
             <tbody className="divide-y divide-gray-100">
               {rows.map((r) => {
                 const suggested = Math.max(r.sold, Math.max(0, r.minStock - r.currentStock))
-                const stockOk   = r.currentStock > r.minStock
+                const stockOk   = r.currentStock >= r.minStock
                 return (
                   <tr key={r.productId} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{r.productName}</td>

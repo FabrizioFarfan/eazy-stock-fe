@@ -51,7 +51,7 @@ function SkeletonRow() {
 }
 
 function StockBadge({ current, min }) {
-  const isLow = current <= min
+  const isLow = current < min   // en el mínimo exacto aún está OK (verde)
   return isLow ? (
     <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">
       ↓ {current}
