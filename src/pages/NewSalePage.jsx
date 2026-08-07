@@ -387,11 +387,25 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onReques
   )
 }
 
+// ── Borrador de venta ─────────────────────────────────────────────────────────
+// La venta en curso se guarda en localStorage (por usuario): el cajero puede ir
+// a Productos o Reportes a mitad de venta, volver, y seguir donde estaba.
+// Sobrevive también a un refresh. Se limpia al cobrar o al descartarla.
+
+const saleDraftKey = (userId) => `eazystock_sale_draft_${userId || 'anon'}`
+
+function loadSaleDraft(userId) {
+  try {
+    const d = JSON.parse(localStorage.getItem(saleDraftKey(userId)))
+    return Array.isArray(d?.cart) && d.cart.length > 0 ? d : null
+  } catch { return null }
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NewSalePage() {
   const navigate      = useNavigate()
-  const { can }       = useAuth()
+  const { user, can } = useAuth()
   const canApplyDiscount = can('canApplyDiscount')
   const canSellOnCredit  = can('canSellOnCredit')
 
@@ -414,15 +428,36 @@ export default function NewSalePage() {
 
   useEffect(() => { cartStateRef.current = cart }, [cart])
 
-  // Avisar antes de cerrar/recargar la pestaña con una venta en proceso.
+  // Restaurar el borrador al entrar (una sola vez, cuando ya sabemos quién es).
+  const draftRestoredRef = useRef(false)
   useEffect(() => {
-    if (cart.length === 0) return
-    const handler = (e) => { e.preventDefault(); e.returnValue = '' }
-    window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
-  }, [cart.length])
+    if (!user?.id || draftRestoredRef.current) return
+    draftRestoredRef.current = true
+    const d = loadSaleDraft(user.id)
+    if (!d) return
+    setCart(d.cart)
+    setNotes(d.notes ?? '')
+    setDiscountType(d.discountType ?? 'PERCENTAGE')
+    setDiscountValue(d.discountValue ?? '')
+    setOnCredit(!!d.onCredit)
+    setCustomer(d.customer ?? null)
+    toast.info(`Se restauró tu venta en curso (${d.cart.length} producto${d.cart.length === 1 ? '' : 's'})`)
+  }, [user?.id])
 
-  // Salir de la venta: si hay productos cargados, confirmar antes de descartar.
+  // Autosave del borrador en cada cambio; carrito vacío = no hay venta que guardar.
+  useEffect(() => {
+    if (!user?.id || !draftRestoredRef.current) return
+    if (cart.length === 0) { localStorage.removeItem(saleDraftKey(user.id)); return }
+    localStorage.setItem(saleDraftKey(user.id), JSON.stringify({
+      cart, notes, discountType, discountValue, onCredit, customer, savedAt: Date.now(),
+    }))
+  }, [cart, notes, discountType, discountValue, onCredit, customer, user?.id])
+
+  const discardDraft = () => {
+    if (user?.id) localStorage.removeItem(saleDraftKey(user.id))
+  }
+
+  // Salir de la venta: si hay productos cargados, preguntar qué hacer con ella.
   const requestLeave = () => {
     if (cart.length > 0) setPendingLeave(true)
     else navigate('/sales')
@@ -570,6 +605,7 @@ export default function NewSalePage() {
             : undefined,
         )
       }
+      discardDraft()
       navigate('/sales')
     } catch { /* error shown via createSale.isError */ }
   }
@@ -788,7 +824,8 @@ export default function NewSalePage() {
       {pendingLeave && (
         <ConfirmLeaveModal
           onStay={() => setPendingLeave(false)}
-          onLeave={() => { setPendingLeave(false); navigate('/sales') }}
+          onLeaveKeep={() => { setPendingLeave(false); navigate('/sales') }}
+          onDiscard={() => { setPendingLeave(false); discardDraft(); setCart([]); navigate('/sales') }}
         />
       )}
     </div>
@@ -797,7 +834,7 @@ export default function NewSalePage() {
 
 // ── ConfirmLeaveModal — evita perder una venta en proceso por error ───────────
 
-function ConfirmLeaveModal({ onStay, onLeave }) {
+function ConfirmLeaveModal({ onStay, onLeaveKeep, onDiscard }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
@@ -808,12 +845,18 @@ function ConfirmLeaveModal({ onStay, onLeave }) {
           <div className="min-w-0">
             <h3 className="text-base font-bold text-gray-900">¿Salir de la venta?</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Tienes productos cargados en el carrito. Si sales ahora, se perderán
-              y la venta no quedará registrada.
+              Tienes productos en el carrito. Puedes salir tranquilo: la venta
+              queda guardada y sigue donde la dejaste cuando vuelvas.
             </p>
           </div>
         </div>
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-5 flex flex-col gap-2">
+          <button
+            onClick={onLeaveKeep}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            Salir — la venta queda guardada
+          </button>
           <button
             onClick={onStay}
             className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
@@ -821,10 +864,10 @@ function ConfirmLeaveModal({ onStay, onLeave }) {
             Seguir con la venta
           </button>
           <button
-            onClick={onLeave}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            onClick={onDiscard}
+            className="rounded-xl px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
           >
-            Salir y descartar
+            Descartar la venta
           </button>
         </div>
       </div>
