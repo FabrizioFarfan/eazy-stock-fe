@@ -134,6 +134,16 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
     prev.map((i) => i.product.id === id ? { ...i, quantity: (Number(i.quantity) || 0) + 1 } : i))
   const changeUnitCost = (id, value) => setItems((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, unitCost: value } : i))
+  // Venta editable desde la recepción: el costo subió → el OWNER decide su
+  // margen ahí mismo. Cerrar el editor descarta el cambio (venta queda como está).
+  const toggleSale = (id) => setItems((prev) =>
+    prev.map((i) => i.product.id === id
+      ? { ...i, saleOpen: !i.saleOpen, ...(i.saleOpen ? { salePrice: null } : {}) }
+      : i))
+  const changeSalePrice = (id, value) => setItems((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, salePrice: value } : i))
+  const effSale = (i) => i.salePrice != null ? Number(i.salePrice) : Number(i.product.salePrice ?? 0)
+  const marginOf = (i) => effSale(i) - Number(i.unitCost ?? 0)
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.product.id !== id))
 
   const handleScan = async (code) => {
@@ -191,6 +201,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             productId: i.product.id,
             quantity:  i.quantity,
             unitCost:  i.unitCost ?? null,
+            salePrice: i.salePrice ?? null,
           })),
           totalAmount:       finalTotal,
           paymentMode,
@@ -458,6 +469,40 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               {formatPrice((Number(it.quantity) || 0) * Number(it.unitCost ?? 0))}
                             </div>
                           </div>
+                          {/* Venta y margen EN VIVO con el costo tipeado: si el
+                              proveedor subió el precio, acá mismo se decide (y ve)
+                              cuánto queda de ganancia — sin ir a Productos. */}
+                          {!it.product.priceIsVariable && (
+                            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-100 pt-2 text-xs">
+                              <span className="text-gray-500">
+                                venta <span className="font-semibold text-gray-800">{formatPrice(effSale(it))}</span>
+                              </span>
+                              <span className={`font-medium ${marginOf(it) > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                margen {formatPrice(marginOf(it))}
+                                {effSale(it) > 0 && ` · ${Math.round((marginOf(it) / effSale(it)) * 100)}%`}
+                              </span>
+                              <button type="button" onClick={() => toggleSale(it.product.id)}
+                                className="ml-auto font-semibold text-blue-600 hover:text-blue-700">
+                                {it.saleOpen ? 'dejar la venta como está' : 'cambiar la venta'}
+                              </button>
+                            </div>
+                          )}
+                          {it.saleOpen && !it.product.priceIsVariable && (
+                            <div className="mt-2">
+                              <PriceInput
+                                label="Nuevo precio de venta"
+                                value={it.salePrice ?? Number(it.product.salePrice ?? 0)}
+                                onChange={(v) => changeSalePrice(it.product.id, v)}
+                                maxDecimals={2}
+                              />
+                            </div>
+                          )}
+                          {it.salePrice != null && Number(it.salePrice) !== Number(it.product.salePrice ?? 0) && (
+                            <p className="mt-1.5 text-xs text-blue-600">
+                              El precio de venta pasará de {formatPrice(it.product.salePrice)} a{' '}
+                              <span className="font-semibold">{formatPrice(it.salePrice)}</span>
+                            </p>
+                          )}
                           {/* Producto habitual de otro proveedor: nace su versión
                               para este proveedor, con su propio código y este costo. */}
                           {isForeign(it.product) && (
@@ -476,11 +521,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             </p>
                           )}
                           {it.unitCost != null && !it.product.priceIsVariable
-                            && Number(it.product.salePrice ?? 0) > 0
-                            && Number(it.unitCost) >= Number(it.product.salePrice) && (
+                            && effSale(it) > 0 && Number(it.unitCost) >= effSale(it) && (
                             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600">
                               <AlertTriangle size={11} className="flex-shrink-0" />
-                              Este costo iguala o supera el precio de venta ({formatPrice(it.product.salePrice)}) — revisá el margen
+                              Este costo iguala o supera el precio de venta ({formatPrice(effSale(it))}) — revisá el margen
                             </p>
                           )}
                         </div>
