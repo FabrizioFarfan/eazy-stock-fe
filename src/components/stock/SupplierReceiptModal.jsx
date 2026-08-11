@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus, ExternalLink,
+  X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSuppliers } from '../../hooks/useSuppliers'
-import { useProducts } from '../../hooks/useProducts'
+import { useProducts, useCreateProduct } from '../../hooks/useProducts'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { productsApi } from '../../services/endpoints/products'
@@ -18,9 +18,10 @@ import { getErrorMessage } from '../../utils/handleApiError'
 /**
  * Modal de recepción de mercadería — flujo en 2 pasos:
  *   1. Elegir proveedor (obligatorio antes que cualquier otra cosa).
- *   2. Cargar productos: el picker se filtra automáticamente por supplierId,
- *      solo lista productos de ese proveedor. Cada línea pide cantidad y
- *      precio unitario (default product.purchasePrice, editable).
+ *   2. Cargar productos: el picker busca en TODO el catálogo. Un producto
+ *      habitual de OTRO proveedor entra igual (el BE crea/reusa la versión de
+ *      este proveedor al registrar) y si no existe se crea inline. Cada línea
+ *      pide cantidad y precio unitario (default product.purchasePrice, editable).
  *
  * El total se calcula sum(qty × unitCost) y queda editable arriba para
  * permitir registrar el monto real de la factura (puede diferir por
@@ -33,6 +34,10 @@ import { getErrorMessage } from '../../utils/handleApiError'
  */
 export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null }) {
   const createReceipt = useCreateSupplierReceipt()
+  const createProduct = useCreateProduct()
+
+  // ── Alta inline: el producto no existe → nace acá, ya de este proveedor ──
+  const [quickForm, setQuickForm] = useState(null) // {name, unit, salePrice} | null
 
   // ── Paso 1: proveedor ────────────────────────────────────────────────────
   const [supplier, setSupplier]                 = useState(initialSupplier)
@@ -50,13 +55,17 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const [showProductDrop, setShowProductDrop]     = useState(false)
   const scanLockRef = useRef(false)
   const debouncedProduct = useDebounce(productQuery, 350)
+  // Busca en TODOS los productos (no solo los del proveedor elegido): si William
+  // le compra a un proveedor nuevo un producto que ya vende, lo encuentra igual
+  // y el BE crea la versión de este proveedor al registrar.
   const { data: productsData, isLoading: loadingProducts } = useProducts(
     supplier && debouncedProduct
-      ? { search: debouncedProduct, size: 8, active: true, supplierId: supplier.id }
+      ? { search: debouncedProduct, size: 8, active: true }
       : null,
     { enabled: !!supplier && !!debouncedProduct },
   )
   const productResults = productsData?.content ?? []
+  const isForeign = (p) => p?.supplierId && supplier && p.supplierId !== supplier.id
 
   // ── Carrito ──────────────────────────────────────────────────────────────
   // item shape: { product, quantity, unitCost }
@@ -134,17 +143,17 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
     try {
       const product = (await productsApi.scanCode(code)).data.data
       if (!product) { toast.error('Producto no encontrado'); return }
-      if (product.supplierId !== supplier.id) {
-        toast.error(`Este producto pertenece a otro proveedor (${product.supplierName ?? '—'})`)
-        return
-      }
       if (itemsRef.current.some((i) => i.product.id === product.id)) {
         bumpQty(product.id)
         toast.info('Cantidad actualizada')
         return
       }
       addProduct(product)
-      toast.success(product.name)
+      if (isForeign(product)) {
+        toast.info(`${product.name} es habitual de ${product.supplierName ?? 'otro proveedor'} — se creará la versión de ${supplier.name}`)
+      } else {
+        toast.success(product.name)
+      }
     } catch {
       toast.error('Producto no encontrado')
     } finally {
@@ -202,7 +211,6 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
 
   const inputCls = 'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
   const totalItems = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0)
-  const productsLink = supplier ? `/products?supplierId=${supplier.id}` : '/products'
 
   // Disable step-2 fields hasta que haya proveedor.
   const step2Disabled = !supplier
@@ -314,11 +322,15 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                         ) : productResults.length === 0 ? (
                           <div className="px-4 py-3 text-sm">
                             <p className="text-gray-500">Sin resultados para "{debouncedProduct}"</p>
-                            <a href={productsLink} target="_blank" rel="noopener noreferrer"
+                            <button type="button"
+                              onClick={() => {
+                                setQuickForm({ name: productQuery.trim(), unit: 'unidad', salePrice: null })
+                                setShowProductDrop(false)
+                              }}
                               className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
-                              <ExternalLink size={11} />
-                              ¿No encontrás el producto? Asignalo a este proveedor desde Productos
-                            </a>
+                              <PackagePlus size={11} />
+                              Crear "{debouncedProduct}" como producto nuevo de {supplier.name}
+                            </button>
                           </div>
                         ) : (
                           productResults.map((p) => (
@@ -326,7 +338,14 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-gray-900">{p.name}</p>
-                                <p className="font-mono text-xs text-gray-400">{p.sku}</p>
+                                <p className="font-mono text-xs text-gray-400">
+                                  {p.sku}
+                                  {isForeign(p) && (
+                                    <span className="ml-2 font-sans font-semibold text-amber-600">
+                                      habitual de {p.supplierName ?? 'otro proveedor'}
+                                    </span>
+                                  )}
+                                </p>
                               </div>
                               <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
                                 {formatPrice(p.purchasePrice)}
@@ -337,6 +356,71 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       </div>
                     )}
                   </div>
+
+                  {/* Alta inline: el producto nace acá, ya de este proveedor */}
+                  {quickForm && (
+                    <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
+                      <p className="text-sm font-semibold text-gray-900">
+                        Producto nuevo de {supplier.name}
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        <input
+                          value={quickForm.name}
+                          onChange={(e) => setQuickForm((f) => ({ ...f, name: e.target.value }))}
+                          placeholder="Nombre del producto"
+                          className={inputCls}
+                        />
+                        <div className="flex flex-wrap gap-1.5">
+                          {['unidad', 'metro', 'kilo', 'litro'].map((u) => (
+                            <button key={u} type="button"
+                              onClick={() => setQuickForm((f) => ({ ...f, unit: u }))}
+                              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                quickForm.unit === u
+                                  ? 'border-blue-500 bg-blue-100 text-blue-700'
+                                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                              }`}>
+                              {u}
+                            </button>
+                          ))}
+                        </div>
+                        <PriceInput
+                          label="Precio de venta"
+                          value={quickForm.salePrice}
+                          onChange={(v) => setQuickForm((f) => ({ ...f, salePrice: v }))}
+                          maxDecimals={2}
+                          helperText="El costo de compra lo escribís en la línea de la recepción"
+                        />
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button type="button" onClick={() => setQuickForm(null)}
+                            className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100">
+                            Cancelar
+                          </button>
+                          <button type="button"
+                            disabled={!quickForm.name.trim() || quickForm.salePrice == null || createProduct.isPending}
+                            onClick={async () => {
+                              try {
+                                const created = await createProduct.mutateAsync({
+                                  name: quickForm.name.trim(),
+                                  unit: quickForm.unit,
+                                  purchasePrice: 0,
+                                  salePrice: quickForm.salePrice,
+                                  supplierId: supplier.id,
+                                })
+                                addProduct(created)
+                                setQuickForm(null)
+                                toast.success(`${created.name} creado — escribí su costo en la línea`)
+                              } catch (err) {
+                                toast.error(getErrorMessage(err))
+                              }
+                            }}
+                            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+                            {createProduct.isPending && <Loader2 size={11} className="animate-spin" />}
+                            Crear y agregar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Carrito */}
                   {items.length === 0 ? (
@@ -374,9 +458,18 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               {formatPrice((Number(it.quantity) || 0) * Number(it.unitCost ?? 0))}
                             </div>
                           </div>
+                          {/* Producto habitual de otro proveedor: nace su versión
+                              para este proveedor, con su propio código y este costo. */}
+                          {isForeign(it.product) && (
+                            <p className="mt-1.5 text-xs font-medium text-violet-600">
+                              Habitual de {it.product.supplierName ?? 'otro proveedor'} — se creará como
+                              producto nuevo de <span className="font-semibold">{supplier?.name}</span> con este costo
+                            </p>
+                          )}
                           {/* El costo tipeado pasa a ser el precio de compra del producto:
                               decirlo acá, no sorprender después en Productos. */}
-                          {it.unitCost != null && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
+                          {!isForeign(it.product) && it.unitCost != null
+                            && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
                             <p className="mt-1.5 text-xs text-blue-600">
                               El precio de compra pasará de {formatPrice(it.product.purchasePrice)} a{' '}
                               <span className="font-semibold">{formatPrice(it.unitCost)}</span>
