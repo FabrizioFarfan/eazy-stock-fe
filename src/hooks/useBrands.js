@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { brandsApi } from '../services/endpoints/brands'
+import { PRODUCTS_KEY } from './useProducts'
 
 export const BRANDS_KEY = 'brands'
 
@@ -24,7 +25,11 @@ export function useUpdateBrand() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data, params }) => brandsApi.update(id, data, params).then((r) => r.data.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [BRANDS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [BRANDS_KEY] })
+      // El rename debe verse en las filas de Productos (brandName cacheado ahí).
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+    },
   })
 }
 
@@ -33,6 +38,9 @@ export function useDeleteBrand() {
   return useMutation({
     // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
     mutationFn: (vars) => (typeof vars === 'object' ? brandsApi.remove(vars.id, vars.params) : brandsApi.remove(vars)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [BRANDS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [BRANDS_KEY] })
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+    },
   })
 }

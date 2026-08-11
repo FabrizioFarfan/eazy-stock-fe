@@ -374,6 +374,22 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               {formatPrice((Number(it.quantity) || 0) * Number(it.unitCost ?? 0))}
                             </div>
                           </div>
+                          {/* El costo tipeado pasa a ser el precio de compra del producto:
+                              decirlo acá, no sorprender después en Productos. */}
+                          {it.unitCost != null && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
+                            <p className="mt-1.5 text-xs text-blue-600">
+                              El precio de compra pasará de {formatPrice(it.product.purchasePrice)} a{' '}
+                              <span className="font-semibold">{formatPrice(it.unitCost)}</span>
+                            </p>
+                          )}
+                          {it.unitCost != null && !it.product.priceIsVariable
+                            && Number(it.product.salePrice ?? 0) > 0
+                            && Number(it.unitCost) >= Number(it.product.salePrice) && (
+                            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600">
+                              <AlertTriangle size={11} className="flex-shrink-0" />
+                              Este costo iguala o supera el precio de venta ({formatPrice(it.product.salePrice)}) — revisá el margen
+                            </p>
+                          )}
                         </div>
                       ))}
                       <p className="text-xs text-gray-400">

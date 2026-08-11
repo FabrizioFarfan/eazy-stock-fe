@@ -69,6 +69,8 @@ function invalidateCustomerWrites(qc, customerId) {
   qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY] })
   qc.invalidateQueries({ queryKey: [CUSTOMERS_KEY, 'detail', customerId] })
   qc.invalidateQueries({ queryKey: [SALES_KEY] })
+  // Cuentas por cobrar y resumen del día viven en reports.
+  qc.invalidateQueries({ queryKey: ['reports'] })
 }
 
 export function useRegisterCustomerPayment() {

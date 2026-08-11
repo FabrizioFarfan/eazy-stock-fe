@@ -19,6 +19,8 @@ export function useCreateSale() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SALES_KEY] })
       qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }) // stock changed
+      qc.invalidateQueries({ queryKey: ['reports'] })    // resumen del día y balances
+      qc.invalidateQueries({ queryKey: ['customers'] })  // venta al fiado sube la deuda del cliente
     },
   })
 }

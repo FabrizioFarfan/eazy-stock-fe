@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { categoriesApi } from '../services/endpoints/categories'
+import { PRODUCTS_KEY } from './useProducts'
 
 const KEY = 'categories'
 
@@ -33,7 +34,11 @@ export function useUpdateCategory() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data, params }) => categoriesApi.update(id, data, params).then((r) => r.data.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] })
+      // El rename debe verse en las filas de Productos (categoryName cacheado ahí).
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+    },
   })
 }
 
@@ -42,6 +47,9 @@ export function useDeleteCategory() {
   return useMutation({
     // acepta un id pelado o { id, params } (SUPER_ADMIN pasa businessId)
     mutationFn: (vars) => (typeof vars === 'object' ? categoriesApi.delete(vars.id, vars.params) : categoriesApi.delete(vars)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] })
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+    },
   })
 }

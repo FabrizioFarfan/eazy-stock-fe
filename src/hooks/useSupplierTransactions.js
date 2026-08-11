@@ -17,6 +17,8 @@ export function useSupplierTransactions(supplierId, params, options = {}) {
 function invalidate(qc, supplierId) {
   qc.invalidateQueries({ queryKey: [SUPPLIER_TXNS_KEY, supplierId] })
   qc.invalidateQueries({ queryKey: [SUPPLIERS_KEY] })
+  // Cuentas por pagar y balances viven en reports.
+  qc.invalidateQueries({ queryKey: ['reports'] })
 }
 
 export function useAddSupplierDebt() {
