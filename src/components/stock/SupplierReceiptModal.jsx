@@ -110,21 +110,45 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const finalTotal = totalAmount != null ? totalAmount : computedTotal
 
   // ── Cart actions ─────────────────────────────────────────────────────────
-  const addProduct = (p) => {
+  // En compras largas la línea recién tocada quedaba lejos del buscador y
+  // había que deslizar hasta encontrarla para cambiar cantidad/precio
+  // (feedback de William) → la línea se trae a la vista sola, destella, y si
+  // el alta fue por click el cursor cae en la cantidad ya seleccionada.
+  const lineRefs = useRef({})
+  const qtyRefs  = useRef({})
+  const [flashId, setFlashId] = useState(null)
+  const flashTimerRef = useRef(null)
+  useEffect(() => () => clearTimeout(flashTimerRef.current), [])
+
+  const spotlightLine = (id, { focusQty = false } = {}) => {
+    // Doble rAF: la línea nueva recién existe en el DOM tras el re-render.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      lineRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Con el escáner NO se roba el foco (rompería el escaneo en cadena).
+      if (focusQty) qtyRefs.current[id]?.focus()
+      setFlashId(id)
+      clearTimeout(flashTimerRef.current)
+      flashTimerRef.current = setTimeout(() => setFlashId(null), 1600)
+    }))
+  }
+
+  const addProduct = (p, { focusQty = false } = {}) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === p.id)
       if (existing) {
         return prev.map((i) => i.product.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
       }
       // Default unitCost del purchasePrice del producto, editable por línea.
-      return [...prev, {
+      // La línea nueva entra ARRIBA: queda pegada al buscador, no al fondo.
+      return [{
         product: p,
         quantity: 1,
         unitCost: Number(p.purchasePrice ?? 0),
-      }]
+      }, ...prev]
     })
     setProductQuery('')
     setShowProductDrop(false)
+    spotlightLine(p.id, { focusQty })
   }
   // Cantidad escribible directa (incl. decimales para productos divisibles).
   const changeQty = (id, value) => setItems((prev) =>
@@ -155,6 +179,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       if (!product) { toast.error('Producto no encontrado'); return }
       if (itemsRef.current.some((i) => i.product.id === product.id)) {
         bumpQty(product.id)
+        spotlightLine(product.id)
         toast.info('Cantidad actualizada')
         return
       }
@@ -345,7 +370,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           </div>
                         ) : (
                           productResults.map((p) => (
-                            <button key={p.id} type="button" onClick={() => addProduct(p)}
+                            <button key={p.id} type="button" onClick={() => addProduct(p, { focusQty: true })}
                               className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-gray-900">{p.name}</p>
@@ -417,7 +442,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                                   salePrice: quickForm.salePrice,
                                   supplierId: supplier.id,
                                 })
-                                addProduct(created)
+                                addProduct(created, { focusQty: true })
                                 setQuickForm(null)
                                 toast.success(`${created.name} creado — escribí su costo en la línea`)
                               } catch (err) {
@@ -441,7 +466,14 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                   ) : (
                     <div className="mt-3 space-y-2">
                       {items.map((it) => (
-                        <div key={it.product.id} className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                        <div
+                          key={it.product.id}
+                          ref={(el) => { lineRefs.current[it.product.id] = el }}
+                          className={`rounded-xl border p-3 transition-all duration-500 ${
+                            flashId === it.product.id
+                              ? 'border-blue-300 bg-blue-50/70 ring-2 ring-blue-300/60'
+                              : 'border-gray-100 bg-gray-50/60 ring-2 ring-transparent'
+                          }`}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-gray-900">{it.product.name}</p>
@@ -455,6 +487,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
 
                           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                             <QuantityInput
+                              ref={(el) => { qtyRefs.current[it.product.id] = el }}
                               value={it.quantity}
                               onChange={(v) => changeQty(it.product.id, v)}
                               unit={it.product.unit || 'unidad'}
