@@ -18,6 +18,9 @@ const processQueue = (error, token = null) => {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('eazystock_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  // Zona horaria del navegador: el BE la usa para que los filtros por día
+  // ("las ventas del 15") sean el día de QUIEN MIRA, no el del server europeo.
+  config.headers['X-Client-Tz'] = Intl.DateTimeFormat().resolvedOptions().timeZone
   return config
 })
 

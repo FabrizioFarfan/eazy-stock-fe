@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { productsApi } from '../../services/endpoints/products'
 import { useBulkDeleteProducts } from '../../hooks/useProducts'
 import { getErrorMessage } from '../../utils/handleApiError'
+import { localISODate } from '../../utils/formatDate'
 
 const inputCls =
   'w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
@@ -15,7 +16,7 @@ const inputCls =
  *  3. Recién ahí se ejecuta. Los productos con ventas/recepciones se preservan.
  */
 export default function BulkDeleteModal({ onClose }) {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localISODate()
   const [from, setFrom]       = useState('')
   const [to, setTo]           = useState(today)
   const [preview, setPreview] = useState(null)   // { total, deletable, withHistory }

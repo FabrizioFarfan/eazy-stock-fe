@@ -6,10 +6,11 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useSellerPerformance } from '../hooks/useReports'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { localISODate } from '../utils/formatDate'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function today() { return new Date().toISOString().slice(0, 10) }
+function today() { return localISODate() }
 function firstOfMonth() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`

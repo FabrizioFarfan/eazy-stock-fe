@@ -12,9 +12,10 @@ import { useUsers } from '../hooks/useUsers'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { localISODate } from '../utils/formatDate'
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  return localISODate()
 }
 
 function todayLabel() {

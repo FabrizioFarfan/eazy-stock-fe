@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useBrands } from '../../hooks/useBrands'
 import { useEmployees } from '../../hooks/useEmployees'
+import { localISODate } from '../../utils/formatDate'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return localISODate()
 }
 function firstOfMonth() {
   const d = new Date()
@@ -15,10 +16,10 @@ function firstOfMonth() {
 const PRESETS = [
   { label: 'Hoy',           from: today,        to: today },
   { label: 'Últimos 7 días', from: () => {
-      const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().slice(0, 10)
+      const d = new Date(); d.setDate(d.getDate() - 6); return localISODate(d)
     }, to: today },
   { label: 'Últimos 30 días', from: () => {
-      const d = new Date(); d.setDate(d.getDate() - 29); return d.toISOString().slice(0, 10)
+      const d = new Date(); d.setDate(d.getDate() - 29); return localISODate(d)
     }, to: today },
   { label: 'Este mes',      from: firstOfMonth, to: today },
   { label: 'Este año',      from: () => `${new Date().getFullYear()}-01-01`, to: today },
