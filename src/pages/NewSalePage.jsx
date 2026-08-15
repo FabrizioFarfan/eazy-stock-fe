@@ -473,6 +473,10 @@ export default function NewSalePage() {
   const [discountValue, setDiscountValue] = useState('')
   const [onCredit, setOnCredit]           = useState(false)
   const [customer, setCustomer]           = useState(null)
+  // Cómo pagó (William): chips comunes + texto libre; se guarda con la venta
+  // y sale como burbuja en el historial (él lo anotaba en las notas).
+  const [payMethod, setPayMethod]         = useState('Efectivo')
+  const [payOther, setPayOther]           = useState('')
   // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
   const [newCustomerName, setNewCustomerName] = useState(null)
   const [pendingLeave, setPendingLeave]       = useState(false)
@@ -492,6 +496,8 @@ export default function NewSalePage() {
     setDiscountValue(d.discountValue ?? '')
     setOnCredit(!!d.onCredit)
     setCustomer(d.customer ?? null)
+    setPayMethod(d.payMethod ?? 'Efectivo')
+    setPayOther(d.payOther ?? '')
     toast.info(`Se restauró tu venta en curso (${d.cart.length} producto${d.cart.length === 1 ? '' : 's'})`)
   }, [user?.id])
 
@@ -500,9 +506,9 @@ export default function NewSalePage() {
     if (!user?.id || !draftRestoredRef.current) return
     if (cart.length === 0) { localStorage.removeItem(saleDraftKey(user.id)); return }
     localStorage.setItem(saleDraftKey(user.id), JSON.stringify({
-      cart, notes, discountType, discountValue, onCredit, customer, savedAt: Date.now(),
+      cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, savedAt: Date.now(),
     }))
-  }, [cart, notes, discountType, discountValue, onCredit, customer, user?.id])
+  }, [cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, user?.id])
 
   const discardDraft = () => {
     if (user?.id) localStorage.removeItem(saleDraftKey(user.id))
@@ -639,8 +645,10 @@ export default function NewSalePage() {
       })
 
       const includeTotalDiscount = canApplyDiscount && numericDiscount > 0
+      const chosenPay = payMethod === '__otro__' ? payOther.trim() : payMethod
       const sale = await createSale.mutateAsync({
         items,
+        ...(!isFiado && chosenPay && { paymentMethod: chosenPay }),
         ...(notes.trim() && { notes: notes.trim() }),
         ...(includeTotalDiscount && {
           discountType,
@@ -801,6 +809,43 @@ export default function NewSalePage() {
               onRequestNewCustomer={(name) => setNewCustomerName(name ?? '')}
               total={total}
             />
+          )}
+
+          {/* ¿Cómo pagó? — no aplica al fiado (todavía no pagó) */}
+          {cart.length > 0 && !isFiado && (
+            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <h3 className="mb-2.5 text-sm font-bold text-gray-900">¿Cómo pagó?</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {['Efectivo', 'Yape', 'Transferencia'].map((m) => (
+                  <button key={m} type="button" onClick={() => setPayMethod(m)}
+                    className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      payMethod === m
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}>
+                    {m}
+                  </button>
+                ))}
+                <button type="button" onClick={() => setPayMethod('__otro__')}
+                  className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    payMethod === '__otro__'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}>
+                  Otro...
+                </button>
+              </div>
+              {payMethod === '__otro__' && (
+                <input
+                  value={payOther}
+                  onChange={(e) => setPayOther(e.target.value)}
+                  maxLength={40}
+                  placeholder="Escribe cómo pagó (ej. Plin, tarjeta...)"
+                  autoFocus
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+                />
+              )}
+            </div>
           )}
 
           <textarea

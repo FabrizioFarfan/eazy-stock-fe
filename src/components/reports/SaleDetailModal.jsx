@@ -150,6 +150,12 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     {debtPending ? 'Fiado' : 'Fiado · pagado'}
                   </span>
                 )}
+                {!sale?.onCredit && sale?.paymentMethod && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-emerald-700">
+                    <Wallet size={11} />
+                    {sale.paymentMethod}
+                  </span>
+                )}
                 {hasDiscount && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-700">
                     <Tag size={11} />

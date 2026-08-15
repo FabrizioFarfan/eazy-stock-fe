@@ -97,6 +97,12 @@ export default function SalesPage() {
   // ── Column filters (empleado, total) + orden ──────────────────────────────
   const canFilterEmployee = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
   const [employeeId, setEmployeeId] = useState('')
+  // Forma de pago: valores comunes + "FIADO" (especial: filtra onCredit) +
+  // texto libre para lo que el cajero haya escrito en "Otro".
+  const [payFilter, setPayFilter]       = useState('')
+  const [payFilterText, setPayFilterText] = useState('')
+  const debPayText = useDebounce(payFilterText, 350)
+  const effectivePayFilter = payFilter === '__otro__' ? debPayText.trim() : payFilter
   const [totalMin, setTotalMin]     = useState('')
   const [totalMax, setTotalMax]     = useState('')
   const [sort, setSort]             = useState({ key: 'createdAt', dir: 'desc' })
@@ -127,7 +133,7 @@ export default function SalesPage() {
   const [selectedSaleId, setSelectedSaleId] = useState(null)
 
   const hasFilters = from || to || selectedProducts.length > 0 || supplierId ||
-    employeeId || debTotalMin !== '' || debTotalMax !== ''
+    employeeId || debTotalMin !== '' || debTotalMax !== '' || effectivePayFilter !== ''
 
   const params = {
     page,
@@ -140,6 +146,7 @@ export default function SalesPage() {
     ...(employeeId && { employeeId }),
     ...(debTotalMin !== '' && { totalMin: debTotalMin }),
     ...(debTotalMax !== '' && { totalMax: debTotalMax }),
+    ...(effectivePayFilter !== '' && { paymentMethod: effectivePayFilter }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -155,7 +162,8 @@ export default function SalesPage() {
 
   const clearAll = () => {
     setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId('')
-    setEmployeeId(''); setTotalMin(''); setTotalMax(''); setPage(0)
+    setEmployeeId(''); setTotalMin(''); setTotalMax('')
+    setPayFilter(''); setPayFilterText(''); setPage(0)
   }
 
   return (
@@ -277,6 +285,28 @@ export default function SalesPage() {
             ))}
           </select>
 
+          {/* Forma de pago (feedback William: poder filtrar cómo pagaron) */}
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Pago</span>
+          <select value={payFilter}
+            onChange={(e) => { setPayFilter(e.target.value); setPayFilterText(''); setPage(0) }}
+            className={`${inputCls} min-w-36`}>
+            <option value="">Todos</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Yape">Yape</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="FIADO">Fiado</option>
+            <option value="__otro__">Otro...</option>
+          </select>
+          {payFilter === '__otro__' && (
+            <input
+              value={payFilterText}
+              onChange={(e) => { setPayFilterText(e.target.value); setPage(0) }}
+              placeholder="Escribe la forma de pago..."
+              className={`${inputCls} w-44`}
+              autoFocus
+            />
+          )}
+
           {/* Chips de filtros de columna (empleado / total) */}
           {employeeId && (
             <span className="flex items-center gap-1 rounded-full bg-blue-50 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -387,6 +417,15 @@ export default function SalesPage() {
                             className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700"
                           >
                             Fiado
+                          </span>
+                        )}
+                        {/* Burbuja hermana de la de fiado: cómo pagó (William) */}
+                        {!sale.onCredit && sale.paymentMethod && (
+                          <span
+                            title={`Pagado con ${sale.paymentMethod}`}
+                            className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700"
+                          >
+                            {sale.paymentMethod}
                           </span>
                         )}
                         {sale.discountAmount > 0 && (
