@@ -477,6 +477,30 @@ export default function NewSalePage() {
   // y sale como burbuja en el historial (él lo anotaba en las notas).
   const [payMethod, setPayMethod]         = useState('Efectivo')
   const [payOther, setPayOther]           = useState('')
+  // Métodos escritos en "Otro" quedan guardados POR NEGOCIO como chips
+  // reutilizables (Frank: "en la vida real es más práctico" — Plin se escribe
+  // una vez y queda de botón; cada chip guardado se quita con su X).
+  const payMethodsKey = `eazystock_pay_methods_${user?.businessId ?? 'default'}`
+  const [customMethods, setCustomMethods] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(payMethodsKey)) ?? [] } catch { return [] }
+  })
+  const DEFAULT_METHODS = ['Efectivo', 'Yape', 'Transferencia']
+  const rememberMethod = (m) => {
+    const clean = m.trim()
+    if (!clean) return
+    const exists = [...DEFAULT_METHODS, ...customMethods]
+      .some((x) => x.toLowerCase() === clean.toLowerCase())
+    if (exists) return
+    const next = [...customMethods, clean].slice(-8) // tope sano de chips
+    setCustomMethods(next)
+    localStorage.setItem(payMethodsKey, JSON.stringify(next))
+  }
+  const forgetMethod = (m) => {
+    const next = customMethods.filter((x) => x !== m)
+    setCustomMethods(next)
+    localStorage.setItem(payMethodsKey, JSON.stringify(next))
+    if (payMethod === m) setPayMethod('Efectivo')
+  }
   // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
   const [newCustomerName, setNewCustomerName] = useState(null)
   const [pendingLeave, setPendingLeave]       = useState(false)
@@ -646,6 +670,8 @@ export default function NewSalePage() {
 
       const includeTotalDiscount = canApplyDiscount && numericDiscount > 0
       const chosenPay = payMethod === '__otro__' ? payOther.trim() : payMethod
+      // Un método nuevo escrito a mano queda de chip para la próxima venta.
+      if (!isFiado && payMethod === '__otro__' && chosenPay) rememberMethod(chosenPay)
       const sale = await createSale.mutateAsync({
         items,
         ...(!isFiado && chosenPay && { paymentMethod: chosenPay }),
@@ -822,7 +848,7 @@ export default function NewSalePage() {
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
               <h3 className="mb-2.5 text-sm font-bold text-gray-900">¿Cómo pagó?</h3>
               <div className="flex flex-wrap gap-1.5">
-                {['Efectivo', 'Yape', 'Transferencia'].map((m) => (
+                {DEFAULT_METHODS.map((m) => (
                   <button key={m} type="button" onClick={() => setPayMethod(m)}
                     className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
                       payMethod === m
@@ -831,6 +857,25 @@ export default function NewSalePage() {
                     }`}>
                     {m}
                   </button>
+                ))}
+                {/* Chips guardados del negocio: un click y listo, X para quitar */}
+                {customMethods.map((m) => (
+                  <span key={m}
+                    className={`group inline-flex items-center overflow-hidden rounded-xl border text-xs font-semibold transition-colors ${
+                      payMethod === m
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white text-gray-600'
+                    }`}>
+                    <button type="button" onClick={() => setPayMethod(m)}
+                      className="px-3 py-1.5 hover:bg-gray-50">
+                      {m}
+                    </button>
+                    <button type="button" onClick={() => forgetMethod(m)}
+                      title={`Quitar "${m}" de los métodos guardados`}
+                      className="border-l border-gray-100 px-1.5 py-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500">
+                      <X size={11} />
+                    </button>
+                  </span>
                 ))}
                 <button type="button" onClick={() => setPayMethod('__otro__')}
                   className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
@@ -842,14 +887,19 @@ export default function NewSalePage() {
                 </button>
               </div>
               {payMethod === '__otro__' && (
-                <input
-                  value={payOther}
-                  onChange={(e) => setPayOther(e.target.value)}
-                  maxLength={40}
-                  placeholder="Escribe cómo pagó (ej. Plin, tarjeta...)"
-                  autoFocus
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-                />
+                <>
+                  <input
+                    value={payOther}
+                    onChange={(e) => setPayOther(e.target.value)}
+                    maxLength={40}
+                    placeholder="Escribe cómo pagó (ej. Plin, tarjeta...)"
+                    autoFocus
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
+                  />
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    Al confirmar la venta queda guardado como botón para las próximas
+                  </p>
+                </>
               )}
             </div>
           )}

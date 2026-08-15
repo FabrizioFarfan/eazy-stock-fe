@@ -40,7 +40,7 @@ export default function Topbar({ onMenuClick }) {
   const showBell   = user?.role === 'OWNER' || user?.role === 'EMPLOYEE'
 
   return (
-    <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 md:px-6">
+    <header className="ez-topbar flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-100 px-4 md:px-6">
       <div className="flex items-center gap-3">
         {/* Hamburger — mobile only */}
         <button

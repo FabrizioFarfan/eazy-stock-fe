@@ -293,3 +293,100 @@ html.dark .hover\:bg-emerald-100:hover  { background-color: rgb(6 78 59 / 0.5); 
 html.dark .hover\:bg-purple-100:hover   { background-color: rgb(88 28 135 / 0.5); }
 html.dark .hover\:bg-amber-100:hover    { background-color: rgb(120 53 15 / 0.5); }
 html.dark .hover\:bg-orange-100:hover   { background-color: rgb(124 45 18 / 0.5); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN v2 · CUPERTINO (2026-08-15)
+   Primera pasada del design propio, mismo lenguaje que EAZY PROJECT v3:
+   canvas #F5F5F7, tinta #1D1D1F, acento system blue #007AFF, hairlines,
+   radios ópticos y tipografía del sistema (SF Pro en Apple). Estrategia de
+   siempre: overrides globales, cero cambios de JSX por página.
+   Va AL FINAL del archivo: a igual especificidad gana sobre lo de arriba,
+   y las reglas html.dark (0,2,0) siguen ganando en dark.
+───────────────────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'Segoe UI', system-ui, sans-serif;
+  letter-spacing: -0.006em;
+  background-color: #F5F5F7;
+}
+
+/* Titulares con tracking óptico apretado (SF Display feel) */
+.text-xl, .text-2xl, .text-3xl { letter-spacing: -0.02em; }
+
+/* Canvas y tinta */
+.bg-gray-50    { background-color: #F5F5F7; }
+.text-gray-900 { color: #1D1D1F; }
+
+/* Hairlines Apple en vez de grises Tailwind */
+.border-gray-100 { border-color: rgb(0 0 0 / 0.07); }
+.border-gray-200 { border-color: rgb(0 0 0 / 0.12); }
+.ring-gray-100   { --tw-ring-color: rgb(0 0 0 / 0.06); }
+
+/* Radios ópticos: 16→13 y 12→10 (Apple es más contenido) */
+.rounded-2xl { border-radius: 0.8125rem; }
+.rounded-xl  { border-radius: 0.625rem; }
+
+/* Acento: system blue (#007AFF claro / #0A84FF dark) */
+.bg-blue-600            { background-color: #007AFF; }
+.hover\:bg-blue-700:hover { background-color: #0066D6; }
+.text-blue-600          { color: #007AFF; }
+.text-blue-700          { color: #0066D6; }
+.border-blue-600        { border-color: #007AFF; }
+.border-blue-500        { border-color: #007AFF; }
+.focus\:border-blue-600:focus { border-color: #007AFF; }
+.focus\:ring-blue-600\/20:focus { --tw-ring-color: rgb(0 122 255 / 0.22); }
+.bg-blue-50  { background-color: rgb(0 122 255 / 0.08); }
+.bg-blue-100 { background-color: rgb(0 122 255 / 0.14); }
+html.dark .bg-blue-600  { background-color: #0A84FF; }
+
+/* Cards: sombra por capas con ring de 0.5px (borde de luz, no gris sucio) */
+.shadow-sm {
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 0.055),
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 6px 18px -8px rgb(0 0 0 / 0.09);
+}
+
+/* Botón azul: bisel + halo del system blue */
+button.bg-blue-600 {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 1px 2px rgb(0 0 0 / 0.16),
+    0 6px 16px -6px rgb(0 122 255 / 0.55);
+}
+
+/* Vibrancy del shell (sidebar y topbar) */
+/* Nota: nada scrollea DETRÁS del sidebar/topbar en este layout (flex
+   hermanos, no overlays) → la vibrancy con blur no aporta y el compositing
+   con backdrop-filter daba artefactos. Fondo sólido tipo Finder. */
+.ez-sidebar {
+  background-color: #F6F6F8;
+  border-right: 1px solid rgb(0 0 0 / 0.07);
+}
+html.dark .ez-sidebar {
+  background-color: #18181B;
+  border-right-color: rgb(255 255 255 / 0.08);
+}
+.ez-topbar {
+  background-color: rgb(255 255 255 / 0.92);
+}
+html.dark .ez-topbar { background-color: #1F2937; }
+
+/* Hover suave del nav claro (no cubierto por los mapeos dark de arriba) */
+html.dark .ez-sidebar .hover\:bg-gray-200\/70:hover { background-color: rgb(75 85 99 / 0.45); }
+
+/* El scrollbar fino acompaña (WebKit) */
+.ez-sidebar nav::-webkit-scrollbar { width: 8px; }
+.ez-sidebar nav::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.14);
+  border-radius: 4px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* Banners con gradiente claro (from-blue-50 via-white → indigo-50) quedaban
+   BLANCOS en dark con el título casi invisible — se aplanan a superficie
+   oscura (bug preexistente al design v2, cazado en el QA del v2) */
+html.dark [class*="from-blue-50"] { background-image: none; background-color: #1F2937; }
+html.dark .border-blue-100 { border-color: rgb(30 64 175 / 0.4); }
