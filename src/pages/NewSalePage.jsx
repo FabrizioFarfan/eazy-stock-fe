@@ -674,7 +674,7 @@ export default function NewSalePage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-24">
+    <div className="flex flex-col gap-4 pb-24 lg:pb-0">
 
       <div className="flex items-center gap-3">
         <button onClick={requestLeave}
@@ -703,7 +703,11 @@ export default function NewSalePage() {
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
 
-        <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-1">
+        {/* La columna de resultados también se capa al alto de pantalla y
+            scrollea POR DENTRO (2º reporte de Frank: con ~100 resultados la
+            página entera se estiraba y había que atravesarlos todos). El
+            buscador queda fijo arriba; el carrito siempre a la vista al lado. */}
+        <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-1 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
           <ScannerInput
             value={search}
             onChange={setSearch}
@@ -711,6 +715,7 @@ export default function NewSalePage() {
             placeholder="Buscar por nombre, código o escanear..."
           />
 
+         <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {!debouncedSearch ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
@@ -743,6 +748,7 @@ export default function NewSalePage() {
               )}
             </div>
           )}
+         </div>
         </div>
 
         {/* La columna sticky se capa al alto de la pantalla y scrollea POR
@@ -895,8 +901,10 @@ export default function NewSalePage() {
         </div>
       </div>
 
+      {/* Barra de cobro rápido: solo móvil — en desktop el Total + Confirmar
+          ya viven SIEMPRE visibles al pie de la columna del carrito. */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-xl">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-xl lg:hidden">
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <p className="text-xs text-gray-500">
