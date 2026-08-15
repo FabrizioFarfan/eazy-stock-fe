@@ -31,8 +31,27 @@ function parseNumber(s) {
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
-function ProductCard({ product, inCart, onAdd }) {
-  const noStock = product.currentStock === 0
+function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
+  const noStock    = product.currentStock === 0
+  const isVariable = !!product.priceIsVariable
+
+  // Cantidad y precio se deciden ACÁ, antes de agregar (dictado de William):
+  // en ventas largas la línea del carrito queda lejos de la mano — la tarjeta
+  // tiene espacio de sobra para decir "llevo 5" y ajustar la venta si hace
+  // falta, y al carrito ya entra listo. Default siempre 1.
+  const [qty, setQty]           = useState(1)
+  const [priceOpen, setPriceOpen] = useState(false)
+  const [price, setPrice]       = useState(null) // null = precio de lista
+
+  const q = Number(qty)
+  const qtyInvalid = !Number.isFinite(q) || q <= 0
+    || q > Number(product.currentStock ?? 0) + 1e-9
+    || (!isDivisibleUnit(product.unit) && !Number.isInteger(q))
+
+  const handleAdd = () => {
+    onAdd(product, q, priceOpen && price != null ? price : null)
+    setQty(1); setPriceOpen(false); setPrice(null)
+  }
 
   return (
     <div className={`rounded-2xl border bg-white p-3.5 transition-all ${
@@ -60,19 +79,29 @@ function ProductCard({ product, inCart, onAdd }) {
       </div>
 
       <div className="mt-3 flex items-end justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-gray-400">
             Stock:{' '}
             <span className={`font-bold ${noStock ? 'text-red-500' : 'text-gray-700'}`}>
               {formatQty(product.currentStock)} {product.unit || 'unidad'}
             </span>
           </p>
-          {product.priceIsVariable ? (
+          {isVariable ? (
             <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
               Precio variable
             </span>
           ) : (
             <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
+          )}
+          {/* El precio se puede ajustar ANTES de agregar — un click y aparece
+              el input; cerrar vuelve al precio de lista. Variable siempre
+              puede definirse; fijo solo con permiso de modificar precios. */}
+          {!inCart && !noStock && (canApplyDiscount || isVariable) && (
+            <button type="button"
+              onClick={() => { setPriceOpen((o) => !o); setPrice(null) }}
+              className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
+              {priceOpen ? 'dejar precio de lista' : isVariable ? 'Definir precio de venta' : 'Cambiar precio de venta'}
+            </button>
           )}
         </div>
 
@@ -85,12 +114,34 @@ function ProductCard({ product, inCart, onAdd }) {
             Sin stock
           </button>
         ) : (
-          <button onClick={() => onAdd(product)}
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.95]">
-            <Plus size={12} />Agregar
-          </button>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <QuantityInput
+              value={qty}
+              onChange={setQty}
+              unit={product.unit || 'unidad'}
+              max={product.currentStock}
+              maxDecimals={3}
+              className="w-32"
+            />
+            <button onClick={handleAdd} disabled={qtyInvalid}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-50">
+              <Plus size={12} />Agregar
+            </button>
+          </div>
         )}
       </div>
+
+      {priceOpen && !inCart && !noStock && (
+        <div className="mt-2.5 border-t border-gray-100 pt-2.5">
+          <PriceInput
+            label={isVariable ? 'Precio de venta de esta venta' : 'Nuevo precio de venta'}
+            value={price ?? (isVariable ? null : Number(product.salePrice ?? 0))}
+            onChange={setPrice}
+            maxDecimals={6}
+            autoFocus
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -473,14 +524,18 @@ export default function NewSalePage() {
   const totalMatches  = productsData?.totalElements ?? 0
   const cartIds       = new Set(cart.map((i) => i.product.id))
 
-  const addToCart = (product) => {
+  // La tarjeta puede mandar cantidad y precio ya decididos; el escáner usa
+  // los defaults (1 unidad, precio de lista).
+  const addToCart = (product, quantity = 1, priceOverride = null) => {
     setCart((prev) => [
       ...prev,
       {
         product,
-        quantity: 1,
+        quantity,
         // Precio variable arranca vacío para forzar al cajero a definirlo
-        unitPrice: product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
+        unitPrice: priceOverride != null
+          ? priceOverride
+          : product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
       },
     ])
   }
@@ -670,7 +725,8 @@ export default function NewSalePage() {
           ) : (
             <div className="space-y-2.5">
               {searchResults.map((p) => (
-                <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart} />
+                <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart}
+                  canApplyDiscount={canApplyDiscount} />
               ))}
               {totalMatches > searchResults.length && (
                 <p className="py-2 text-center text-xs text-gray-400">
@@ -681,7 +737,13 @@ export default function NewSalePage() {
           )}
         </div>
 
-        <div ref={cartRef} className="flex flex-col gap-3 lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4">
+        {/* La columna sticky se capa al alto de la pantalla y scrollea POR
+            DENTRO: sin esto, con muchos productos el fondo (fiado, notas,
+            confirmar) quedaba clavado fuera de la vista y no había forma de
+            llegar (bug reportado por William). El total + confirmar viven
+            FUERA del área scrolleable: siempre visibles. */}
+        <div ref={cartRef} className="flex flex-col gap-3 lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
+         <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
@@ -748,8 +810,9 @@ export default function NewSalePage() {
             rows={2}
             className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
           />
+         </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm lg:flex-shrink-0">
             {discountAmount > 0 && (
               <div className="mb-3 space-y-1 border-b border-gray-100 pb-3 text-sm">
                 <div className="flex items-center justify-between text-gray-500">
