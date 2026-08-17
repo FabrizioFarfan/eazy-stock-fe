@@ -12,6 +12,17 @@ export function useMovements(params, options = {}) {
   })
 }
 
+// Clave anidada bajo MOVEMENTS_KEY: toda invalidación de movimientos
+// (ventas, recepciones, ajustes) refresca también el resumen.
+export function useSalesSummary(params, options = {}) {
+  return useQuery({
+    queryKey: [MOVEMENTS_KEY, 'sales-summary', params],
+    queryFn: () => stockApi.getSalesSummary(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
 export function useCreateMovement() {
   const qc = useQueryClient()
   return useMutation({
