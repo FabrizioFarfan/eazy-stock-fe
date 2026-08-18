@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, ClipboardList } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useMovements, useSalesSummary } from '../../hooks/useStock'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -29,10 +29,10 @@ function QuantityCell({ type, quantity }) {
   return <span className={cls}>{sign}{Math.abs(quantity)}</span>
 }
 
-function SkeletonRow() {
+function SkeletonRow({ cols = 8 }) {
   return (
     <tr>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-4 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -55,52 +55,132 @@ function rangeLabel(from, to) {
   return null
 }
 
-const sumThCls = 'px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400'
+const thCls = 'px-4 py-3.5 text-xs font-semibold uppercase tracking-widest text-gray-400'
 
 /**
- * Panel de reposición: aparece al filtrar por Ventas, ENCIMA del detalle (no
- * lo reemplaza — a veces se necesita ver una venta puntual). El total lo suma
- * el servidor sobre todo el rango filtrado, no solo la página visible.
+ * Modal con las ventas una por una de UN producto del resumen, respetando el
+ * rango de fechas activo. El detalle vive aquí para que el resumen sea la
+ * única tabla en pantalla (decisión de Frank: nunca dos tablas a la vez).
  */
-function ReplenishmentSummary({ rows, isLoading, from, to }) {
+function ProductSalesModal({ row, from, to, onClose }) {
+  const range = rangeLabel(from, to)
+  const { data, isLoading } = useMovements({
+    type: 'SALE', productId: row.productId, size: 100,
+    ...(from && { from }), ...(to && { to }),
+  })
+  const sales = data?.content ?? []
+  const totalElements = data?.totalElements ?? 0
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4" onMouseDown={onClose}>
+      <div className="flex max-h-[88dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+              <ClipboardList size={20} className="text-blue-600" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-bold text-gray-900">{row.productName}</h3>
+              <p className="text-xs text-gray-500">
+                Ventas una por una {range ?? '· todo el historial'}
+                {row.providerCode && <> · cód. proveedor <span className="font-mono font-semibold text-gray-700">{row.providerCode}</span></>}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors" aria-label="Cerrar">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white">
+              <tr className="border-b border-gray-100">
+                <th className={`${thCls} text-left whitespace-nowrap`}>Fecha</th>
+                <th className={`${thCls} text-center`}>Cantidad</th>
+                <th className={`${thCls} text-left`}>Vendedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={3} />)
+              ) : sales.length === 0 ? (
+                <tr><td colSpan={3} className="py-12 text-center text-sm font-medium text-gray-400">No hay ventas en este período</td></tr>
+              ) : (
+                sales.map((m) => (
+                  <tr key={m.id} className="border-b border-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
+                    <td className="px-4 py-3 text-center font-bold text-red-500">-{fmtQty(m.quantity)}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600">{m.createdByName ?? '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          {totalElements > 100 && (
+            <p className="px-5 py-2 text-center text-xs text-gray-400">Mostrando las 100 ventas más recientes de {totalElements}</p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+          <p className="text-sm text-gray-500">
+            Total vendido: <span className="font-bold text-blue-600">{fmtQty(row.totalSold)}</span>
+          </p>
+          <p className="text-sm text-gray-500">
+            Stock actual: <span className="font-bold text-gray-900">{fmtQty(row.currentStock)}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * El resumen de reposición ES la tabla cuando se filtra por Ventas (nunca dos
+ * tablas a la vez). El total lo suma el servidor sobre todo el rango filtrado,
+ * no solo la página visible. Click en una fila → modal con el detalle.
+ */
+function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
   const range = rangeLabel(from, to)
   const list = rows ?? []
   return (
-    <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-blue-100/60 bg-blue-50/50 px-5 py-3.5">
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-gray-100 px-5 py-3.5">
         <ClipboardList size={16} className="flex-shrink-0 text-blue-600" />
         <h3 className="text-sm font-bold text-gray-900">Resumen de reposición</h3>
         <p className="text-xs text-gray-500">
           {range ? (
-            <>Ventas <span className="font-semibold text-gray-700">{range}</span> sumadas por producto — la lista para armar tu pedido. Abajo sigue el detalle una por una.</>
+            <>Ventas <span className="font-semibold text-gray-700">{range}</span> sumadas por producto — la lista para armar tu pedido.</>
           ) : (
-            <>Resumen de todas tus ventas — elige fechas arriba para armar el pedido de la semana.</>
+            <>Todas tus ventas sumadas por producto — elige fechas arriba para armar el pedido de la semana.</>
           )}
+          {' '}<span className="text-gray-400">Click en un producto para ver sus ventas una por una.</span>
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/60">
-              <th className={`${sumThCls} text-left whitespace-nowrap`}>Cód. proveedor</th>
-              <th className={`${sumThCls} text-left`}>Producto</th>
-              <th className={`${sumThCls} text-left`}>Proveedor</th>
-              <th className={`${sumThCls} text-center`}>Vendido</th>
-              <th className={`${sumThCls} text-center whitespace-nowrap`}>Stock actual</th>
+              <th className={`${thCls} text-left whitespace-nowrap`}>Cód. proveedor</th>
+              <th className={`${thCls} text-left`}>Producto</th>
+              <th className={`${thCls} text-left`}>Proveedor</th>
+              <th className={`${thCls} text-center`}>Vendido</th>
+              <th className={`${thCls} text-center whitespace-nowrap`}>Stock actual</th>
+              <th className={`${thCls} w-10`}><span className="sr-only">Detalle</span></th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <tr key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 animate-pulse rounded-lg bg-gray-100" /></td>
-                  ))}
-                </tr>
-              ))
+              Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
             ) : list.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-sm font-medium text-gray-400">
+                <td colSpan={6} className="py-10 text-center text-sm font-medium text-gray-400">
                   No hay ventas en este período
                 </td>
               </tr>
@@ -108,14 +188,16 @@ function ReplenishmentSummary({ rows, isLoading, from, to }) {
               list.map((r) => {
                 const low = parseFloat(r.currentStock ?? 0) <= parseFloat(r.minStock ?? 0)
                 return (
-                  <tr key={r.productId} className="border-b border-gray-50 hover:bg-gray-50/70 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700 whitespace-nowrap">{r.providerCode ?? '—'}</td>
-                    <td className="max-w-[220px] truncate px-4 py-3 font-semibold text-gray-900">{r.productName}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{r.supplierName ?? '—'}</td>
-                    <td className="px-4 py-3 text-center font-bold text-blue-700">{fmtQty(r.totalSold)}</td>
-                    <td className={`px-4 py-3 text-center ${low ? 'font-bold text-red-500' : 'font-medium text-gray-700'}`}>
+                  <tr key={r.productId} onClick={() => onRowClick(r)} title="Ver ventas una por una"
+                    className="cursor-pointer border-b border-gray-50 hover:bg-gray-50/70 transition-colors">
+                    <td className="px-4 py-3.5 font-mono text-xs font-semibold text-gray-700 whitespace-nowrap">{r.providerCode ?? '—'}</td>
+                    <td className="max-w-[220px] truncate px-4 py-3.5 font-semibold text-gray-900">{r.productName}</td>
+                    <td className="px-4 py-3.5 text-xs text-gray-500">{r.supplierName ?? '—'}</td>
+                    <td className="px-4 py-3.5 text-center font-bold text-blue-600">{fmtQty(r.totalSold)}</td>
+                    <td className={`px-4 py-3.5 text-center ${low ? 'font-bold text-red-500' : 'font-medium text-gray-700'}`}>
                       {fmtQty(r.currentStock)}
                     </td>
+                    <td className="px-2 py-3.5 text-gray-400"><ChevronRight size={15} /></td>
                   </tr>
                 )
               })
@@ -136,12 +218,15 @@ export default function MovementsTab() {
   const [from, setFrom]               = useState('')
   const [to, setTo]                   = useState('')
   const [page, setPage]               = useState(0)
+  const [detailRow, setDetailRow]     = useState(null)
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(0) }, [typeFilter, supplierId, from, to])
 
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
+
+  const isSalesFilter = typeFilter === 'SALE'
 
   const params = {
     page, size: PAGE_SIZE,
@@ -151,9 +236,9 @@ export default function MovementsTab() {
     ...(to   && { to   }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
-  const { data, isLoading, isFetching } = useMovements(params)
+  // Con el filtro Ventas la tabla visible es el resumen — el historial no se pide.
+  const { data, isLoading, isFetching } = useMovements(params, { enabled: !isSalesFilter })
 
-  const isSalesFilter = typeFilter === 'SALE'
   const summaryParams = {
     ...(supplierId && { supplierId }),
     ...(from && { from }),
@@ -205,79 +290,95 @@ export default function MovementsTab() {
         )}
       </div>
 
-      {/* Resumen de reposición — solo al filtrar por Ventas */}
-      {isSalesFilter && (
-        <ReplenishmentSummary rows={summaryRows} isLoading={summaryLoading} from={from} to={to} />
+      {/* Guía fija (pedido de Frank): la feature no es banal, que se descubra sola */}
+      {!isSalesFilter && (
+        <p className="flex items-start gap-2 px-1 text-[13px] leading-snug text-gray-500">
+          <Lightbulb size={15} className="mt-0.5 flex-shrink-0 text-amber-500" />
+          <span>
+            ¿Quieres el <span className="font-semibold text-gray-700">Resumen de reposición</span>?
+            Filtra por <span className="font-semibold text-gray-700">Ventas</span>: verás cuánto vendiste
+            de cada producto con su código de proveedor, listo para armar tu pedido.
+          </span>
+        </p>
       )}
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">Fecha</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400 whitespace-nowrap">Cód. prov.</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Tipo</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Cantidad</th>
-                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Costo unit.</th>
-                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-              ) : movements.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-14 text-center text-sm font-medium text-gray-400">
-                    No hay movimientos en este período
-                  </td>
+      {/* Una sola tabla a la vez: resumen si filtras Ventas, historial si no */}
+      {isSalesFilter ? (
+        <ReplenishmentSummary rows={summaryRows} isLoading={summaryLoading}
+          from={from} to={to} onRowClick={setDetailRow} />
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/60">
+                  <th className={`${thCls} text-left whitespace-nowrap`}>Fecha</th>
+                  <th className={`${thCls} text-left`}>Producto</th>
+                  <th className={`${thCls} text-left whitespace-nowrap`}>Cód. prov.</th>
+                  <th className={`${thCls} text-left`}>Proveedor</th>
+                  <th className={`${thCls} text-center`}>Tipo</th>
+                  <th className={`${thCls} text-center`}>Cantidad</th>
+                  <th className={`${thCls} text-right`}>Costo unit.</th>
+                  <th className={`${thCls} text-right`}>Subtotal</th>
                 </tr>
-              ) : (
-                movements.map((m) => {
-                  const cfg = TYPE_CONFIG[m.type] ?? { label: m.type, cls: 'bg-gray-100 text-gray-600' }
-                  return (
-                    <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/70 transition-colors ${isFetching ? 'opacity-60' : ''}`}>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
-                      <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900">{m.productName}</td>
-                      <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
-                      <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} /></td>
-                      <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
-                      <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatPrice(m.subtotal)}</td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
-            <p className="text-sm text-gray-400">
-              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-semibold text-gray-700">{totalElements}</span> movimientos
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
-                className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                <ChevronLeft size={14} />Anterior
-              </button>
-              <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
-                className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                Siguiente<ChevronRight size={14} />
-              </button>
-            </div>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+                ) : movements.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-14 text-center text-sm font-medium text-gray-400">
+                      No hay movimientos en este período
+                    </td>
+                  </tr>
+                ) : (
+                  movements.map((m) => {
+                    const cfg = TYPE_CONFIG[m.type] ?? { label: m.type, cls: 'bg-gray-100 text-gray-600' }
+                    return (
+                      <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/70 transition-colors ${isFetching ? 'opacity-60' : ''}`}>
+                        <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
+                        <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900">{m.productName}</td>
+                        <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
+                        <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} /></td>
+                        <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
+                        <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatPrice(m.subtotal)}</td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+              <p className="text-sm text-gray-400">
+                <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
+                <span className="font-semibold text-gray-700">{totalElements}</span> movimientos
+              </p>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
+                  className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                  <ChevronLeft size={14} />Anterior
+                </button>
+                <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
+                <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                  className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                  Siguiente<ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {detailRow && (
+        <ProductSalesModal row={detailRow} from={from} to={to} onClose={() => setDetailRow(null)} />
+      )}
     </div>
   )
 }
