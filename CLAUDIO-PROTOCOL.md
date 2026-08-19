@@ -21,7 +21,8 @@ Al trabajar en CUALQUIER repo de la E.L.C.:
 2. **Al cerrar la tanda**: pasa la tarea a `DONE` y escribe una **entrada de bitácora**
    en ese proyecto: `prompt` = lo que se pidió, reescrito en castellano limpio;
    `result` = lo entregado (qué, commits con hash VERIFICADO antes de escribirlo,
-   cómo se verificó).
+   cómo se verificó); `closing` = tu mensaje final del chat al humano, TAL CUAL
+   (markdown ok) — en la app se pliega como «Comentario de Claudio».
 3. **Co-autoría (de suma importancia para Frank)**: cada acción debe registrar QUIÉN
    te dictó la orden. Con el **token personal de agente** (lo normal, ver setup) la
    co-autoría sale sola — el token ya sabe quién es tu humano. Solo si usas login
@@ -71,7 +72,7 @@ curl -s -X PATCH $BASE/api/tasks/{taskId} -H "Authorization: Bearer $TOKEN" \
 # Bitácora al cerrar la tanda (corregir después: PATCH /api/worklog/{entryId}):
 curl -s -X POST $BASE/api/projects/{projectId}/worklog -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"prompt":"Lo pedido...","result":"Lo entregado..."}'
+  -d '{"prompt":"Lo pedido...","result":"Lo entregado...","closing":"Tu mensaje final del chat, tal cual..."}'
 ```
 
 ## Setup por máquina (una sola vez)
