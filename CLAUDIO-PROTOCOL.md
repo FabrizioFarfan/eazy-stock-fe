@@ -1,7 +1,7 @@
 # CLAUDIO-PROTOCOL.md — protocolo del agente de la E.L.C. (portable, igual en todos los repos)
 
 > Este archivo es idéntico en todos los repos de la Eazy Life Company. Si lo mejoras,
-> replica el cambio en los demás repos. No contiene secretos: las credenciales viven
+> replica el cambio en los demás repos. No contiene secretos: el token personal vive
 > en el `~/.claude/CLAUDE.md` de cada máquina (ver "Setup por máquina" abajo).
 
 ## Quién eres aquí
@@ -22,10 +22,11 @@ Al trabajar en CUALQUIER repo de la E.L.C.:
    en ese proyecto: `prompt` = lo que se pidió, reescrito en castellano limpio;
    `result` = lo entregado (qué, commits con hash VERIFICADO antes de escribirlo,
    cómo se verificó).
-3. **Co-autoría (de suma importancia para Frank)**: CADA request a la API lleva el
-   header **`X-Directed-By: <userId>`** con el id del humano que dictó la orden
-   (está en el snippet personal de la máquina; Frank = 1). Sin ese header la acción
-   sale como tuya sola y se pierde quién la dirigió — no lo omitas nunca.
+3. **Co-autoría (de suma importancia para Frank)**: cada acción debe registrar QUIÉN
+   te dictó la orden. Con el **token personal de agente** (lo normal, ver setup) la
+   co-autoría sale sola — el token ya sabe quién es tu humano. Solo si usas login
+   con password añade el header **`X-Directed-By: <userId>`** en CADA request
+   (Frank = 1). Si ambos van, el header explícito gana.
 4. **Commit + push SIEMPRE** al cerrar: el equipo trabaja desde varias máquinas
    (Contabo + PCs locales); lo no pusheado no existe para los demás.
 
@@ -51,36 +52,43 @@ Si el repo no aparece o dudas del proyecto, pregunta al humano antes de registra
 
 ```bash
 BASE=https://api.eazy-project.com
-# Login (credenciales en ~/.claude/CLAUDE.md de esta máquina, NUNCA en el repo):
-TOKEN=$(curl -s -X POST $BASE/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"claudio@eazylife.dev","password":"<del snippet personal>"}' \
-  | python3 -c "import sys,json;print(json.load(sys.stdin)['accessToken'])")
+# Vía normal: el token personal de agente (ept_…) del ~/.claude/CLAUDE.md de esta
+# máquina. Va directo como Bearer — sin login y con la co-autoría implícita:
+TOKEN="ept_...del snippet personal..."
 
-# Tarea al arrancar (X-Directed-By = id del humano que dicta):
+# (Fallback sin token: POST $BASE/api/auth/login con las credenciales de Claudio
+#  → accessToken; entonces SÍ añade -H 'X-Directed-By: <id del humano>' a todo.)
+
+# Tarea al arrancar:
 curl -s -X POST $BASE/api/projects/{projectId}/tasks -H "Authorization: Bearer $TOKEN" \
-  -H 'X-Directed-By: 1' -H 'Content-Type: application/json' \
+  -H 'Content-Type: application/json' \
   -d '{"title":"...","status":"DOING","platform":"FE"}'
 
 # Cerrar tarea:
 curl -s -X PATCH $BASE/api/tasks/{taskId} -H "Authorization: Bearer $TOKEN" \
-  -H 'X-Directed-By: 1' -H 'Content-Type: application/json' -d '{"status":"DONE"}'
+  -H 'Content-Type: application/json' -d '{"status":"DONE"}'
 
 # Bitácora al cerrar la tanda (corregir después: PATCH /api/worklog/{entryId}):
 curl -s -X POST $BASE/api/projects/{projectId}/worklog -H "Authorization: Bearer $TOKEN" \
-  -H 'X-Directed-By: 1' -H 'Content-Type: application/json' \
+  -H 'Content-Type: application/json' \
   -d '{"prompt":"Lo pedido...","result":"Lo entregado..."}'
 ```
 
 ## Setup por máquina (una sola vez)
 
-En el `~/.claude/CLAUDE.md` del usuario de esa máquina debe existir el snippet
-personal (pedírselo a Frank si falta):
+1. El humano entra a https://eazy-project.com/settings → sección **«Tu Claudio»** →
+   **Generar token de agente**. El token (`ept_…`) se muestra UNA sola vez y la
+   misma pantalla da el bloque listo para copiar.
+2. Ese bloque se pega en el `~/.claude/CLAUDE.md` del usuario de esa máquina:
 
 ```markdown
-## Claudio — credenciales E.L.C. (esta máquina, no commitear jamás)
-- Soy <nombre>, user id <N> en EAZY PROJECT → todo X-Directed-By: <N>.
-- Login de Claudio: claudio@eazylife.dev / <password>
+## Claudio — token E.L.C. (esta máquina, no commitear jamás)
+- Soy <nombre>, user id <N> en EAZY PROJECT.
+- Token de agente EAZY PROJECT: ept_…
+  Úsalo como Bearer contra https://api.eazy-project.com — autentica como
+  Claudio y registra mi co-autoría automáticamente (sin X-Directed-By).
 ```
 
-Con eso + este archivo en el repo, cualquier Claude Code local ya sabe quién es,
-dónde anotar y a nombre de quién.
+En esa misma sección se ve la última actividad del Claudio de cada uno, y el token
+se puede revocar o regenerar cuando se quiera. Con ese snippet + este archivo en el
+repo, cualquier Claude Code local ya sabe quién es, dónde anotar y a nombre de quién.
