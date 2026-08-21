@@ -19,14 +19,24 @@ const TYPE_CONFIG = {
   RETURN:         { label: 'Devolución', cls: 'bg-purple-50 text-purple-700 ring-1 ring-purple-100' },
 }
 
-function QuantityCell({ type, quantity }) {
+function QuantityCell({ type, quantity, stockAfter }) {
   const isPositive = type === 'PURCHASE_ENTRY' || type === 'RETURN' || (type === 'ADJUSTMENT' && quantity > 0)
   const isNegative = type === 'SALE'           || (type === 'ADJUSTMENT' && quantity < 0)
   const cls = isPositive ? 'font-bold text-emerald-600'
             : isNegative ? 'font-bold text-red-500'
             : 'font-medium text-gray-700'
   const sign = isPositive ? '+' : type === 'SALE' ? '-' : ''
-  return <span className={cls}>{sign}{Math.abs(quantity)}</span>
+  return (
+    <span className={`whitespace-nowrap ${cls}`}>
+      {sign}{Math.abs(quantity)}
+      {stockAfter != null && (
+        // Idea de William: el stock que QUEDÓ del producto tras este movimiento
+        <span className="ml-1 text-xs font-normal text-gray-500" title="Stock del producto tras este movimiento">
+          ({fmtQty(stockAfter)})
+        </span>
+      )}
+    </span>
+  )
 }
 
 function SkeletonRow({ cols = 8 }) {
@@ -116,7 +126,14 @@ function ProductSalesModal({ row, from, to, onClose }) {
                 sales.map((m) => (
                   <tr key={m.id} className="border-b border-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
-                    <td className="px-4 py-3 text-center font-bold text-red-500">-{fmtQty(m.quantity)}</td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap font-bold text-red-500">
+                      -{fmtQty(m.quantity)}
+                      {m.stockAfter != null && (
+                        <span className="ml-1 text-xs font-normal text-gray-500" title="Stock del producto tras esta venta">
+                          ({fmtQty(m.stockAfter)})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-gray-600">{m.createdByName ?? '—'}</td>
                   </tr>
                 ))
@@ -318,7 +335,7 @@ export default function MovementsTab() {
                   <th className={`${thCls} text-left`}>Proveedor</th>
                   <th className={`${thCls} text-center`}>Tipo</th>
                   <th className={`${thCls} text-center`}>Cantidad</th>
-                  <th className={`${thCls} text-right`}>Costo unit.</th>
+                  <th className={`${thCls} text-right whitespace-nowrap`} title="Entradas: costo de compra · Ventas: precio de venta">Precio unit.</th>
                   <th className={`${thCls} text-right`}>Subtotal</th>
                 </tr>
               </thead>
@@ -343,7 +360,7 @@ export default function MovementsTab() {
                         <td className="px-4 py-3.5 text-center">
                           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
                         </td>
-                        <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} /></td>
+                        <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} /></td>
                         <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
                         <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatPrice(m.subtotal)}</td>
                       </tr>
