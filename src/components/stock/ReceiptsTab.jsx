@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, PackagePlus, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PackagePlus, Loader2, Search, AlertTriangle } from 'lucide-react'
 import { useReceipts } from '../../hooks/useReceipts'
 import { useSuppliers } from '../../hooks/useSuppliers'
+import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import ReceiptDetailModal from './ReceiptDetailModal'
 
@@ -19,19 +20,29 @@ export default function ReceiptsTab() {
   const [supplierId, setSupplierId]     = useState('')
   const [from, setFrom]                 = useState('')
   const [to, setTo]                     = useState('')
+  const [reference, setReference]       = useState('')
+  const [paymentMode, setPaymentMode]   = useState('')
   const [selectedReceiptId, setSelectedReceiptId] = useState(null)
+  const debouncedReference = useDebounce(reference, 350)
 
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
+  const hasFilters = !!(supplierId || from || to || reference || paymentMode)
+
+  // Fechas planas yyyy-MM-dd: el BE las interpreta como día en la zona del
+  // usuario (ClientDay). El `T00:00:00` viejo era hora del SERVER (Berlín) y
+  // por eso filtrar por fechas vaciaba la lista (reporte de William).
   const params = {
     page, size: PAGE_SIZE,
     ...(supplierId && { supplierId }),
-    ...(from && { from: `${from}T00:00:00` }),
-    ...(to   && { to:   `${to}T23:59:59`  }),
+    ...(from && { from }),
+    ...(to   && { to }),
+    ...(debouncedReference.trim() && { reference: debouncedReference.trim() }),
+    ...(paymentMode && { paymentMode }),
   }
 
-  const { data, isLoading, isFetching } = useReceipts(params)
+  const { data, isLoading, isFetching, isError } = useReceipts(params)
   const items         = data?.content       ?? []
   const totalElements = data?.totalElements ?? 0
   const totalPages    = data?.totalPages    ?? 0
@@ -64,8 +75,27 @@ export default function ReceiptsTab() {
             className={selectCls} />
         </div>
 
-        {(supplierId || from || to) && (
-          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setPage(0) }}
+        {/* Nº de factura/guía: para eso se pide al registrar (pedido de William) */}
+        <div className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={reference}
+            onChange={(e) => { setReference(e.target.value); setPage(0) }}
+            placeholder="Nº de factura / guía..."
+            className={`${selectCls} pl-8 min-w-44`}
+          />
+        </div>
+
+        <select value={paymentMode} onChange={(e) => { setPaymentMode(e.target.value); setPage(0) }}
+          className={selectCls}>
+          <option value="">Contado y crédito</option>
+          <option value="CASH">Al contado</option>
+          <option value="CREDIT">A crédito</option>
+        </select>
+
+        {hasFilters && (
+          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setPage(0) }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
             Limpiar
           </button>
@@ -89,6 +119,19 @@ export default function ReceiptsTab() {
             <tbody>
               {isLoading ? (
                 <tr><td colSpan={6} className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></td></tr>
+              ) : isError ? (
+                // Un error NO es "no tienes recepciones": decir la verdad.
+                <tr>
+                  <td colSpan={6}>
+                    <div className="flex flex-col items-center gap-3 py-16">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50">
+                        <AlertTriangle size={28} className="text-amber-600" />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-700">No pudimos cargar las recepciones</p>
+                      <p className="text-xs text-gray-400">Revisá tu conexión y volvé a intentar.</p>
+                    </div>
+                  </td>
+                </tr>
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
@@ -96,8 +139,17 @@ export default function ReceiptsTab() {
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <PackagePlus size={28} className="text-gray-400" />
                       </div>
-                      <p className="text-sm font-semibold text-gray-700">Aún no registraste recepciones</p>
-                      <p className="text-xs text-gray-400">Hacé click en "Registrar recepción" arriba.</p>
+                      {hasFilters ? (
+                        <>
+                          <p className="text-sm font-semibold text-gray-700">Sin recepciones con estos filtros</p>
+                          <p className="text-xs text-gray-400">Probá ampliar las fechas o tocá "Limpiar".</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-gray-700">Aún no registraste recepciones</p>
+                          <p className="text-xs text-gray-400">Hacé click en "Registrar recepción" arriba.</p>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
