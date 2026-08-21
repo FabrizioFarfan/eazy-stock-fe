@@ -1,4 +1,4 @@
-import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit } from 'lucide-react'
+import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
 import { usersApi } from '../services/endpoints/users'
 import { businessesApi } from '../services/endpoints/businesses'
+import { useInstallApp, promptInstall } from '../utils/installApp'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -361,6 +362,94 @@ function BusinessSection() {
   )
 }
 
+// ── Instalar la app (PWA) ──────────────────────────────────────────────────
+
+function InstallSection() {
+  const { canPrompt, installed, ios } = useInstallApp()
+  const [installing, setInstalling] = useState(false)
+
+  const handleInstall = async () => {
+    setInstalling(true)
+    try {
+      const outcome = await promptInstall()
+      if (outcome === 'accepted') {
+        toast.success('¡Listo! Busca «Eazy Stock» en tu escritorio o pantalla de inicio')
+      }
+    } finally {
+      setInstalling(false)
+    }
+  }
+
+  return (
+    <Section title="Instalar la app">
+      {installed ? (
+        <div className="flex items-center gap-3.5 py-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+            <CheckCircle2 size={15} className="text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">La app ya está instalada</p>
+            <p className="text-xs text-gray-400">
+              Búscala como «Eazy Stock» en tu escritorio o pantalla de inicio
+            </p>
+          </div>
+        </div>
+      ) : canPrompt ? (
+        <button
+          onClick={handleInstall}
+          disabled={installing}
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-blue-50 transition-colors disabled:opacity-60"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+            {installing
+              ? <Loader2 size={15} className="animate-spin text-blue-600" />
+              : <MonitorDown size={15} className="text-blue-600" />
+            }
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-600">Instalar en este dispositivo</p>
+            <p className="text-xs text-gray-400">
+              Con su propio ícono y ventana, como cualquier aplicación
+            </p>
+          </div>
+          <ChevronRight size={16} className="text-gray-400" />
+        </button>
+      ) : ios ? (
+        <div className="flex items-start gap-3.5 py-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
+            <Share size={15} className="text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">Instalar en iPhone / iPad</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
+              Abre esta página en <span className="font-semibold text-gray-700">Safari</span>,
+              toca el botón <span className="font-semibold text-gray-700">Compartir</span> y
+              elige <span className="font-semibold text-gray-700">«Añadir a pantalla de inicio»</span>.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-start gap-3.5 py-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100">
+            <MoreVertical size={15} className="text-gray-500" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">Instalar desde el navegador</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
+              Abre el menú <span className="font-semibold text-gray-700">⋮</span> del navegador
+              (arriba a la derecha) y elige{' '}
+              <span className="font-semibold text-gray-700">«Instalar Eazy Stock»</span>
+              {' '}— en el celular puede llamarse{' '}
+              <span className="font-semibold text-gray-700">«Añadir a pantalla de inicio»</span>.
+              Si no aparece, recarga la página y vuelve a intentar.
+            </p>
+          </div>
+        </div>
+      )}
+    </Section>
+  )
+}
+
 export default function SettingsPage() {
   const { user, logout, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
@@ -445,6 +534,9 @@ export default function SettingsPage() {
           </div>
         </button>
       </Section>
+
+      {/* Install PWA */}
+      <InstallSection />
 
       {/* Password */}
       <Section title="Cambiar contraseña">
