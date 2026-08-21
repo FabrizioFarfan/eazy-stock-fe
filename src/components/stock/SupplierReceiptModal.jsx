@@ -3,6 +3,7 @@ import {
   X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '../../context/AuthContext'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useProducts, useCreateProduct } from '../../hooks/useProducts'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -36,11 +37,30 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const createReceipt = useCreateSupplierReceipt()
   const createProduct = useCreateProduct()
 
+  // ── Borrador persistente (caso William: factura con productos nuevos) ────
+  // El carrito se guarda solo en localStorage mientras se arma: cerrar el
+  // modal (para crear productos en Productos con calma, o por accidente) NO
+  // pierde nada — al reabrir la recepción sigue donde quedó. Se limpia al
+  // registrar o con «Empezar de cero». Si llega initialProduct/initialSupplier
+  // (flujo «Registrar entrada» del detalle) esa intención explícita gana.
+  const { user } = useAuth()
+  const draftKey = `eazystock_receipt_draft_${user?.businessId ?? 'global'}`
+  const draftRef = useRef(undefined)
+  if (draftRef.current === undefined) {
+    let d = null
+    if (!initialProduct && !initialSupplier) {
+      try { d = JSON.parse(localStorage.getItem(draftKey)) } catch { d = null }
+    }
+    draftRef.current = d
+  }
+  const draft = draftRef.current
+  const [restoredBanner, setRestoredBanner] = useState(!!draft?.items?.length)
+
   // ── Alta inline: el producto no existe → nace acá, ya de este proveedor ──
   const [quickForm, setQuickForm] = useState(null) // {name, unit, salePrice} | null
 
   // ── Paso 1: proveedor ────────────────────────────────────────────────────
-  const [supplier, setSupplier]                 = useState(initialSupplier)
+  const [supplier, setSupplier]                 = useState(initialSupplier ?? draft?.supplier ?? null)
   const [supplierQuery, setSupplierQuery]       = useState('')
   const [showSupplierDrop, setShowSupplierDrop] = useState(false)
   const debouncedSupplier = useDebounce(supplierQuery, 350)
@@ -108,7 +128,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const [items, setItems] = useState(() => (
     initialProduct && initialSupplier
       ? [{ product: initialProduct, quantity: 1, unitCost: Number(initialProduct.purchasePrice ?? 0) }]
-      : []
+      : (draft?.items ?? [])
   ))
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = items }, [items])
@@ -124,12 +144,31 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   }, [supplier?.id])
 
   // ── Receipt header ───────────────────────────────────────────────────────
-  const [paymentMode, setPaymentMode]               = useState('CASH')
-  const [totalAmount, setTotalAmount]               = useState(null)
-  const [totalTouched, setTotalTouched]             = useState(false)
-  const [referenceDocument, setReferenceDocument]   = useState('')
-  const [notes, setNotes]                           = useState('')
+  const [paymentMode, setPaymentMode]               = useState(draft?.paymentMode ?? 'CASH')
+  const [totalAmount, setTotalAmount]               = useState(draft?.totalAmount ?? null)
+  const [totalTouched, setTotalTouched]             = useState(draft?.totalTouched ?? false)
+  const [referenceDocument, setReferenceDocument]   = useState(draft?.referenceDocument ?? '')
+  const [notes, setNotes]                           = useState(draft?.notes ?? '')
   const [error, setError]                           = useState(null)
+
+  // Autosave del borrador en cada cambio; sin contenido, se limpia solo.
+  useEffect(() => {
+    try {
+      if (!supplier && items.length === 0 && !referenceDocument && !notes) {
+        localStorage.removeItem(draftKey)
+      } else {
+        localStorage.setItem(draftKey, JSON.stringify({
+          supplier, items, paymentMode, totalAmount, totalTouched, referenceDocument, notes,
+        }))
+      }
+    } catch { /* localStorage lleno o bloqueado: el borrador es best-effort */ }
+  }, [supplier, items, paymentMode, totalAmount, totalTouched, referenceDocument, notes, draftKey])
+
+  const startFresh = () => {
+    setSupplier(null); setItems([]); setPaymentMode('CASH'); setTotalAmount(null)
+    setTotalTouched(false); setReferenceDocument(''); setNotes(''); setRestoredBanner(false)
+    try { localStorage.removeItem(draftKey) } catch {}
+  }
 
   const computedTotal = useMemo(() => items.reduce(
     (sum, it) => sum + (Number(it.unitCost ?? 0) * (Number(it.quantity) || 0)),
@@ -206,6 +245,14 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const marginOf = (i) => effSale(i) - Number(i.unitCost ?? 0)
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.product.id !== id))
 
+  // Cerrar con carrito != perderlo: avisamos que el borrador queda guardado.
+  const handleClose = () => {
+    if (itemsRef.current.length > 0) {
+      toast.info('Recepción guardada como borrador — al volver a «Registrar recepción» seguirá aquí')
+    }
+    onClose()
+  }
+
   const handleScan = async (code) => {
     if (!supplier) { toast.warning('Elegí primero el proveedor'); return }
     if (scanLockRef.current) return
@@ -270,6 +317,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           notes:             notes.trim() || null,
         },
       })
+      try { localStorage.removeItem(draftKey) } catch {}
       toast.success(
         paymentMode === 'CREDIT'
           ? `Recepción registrada — ${formatPrice(finalTotal)} sumados a la deuda con ${supplier.name}`
@@ -297,13 +345,29 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             <PackagePlus size={20} className="text-emerald-600" />
             <h3 className="text-base font-bold text-gray-900">Nueva recepción</h3>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100">
+          <button onClick={handleClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100">
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+
+            {restoredBanner && (
+              <div className="flex items-start justify-between gap-3 rounded-xl bg-blue-50 px-4 py-3 ring-1 ring-blue-100">
+                <p className="text-xs leading-relaxed text-blue-700">
+                  <span className="font-semibold">Retomaste una recepción guardada.</span>{' '}
+                  El carrito se guarda solo: puedes cerrar, crear productos en Productos y volver — nada se pierde.
+                </p>
+                <button
+                  type="button"
+                  onClick={startFresh}
+                  className="flex-shrink-0 text-xs font-semibold text-blue-700 underline hover:opacity-80"
+                >
+                  Empezar de cero
+                </button>
+              </div>
+            )}
 
             {/* ── Paso 1: proveedor ──────────────────────────────────────── */}
             <section>
@@ -380,7 +444,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                 </p>
               ) : (
                 <>
-                  <div className="relative">
+                  <div className="flex items-start gap-2">
+                  <div className="relative flex-1">
                     <ScannerInput
                       value={productQuery}
                       onChange={(v) => { setProductQuery(v); setShowProductDrop(true) }}
@@ -439,6 +504,21 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                         )}
                       </div>
                     )}
+                  </div>
+                  {/* Producto nuevo SIEMPRE a la vista: en la factura real hay
+                      productos nuevos entre los recurrentes (caso William) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuickForm({ name: productQuery.trim(), unit: 'unidad', salePrice: null })
+                      setShowProductDrop(false)
+                    }}
+                    className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="Crear un producto que aún no existe y agregarlo a esta recepción"
+                  >
+                    <PackagePlus size={14} />
+                    Nuevo
+                  </button>
                   </div>
 
                   {/* Alta inline: el producto nace acá, ya de este proveedor */}
@@ -704,7 +784,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           </div>
 
           <div className="flex flex-shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4">
-            <button type="button" onClick={onClose}
+            <button type="button" onClick={handleClose}
               className="rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">
               Cancelar
             </button>

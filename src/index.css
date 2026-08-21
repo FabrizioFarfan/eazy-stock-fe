@@ -249,6 +249,7 @@ html.dark .bg-amber-100     { background-color: rgb(120 53 15 / 0.4); }
 /* Texto de chips/acentos — aclarado para contrastar sobre los fondos oscuros */
 html.dark .text-blue-600    { color: #60A5FA; }
 html.dark .text-blue-700    { color: #93C5FD; }
+html.dark .text-blue-900    { color: #BFDBFE; }
 html.dark .text-emerald-600 { color: #34D399; }
 html.dark .text-emerald-700 { color: #6EE7B7; }
 html.dark .text-red-600     { color: #F87171; }
