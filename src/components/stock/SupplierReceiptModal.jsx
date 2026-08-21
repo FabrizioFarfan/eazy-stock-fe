@@ -58,13 +58,49 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   // Busca en TODOS los productos (no solo los del proveedor elegido): si William
   // le compra a un proveedor nuevo un producto que ya vende, lo encuentra igual
   // y el BE crea la versión de este proveedor al registrar.
-  const { data: productsData, isLoading: loadingProducts } = useProducts(
+  //
+  // Scroll infinito: páginas de 30 acumuladas por número de página DEL SERVER
+  // (productsData.number) — el placeholderData del hook re-entrega la página
+  // anterior mientras carga la nueva, y keyear por productPage la duplicaría.
+  const PRODUCT_PAGE_SIZE = 30
+  const [productPage, setProductPage] = useState(0)
+  const [productPagesMap, setProductPagesMap] = useState({})
+  useEffect(() => { setProductPage(0); setProductPagesMap({}) }, [debouncedProduct])
+  const { data: productsData, isLoading: loadingProducts, isFetching: fetchingProducts } = useProducts(
     supplier && debouncedProduct
-      ? { search: debouncedProduct, size: 8, active: true }
+      ? { search: debouncedProduct, size: PRODUCT_PAGE_SIZE, page: productPage, active: true }
       : null,
     { enabled: !!supplier && !!debouncedProduct },
   )
-  const productResults = productsData?.content ?? []
+  useEffect(() => {
+    if (productsData?.content) {
+      setProductPagesMap((prev) => ({ ...prev, [productsData.number ?? 0]: productsData.content }))
+    }
+  }, [productsData])
+  const productResults = Object.keys(productPagesMap)
+    .sort((a, b) => a - b)
+    .flatMap((k) => productPagesMap[k])
+  const totalProductResults = productsData?.totalElements ?? 0
+  const hasMoreProducts = productResults.length > 0 && productResults.length < totalProductResults
+
+  // Centinela al pie del dropdown: al verse, carga la página siguiente.
+  // Los refs evitan closures viejos dentro del IntersectionObserver.
+  const productSentinelRef = useRef(null)
+  const fetchingProductsRef = useRef(false)
+  useEffect(() => { fetchingProductsRef.current = fetchingProducts }, [fetchingProducts])
+  const lastPageRef = useRef(true)
+  useEffect(() => { lastPageRef.current = productsData?.last ?? true }, [productsData])
+  useEffect(() => {
+    const el = productSentinelRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !fetchingProductsRef.current && !lastPageRef.current) {
+        setProductPage((p) => p + 1)
+      }
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [showProductDrop, debouncedProduct, productResults.length])
   const isForeign = (p) => p?.supplierId && supplier && p.supplierId !== supplier.id
 
   // ── Carrito ──────────────────────────────────────────────────────────────
@@ -353,7 +389,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                     />
                     {showProductDrop && debouncedProduct && (
                       <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
-                        {loadingProducts ? (
+                        {productResults.length === 0 && (loadingProducts || fetchingProducts) ? (
                           <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
                         ) : productResults.length === 0 ? (
                           <div className="px-4 py-3 text-sm">
@@ -369,25 +405,37 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             </button>
                           </div>
                         ) : (
-                          productResults.map((p) => (
-                            <button key={p.id} type="button" onClick={() => addProduct(p, { focusQty: true })}
-                              className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
-                              <div className="min-w-0">
-                                <p className="truncate font-semibold text-gray-900">{p.name}</p>
-                                <p className="font-mono text-xs text-gray-400">
-                                  {p.sku}
-                                  {isForeign(p) && (
-                                    <span className="ml-2 font-sans font-semibold text-amber-600">
-                                      habitual de {p.supplierName ?? 'otro proveedor'}
-                                    </span>
-                                  )}
-                                </p>
+                          <>
+                            {productResults.map((p) => (
+                              <button key={p.id} type="button" onClick={() => addProduct(p, { focusQty: true })}
+                                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
+                                <div className="min-w-0">
+                                  <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                                  <p className="font-mono text-xs text-gray-400">
+                                    {p.sku}
+                                    {isForeign(p) && (
+                                      <span className="ml-2 font-sans font-semibold text-amber-600">
+                                        habitual de {p.supplierName ?? 'otro proveedor'}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                                <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
+                                  {formatPrice(p.purchasePrice)}
+                                </span>
+                              </button>
+                            ))}
+                            {hasMoreProducts && (
+                              <div
+                                ref={productSentinelRef}
+                                className="border-t border-gray-50 px-4 py-2.5 text-center text-xs text-gray-500"
+                              >
+                                {fetchingProducts
+                                  ? 'Cargando más...'
+                                  : `${totalProductResults - productResults.length} resultados más — baja para cargarlos o sigue escribiendo para afinar`}
                               </div>
-                              <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
-                                {formatPrice(p.purchasePrice)}
-                              </span>
-                            </button>
-                          ))
+                            )}
+                          </>
                         )}
                       </div>
                     )}
