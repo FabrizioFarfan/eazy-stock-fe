@@ -169,7 +169,15 @@ function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
   }
 }
 
-export default function ProductFormModal({ product, onClose, autoTutorial = false }) {
+/**
+ * `receiptContext` (opcional): el modal se abrió desde una RECEPCIÓN en curso.
+ * { supplier: {id, name}, initialName, onCreated(product) } — el proveedor
+ * llega FIJO (obvio: es el de la recepción, no se completa ni se cambia),
+ * el nombre viene prefilled con lo tipeado en el buscador, el stock inicial
+ * se oculta (la recepción es la que suma el stock — sería doble conteo) y el
+ * producto creado se devuelve para caer al carrito.
+ */
+export default function ProductFormModal({ product, onClose, autoTutorial = false, receiptContext = null }) {
   const isEdit = !!product
   const { user } = useAuth()
   const create   = useCreateProduct()
@@ -201,7 +209,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   // Controlled brand/supplier/category (outside RHF schema)
   const [brandId,     setBrandId]     = useState(product?.brandId     ?? null)
-  const [supplierId,  setSupplierId]  = useState(product?.supplierId  ?? null)
+  const [supplierId,  setSupplierId]  = useState(product?.supplierId  ?? receiptContext?.supplier?.id ?? null)
   const [categoryId,  setCategoryId]  = useState(product?.categoryId  ?? null)
 
   // Attributes map: Record<string, string>
@@ -323,7 +331,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           minStock:      product.minStock      ?? 0,
           expirationDate: product.expirationDate ?? '',
         }
-      : { minStock: 0, initialStock: 0, unit: 'unidad', priceIsVariable: false, expirationDate: '' },
+      : { name: receiptContext?.initialName ?? '', minStock: 0, initialStock: 0, unit: 'unidad', priceIsVariable: false, expirationDate: '' },
   })
 
   const unitValue = watch('unit')
@@ -450,13 +458,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           },
         })
       } else {
-        const withInitial = initialStock && Number(initialStock) > 0
+        // Desde la recepción el stock inicial NO aplica: lo suma la recepción.
+        const withInitial = !receiptContext && initialStock && Number(initialStock) > 0
           ? { ...payload, initialStock: Number(initialStock) }
           : payload
         const finalPayload = user.role === 'SUPER_ADMIN'
           ? { ...withInitial, businessId: user.businessId }
           : withInitial
-        await create.mutateAsync(finalPayload)
+        const created = await create.mutateAsync(finalPayload)
+        receiptContext?.onCreated?.(created)
       }
       onClose()
     } catch (err) {
@@ -583,6 +593,16 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
             {/* Supplier picker — obligatorio */}
             <div data-tutorial-target="supplier-picker">
+              {receiptContext ? (
+                // Desde la recepción el proveedor YA está elegido: fijo, sin picker.
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-gray-700">Proveedor</p>
+                  <div className="flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+                    <span className="text-sm font-semibold text-blue-900">{receiptContext.supplier.name}</span>
+                    <span className="text-xs text-blue-700">· el de la recepción en curso</span>
+                  </div>
+                </div>
+              ) : (
               <EntityPicker
                 label={<>Proveedor <span className="text-red-500">*</span></>}
                 items={suppliers}
@@ -597,6 +617,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 createLabel="Nuevo proveedor"
                 isCreating={createSupplier.isPending}
               />
+              )}
               {supplierError && (
                 <p className="mt-1 text-xs text-red-500">{supplierError}</p>
               )}
@@ -824,7 +845,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               <Field label="Stock mín." required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
               </Field>
-              {!isEdit && (
+              {!isEdit && !receiptContext && (
                 <Field label="Stock inicial" error={errors.initialStock?.message}>
                   <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                 </Field>

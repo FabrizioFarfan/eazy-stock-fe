@@ -5,11 +5,12 @@ import {
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import { useSuppliers } from '../../hooks/useSuppliers'
-import { useProducts, useCreateProduct } from '../../hooks/useProducts'
+import { useProducts } from '../../hooks/useProducts'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
+import ProductFormModal from '../products/ProductFormModal'
 import PriceInput from '../inputs/PriceInput'
 import QuantityInput from '../inputs/QuantityInput'
 import { formatPrice } from '../../utils/formatMoney'
@@ -35,7 +36,6 @@ import { getErrorMessage } from '../../utils/handleApiError'
  */
 export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null }) {
   const createReceipt = useCreateSupplierReceipt()
-  const createProduct = useCreateProduct()
 
   // ── Borrador persistente (caso William: factura con productos nuevos) ────
   // El carrito se guarda solo en localStorage mientras se arma: cerrar el
@@ -56,8 +56,16 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const draft = draftRef.current
   const [restoredBanner, setRestoredBanner] = useState(!!draft?.items?.length)
 
-  // ── Alta inline: el producto no existe → nace acá, ya de este proveedor ──
-  const [quickForm, setQuickForm] = useState(null) // {name, unit, salePrice} | null
+  // ── Producto nuevo: abre el modal COMPLETO de producto (con código de
+  // proveedor, stock mínimo, marca, etc. — dictado de Frank: el mini-form se
+  // quedaba corto). El proveedor va fijo y el creado cae al carrito.
+  const [newProductOpen, setNewProductOpen] = useState(false)
+  const [newProductName, setNewProductName] = useState('')
+  const openNewProduct = (name) => {
+    setNewProductName(name)
+    setNewProductOpen(true)
+    setShowProductDrop(false)
+  }
 
   // ── Paso 1: proveedor ────────────────────────────────────────────────────
   const [supplier, setSupplier]                 = useState(initialSupplier ?? draft?.supplier ?? null)
@@ -460,10 +468,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           <div className="px-4 py-3 text-sm">
                             <p className="text-gray-500">Sin resultados para "{debouncedProduct}"</p>
                             <button type="button"
-                              onClick={() => {
-                                setQuickForm({ name: productQuery.trim(), unit: 'unidad', salePrice: null })
-                                setShowProductDrop(false)
-                              }}
+                              onClick={() => openNewProduct(productQuery.trim())}
                               className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
                               <PackagePlus size={11} />
                               Crear "{debouncedProduct}" como producto nuevo de {supplier.name}
@@ -509,10 +514,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       productos nuevos entre los recurrentes (caso William) */}
                   <button
                     type="button"
-                    onClick={() => {
-                      setQuickForm({ name: productQuery.trim(), unit: 'unidad', salePrice: null })
-                      setShowProductDrop(false)
-                    }}
+                    onClick={() => openNewProduct(productQuery.trim())}
                     className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
                     title="Crear un producto que aún no existe y agregarlo a esta recepción"
                   >
@@ -521,70 +523,6 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                   </button>
                   </div>
 
-                  {/* Alta inline: el producto nace acá, ya de este proveedor */}
-                  {quickForm && (
-                    <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-                      <p className="text-sm font-semibold text-gray-900">
-                        Producto nuevo de {supplier.name}
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        <input
-                          value={quickForm.name}
-                          onChange={(e) => setQuickForm((f) => ({ ...f, name: e.target.value }))}
-                          placeholder="Nombre del producto"
-                          className={inputCls}
-                        />
-                        <div className="flex flex-wrap gap-1.5">
-                          {['unidad', 'metro', 'kilo', 'litro'].map((u) => (
-                            <button key={u} type="button"
-                              onClick={() => setQuickForm((f) => ({ ...f, unit: u }))}
-                              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                quickForm.unit === u
-                                  ? 'border-blue-500 bg-blue-100 text-blue-700'
-                                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
-                              }`}>
-                              {u}
-                            </button>
-                          ))}
-                        </div>
-                        <PriceInput
-                          label="Precio de venta"
-                          value={quickForm.salePrice}
-                          onChange={(v) => setQuickForm((f) => ({ ...f, salePrice: v }))}
-                          maxDecimals={2}
-                          helperText="El costo de compra lo escribís en la línea de la recepción"
-                        />
-                        <div className="flex justify-end gap-2 pt-1">
-                          <button type="button" onClick={() => setQuickForm(null)}
-                            className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100">
-                            Cancelar
-                          </button>
-                          <button type="button"
-                            disabled={!quickForm.name.trim() || quickForm.salePrice == null || createProduct.isPending}
-                            onClick={async () => {
-                              try {
-                                const created = await createProduct.mutateAsync({
-                                  name: quickForm.name.trim(),
-                                  unit: quickForm.unit,
-                                  purchasePrice: 0,
-                                  salePrice: quickForm.salePrice,
-                                  supplierId: supplier.id,
-                                })
-                                addProduct(created, { focusQty: true })
-                                setQuickForm(null)
-                                toast.success(`${created.name} creado — escribí su costo en la línea`)
-                              } catch (err) {
-                                toast.error(getErrorMessage(err))
-                              }
-                            }}
-                            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
-                            {createProduct.isPending && <Loader2 size={11} className="animate-spin" />}
-                            Crear y agregar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Carrito */}
                   {items.length === 0 ? (
@@ -796,6 +734,25 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           </div>
         </form>
       </div>
+
+      {/* Producto nuevo con el modal COMPLETO (código de proveedor, stock
+          mínimo, marca…). El proveedor va FIJO (el de esta recepción), el
+          stock inicial se oculta (lo suma la recepción) y el creado cae al
+          carrito — que además ya persiste como borrador. */}
+      {newProductOpen && supplier && (
+        <ProductFormModal
+          product={null}
+          onClose={() => setNewProductOpen(false)}
+          receiptContext={{
+            supplier,
+            initialName: newProductName,
+            onCreated: (p) => {
+              addProduct(p, { focusQty: true })
+              toast.success(`${p.name} creado y agregado — escribí su costo en la línea`)
+            },
+          }}
+        />
+      )}
     </div>
   )
 }
