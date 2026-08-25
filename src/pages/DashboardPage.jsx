@@ -216,7 +216,9 @@ function OwnerDashboard({ name, businessId }) {
   const navigate    = useNavigate()
   const scopeParams = businessId ? { businessId } : {}
 
-  const { data: summary,      isLoading: loadingSummary } = useDailySummary(scopeParams)
+  // Fecha explícita del navegador: el server está en Europa y su "hoy" empieza
+  // a las 19:00 de Lima — sin esto el resumen salía en 0 por las tardes.
+  const { data: summary,      isLoading: loadingSummary } = useDailySummary({ date: todayStr(), ...scopeParams })
   const { data: lowStockPage, isLoading: loadingLow }     = useReportsLowStock({ size: 10, ...scopeParams })
   const { data: expiringPage, isLoading: loadingExp }     = useReportsExpiring({ size: 10, ...scopeParams })
 

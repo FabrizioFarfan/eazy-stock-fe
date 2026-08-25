@@ -276,6 +276,26 @@ html.dark .border-orange-200  { border-color: rgb(154 52 18 / 0.6); }
 html.dark .border-purple-100  { border-color: rgb(107 33 168 / 0.5); }
 html.dark .border-purple-200  { border-color: rgb(107 33 168 / 0.6); }
 
+/* Cabecera fija en TODAS las tablas (pedido de William: en Stock bajaba y
+   tenía que volver arriba para saber qué columna miraba). El wrapper
+   .overflow-x-auto ya es un contenedor de scroll; con alto máximo el thead
+   se pega a su borde superior mientras el cuerpo scrollea dentro. */
+.overflow-x-auto:has(> table) {
+  max-height: calc(100vh - 11rem);
+  overflow-y: auto;
+}
+.overflow-x-auto:has(> table) > table > thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #ffffff;
+  box-shadow: 0 1px 0 #f3f4f6;
+}
+html.dark .overflow-x-auto:has(> table) > table > thead {
+  background-color: #1F2937;
+  box-shadow: 0 1px 0 #374151;
+}
+
 /* Rings de badges de colores */
 html.dark .ring-red-100     { --tw-ring-color: rgb(153 27 27 / 0.5); }
 html.dark .ring-emerald-100 { --tw-ring-color: rgb(6 95 70 / 0.5); }
