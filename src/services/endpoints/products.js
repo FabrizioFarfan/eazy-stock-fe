@@ -27,6 +27,7 @@ export const productsApi = {
   // Huecos reutilizables en la numeración: códigos de productos borrados que
   // nunca tuvieron movimientos. Se sugieren al dar de alta un producto nuevo.
   freeCodes: () => api.get('/products/free-codes'),
+  units: (params) => api.get('/products/units', { params }),
 
   // Borrado masivo por rango de fecha de creación (from/to en formato YYYY-MM-DD)
   bulkDeletePreview: (from, to) =>

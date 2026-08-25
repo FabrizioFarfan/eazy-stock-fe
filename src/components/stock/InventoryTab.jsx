@@ -13,6 +13,7 @@ import { useBrands } from '../../hooks/useBrands'
 import { useCategories } from '../../hooks/useCategories'
 import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
+import UnitBadge from '../../components/common/UnitBadge'
 
 const PAGE_SIZE = 20
 
@@ -288,7 +289,13 @@ export default function InventoryTab() {
                       className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}
                     >
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{p.sku}</td>
-                      <td className="max-w-[200px] truncate px-4 py-3.5 font-semibold text-gray-900">{p.name}</td>
+                      <td className="max-w-[220px] px-4 py-3.5">
+                        <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                        <p className="mt-0.5 flex items-center gap-1.5">
+                          <UnitBadge unit={p.unit} />
+                          {p.presentation && <span className="truncate text-xs text-gray-400">{p.presentation}</span>}
+                        </p>
+                      </td>
                       <td className="px-4 py-3.5">
                         {p.supplierId ? (
                           <button

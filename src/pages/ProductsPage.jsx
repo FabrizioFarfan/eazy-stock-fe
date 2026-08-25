@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
-import { useProducts, useReactivateProduct } from '../hooks/useProducts'
+import { useProducts, useReactivateProduct, useProductUnits } from '../hooks/useProducts'
 import { getErrorMessage } from '../utils/handleApiError'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useBrands } from '../hooks/useBrands'
@@ -17,13 +17,14 @@ import DeleteProductModal from '../components/products/DeleteProductModal'
 import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
+import UnitBadge from '../components/common/UnitBadge'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
 
 // Estado inicial de los filtros por columna (embudo por encabezado).
 const EMPTY_COL_FILTERS = {
-  sku: '', name: '', providerCode: '',
+  sku: '', name: '', providerCode: '', unit: '',
   categoryId: '', brandId: '', supplierId: '',
   status: 'active',                  // active | inactive | all
   purchaseMin: '', purchaseMax: '',
@@ -41,7 +42,7 @@ const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 11 }).map((_, i) => (
+      {Array.from({ length: 12 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -143,9 +144,11 @@ export default function ProductsPage() {
   const { data: suppliersData }  = useSuppliers({ size: 200, ...bizParam })
   const { data: brandsData }     = useBrands({ size: 200, ...bizParam })
   const { data: categoriesData } = useCategories({ size: 200, ...bizParam })
+  const { data: unitsData }      = useProductUnits(bizParam)
   const supplierOpts  = (suppliersData?.content  ?? []).map((s) => ({ value: s.id, label: s.name }))
   const brandOpts     = (brandsData?.content     ?? []).map((b) => ({ value: b.id, label: b.name }))
   const categoryOpts  = (categoriesData?.content ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const unitOpts      = (unitsData ?? []).map((u) => ({ value: u, label: u }))
 
   // Helpers de filtros por columna
   const setField    = (k, v) => setColFilters((f) => ({ ...f, [k]: v }))
@@ -190,6 +193,7 @@ export default function ProductsPage() {
     ...(c.name && { name: c.name }),
     ...(c.sku && { sku: c.sku }),
     ...(c.providerCode && { providerCode: c.providerCode }),
+    ...(c.unit && { unit: c.unit }),
     ...(c.categoryId && { categoryId: c.categoryId }),
     ...(c.brandId && { brandId: c.brandId }),
     ...(c.supplierId && { supplierId: c.supplierId }),
@@ -224,6 +228,7 @@ export default function ProductsPage() {
   const activeChips = []
   if (colFilters.name)         activeChips.push({ label: `Nombre: "${colFilters.name}"`, onRemove: () => clearFields('name') })
   if (colFilters.sku)          activeChips.push({ label: `Código: "${colFilters.sku}"`, onRemove: () => clearFields('sku') })
+  if (colFilters.unit)         activeChips.push({ label: `Unidad: ${colFilters.unit}`, onRemove: () => clearFields('unit') })
   if (colFilters.categoryId)   activeChips.push({ label: `Categoría: ${labelOf(categoryOpts, colFilters.categoryId)}`, onRemove: () => clearFields('categoryId') })
   if (colFilters.brandId)      activeChips.push({ label: `Marca: ${labelOf(brandOpts, colFilters.brandId)}`, onRemove: () => clearFields('brandId') })
   if (colFilters.supplierId)   activeChips.push({ label: `Proveedor: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
@@ -443,6 +448,10 @@ export default function ProductsPage() {
                   placeholder="Buscar nombre..." active={!!colFilters.name}
                   sortState={sortStateFor('name')} onSort={onSortBy('name')} ascLabel="A–Z" descLabel="Z–A"
                   onClear={() => clearFields('name')} />
+                <ColumnFilter label="Unidad" type="select" align="left"
+                  value={colFilters.unit} onChange={(v) => setField('unit', v)}
+                  options={unitOpts} active={!!colFilters.unit}
+                  onClear={() => clearFields('unit')} />
                 <ColumnFilter label="Categoría" type="select" align="left"
                   value={colFilters.categoryId} onChange={(v) => setField('categoryId', v)}
                   options={categoryOpts} active={!!colFilters.categoryId}
@@ -496,7 +505,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>
+                  <td colSpan={12}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         {showHidden
@@ -538,6 +547,7 @@ export default function ProductsPage() {
                         <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
                       )}
                     </td>
+                    <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>

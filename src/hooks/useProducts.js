@@ -20,6 +20,14 @@ export const FREE_CODES_KEY = 'product-free-codes'
  * borrados que nunca se vendieron ni se recibieron). Solo trae huecos del
  * MEDIO: el de la cola se autocura porque el generador es max+1.
  */
+export function useProductUnits(params, options = {}) {
+  return useQuery({
+    queryKey: [PRODUCTS_KEY, 'units', params],
+    queryFn: () => productsApi.units(params).then((r) => r.data.data),
+    ...options,
+  })
+}
+
 export function useFreeCodes(options = {}) {
   return useQuery({
     queryKey: [FREE_CODES_KEY],
