@@ -102,6 +102,15 @@ export function useSalesBalance(params, options = {}) {
   })
 }
 
+export function useCashClosing(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'cash-closing', params],
+    queryFn: () => reportsApi.getCashClosing(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
 export function useCashBalance(params, options = {}) {
   return useQuery({
     queryKey: ['reports', 'cash-balance', params],

@@ -30,6 +30,7 @@ export const reportsApi = {
 
   // Ingresos vs egresos: params = { from?, to?, businessId? }
   getCashBalance: (params) => api.get('/reports/cash-balance', { params }),
+  getCashClosing: (params) => api.get('/reports/cash-closing', { params }),
 
   // Información total del negocio (valorización del inventario actual)
   getBusinessOverview: (params) => api.get('/reports/business-overview', { params }),

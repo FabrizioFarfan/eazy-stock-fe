@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import {
   Scale, TrendingUp, TrendingDown, Loader2,
   Wallet, PackageOpen, PiggyBank, ShoppingCart, Undo2, AlertTriangle,
+  Banknote, Smartphone, Landmark, CreditCard, HandCoins,
 } from 'lucide-react'
-import { useSalesBalance, useCashBalance, useBusinessOverview } from '../hooks/useReports'
+import { useSalesBalance, useCashBalance, useBusinessOverview, useCashClosing } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
 import DateRangeQuick from '../components/common/DateRangeQuick'
@@ -45,6 +46,19 @@ function BalanceHelp() {
         <p><span className="font-semibold">Costo del producto</span>: lo que a ti te costó la mercadería vendida.</p>
         <p><span className="font-semibold">Ganancia</span>: lo que te queda después de restar todo lo anterior. Verde = ganaste, rojo = perdiste.</p>
       </S>
+      <S title="2b · Cierre de caja — cuánto entró por cada medio">
+        <p>
+          Separa las ventas <span className="font-semibold">al contado</span> del período por cómo
+          te pagaron: <span className="font-semibold">Efectivo, Yape, Transferencia</span> o lo que
+          hayas escrito al vender. Sirve para cerrar la caja del día: la línea de Efectivo es
+          la plata que deberías tener en el cajón por las ventas de hoy.
+        </p>
+        <p className="text-xs text-gray-400">
+          Las ventas al fiado no entran (todavía no cobraste). Los cobros de fiado del día sí
+          entraron, pero no registran medio de pago, por eso van en su propia línea. Las
+          devoluciones en dinero salieron de caja.
+        </p>
+      </S>
       <S title="3 · Ingresos y egresos">
         <p>
           Compara la plata que entró (ventas) contra la que salió (compras de mercadería a
@@ -83,6 +97,113 @@ function BalanceLine({ label, value, negative = false, muted = false }) {
   )
 }
 
+// Ícono por medio de pago: se adivina por el texto que escribió el cajero.
+function methodIcon(method) {
+  const m = (method || '').toLowerCase()
+  if (m.includes('efectivo') || m.includes('cash'))   return { Icon: Banknote,   cls: 'bg-emerald-50 text-emerald-600' }
+  if (m.includes('yape') || m.includes('plin'))       return { Icon: Smartphone, cls: 'bg-purple-50 text-purple-600' }
+  if (m.includes('transfer') || m.includes('banco'))  return { Icon: Landmark,   cls: 'bg-blue-50 text-blue-600' }
+  if (m.includes('tarjeta') || m.includes('pos'))     return { Icon: CreditCard, cls: 'bg-amber-50 text-amber-600' }
+  return { Icon: Wallet, cls: 'bg-gray-100 text-gray-500' }
+}
+
+function CashClosingCard({ report, isLoading, isError, hasRange }) {
+  const cc = report
+  const body = () => {
+    if (!hasRange) return <p className="py-8 text-center text-sm text-gray-400">Selecciona un rango de fechas</p>
+    if (isLoading) return <div className="flex justify-center py-10"><Loader2 size={20} className="animate-spin text-gray-400" /></div>
+    if (isError)   return <p className="py-8 text-center text-sm text-red-500">No pudimos cargar el cierre de caja.</p>
+    if (!cc) return null
+
+    const noMovement = cc.byMethod.length === 0 && Number(cc.creditSalesTotal) === 0
+      && Number(cc.debtPaymentsReceived) === 0 && Number(cc.cashRefunds) === 0
+    if (noMovement) {
+      return <p className="py-8 text-center text-sm text-gray-400">Sin ventas al contado en este período.</p>
+    }
+
+    const max = Math.max(...cc.byMethod.map((l) => Number(l.total)), 1)
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {cc.byMethod.map((line) => {
+            const { Icon, cls } = methodIcon(line.method)
+            const pct = Math.max(4, Math.round((Number(line.total) / max) * 100))
+            return (
+              <div key={line.method} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${cls}`}>
+                    <Icon size={19} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold uppercase tracking-widest text-gray-500">{line.method}</p>
+                    <p className="text-xl font-extrabold tabular-nums text-gray-900">{formatPrice(line.total)}</p>
+                  </div>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-gray-500 ring-1 ring-gray-100">
+                    {line.salesCount} venta{line.salesCount !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200/70">
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="divide-y divide-gray-50 rounded-2xl border border-gray-100 px-4">
+          <div className="flex items-center justify-between py-2.5">
+            <span className="text-sm font-bold text-gray-800">Total ventas al contado</span>
+            <span className="text-lg font-extrabold tabular-nums text-gray-900">{formatPrice(cc.cashSalesTotal)}</span>
+          </div>
+          {Number(cc.debtPaymentsReceived) > 0 && (
+            <div className="flex items-center justify-between py-2.5">
+              <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                <HandCoins size={14} className="text-gray-400" />
+                Cobros de fiado recibidos
+                <span className="text-xs text-gray-400">(sin medio registrado)</span>
+              </span>
+              <span className="font-semibold tabular-nums text-gray-900">+{formatPrice(cc.debtPaymentsReceived)}</span>
+            </div>
+          )}
+          {Number(cc.cashRefunds) > 0 && (
+            <BalanceLine label="Devoluciones en dinero" value={cc.cashRefunds} negative />
+          )}
+          {cc.creditSalesCount > 0 && (
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-gray-400">
+                Ventas al fiado ({cc.creditSalesCount}) · no entraron en caja
+              </span>
+              <span className="font-semibold tabular-nums text-gray-400">{formatPrice(cc.creditSalesTotal)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
+            <Banknote size={17} className="text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">Cierre de caja</h3>
+            <p className="text-xs text-gray-400">Cuánto entró por cada medio de pago</p>
+          </div>
+        </div>
+        {cc != null && hasRange && (
+          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-500">
+            {cc.cashSalesCount} al contado
+          </span>
+        )}
+      </div>
+      {body()}
+    </div>
+  )
+}
+
 function OverviewCard({ icon: Icon, label, value, tone, subtitle }) {
   const tones = {
     blue:    'bg-blue-50 text-blue-600',
@@ -116,6 +237,7 @@ export default function BalancePage() {
 
   const salesBalance = useSalesBalance(periodParams, { enabled: !!periodParams })
   const cashBalance  = useCashBalance(periodParams,  { enabled: !!periodParams })
+  const cashClosing  = useCashClosing(periodParams,  { enabled: !!periodParams })
   const overview     = useBusinessOverview(baseParams)
 
   const sb = salesBalance.data
@@ -147,6 +269,14 @@ export default function BalancePage() {
           <p className="mt-2 text-xs text-gray-400">Elige ambas fechas para ver el balance</p>
         )}
       </div>
+
+      {/* Cierre de caja: por medio de pago (pedido de William para cerrar el día) */}
+      <CashClosingCard
+        report={cashClosing.data}
+        isLoading={cashClosing.isLoading}
+        isError={cashClosing.isError}
+        hasRange={!!periodParams}
+      />
 
       <div className="grid gap-5 lg:grid-cols-2">
 
