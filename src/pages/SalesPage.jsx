@@ -443,7 +443,22 @@ export default function SalesPage() {
                               : `-${formatCurrency(sale.discountAmount)}`}
                           </span>
                         )}
-                        <span>{formatCurrency(sale.total)}</span>
+                        {/* Burbuja de devolución (William): saber que la venta se anuló sin abrir el detalle */}
+                        {sale.returnedAmount > 0 && (
+                          <span
+                            title={
+                              Number(sale.returnedAmount) >= Number(sale.total)
+                                ? `Venta devuelta por completo (−${formatCurrency(sale.returnedAmount)})`
+                                : `Devolución parcial: −${formatCurrency(sale.returnedAmount)} de ${formatCurrency(sale.total)}`
+                            }
+                            className="inline-flex items-center gap-0.5 rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700"
+                          >
+                            {Number(sale.returnedAmount) >= Number(sale.total) ? 'Devuelto' : 'Dev. parcial'}
+                          </span>
+                        )}
+                        <span className={Number(sale.returnedAmount) >= Number(sale.total) && sale.returnedAmount > 0 ? 'text-slate-400 line-through' : ''}>
+                          {formatCurrency(sale.total)}
+                        </span>
                       </div>
                     </td>
                   </tr>
