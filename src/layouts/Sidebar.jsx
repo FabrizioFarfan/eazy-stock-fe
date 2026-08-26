@@ -44,6 +44,9 @@ const EMPLOYEE_NAV = [
   { icon: Plus,            label: 'Nueva Venta',       path: '/sales/new',           permission: 'canRegisterSale' },
   { icon: FileText,        label: 'Cotización',        path: '/cotizaciones',        permission: 'canRegisterSale' },
   { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
+  { icon: Scale,           label: 'Balance',           path: '/reports/balance',     permission: 'canViewReports' },
+  // Vendedor sin reportes completos: solo el cierre de caja del día (sin ganancias).
+  { icon: Scale,           label: 'Cierre de caja',    path: '/reports/balance',     permission: 'canViewCashClosing', hideIfPermission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
@@ -75,7 +78,8 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
     : navItemsForRole(user?.role)
 
   const items = baseItems.filter(
-    (item) => !item.permission || can(item.permission),
+    (item) => (!item.permission || can(item.permission))
+      && (!item.hideIfPermission || !can(item.hideIfPermission)),
   )
 
   const initials = user?.name

@@ -78,10 +78,12 @@ export default function AppRouter() {
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ReportsPage /></ProtectedRoute>
       } />
 
-      {/* OWNER only */}
+      {/* Balance: OWNER completo; EMPLOYEE con canViewCashClosing ve solo el cierre de caja */}
       <Route path="/reports/balance" element={
-        <ProtectedRoute allowedRoles={['OWNER']}><BalancePage /></ProtectedRoute>
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><BalancePage /></ProtectedRoute>
       } />
+
+      {/* OWNER only */}
       <Route path="/reports/sellers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SellerPerformancePage /></ProtectedRoute>
       } />

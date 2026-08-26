@@ -78,6 +78,37 @@ function BalanceHelp() {
   )
 }
 
+// Ayuda del vendedor con solo canViewCashClosing: su misión es el confronto
+// de fin de día contra lo anotado a mano, sin ver ganancias del negocio.
+function CashClosingHelp() {
+  return (
+    <>
+      <p>
+        Esta página te dice, en un vistazo, <span className="font-semibold">cuánto entró en
+        caja</span> por cada medio de pago en el período que elijas.
+      </p>
+      <S title="1 · Elige el período">
+        <p>
+          Toca <span className="font-semibold">Hoy</span> para cerrar la caja del día. Con{' '}
+          <span className="font-semibold">"Elegir fechas"</span> puedes revisar días anteriores.
+        </p>
+      </S>
+      <S title="2 · El confronto de fin de día">
+        <p>
+          Compara lo que anotaste a mano con lo que dice el sistema:{' '}
+          <span className="font-semibold">Efectivo, Yape, Transferencia</span> o lo que hayas
+          escrito al vender. La línea de Efectivo es la plata que deberías tener en el cajón
+          por las ventas de hoy. Si coincide, la caja cierra bien.
+        </p>
+        <p className="text-xs text-gray-400">
+          Las ventas al fiado no entran (todavía no se cobraron). Los cobros de fiado del día sí
+          entraron, pero van en su propia línea. Las devoluciones en dinero salieron de caja.
+        </p>
+      </S>
+    </>
+  )
+}
+
 function formatRangeLabel(from, to) {
   if (!from || !to) return ''
   const fmt = new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -226,8 +257,12 @@ function OverviewCard({ icon: Icon, label, value, tone, subtitle }) {
 }
 
 export default function BalancePage() {
-  const { user } = useAuth()
+  const { user, can } = useAuth()
   const [range, setRange] = useState(() => quickRange('day'))
+
+  // Vendedor con solo canViewCashClosing: ve ÚNICAMENTE el cierre de caja del
+  // período (medios de pago), nunca ganancias, costos ni valorización.
+  const fullReports = can('canViewReports')
 
   const rangeComplete = !!(range?.from && range?.to)
   const baseParams = user?.role === 'SUPER_ADMIN' && user?.businessId
@@ -235,10 +270,10 @@ export default function BalancePage() {
     : {}
   const periodParams = rangeComplete ? { ...baseParams, ...range } : null
 
-  const salesBalance = useSalesBalance(periodParams, { enabled: !!periodParams })
-  const cashBalance  = useCashBalance(periodParams,  { enabled: !!periodParams })
+  const salesBalance = useSalesBalance(periodParams, { enabled: !!periodParams && fullReports })
+  const cashBalance  = useCashBalance(periodParams,  { enabled: !!periodParams && fullReports })
   const cashClosing  = useCashClosing(periodParams,  { enabled: !!periodParams })
-  const overview     = useBusinessOverview(baseParams)
+  const overview     = useBusinessOverview(baseParams, { enabled: fullReports })
 
   const sb = salesBalance.data
   const cb = cashBalance.data
@@ -252,14 +287,20 @@ export default function BalancePage() {
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <PageTitle icon={Scale} tone="emerald">Balance del negocio</PageTitle>
+          <PageTitle icon={Scale} tone="emerald">{fullReports ? 'Balance del negocio' : 'Cierre de caja'}</PageTitle>
           {rangeComplete && (
             <p className="mt-0.5 text-sm text-gray-400">{formatRangeLabel(range.from, range.to)}</p>
           )}
         </div>
-        <HelpDrawer title="Cómo leer el balance" autoOpenKey="eazystock_balance_help_v1">
-          <BalanceHelp />
-        </HelpDrawer>
+        {fullReports ? (
+          <HelpDrawer title="Cómo leer el balance" autoOpenKey="eazystock_balance_help_v1">
+            <BalanceHelp />
+          </HelpDrawer>
+        ) : (
+          <HelpDrawer title="Cómo cerrar la caja" autoOpenKey="eazystock_cash_closing_help_v1">
+            <CashClosingHelp />
+          </HelpDrawer>
+        )}
       </div>
 
       {/* Selector de período */}
@@ -278,6 +319,7 @@ export default function BalancePage() {
         hasRange={!!periodParams}
       />
 
+      {fullReports && (
       <div className="grid gap-5 lg:grid-cols-2">
 
         {/* Balance de ventas */}
@@ -359,8 +401,10 @@ export default function BalancePage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Información total del negocio */}
+      {fullReports && (
       <div>
         <h3 className="mb-3 flex items-center gap-2 font-bold text-gray-900">
           <PiggyBank size={17} className="text-gray-400" />
@@ -414,6 +458,7 @@ export default function BalancePage() {
           </>
         )}
       </div>
+      )}
     </div>
   )
 }
