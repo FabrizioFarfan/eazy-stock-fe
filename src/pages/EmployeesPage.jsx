@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react'
+import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight, Lightbulb, Trash2, RotateCcw, UserX, AlertTriangle, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
-import { useEmployees, useCreateEmployee, useToggleEmployee } from '../hooks/useEmployees'
+import { useEmployees, useCreateEmployee, useToggleEmployee, useDeleteEmployee } from '../hooks/useEmployees'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import EditUserModal from '../components/EditUserModal'
 import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
@@ -229,6 +230,58 @@ function CreateEmployeeModal({ businessName, onClose }) {
   )
 }
 
+// ── Confirmación de borrado definitivo ───────────────────────────────────────
+
+function DeleteEmployeeModal({ employee, onClose }) {
+  const t = useT()
+  const del = useDeleteEmployee()
+  const confirm = async () => {
+    try {
+      await del.mutateAsync(employee.id)
+      toast.success(t('{name} borrado. Su correo {email} ya puede usarse de nuevo.', { name: employee.name, email: employee.email }))
+      onClose()
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="px-6 pt-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+            <Trash2 size={22} />
+          </div>
+          <h3 className="mt-4 text-lg font-bold text-gray-900">{t('¿Borrar a {name} definitivamente?', { name: employee.name })}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            {t('Nunca registró ventas ni operaciones, así que no se pierde ningún historial.')}
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-gray-600">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-emerald-500">✓</span>
+              {t('El correo {email} queda libre para crear otro empleado.', { email: employee.email })}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-red-500">✕</span>
+              {t('No se puede deshacer. Si solo quieres que vuelva a entrar, usa «Reactivar».')}
+            </li>
+          </ul>
+        </div>
+        <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
+          <button type="button" onClick={onClose}
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
+            {t('Cancelar')}
+          </button>
+          <button type="button" onClick={confirm} disabled={del.isPending}
+            className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-red-600/30 transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-60">
+            {del.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {t('Borrar definitivamente')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20
@@ -267,6 +320,9 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false)
   const [permTarget, setPermTarget] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [tab, setTab]             = useState('active')   // 'active' | 'inactive'
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [editTarget, setEditTarget] = useState(null)
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem(BANNER_DISMISSED_KEY) === '1',
   )
@@ -276,7 +332,11 @@ export default function EmployeesPage() {
     setBannerDismissed(true)
   }
 
-  const { data, isLoading, isFetching } = useEmployees({ page, size: PAGE_SIZE, sort: 'createdAt,desc' })
+  const showInactive = tab === 'inactive'
+  const { data, isLoading, isFetching } = useEmployees({ page, size: PAGE_SIZE, sort: 'createdAt,desc', active: !showInactive })
+  // contador de la pestaña «Dados de baja» (solo el total, una fila)
+  const { data: inactiveMeta } = useEmployees({ page: 0, size: 1, active: false })
+  const inactiveCount = inactiveMeta?.totalElements ?? 0
   const toggleEmployee = useToggleEmployee()
 
   const employees     = data?.content       ?? []
@@ -291,11 +351,22 @@ export default function EmployeesPage() {
         e.email.toLowerCase().includes(search.toLowerCase()))
     : employees
 
-  const handleToggle = async (id) => {
-    setTogglingId(id)
-    try { await toggleEmployee.mutateAsync(id) }
-    finally { setTogglingId(null) }
+  const handleToggle = async (emp) => {
+    setTogglingId(emp.id)
+    try {
+      await toggleEmployee.mutateAsync(emp.id)
+      if (emp.active) {
+        toast.success(t('{name} dado de baja. Lo encuentras en la pestaña «Dados de baja»; puedes reactivarlo cuando quieras.', { name: emp.name }))
+      } else {
+        toast.success(t('{name} reactivado: ya puede volver a entrar con su mismo correo.', { name: emp.name }))
+        setTab('active')
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    } finally { setTogglingId(null) }
   }
+
+  const switchTab = (next) => { setTab(next); setPage(0); setSearch('') }
 
   return (
     <div className="flex flex-col gap-5">
@@ -303,7 +374,7 @@ export default function EmployeesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold text-gray-900">{t('Empleados')}</h2>
-          <HelpDrawer title={t('Cómo usar Empleados')} autoOpenKey="eazystock_employees_help_v2">
+          <HelpDrawer title={t('Cómo usar Empleados')} autoOpenKey="eazystock_employees_help_v3">
             <p>{t('Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
@@ -322,8 +393,20 @@ export default function EmployeesPage() {
               <p className="mt-1">{t('Cada venta queda registrada con su vendedor. En Reportes ves el ranking de vendedores: quién vendió cuánto cada día.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🚫 {t('Desactivar')}</p>
-              <p className="mt-1">{t('Si alguien deja de trabajar contigo, desactívalo: pierde el acceso pero su historial de ventas se conserva.')}</p>
+              <p className="font-semibold text-gray-800">🚫 {t('Dar de baja')}</p>
+              <p className="mt-1">{t('Si alguien deja de trabajar contigo, dale de baja: pierde el acceso al instante, pero su historial de ventas se conserva y su cuenta no desaparece.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🗂️ {t('Pestaña «Dados de baja»')}</p>
+              <p className="mt-1">{t('Arriba de la tabla tienes dos pestañas: «Activos» y «Dados de baja». En la segunda ves a todos los que desactivaste y puedes:')}</p>
+              <ul className="mt-2 space-y-1.5">
+                <li>↩️ <span className="font-semibold">{t('Reactivar')}</span>: {t('vuelve a entrar con su mismo correo y contraseña. Ideal si diste de baja a alguien y luego lo necesitas, o si quieres darle esa cuenta a otro trabajador (con el lápiz «Editar» le cambias el nombre y la contraseña).')}</li>
+                <li>🗑️ <span className="font-semibold">{t('Borrar definitivamente')}</span>: {t('solo aparece si esa persona NUNCA registró una venta ni una operación (por ejemplo, cuentas de prueba). Libera su correo para usarlo en un empleado nuevo. Si ya vendió, no se puede borrar: se queda dado de baja para no perder el historial.')}</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">✉️ {t('«Ese correo ya existe»')}</p>
+              <p className="mt-1">{t('Si al crear un empleado te dice que el correo ya existe, casi siempre es de alguien que diste de baja. No hace falta otro correo: ve a «Dados de baja» y reactívalo, o bórralo si nunca vendió.')}</p>
             </div>
           </HelpDrawer>
           {!isLoading && (
@@ -343,13 +426,40 @@ export default function EmployeesPage() {
         <PermissionsBanner onDismiss={dismissBanner} />
       )}
 
-      {/* Search */}
-      <div className="relative max-w-sm">
+      {/* Tabs + Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="tablist">
+          <button type="button" role="tab" aria-selected={!showInactive} onClick={() => switchTab('active')}
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              !showInactive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            <Power size={13} className={!showInactive ? 'text-emerald-500' : ''} />{t('Activos')}
+          </button>
+          <button type="button" role="tab" aria-selected={showInactive} onClick={() => switchTab('inactive')}
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              showInactive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            <UserX size={13} className={showInactive ? 'text-amber-500' : ''} />{t('Dados de baja')}
+            {inactiveCount > 0 && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${showInactive ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'}`}>{inactiveCount}</span>
+            )}
+          </button>
+        </div>
+        <div className="relative w-full sm:w-80">
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         <input type="text" placeholder={t('Buscar por nombre o email...')} value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0) }}
           className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
+        </div>
       </div>
+
+      {showInactive && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <AlertTriangle size={18} className="mt-0.5 flex-shrink-0 text-amber-500" />
+          <p>
+            <span className="font-semibold">{t('Estas personas ya no pueden entrar.')}</span>{' '}
+            {t('«Reactivar» les devuelve el acceso con su mismo correo. «Borrar» solo aparece si nunca vendieron: libera el correo para un empleado nuevo.')}
+          </p>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -383,12 +493,19 @@ export default function EmployeesPage() {
                         {t('Sin resultados para "{q}"', { q: search })}
                       </span>
                     ) : (
+                      showInactive ? (
+                      <div className="mx-auto max-w-md space-y-2">
+                        <p className="font-semibold text-gray-700">{t('Nadie dado de baja')}</p>
+                        <p className="text-gray-500">{t('Cuando des de baja a alguien aparecerá aquí: podrás reactivarlo o borrarlo si nunca vendió.')}</p>
+                      </div>
+                      ) : (
                       <div className="mx-auto max-w-md space-y-2">
                         <p className="font-semibold text-gray-700">{t('Aún no tenés empleados')}</p>
                         <p className="text-gray-500">
                           {t('Creá empleados y asignales permisos individuales: vender, modificar stock, aplicar descuentos, ver reportes y más.')}
                         </p>
                       </div>
+                      )
                     )}
                   </td>
                 </tr>
@@ -414,12 +531,21 @@ export default function EmployeesPage() {
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {emp.active ? t('Activo') : t('Inactivo')}
+                          {emp.active ? t('Activo') : t('Dado de baja')}
                         </span>
+                        {!emp.active && emp.hasActivity && (
+                          <p className="mt-1 text-[10px] text-gray-400">{t('con historial de ventas')}</p>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-xs text-gray-400">{formatDate(emp.createdAt)}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setEditTarget(emp)}
+                            title={t('Editar nombre, correo o contraseña')}
+                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
+                            <Pencil size={13} />
+                          </button>
                           <button
                             onClick={() => setPermTarget(emp)}
                             title={t('Configurar permisos')}
@@ -427,17 +553,28 @@ export default function EmployeesPage() {
                             <Shield size={14} />{t('Permisos')}
                           </button>
                           <button
-                            onClick={() => handleToggle(emp.id)}
+                            onClick={() => handleToggle(emp)}
                             disabled={isSelf || isToggling}
-                            title={isSelf ? t('No puedes desactivarte a ti mismo') : emp.active ? t('Desactivar empleado') : t('Activar empleado')}
+                            title={isSelf ? t('No puedes darte de baja a ti mismo') : emp.active ? t('Dar de baja: pierde el acceso, se conserva su historial') : t('Reactivar: vuelve a entrar con su mismo correo')}
                             className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                               emp.active
                                 ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                                : 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 hover:bg-emerald-700'
                             }`}>
-                            {isToggling ? <Loader2 size={12} className="animate-spin" /> : <Power size={12} />}
-                            {emp.active ? t('Desactivar') : t('Activar')}
+                            {isToggling ? <Loader2 size={12} className="animate-spin" /> : emp.active ? <Power size={12} /> : <RotateCcw size={12} />}
+                            {emp.active ? t('Dar de baja') : t('Reactivar')}
                           </button>
+                          {!emp.active && (
+                            <button
+                              onClick={() => setDeleteTarget(emp)}
+                              disabled={emp.hasActivity}
+                              title={emp.hasActivity
+                                ? t('Tiene ventas u operaciones: se conserva dado de baja para no perder el historial')
+                                : t('Borrar definitivamente (libera su correo)')}
+                              className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent disabled:hover:text-gray-600">
+                              <Trash2 size={12} />{t('Borrar')}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -471,6 +608,8 @@ export default function EmployeesPage() {
 
       {showModal && <CreateEmployeeModal businessName={currentUser?.businessName} onClose={() => setShowModal(false)} />}
       {permTarget && <PermissionsPanel targetUser={permTarget} onClose={() => setPermTarget(null)} />}
+      {editTarget && <EditUserModal targetUser={editTarget} onClose={() => setEditTarget(null)} />}
+      {deleteTarget && <DeleteEmployeeModal employee={deleteTarget} onClose={() => setDeleteTarget(null)} />}
     </div>
   )
 }

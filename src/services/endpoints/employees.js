@@ -8,4 +8,7 @@ export const employeesApi = {
   // body: { name, email, password }  — businessId taken from JWT in BE
 
   toggleActive: (id) => api.put(`/users/${id}/activate`),
+
+  // borrado DEFINITIVO (libera el correo); 409 si el empleado tiene ventas u operaciones
+  remove: (id) => api.delete(`/employees/${id}`),
 }

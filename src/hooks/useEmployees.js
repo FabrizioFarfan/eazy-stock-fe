@@ -27,3 +27,11 @@ export function useToggleEmployee() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [EMPLOYEES_KEY] }),
   })
 }
+
+export function useDeleteEmployee() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => employeesApi.remove(id).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [EMPLOYEES_KEY] }),
+  })
+}

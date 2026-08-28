@@ -27,6 +27,7 @@ export function useUpdateUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [USERS_KEY] })
       qc.invalidateQueries({ queryKey: ['owners'] })
+      qc.invalidateQueries({ queryKey: ['employees'] })
     },
   })
 }
