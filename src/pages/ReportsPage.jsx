@@ -21,7 +21,7 @@ import SalesByDayChart from '../components/reports/SalesByDayChart'
 import TopProductsList from '../components/reports/TopProductsList'
 import SalesTable      from '../components/reports/SalesTable'
 import HelpDrawer from '../components/common/HelpDrawer'
-import { printSupplierOrder } from '../utils/printSupplierOrder'
+import SupplierOrderModal from '../components/reports/SupplierOrderModal'
 import { localISODate } from '../utils/formatDate'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -411,15 +411,17 @@ function TabLowStock({ businessId }) {
   }, {})
   const supplierNames = Object.keys(orderableBySupplier).sort((a, b) => a.localeCompare(b))
 
+  // «Generar PDF» ya no imprime en seco: abre la previsual editable (William
+  // quita lo que no va a pedir, sube cantidades o agrega productos sin stock bajo).
+  const [orderPreview, setOrderPreview] = useState(null)
   const handlePrintOrder = () => {
     const rows = orderableBySupplier[orderSupplier] ?? []
     if (!rows.length) return
     const s = supplierByName.get(orderSupplier)
-    printSupplierOrder({
-      businessName: user?.businessName,
-      authorName:   user?.name,
-      supplier: { name: orderSupplier, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
+    setOrderPreview({
+      supplier: { id: s?.id, name: orderSupplier, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
       items: rows.map((p) => ({
+        productId:    p.productId,
         productName:  p.productName,
         providerCode: p.providerCode,
         brand:        p.brand,
@@ -431,6 +433,15 @@ function TabLowStock({ businessId }) {
 
   return (
     <div className="space-y-4">
+      {orderPreview && (
+        <SupplierOrderModal
+          supplier={orderPreview.supplier}
+          items={orderPreview.items}
+          user={user}
+          businessId={businessId}
+          onClose={() => setOrderPreview(null)}
+        />
+      )}
       {supplierNames.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
@@ -451,7 +462,7 @@ function TabLowStock({ businessId }) {
             Generar PDF
           </button>
           <p className="basis-full text-xs text-blue-700/70 sm:basis-auto">
-            El documento lista el déficit de cada producto, sin mostrar tu stock actual ni precios.
+            Antes de generar el PDF verás una previsual editable: quita productos, cambia cantidades o agrega otros.
           </p>
         </div>
       )}
@@ -708,7 +719,7 @@ export default function ReportsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-3">
         <PageTitle icon={BarChart2} tone="rose">Reportes</PageTitle>
-        <HelpDrawer title="Cómo usar Reportes" autoOpenKey="eazystock_reports_help_v1">
+        <HelpDrawer title="Cómo usar Reportes" autoOpenKey="eazystock_reports_help_v2">
           <p>Cada pestaña responde una pregunta distinta sobre tu negocio:</p>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">📈 Análisis de ventas</p>
@@ -723,8 +734,16 @@ export default function ReportsPage() {
             <p className="mt-1">Qué productos y proveedores te generan más ventas. Útil para decidir <strong>qué reponer y a quién comprarle más</strong>.</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">⚠️ Stock bajo y Resurtido</p>
-            <p className="mt-1">Productos bajo su mínimo y sugerencia de <strong>a qué proveedor pedirle</strong> cada uno. Tu lista de compras lista para usar.</p>
+            <p className="font-semibold text-gray-800">⚠️ Stock bajo</p>
+            <p className="mt-1">Productos bajo su mínimo con el <strong>déficit</strong> de cada uno. Elige un proveedor y pulsa <strong>Generar PDF</strong>: verás una <strong>previsual editable</strong> del pedido — quita productos que no quieras pedir, cambia la cantidad (por defecto es el déficit) o agrega productos que no están en stock bajo. El PDF nunca muestra tu stock ni tus precios: solo lo que el proveedor necesita.</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">📅 Por vencer</p>
+            <p className="mt-1">Productos que <strong>vencen dentro de 30 días o ya vencieron</strong> (según la fecha de vencimiento que cargas en cada producto). Úsalo para hacer promociones antes de perder mercadería o para retirar lo vencido. <em>"¿Qué tengo que mover ya?"</em></p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">🚚 Resurtido</p>
+            <p className="mt-1">Por proveedor: lo recibido, lo vendido en el período y una <strong>sugerencia de cuánto pedir</strong> (lo vendido o lo que falta para el mínimo, lo que sea mayor). Se puede imprimir como lista interna.</p>
           </div>
         </HelpDrawer>
       </div>
