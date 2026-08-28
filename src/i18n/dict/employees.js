@@ -1,6 +1,16 @@
 // Empleados: pestaña «Dados de baja», reactivar, borrado definitivo y tutorial. El español es la llave.
 export default {
   en: {
+    '¿Dar de baja a {name}?': 'Deactivate {name}?',
+    '¿Reactivar a {name}?': 'Reactivate {name}?',
+    'Deja de poder entrar al sistema en este mismo momento.': 'They lose access to the system right now.',
+    'Su historial de ventas se conserva y su cuenta no se borra.': 'Their sales history is kept and the account is not deleted.',
+    'Lo encontrarás en la pestaña «Dados de baja» y podrás reactivarlo cuando quieras.': 'You\'ll find them under the "Deactivated" tab and can reactivate them anytime.',
+    'Vuelve a entrar con su mismo correo ({email}) y su contraseña de antes.': 'They sign in again with the same email ({email}) and their previous password.',
+    'Recupera los permisos que tenía; revísalos en «Permisos» si cambió de puesto.': 'They get back the permissions they had; review them under "Permissions" if their role changed.',
+    'Si vas a darle la cuenta a otra persona, usa el lápiz «Editar» para cambiar nombre y contraseña.': 'If you\'re handing the account to someone else, use the "Edit" pencil to change the name and password.',
+    'Sí, dar de baja': 'Yes, deactivate',
+    'Sí, reactivar': 'Yes, reactivate',
     '{name} borrado. Su correo {email} ya puede usarse de nuevo.': '{name} deleted. The email {email} can be used again.',
     '¿Borrar a {name} definitivamente?': 'Permanently delete {name}?',
     'Nunca registró ventas ni operaciones, así que no se pierde ningún historial.': 'They never recorded a sale or any operation, so no history is lost.',
@@ -35,6 +45,16 @@ export default {
     'Borrar': 'Delete',
   },
   it: {
+    '¿Dar de baja a {name}?': 'Disattivare {name}?',
+    '¿Reactivar a {name}?': 'Riattivare {name}?',
+    'Deja de poder entrar al sistema en este mismo momento.': 'Perde subito l\'accesso al sistema.',
+    'Su historial de ventas se conserva y su cuenta no se borra.': 'Lo storico delle vendite si conserva e l\'account non viene eliminato.',
+    'Lo encontrarás en la pestaña «Dados de baja» y podrás reactivarlo cuando quieras.': 'Lo troverai nella scheda «Disattivati» e potrai riattivarlo quando vuoi.',
+    'Vuelve a entrar con su mismo correo ({email}) y su contraseña de antes.': 'Torna ad accedere con la stessa email ({email}) e la password di prima.',
+    'Recupera los permisos que tenía; revísalos en «Permisos» si cambió de puesto.': 'Recupera i permessi che aveva; controllali in «Permessi» se ha cambiato ruolo.',
+    'Si vas a darle la cuenta a otra persona, usa el lápiz «Editar» para cambiar nombre y contraseña.': 'Se dai l\'account a un\'altra persona, usa la matita «Modifica» per cambiare nome e password.',
+    'Sí, dar de baja': 'Sì, disattiva',
+    'Sí, reactivar': 'Sì, riattiva',
     '{name} borrado. Su correo {email} ya puede usarse de nuevo.': '{name} eliminato. L\'email {email} può essere usata di nuovo.',
     '¿Borrar a {name} definitivamente?': 'Eliminare definitivamente {name}?',
     'Nunca registró ventas ni operaciones, así que no se pierde ningún historial.': 'Non ha mai registrato vendite né operazioni, quindi non si perde nessuno storico.',

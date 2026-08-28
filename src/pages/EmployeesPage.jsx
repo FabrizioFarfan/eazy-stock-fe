@@ -282,6 +282,53 @@ function DeleteEmployeeModal({ employee, onClose }) {
   )
 }
 
+// ── Confirmación de dar de baja / reactivar ──────────────────────────────────
+
+function ToggleEmployeeModal({ employee, onConfirm, onClose }) {
+  const t = useT()
+  const deactivating = employee.active
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+        <div className="px-6 pt-6">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${deactivating ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            {deactivating ? <UserX size={22} /> : <RotateCcw size={22} />}
+          </div>
+          <h3 className="mt-4 text-lg font-bold text-gray-900">
+            {deactivating ? t('¿Dar de baja a {name}?', { name: employee.name }) : t('¿Reactivar a {name}?', { name: employee.name })}
+          </h3>
+          <ul className="mt-3 space-y-2 text-sm text-gray-600">
+            {deactivating ? (
+              <>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-red-500">✕</span>{t('Deja de poder entrar al sistema en este mismo momento.')}</li>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-emerald-500">✓</span>{t('Su historial de ventas se conserva y su cuenta no se borra.')}</li>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-emerald-500">✓</span>{t('Lo encontrarás en la pestaña «Dados de baja» y podrás reactivarlo cuando quieras.')}</li>
+              </>
+            ) : (
+              <>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-emerald-500">✓</span>{t('Vuelve a entrar con su mismo correo ({email}) y su contraseña de antes.', { email: employee.email })}</li>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-emerald-500">✓</span>{t('Recupera los permisos que tenía; revísalos en «Permisos» si cambió de puesto.')}</li>
+                <li className="flex items-start gap-2"><span className="mt-0.5 text-amber-500">!</span>{t('Si vas a darle la cuenta a otra persona, usa el lápiz «Editar» para cambiar nombre y contraseña.')}</li>
+              </>
+            )}
+          </ul>
+        </div>
+        <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
+          <button type="button" onClick={onClose}
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
+            {t('Cancelar')}
+          </button>
+          <button type="button" onClick={onConfirm}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-[0.98] ${
+              deactivating ? 'bg-red-600 shadow-red-600/30 hover:bg-red-700' : 'bg-emerald-600 shadow-emerald-600/30 hover:bg-emerald-700'}`}>
+            {deactivating ? <><Power size={14} />{t('Sí, dar de baja')}</> : <><RotateCcw size={14} />{t('Sí, reactivar')}</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 20
@@ -322,6 +369,7 @@ export default function EmployeesPage() {
   const [togglingId, setTogglingId] = useState(null)
   const [tab, setTab]             = useState('active')   // 'active' | 'inactive'
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [toggleTarget, setToggleTarget] = useState(null)
   const [editTarget, setEditTarget] = useState(null)
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem(BANNER_DISMISSED_KEY) === '1',
@@ -352,6 +400,7 @@ export default function EmployeesPage() {
     : employees
 
   const handleToggle = async (emp) => {
+    setToggleTarget(null)
     setTogglingId(emp.id)
     try {
       await toggleEmployee.mutateAsync(emp.id)
@@ -546,14 +595,16 @@ export default function EmployeesPage() {
                             className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
                             <Pencil size={13} />
                           </button>
+                          {emp.active && (
                           <button
                             onClick={() => setPermTarget(emp)}
                             title={t('Configurar permisos')}
                             className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/40 active:scale-[0.97]">
                             <Shield size={14} />{t('Permisos')}
                           </button>
+                          )}
                           <button
-                            onClick={() => handleToggle(emp)}
+                            onClick={() => setToggleTarget(emp)}
                             disabled={isSelf || isToggling}
                             title={isSelf ? t('No puedes darte de baja a ti mismo') : emp.active ? t('Dar de baja: pierde el acceso, se conserva su historial') : t('Reactivar: vuelve a entrar con su mismo correo')}
                             className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
@@ -609,6 +660,7 @@ export default function EmployeesPage() {
       {showModal && <CreateEmployeeModal businessName={currentUser?.businessName} onClose={() => setShowModal(false)} />}
       {permTarget && <PermissionsPanel targetUser={permTarget} onClose={() => setPermTarget(null)} />}
       {editTarget && <EditUserModal targetUser={editTarget} onClose={() => setEditTarget(null)} />}
+      {toggleTarget && <ToggleEmployeeModal employee={toggleTarget} onConfirm={() => handleToggle(toggleTarget)} onClose={() => setToggleTarget(null)} />}
       {deleteTarget && <DeleteEmployeeModal employee={deleteTarget} onClose={() => setDeleteTarget(null)} />}
     </div>
   )
