@@ -125,7 +125,7 @@ function Hero() {
             </h1>
 
             <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
-              {t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con Yape o efectivo, y al cierre sabes exactamente cuánto hay en caja. Se aprende en una tarde.')}
+              {t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo, y al cierre sabes exactamente cuánto hay en caja. Se aprende en una tarde.')}
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
@@ -175,7 +175,7 @@ function Hero() {
 const MARQUEE = [
   [QrCode, 'Escaneo con la cámara'],
   [CalendarClock, 'Reporte «Por vencer»'],
-  [Wallet, 'Cierre de caja por Yape, Plin, efectivo'],
+  [Wallet, 'Cierre de caja por medio de pago'],
   [CreditCard, 'Fiado con recordatorio por WhatsApp'],
   [FileText, 'Pedido al proveedor en PDF'],
   [Filter, 'Filtros tipo Excel por columna'],
@@ -216,7 +216,7 @@ function Stats() {
     { to: 7,  label: 'reportes listos',   sub: 'Ventas, día, producto, proveedor, stock bajo, por vencer, resurtido' },
     { to: 14, label: 'permisos finos',    sub: 'Hasta «solo ver el cierre de caja»' },
     { to: 3,  label: 'idiomas',           sub: 'Español, inglés e italiano' },
-    { to: 6,  label: 'decimales en precios', sub: 'Para el tornillo a S/ 0.0357' },
+    { to: 6,  label: 'decimales en precios', sub: 'Para el tornillo a $ 0.0357' },
   ]
   return (
     <section className="bg-white py-14">
@@ -295,11 +295,11 @@ function ProductShowcases() {
             kickerIcon={ScanLine}
             tone="emerald"
             title="Escaneas, cobras, listo. Sin lector, sin calculadora."
-            desc="La cámara del celular lee el código de barras o el QR del producto. Vendes por unidad, por paquete, por metro o por gramo; aplicas descuento y eliges cómo te pagaron: efectivo, Yape, Plin, tarjeta, transferencia o al fiado. El stock se descuenta al instante."
+            desc="La cámara del celular lee el código de barras o el QR del producto. Vendes por unidad, por paquete, por metro o por gramo; aplicas descuento y eliges cómo te pagaron: efectivo, billetera digital, tarjeta, transferencia o al fiado. El stock se descuenta al instante."
             bullets={[
               'Búsqueda instantánea por nombre, código o código de barras',
               'Descuentos por porcentaje o monto, con permiso aparte',
-              'Medios de pago que tú defines (Yape, Plin, tarjeta…) y se recuerdan',
+              'Medios de pago que tú defines (billetera digital, tarjeta…) y se recuerdan',
               'Precio variable para lo que se negocia en el momento',
               'Devoluciones totales o parciales, marcadas en la venta',
             ]}
@@ -311,7 +311,7 @@ function ProductShowcases() {
             kickerIcon={Wallet}
             tone="blue"
             flip
-            title="Al final del día sabes cuánto entró por Yape, cuánto en efectivo y cuánto quedó fiado."
+            title="Al final del día sabes cuánto entró por cada medio de pago, cuánto en efectivo y cuánto quedó fiado."
             desc="El cierre de caja separa cada medio de pago y te dice cuánto efectivo debería haber en el cajón. Puedes darle a un vendedor el permiso de ver solo el cierre, sin ganancias ni costos."
             bullets={[
               'Desglose por medio de pago del día o del rango que elijas',
@@ -435,7 +435,7 @@ function FiadoSection() {
           kickerIcon={CreditCard}
           tone="violet"
           flip
-          title="Fía sin miedo: cada sol prestado tiene nombre, fecha y recordatorio."
+          title="Fía sin miedo: cada crédito tiene nombre, fecha y recordatorio."
           desc="Cada cliente tiene su línea de crédito y su deuda al día. Cuando toca cobrar, mandas el recordatorio por WhatsApp con un clic o le imprimes su estado de cuenta en PDF. Los abonos parciales van bajando la deuda solos."
           bullets={[
             'Límite de crédito por cliente: avisa si la venta lo excede',
@@ -502,7 +502,7 @@ const FEATURE_GROUPS = [
     items: [
       [ScanLine,   'Venta rápida con escáner',       'Cámara del celular como lector de barras y QR. Sin hardware.'],
       [Percent,    'Descuentos y precio variable',   'Por venta o por ítem; lo negociado queda registrado.'],
-      [Wallet,     'Medios de pago a tu medida',     'Efectivo, Yape, Plin, tarjeta, transferencia… y los que agregues.'],
+      [Wallet,     'Medios de pago a tu medida',     'Efectivo, billetera digital, tarjeta, transferencia… y los que agregues.'],
       [FileText,   'Cotizaciones en PDF',            'Arma el presupuesto, mándalo por WhatsApp; no toca el stock.'],
       [Receipt,    'Devoluciones',                   'Totales o parciales, con su burbuja en la lista de ventas.'],
       [Trophy,     'Ranking de vendedores',          'Quién vendió cuánto, por día, con desglose.'],
@@ -587,7 +587,7 @@ const INDUSTRIES = [
   [Store,  'Bodegas y minimarkets', 'Venta al paso con escáner, fiado del barrio con recordatorio y aviso de lo que vence.', 'from-amber-500 to-orange-600'],
   [Pill,   'Farmacias y boticas',   'Fecha de vencimiento en cada caja, reporte «Por vencer» y venta por blíster o unidad.', 'from-rose-500 to-pink-600'],
   [Truck,  'Distribuidoras',        'Recepciones grandes, cuentas por pagar a proveedores y pedidos en PDF.', 'from-blue-500 to-indigo-600'],
-  [Apple,  'Abarrotes y alimentos', 'Venta por kilo o gramo, lo perecible controlado y cierre de caja por Yape y efectivo.', 'from-emerald-500 to-teal-600'],
+  [Apple,  'Abarrotes y alimentos', 'Venta por kilo o gramo, lo perecible controlado y cierre de caja por medio de pago.', 'from-emerald-500 to-teal-600'],
   [Coffee, 'Cualquier tienda de barrio', 'Si vendes y anotas en cuaderno, esto es para ti. Se aprende en una tarde.', 'from-violet-500 to-fuchsia-600'],
 ]
 
@@ -637,7 +637,7 @@ function HowItWorks() {
   const steps = [
     [Users,           'Crea tu negocio',       'Abres tu cuenta, pones el nombre de la tienda e invitas a tu gente con los permisos que tú decidas.'],
     [FileSpreadsheet, 'Sube tu Excel',         'O carga productos uno por uno. El sistema te sugiere el código y guarda unidad, mínimo y vencimiento.'],
-    [ShoppingCart,    'Vende desde el día uno','Escaneas, cobras por Yape o efectivo, fías con control y cierras la caja cada noche.'],
+    [ShoppingCart,    'Vende desde el día uno','Escaneas, cobras por cualquier medio, fías con control y cierras la caja cada noche.'],
   ]
   return (
     <section id="como-funciona" className="bg-white py-24">
@@ -684,7 +684,7 @@ function Testimonial() {
             <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
             <div className="relative">
               <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
-                {t('«Antes anotaba el fiado en un cuaderno y se me perdían ventas. Ahora subí todo el catálogo desde mi Excel en una tarde, mis hijos cobran desde el celular y al cierre sé cuánto entró por Yape y cuánto en efectivo.»')}
+                {t('«Antes anotaba el fiado en un cuaderno y se me perdían ventas. Ahora subí todo el catálogo desde mi Excel en una tarde, mis hijos cobran desde el celular y al cierre sé cuánto entró por cada medio y cuánto en efectivo.»')}
               </p>
               <div className="mt-8 flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
@@ -692,7 +692,7 @@ function Testimonial() {
                 </div>
                 <div>
                   <p className="text-base font-bold text-gray-900">{t('Dueño de ferretería')}</p>
-                  <p className="text-sm text-gray-500">{t('Lima, Perú · cliente desde el piloto')}</p>
+                  <p className="text-sm text-gray-500">{t('Cliente desde el piloto')}</p>
                 </div>
                 <div className="ml-auto hidden flex-col items-end sm:flex">
                   <div className="flex gap-0.5">
@@ -710,85 +710,46 @@ function Testimonial() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Roadmap — lo que viene
+//  Lo que viene — corto y sin roadmap
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ROADMAP = [
-  {
-    period: 'Disponible hoy', status: 'done',
-    items: [
-      'Catálogo con unidad de venta, vencimiento, códigos automáticos, QR y barras',
-      'Venta rápida con escáner, descuentos y medios de pago a medida',
-      'Fiado con recordatorio por WhatsApp y estado de cuenta PDF',
-      'Cierre de caja por medio de pago y 7 reportes',
-      'Pedido al proveedor en PDF, recepciones y cuentas por pagar',
-      'Importar/exportar Excel con historial, filtros tipo Excel',
-      'Empleados con 14 permisos, ranking de vendedores, cotizaciones',
-      'App instalable (PWA), modo oscuro, ES/EN/IT',
-    ],
-  },
-  {
-    period: 'Pronto', status: 'next',
-    items: [
-      'Apps móviles nativas para Android e iOS',
-      'Asistente con IA: pregúntale cuánto vendiste o qué reponer',
-      'Alertas de stock y cobranza automática por WhatsApp',
-    ],
-  },
-  {
-    period: 'Después', status: 'planned',
-    items: [
-      'Facturación electrónica (SUNAT)',
-      'Multi-sucursal y multi-negocio desde una cuenta',
-      'Modo sin conexión: sigue vendiendo sin internet',
-    ],
-  },
+const COMING = [
+  { icon: Smartphone, tone: 'from-blue-500 to-indigo-600',   badge: 'Pronto',       title: 'Apps para Android e iOS',
+    desc: 'La misma app, nativa en tu celular: más rápida, con notificaciones y lista para vender aunque se caiga el internet.' },
+  { icon: Sparkles,   tone: 'from-emerald-500 to-teal-600',  badge: 'Siempre',      title: 'Más funciones cada mes',
+    desc: 'Construimos con nuestros clientes, de a una observación por vez. Lo que pides, se prioriza.' },
+  { icon: Bot,        tone: 'from-violet-500 to-fuchsia-600', badge: 'En el futuro', title: 'Inteligencia artificial',
+    desc: 'Pregúntale a tu negocio cuánto vendiste, qué reponer o qué se te está venciendo. Como hablar con tu contador, pero al instante.' },
 ]
 
-const STATUS_STYLE = {
-  done:    { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
-  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-600 text-white', border: 'border-blue-200' },
-  planned: { dot: 'bg-gray-300', badge: 'bg-gray-100 text-gray-500', border: 'border-gray-200' },
-}
-const STATUS_LABEL = { done: 'Disponible', next: 'PRONTO', planned: 'En diseño' }
-
-function Roadmap() {
+function ComingSoon() {
   const t = useT()
   return (
     <section id="roadmap" className="bg-white py-24">
-      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
-            kicker={t('Roadmap')}
-            title={t('Lo que viene')}
-            sub={t('Construimos con los clientes, de a una observación por vez. Esto es lo que hay y lo que sigue.')}
+            kicker={t('Lo que viene')}
+            title={t('Esto recién empieza')}
+            sub={t('Hoy ya ordena tu tienda. Y sigue creciendo contigo.')}
           />
         </Reveal>
-        <div className="relative space-y-6 pl-8">
-          <div className="absolute bottom-0 left-2 top-2 w-0.5 bg-gradient-to-b from-emerald-300 via-blue-300 to-gray-200" />
-          {ROADMAP.map(({ period, status, items }) => {
-            const s = STATUS_STYLE[status]
-            return (
-              <Reveal key={period} className="relative">
-                <div className={`absolute -left-7 top-5 h-4 w-4 rounded-full border-2 border-white shadow ${s.dot}`} />
-                <div className={`rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg ${s.border}`}>
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg font-extrabold text-gray-900">{t(period)}</h3>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${s.badge}`}>{t(STATUS_LABEL[status])}</span>
-                    {status === 'next' && <Bot size={16} className="text-blue-600" />}
+        <div className="grid gap-5 md:grid-cols-3">
+          {COMING.map(({ icon: Icon, tone, badge, title, desc }, i) => (
+            <Reveal key={title} delay={i * 100}>
+              <div className="group relative h-full overflow-hidden rounded-3xl border border-gray-200 bg-white p-7 transition-all hover:-translate-y-1 hover:shadow-xl">
+                <div className={`absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br opacity-10 blur-2xl transition-opacity group-hover:opacity-25 ${tone}`} />
+                <div className="mb-5 flex items-center justify-between">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg ${tone}`}>
+                    <Icon size={22} />
                   </div>
-                  <ul className="grid gap-2 sm:grid-cols-2">
-                    {items.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm text-gray-600">
-                        <Check size={15} className={`mt-0.5 flex-shrink-0 ${status === 'done' ? 'text-emerald-500' : 'text-gray-300'}`} />
-                        {t(item)}
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-600">{t(badge)}</span>
                 </div>
-              </Reveal>
-            )
-          })}
+                <h3 className="text-xl font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">{t(desc)}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
@@ -853,27 +814,77 @@ function Faq() {
 
 function CtaBanner() {
   const t = useT()
+  const chips = [
+    [Check,        'Sin tarjeta'],
+    [CalendarClock,'Listo en una tarde'],
+    [Languages,    'ES · EN · IT'],
+    [Smartphone,   'Se instala como app'],
+  ]
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 py-20">
-      <div aria-hidden className="absolute inset-0 opacity-30">
-        <div className="absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-white/30 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-amber-300/30 blur-3xl" />
+    <section className="relative overflow-hidden bg-[#0a0e1a] py-28 sm:py-36">
+      <GridPattern />
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/25 blur-[140px]" />
+        <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-amber-400/15 blur-[120px]" />
+        <div className="absolute -right-24 top-0 h-80 w-80 rounded-full bg-fuchsia-500/15 blur-[120px]" />
+        {/* anillos que laten detrás del botón */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="lp-ring absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/30" style={{ animationDelay: `${i * 0.6}s`, animationDuration: '3.6s' }} />
+          ))}
+        </div>
       </div>
-      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
+
+      {/* fichas flotantes */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
+        <div className="lp-floaty absolute left-[8%] top-[22%] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-2xl backdrop-blur">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">{t('Venta registrada')}</p>
+          <p className="mt-0.5 font-mono text-sm font-extrabold text-white">$ 45.50</p>
+        </div>
+        <div className="lp-floaty-slow absolute right-[9%] top-[28%] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-2xl backdrop-blur">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300">{t('Por vencer')}</p>
+          <p className="mt-0.5 text-sm font-bold text-white">{t('2 productos · 30 días')}</p>
+        </div>
+        <div className="lp-floaty absolute bottom-[20%] left-[12%] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-2xl backdrop-blur" style={{ animationDelay: '1.4s' }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-violet-300">{t('Fiado cobrado')}</p>
+          <p className="mt-0.5 text-sm font-bold text-white">{t('Rosa · recordatorio enviado')}</p>
+        </div>
+        <div className="lp-floaty-slow absolute bottom-[18%] right-[10%] rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-2xl backdrop-blur" style={{ animationDelay: '2s' }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-300">{t('Cierre de caja')}</p>
+          <p className="mt-0.5 font-mono text-sm font-extrabold text-white">$ 2,580.50</p>
+        </div>
+      </div>
+
+      <div className="relative mx-auto max-w-4xl px-5 text-center sm:px-8">
         <Reveal>
-          <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            {t('Pruébalo hoy con tu propio inventario.')}
+          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            {t('Gratis durante el lanzamiento')}
+          </span>
+          <h2 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+            {t('Tu tienda, ordenada')}<br />
+            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('desde esta tarde.')}</span>
           </h2>
-          <p className="mb-9 text-base text-blue-100 sm:text-lg">
-            {t('Sin tarjeta, sin compromiso. Si en una tarde no te ordena la tienda, no nos debes nada.')}
+          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
+            {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró. Sin tarjeta, sin compromiso: si no te ordena la tienda, no nos debes nada.')}
           </p>
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link to={CTA} className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-2xl shadow-blue-900/30 transition-all hover:scale-[1.02]">
-              {t('Probar gratis')} <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link to={CTA} className="group relative inline-flex items-center gap-2 rounded-2xl bg-white px-9 py-4 text-base font-bold text-[#0a0e1a] shadow-[0_0_60px_-10px_rgba(96,165,250,.8)] transition-all hover:scale-[1.03] hover:shadow-[0_0_80px_-10px_rgba(96,165,250,1)]">
+              {t('Probar gratis')} <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to={CTA} className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/20">
+            <Link to={CTA} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
               {t('Ya tengo cuenta')}
             </Link>
+          </div>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            {chips.map(([Icon, label]) => (
+              <span key={label} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
+                <Icon size={12} className="text-blue-300" /> {t(label)}
+              </span>
+            ))}
           </div>
         </Reveal>
       </div>
@@ -893,7 +904,7 @@ function Footer() {
               <span className="text-lg font-bold text-white">Eazy Stock</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              {t('Inventario, ventas y fiado para tiendas de Perú y Latinoamérica. Construido con clientes reales.')}
+              {t('Inventario, ventas y fiado para tiendas de cualquier tamaño, en cualquier país. Construido con clientes reales.')}
             </p>
             <div className="mt-4"><LangSwitcher compact className="!border-white/15 !bg-white/5 !text-slate-200 [&_select]:text-slate-200 [&_option]:text-gray-900" /></div>
           </div>
@@ -917,12 +928,14 @@ function Footer() {
             <ul className="space-y-2 text-sm text-slate-500">
               <li>{t('Tutorial en cada pantalla')}</li>
               <li><a href="mailto:kontakt.eazylife@gmail.com" className="transition-colors hover:text-white">kontakt.eazylife@gmail.com</a></li>
+              <li><a href="https://eazylifecompany.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-slate-300 transition-colors hover:text-white">Eazy Life Company <ArrowRight size={12} /></a></li>
             </ul>
           </div>
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 md:flex-row">
           <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} Eazy Stock · {t('una app de Eazy Life Company')} · {t('Hecho en Latinoamérica')}
+            © {new Date().getFullYear()} Eazy Stock · {t('una app de')}{' '}
+            <a href="https://eazylifecompany.com" target="_blank" rel="noreferrer" className="font-semibold text-slate-300 transition-colors hover:text-white">Eazy Life Company</a>
           </p>
           <div className="flex items-center gap-2 text-xs text-slate-600">
             <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
@@ -954,7 +967,7 @@ export default function LandingPage() {
       <Industries />
       <HowItWorks />
       <Testimonial />
-      <Roadmap />
+      <ComingSoon />
       <Faq />
       <CtaBanner />
       <Footer />
