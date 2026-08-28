@@ -6,10 +6,11 @@ import { useReceivables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
 import { waPhone, reminderMessage } from '../utils/debtReminder'
+import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
+  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
 }
 
 function HelpBlock({ title, children }) {
@@ -22,33 +23,32 @@ function HelpBlock({ title, children }) {
 }
 
 function ReceivablesHelp() {
+  const t = useT()
   return (
     <>
       <p>
-        Aquí ves a <span className="font-semibold">todos los clientes que te deben dinero</span>{' '}
-        (por ventas al fiado), cuánto debe cada uno y hace cuánto no paga.
+        {t('Aquí ves a')}{' '}
+        <span className="font-semibold">{t('todos los clientes que te deben dinero')}</span>{' '}
+        {t('(por ventas al fiado), cuánto debe cada uno y hace cuánto no paga.')}
       </p>
-      <HelpBlock title="Cobrar por WhatsApp (botón verde)">
+      <HelpBlock title={t('Cómo leer la tabla')}>
         <p>
-          En la columna <span className="font-semibold">"Recordar"</span>, toca el botón verde del
-          cliente: se abre WhatsApp con un recordatorio cordial ya escrito con su nombre y su deuda.
-          Solo revisas y envías. Si en vez del botón ves un guion, es porque ese cliente no tiene
-          teléfono guardado — agrégaselo desde la página Clientes.
+          {t('Deuda es el saldo pendiente. «% Límite» compara la deuda con el límite de fiado que le pusiste al cliente: si pasa del 100% se pinta en rojo con una alerta. «Días» cuenta cuántos días lleva sin pagar desde su último abono.')}
         </p>
       </HelpBlock>
-      <HelpBlock title="PDF con el detalle de la deuda">
+      <HelpBlock title={t('Cobrar por WhatsApp (botón verde)')}>
         <p>
-          <span className="font-semibold">Toca la fila del cliente</span> para entrar a su ficha.
-          Ahí está el botón <span className="font-semibold">"PDF de deuda"</span>: genera una carta
-          con el detalle de todo lo que compró al fiado (producto por producto), los pagos que ya
-          hizo y el saldo pendiente. Ese documento es para imprimirlo o mandárselo al cliente por
-          WhatsApp o correo.
+          {t('En la columna «Recordar», toca el botón verde del cliente: se abre WhatsApp con un recordatorio cordial ya escrito con su nombre y su deuda. Solo revisas y envías. Si en vez del botón ves un guion, es porque ese cliente no tiene teléfono guardado — agrégaselo desde la página Clientes.')}
         </p>
       </HelpBlock>
-      <HelpBlock title="Cuando el cliente paga">
+      <HelpBlock title={t('Estado de cuenta en PDF')}>
         <p>
-          Entra a su ficha y usa <span className="font-semibold">"Registrar pago"</span> — la deuda
-          baja automáticamente y el cliente sale de esta lista cuando llega a cero.
+          {t('Toca la fila del cliente para entrar a su ficha. Ahí está el botón «PDF de deuda»: genera una carta con el detalle de todo lo que compró al fiado (producto por producto), los pagos que ya hizo y el saldo pendiente. Ese documento es para imprimirlo o mandárselo al cliente por WhatsApp o correo.')}
+        </p>
+      </HelpBlock>
+      <HelpBlock title={t('Cuando el cliente paga')}>
+        <p>
+          {t('Entra a su ficha y usa «Registrar pago» — la deuda baja automáticamente y el cliente sale de esta lista cuando llega a cero.')}
         </p>
       </HelpBlock>
     </>
@@ -56,6 +56,7 @@ function ReceivablesHelp() {
 }
 
 export default function ReceivablesPage() {
+  const t = useT()
   const navigate = useNavigate()
   const { user } = useAuth()
   const params = user?.role === 'SUPER_ADMIN' && user?.businessId
@@ -70,21 +71,21 @@ export default function ReceivablesPage() {
     <div className="flex flex-col gap-5">
 
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageTitle icon={Wallet} tone="emerald">Cuentas por cobrar</PageTitle>
+        <PageTitle icon={Wallet} tone="emerald">{t('Cuentas por cobrar')}</PageTitle>
         <div className="flex items-end gap-4">
-          <HelpDrawer title="Cómo cobrar a tus clientes" autoOpenKey="eazystock_receivables_help_v1">
+          <HelpDrawer title={t('Cómo cobrar a tus clientes')} autoOpenKey="eazystock_receivables_help_v2">
             <ReceivablesHelp />
           </HelpDrawer>
           <div className="text-right">
-            <p className="text-xs uppercase tracking-widest text-gray-400">Total por cobrar</p>
+            <p className="text-xs uppercase tracking-widest text-gray-400">{t('Total por cobrar')}</p>
             <p className="text-2xl font-extrabold text-blue-700">{formatPrice(total)}</p>
           </div>
         </div>
       </div>
 
       <p className="text-sm text-gray-500">
-        Toca un cliente para ver su ficha, registrar pagos y descargar el{' '}
-        <span className="font-semibold text-gray-700">PDF con el detalle de su deuda</span> para enviárselo.
+        {t('Toca un cliente para ver su ficha, registrar pagos y descargar el')}{' '}
+        <span className="font-semibold text-gray-700">{t('PDF con el detalle de su deuda')}</span> {t('para enviárselo.')}
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -92,21 +93,21 @@ export default function ReceivablesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Cliente</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Documento</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Teléfono</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Deuda</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">% Límite</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Último pago</th>
-                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Días</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Recordar</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Cliente')}</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Documento')}</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Teléfono')}</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Deuda')}</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('% Límite')}</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Último pago')}</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Días')}</th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Recordar')}</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr><td colSpan={8} className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></td></tr>
               ) : isError ? (
-                <tr><td colSpan={8} className="py-10 text-center text-sm text-red-500">No pudimos cargar el reporte.</td></tr>
+                <tr><td colSpan={8} className="py-10 text-center text-sm text-red-500">{t('No pudimos cargar el reporte.')}</td></tr>
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
@@ -114,7 +115,7 @@ export default function ReceivablesPage() {
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
                         <Users size={28} className="text-emerald-500" />
                       </div>
-                      <p className="text-sm font-semibold text-gray-700">Ningún cliente tiene deuda pendiente</p>
+                      <p className="text-sm font-semibold text-gray-700">{t('Ningún cliente tiene deuda pendiente')}</p>
                     </div>
                   </td>
                 </tr>
@@ -143,13 +144,13 @@ export default function ReceivablesPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            title={`Enviar recordatorio de deuda por WhatsApp a ${r.name}`}
+                            title={t('Enviar recordatorio de deuda por WhatsApp a {name}', { name: r.name })}
                             className="inline-flex items-center justify-center rounded-lg bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100 transition-colors"
                           >
                             <MessageCircle size={15} />
                           </a>
                         ) : (
-                          <span title="El cliente no tiene teléfono registrado" className="text-xs text-gray-300">—</span>
+                          <span title={t('El cliente no tiene teléfono registrado')} className="text-xs text-gray-300">—</span>
                         )}
                       </td>
                     </tr>

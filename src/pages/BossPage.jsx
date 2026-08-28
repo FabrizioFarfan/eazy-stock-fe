@@ -4,6 +4,7 @@ import {
   Building2, Users, ShoppingCart, Activity, CheckCircle2, Loader2, RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../i18n'
 import { bossApi } from '../services/endpoints/boss'
 
 /* ── Roadmap (espejo de ROADMAP.md) ──────────────────────────────────────── */
@@ -82,33 +83,33 @@ const OVERALL_PROGRESS = Math.round(
 // serverTime (mismo reloj) para que "hace X min" no dependa de zonas horarias.
 const parseTs = (s) => (s ? new Date(s).getTime() : null)
 
-function activityInfo(lastSeenAt, serverTs) {
+function activityInfo(lastSeenAt, serverTs, t = (s) => s) {
   const ts = parseTs(lastSeenAt)
   if (!ts || !serverTs) {
-    return { level: 'never', label: 'Nunca entró', dot: 'bg-gray-300', text: 'text-gray-400' }
+    return { level: 'never', label: t('Nunca entró'), dot: 'bg-gray-300', text: 'text-gray-400' }
   }
   const min = Math.max(0, Math.floor((serverTs - ts) / 60000))
-  if (min < 10)   return { level: 'online', label: 'En línea ahora', dot: 'bg-emerald-500 animate-pulse', text: 'text-emerald-600' }
-  if (min < 60)   return { level: 'today',  label: `Hace ${min} min`, dot: 'bg-emerald-400', text: 'text-emerald-600' }
+  if (min < 10)   return { level: 'online', label: t('En línea ahora'), dot: 'bg-emerald-500 animate-pulse', text: 'text-emerald-600' }
+  if (min < 60)   return { level: 'today',  label: t('Hace {n} min', { n: min }), dot: 'bg-emerald-400', text: 'text-emerald-600' }
   const h = Math.floor(min / 60)
-  if (h < 24)     return { level: 'today',  label: `Hace ${h} h`, dot: 'bg-emerald-400', text: 'text-emerald-600' }
+  if (h < 24)     return { level: 'today',  label: t('Hace {n} h', { n: h }), dot: 'bg-emerald-400', text: 'text-emerald-600' }
   const d = Math.floor(h / 24)
-  if (d === 1)    return { level: 'week',   label: 'Ayer', dot: 'bg-amber-400', text: 'text-amber-600' }
-  if (d < 7)      return { level: 'week',   label: `Hace ${d} días`, dot: 'bg-amber-400', text: 'text-amber-600' }
-  if (d < 30)     return { level: 'cold',   label: `Hace ${d} días`, dot: 'bg-gray-300', text: 'text-gray-400' }
+  if (d === 1)    return { level: 'week',   label: t('Ayer'), dot: 'bg-amber-400', text: 'text-amber-600' }
+  if (d < 7)      return { level: 'week',   label: t('Hace {n} días', { n: d }), dot: 'bg-amber-400', text: 'text-amber-600' }
+  if (d < 30)     return { level: 'cold',   label: t('Hace {n} días', { n: d }), dot: 'bg-gray-300', text: 'text-gray-400' }
   const m = Math.floor(d / 30)
-  return { level: 'cold', label: m === 1 ? 'Hace 1 mes' : `Hace ${m} meses`, dot: 'bg-gray-300', text: 'text-gray-400' }
+  return { level: 'cold', label: m === 1 ? t('Hace 1 mes') : t('Hace {n} meses', { n: m }), dot: 'bg-gray-300', text: 'text-gray-400' }
 }
 
-function lastSaleLabel(lastSaleAt, serverTs) {
+function lastSaleLabel(lastSaleAt, serverTs, t) {
   const ts = parseTs(lastSaleAt)
-  if (!ts || !serverTs) return 'Sin ventas aún'
+  if (!ts || !serverTs) return t('Sin ventas aún')
   const min = Math.max(0, Math.floor((serverTs - ts) / 60000))
-  if (min < 60) return `Última venta hace ${Math.max(1, min)} min`
+  if (min < 60) return t('Última venta hace {n} min', { n: Math.max(1, min) })
   const h = Math.floor(min / 60)
-  if (h < 24) return `Última venta hace ${h} h`
+  if (h < 24) return t('Última venta hace {n} h', { n: h })
   const d = Math.floor(h / 24)
-  return d === 1 ? 'Última venta ayer' : `Última venta hace ${d} días`
+  return d === 1 ? t('Última venta ayer') : t('Última venta hace {n} días', { n: d })
 }
 
 const flagEmoji = (cc) =>
@@ -139,6 +140,7 @@ function StatTile({ icon: Icon, label, value, accent }) {
 }
 
 function PhaseCard({ phase, isLast }) {
+  const t = useT()
   const cfg = STATUS_CFG[phase.status]
   const Icon = phase.icon
   const highlight = phase.status === 'now'
@@ -157,12 +159,12 @@ function PhaseCard({ phase, isLast }) {
         highlight ? 'border-blue-200 ring-2 ring-blue-600/10' : 'border-gray-100'
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-sm font-bold text-gray-900">{phase.title}</h4>
+          <h4 className="text-sm font-bold text-gray-900">{t(phase.title)}</h4>
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cfg.badgeCls}`}>
-            {cfg.badge}
+            {t(cfg.badge)}
           </span>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-gray-500">{phase.desc}</p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(phase.desc)}</p>
 
         <ul className="mt-3 space-y-1.5">
           {phase.items.map((item) => (
@@ -175,7 +177,7 @@ function PhaseCard({ phase, isLast }) {
                 }`} />
               )}
               <span className={item.done ? 'text-gray-400 line-through decoration-emerald-300' : 'text-gray-600'}>
-                {item.label}
+                {t(item.label)}
               </span>
             </li>
           ))}
@@ -195,7 +197,8 @@ function PhaseCard({ phase, isLast }) {
 }
 
 function BusinessCard({ biz, serverTs }) {
-  const sale = lastSaleLabel(biz.lastSaleAt, serverTs)
+  const t = useT()
+  const sale = lastSaleLabel(biz.lastSaleAt, serverTs, t)
   const hot = biz.salesLast7Days > 0
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -205,7 +208,7 @@ function BusinessCard({ biz, serverTs }) {
           <span className="text-xl">{flagEmoji(biz.countryCode)}</span>
           <p className="truncate text-sm font-bold text-gray-900">{biz.name}</p>
           {!biz.active && (
-            <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-500">Inactivo</span>
+            <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-500">{t('Inactivo')}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -213,7 +216,7 @@ function BusinessCard({ biz, serverTs }) {
             hot ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400'
           }`}>
             <ShoppingCart size={11} />
-            {biz.salesLast7Days} venta{biz.salesLast7Days === 1 ? '' : 's'} · 7d
+            {biz.salesLast7Days === 1 ? t('1 venta · 7d') : t('{n} ventas · 7d', { n: biz.salesLast7Days })}
           </span>
           <span className="hidden text-[11px] text-gray-400 sm:inline">{sale}</span>
         </div>
@@ -222,10 +225,10 @@ function BusinessCard({ biz, serverTs }) {
       {/* Usuarios */}
       <ul className="divide-y divide-gray-50 px-4">
         {biz.users.length === 0 && (
-          <li className="py-3 text-xs text-gray-400">Sin usuarios registrados</li>
+          <li className="py-3 text-xs text-gray-400">{t('Sin usuarios registrados')}</li>
         )}
         {biz.users.map((u) => {
-          const act = activityInfo(u.lastSeenAt, serverTs)
+          const act = activityInfo(u.lastSeenAt, serverTs, t)
           return (
             <li key={u.id} className="flex items-center gap-3 py-2.5">
               <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${act.dot}`} />
@@ -235,10 +238,10 @@ function BusinessCard({ biz, serverTs }) {
                     {u.name}
                   </p>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ROLE_CHIP[u.role] ?? 'bg-gray-100 text-gray-500'}`}>
-                    {ROLE_SHORT[u.role] ?? u.role}
+                    {ROLE_SHORT[u.role] ? t(ROLE_SHORT[u.role]) : u.role}
                   </span>
                   {!u.active && (
-                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-400">Desactivado</span>
+                    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-400">{t('Desactivado')}</span>
                   )}
                 </div>
                 <p className="truncate text-[11px] text-gray-400">{u.email}</p>
@@ -255,6 +258,7 @@ function BusinessCard({ biz, serverTs }) {
 /* ── Página ──────────────────────────────────────────────────────────────── */
 
 export default function BossPage() {
+  const t = useT()
   const { user } = useAuth()
   const [data, setData]         = useState(null)
   const [loading, setLoading]   = useState(true)
@@ -300,20 +304,20 @@ export default function BossPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/20">
               <Crown size={18} className="text-amber-400" />
             </span>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">Modo Boss</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">{t('Modo Boss')}</p>
           </div>
           <h2 className="mt-3 text-2xl font-extrabold text-white">
-            {firstName ? `${firstName}, esto ya es un imperio en marcha` : 'Esto ya es un imperio en marcha'} 🚀
+            {firstName ? t('{name}, esto ya es un imperio en marcha', { name: firstName }) : t('Esto ya es un imperio en marcha')} 🚀
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Cada venta que se registra abajo existe porque tú construiste esto.
+            {t('Cada venta que se registra abajo existe porque tú construiste esto.')}
           </p>
 
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile icon={Building2}    label="Negocios"     value={activeBiz.length}  accent="text-blue-400" />
-            <StatTile icon={Users}        label="Usuarios"     value={allUsers.length}   accent="text-violet-400" />
-            <StatTile icon={Activity}     label="Activos hoy"  value={activeToday}       accent="text-emerald-400" />
-            <StatTile icon={ShoppingCart} label="Ventas · 7d"  value={sales7d}           accent="text-amber-400" />
+            <StatTile icon={Building2}    label={t('Negocios')}     value={activeBiz.length}  accent="text-blue-400" />
+            <StatTile icon={Users}        label={t('Usuarios')}     value={allUsers.length}   accent="text-violet-400" />
+            <StatTile icon={Activity}     label={t('Activos hoy')}  value={activeToday}       accent="text-emerald-400" />
+            <StatTile icon={ShoppingCart} label={t('Ventas · 7d')}  value={sales7d}           accent="text-amber-400" />
           </div>
         </div>
       </div>
@@ -322,8 +326,8 @@ export default function BossPage() {
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-50 px-5 py-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-bold text-gray-900">🗺️ La ruta a SaaS</h3>
-            <span className="text-xs font-bold text-blue-600">{OVERALL_PROGRESS}% recorrido</span>
+            <h3 className="text-sm font-bold text-gray-900">🗺️ {t('La ruta a SaaS')}</h3>
+            <span className="text-xs font-bold text-blue-600">{t('{n}% recorrido', { n: OVERALL_PROGRESS })}</span>
           </div>
           <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-gray-100">
             <div
@@ -342,31 +346,31 @@ export default function BossPage() {
       {/* ── Actividad ── */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-900">👀 ¿Quién lo está usando?</h3>
+          <h3 className="text-sm font-bold text-gray-900">👀 {t('¿Quién lo está usando?')}</h3>
           <button
             onClick={() => { setLoading(true); load() }}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            Actualizar
+            {t('Actualizar')}
           </button>
         </div>
 
         {loading && (
           <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white py-10 text-sm text-gray-400 shadow-sm">
-            <Loader2 size={16} className="animate-spin" /> Cargando actividad...
+            <Loader2 size={16} className="animate-spin" /> {t('Cargando actividad...')}
           </div>
         )}
 
         {error && !loading && (
           <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-6 text-center text-sm text-red-500">
-            No se pudo cargar la actividad. Intenta actualizar.
+            {t('No se pudo cargar la actividad. Intenta actualizar.')}
           </div>
         )}
 
         {!loading && !error && businesses.length === 0 && (
           <div className="rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-400 shadow-sm">
-            Aún no hay negocios registrados.
+            {t('Aún no hay negocios registrados.')}
           </div>
         )}
 
@@ -376,7 +380,7 @@ export default function BossPage() {
       </div>
 
       <p className="pb-2 text-center text-xs text-gray-300">
-        La actividad se registra con cada uso real de la app (precisión ~5 min).
+        {t('La actividad se registra con cada uso real de la app (precisión ~5 min).')}
       </p>
     </div>
   )

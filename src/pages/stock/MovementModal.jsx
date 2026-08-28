@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,16 +9,17 @@ import { useDebounce } from '../../hooks/useDebounce'
 import ScannerInput from '../../components/ScannerInput'
 import { productsApi } from '../../services/endpoints/products'
 import { formatQty, isDivisibleUnit, isKiloUnit, gramsEquivalent } from '../../utils/quantity'
+import { useT } from '../../i18n'
 
 // Las cantidades admiten decimales (venta/recepción por peso). La restricción de
 // "entero para productos por unidad" se valida en onSubmit con la unidad del producto.
-const entrySchema = z.object({
-  quantity: z.coerce.number().positive('Debe ser mayor a 0'),
+const makeEntrySchema = (t) => z.object({
+  quantity: z.coerce.number().positive(t('Debe ser mayor a 0')),
   notes: z.string().optional(),
 })
 
-const adjustSchema = z.object({
-  quantity: z.coerce.number().refine((v) => v !== 0, 'No puede ser 0'),
+const makeAdjustSchema = (t) => z.object({
+  quantity: z.coerce.number().refine((v) => v !== 0, t('No puede ser 0')),
   notes: z.string().optional(),
 })
 
@@ -42,6 +43,7 @@ const inputCls =
 
 /** `initialProduct`: producto preseleccionado (p. ej. desde el detalle en Stock). */
 export default function MovementModal({ type, onClose, initialProduct = null }) {
+  const t = useT()
   const [search, setSearch]                   = useState(initialProduct?.name ?? '')
   const [selectedProduct, setSelectedProduct] = useState(initialProduct)
   const [showDropdown, setShowDropdown]       = useState(false)
@@ -50,11 +52,11 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
   const debouncedSearch                       = useDebounce(search, 400)
   const createMovement                        = useCreateMovement()
 
-  const schema = type === 'PURCHASE_ENTRY' ? entrySchema : adjustSchema
+  const schema = useMemo(() => (type === 'PURCHASE_ENTRY' ? makeEntrySchema(t) : makeAdjustSchema(t)), [type, t])
   const { register, handleSubmit, setError, watch, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const divisible   = selectedProduct ? isDivisibleUnit(selectedProduct.unit) : true
-  const unitLabel   = selectedProduct?.unit || 'unidad'
+  const unitLabel   = selectedProduct?.unit || t('unidad')
   const qtyWatch    = watch('quantity')
   const gramsHint   = selectedProduct && isKiloUnit(selectedProduct.unit)
     ? gramsEquivalent(qtyWatch) : null
@@ -80,7 +82,7 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
       const product = (await productsApi.scanCode(code)).data.data
       selectProduct(product)
     } catch {
-      setScanError('Código no encontrado. Búscalo por nombre.')
+      setScanError(t('Código no encontrado. Búscalo por nombre.'))
     } finally {
       scanLockRef.current = false
     }
@@ -90,7 +92,7 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
     if (!selectedProduct) return
     // Productos por unidad: solo enteros.
     if (!isDivisibleUnit(selectedProduct.unit) && !Number.isInteger(Number(quantity))) {
-      setError('quantity', { message: `"${selectedProduct.name}" se mide por unidad: usá un número entero` })
+      setError('quantity', { message: t('"{name}" se mide por unidad: usá un número entero', { name: selectedProduct.name }) })
       return
     }
     try {
@@ -113,7 +115,7 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div className="flex items-center gap-3">
             <TitleIcon size={18} className={ACCENT[type]} />
-            <h3 className="text-base font-bold text-gray-900">{TITLES[type]}</h3>
+            <h3 className="text-base font-bold text-gray-900">{t(TITLES[type])}</h3>
           </div>
           <button onClick={onClose}
             className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
@@ -126,21 +128,21 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
             {/* Product search + camera scan */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Producto <span className="text-red-400">*</span>
+                {t('Producto')} <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <ScannerInput
                   value={search}
                   onChange={(v) => { setSearch(v); setSelectedProduct(null); setScanError(null); setShowDropdown(true) }}
                   onScan={handleScan}
-                  placeholder="Buscar producto..."
+                  placeholder={t('Buscar producto...')}
                 />
                 {showDropdown && debouncedSearch && (
                   <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
                     {loadingProducts ? (
-                      <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+                      <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
                     ) : results.length === 0 ? (
-                      <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+                      <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                     ) : (
                       results.map((p) => (
                         <button key={p.id} type="button" onClick={() => selectProduct(p)}
@@ -161,7 +163,7 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
               {selectedProduct && (
                 <div className="mt-2 flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-2.5">
                   <div>
-                    <span className="text-xs text-gray-500">Stock actual: </span>
+                    <span className="text-xs text-gray-500">{t('Stock actual:')} </span>
                     <span className="text-sm font-bold text-gray-900">
                       {formatQty(selectedProduct.currentStock)} {unitLabel}
                     </span>
@@ -174,12 +176,12 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
             {/* Quantity */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Cantidad <span className="text-red-400">*</span>
+                {t('Cantidad')} <span className="text-red-400">*</span>
               </label>
               <div className="flex items-center gap-2">
                 <input {...register('quantity')} type="number" step={divisible ? '0.001' : '1'}
                   autoFocus={!!initialProduct}
-                  placeholder={type === 'ADJUSTMENT' ? 'Ej. -5 o +10' : 'Ej. 50'}
+                  placeholder={type === 'ADJUSTMENT' ? t('Ej. -5 o +10') : t('Ej. 50')}
                   className={inputCls} />
                 {selectedProduct && (
                   <span className="flex-shrink-0 text-sm font-medium text-gray-400">{unitLabel}</span>
@@ -190,21 +192,21 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
                 <p className="mt-1 text-xs text-gray-400">= {gramsHint}</p>
               )}
               {type === 'ADJUSTMENT' && (
-                <p className="mt-1 text-xs text-gray-400">Positivo para agregar, negativo para reducir</p>
+                <p className="mt-1 text-xs text-gray-400">{t('Positivo para agregar, negativo para reducir')}</p>
               )}
             </div>
 
             {/* Notes */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Notas</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Notas')}</label>
               <textarea {...register('notes')} rows={2}
-                placeholder="Observaciones opcionales..."
+                placeholder={t('Observaciones opcionales...')}
                 className={`${inputCls} resize-none`} />
             </div>
 
             {createMovement.isError && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {createMovement.error?.response?.data?.message ?? 'Error al registrar el movimiento'}
+                {createMovement.error?.response?.data?.message ?? t('Error al registrar el movimiento')}
               </p>
             )}
           </div>
@@ -212,12 +214,12 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
           <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
             <button type="button" onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={!selectedProduct || createMovement.isPending}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {createMovement.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createMovement.isPending ? 'Guardando...' : 'Guardar'}
+              {createMovement.isPending ? t('Guardando...') : t('Guardar')}
             </button>
           </div>
         </form>

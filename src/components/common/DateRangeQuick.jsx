@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
 import { quickRange } from '../../utils/dateRanges'
+import { useT } from '../../i18n'
 
 /**
  * Selector de rango de fechas "para humanos": botones grandes
@@ -22,6 +23,7 @@ const CHIPS = [
 const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
 export default function DateRangeQuick({ from, to, onChange }) {
+  const t = useT()
   const [customOpen, setCustomOpen] = useState(false)
 
   // El chip activo se deduce del rango actual — así "Este mes" aparece
@@ -52,7 +54,7 @@ export default function DateRangeQuick({ from, to, onChange }) {
                 : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
-            {c.label}
+            {t(c.label)}
           </button>
         ))}
         <button
@@ -65,19 +67,19 @@ export default function DateRangeQuick({ from, to, onChange }) {
           }`}
         >
           <Calendar size={14} />
-          Elegir fechas
+          {t('Elegir fechas')}
         </button>
       </div>
 
       {(customOpen || !activeKey) && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-500">Desde</span>
+            <span className="text-sm font-medium text-gray-500">{t('Desde')}</span>
             <input type="date" value={from ?? ''} max={to || undefined}
               onChange={(e) => onChange({ from: e.target.value, to })} className={inputCls} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-500">Hasta</span>
+            <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
             <input type="date" value={to ?? ''} min={from || undefined}
               onChange={(e) => onChange({ from, to: e.target.value })} className={inputCls} />
           </div>

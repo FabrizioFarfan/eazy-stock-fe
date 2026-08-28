@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,12 +8,14 @@ import { useAuth } from '../context/AuthContext'
 import { useUsers, useCreateUser, useToggleUser } from '../hooks/useUsers'
 import EditUserModal from '../components/EditUserModal'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
+import HelpDrawer from '../components/common/HelpDrawer'
+import { useT, dateLocale } from '../i18n'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
   }).format(new Date(str))
 }
@@ -76,6 +78,7 @@ const PERMISSION_META = [
 // ── PermissionsPanel ──────────────────────────────────────────────────────────
 
 function PermissionsPanel({ targetUser, onClose }) {
+  const t = useT()
   const qc = useQueryClient()
 
   const { data: perms, isLoading } = useQuery({
@@ -101,10 +104,10 @@ function PermissionsPanel({ targetUser, onClose }) {
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
             <h3 className="text-base font-semibold text-gray-900">
-              Permisos — {targetUser.name}
+              {t('Permisos')} — {targetUser.name}
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              Los cambios se aplican de inmediato
+              {t('Los cambios se aplican de inmediato')}
             </p>
           </div>
           <button
@@ -134,7 +137,7 @@ function PermissionsPanel({ targetUser, onClose }) {
 
                 return (
                   <li key={key} className="flex items-center justify-between gap-4">
-                    <span className="text-sm text-gray-700">{label}</span>
+                    <span className="text-sm text-gray-700">{t(label)}</span>
                     <button
                       role="switch"
                       aria-checked={value}
@@ -158,7 +161,7 @@ function PermissionsPanel({ targetUser, onClose }) {
 
           {patch.isError && (
             <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-              {patch.error?.response?.data?.message ?? 'Error al actualizar permisos'}
+              {patch.error?.response?.data?.message ?? t('Error al actualizar permisos')}
             </p>
           )}
         </div>
@@ -172,14 +175,14 @@ function PermissionsPanel({ targetUser, onClose }) {
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
-function buildSchema(isSuperAdmin) {
+function buildSchema(isSuperAdmin, t) {
   return z.object({
-    name:       z.string().min(2, 'Mínimo 2 caracteres'),
-    email:      z.string().email('Email inválido'),
-    password:   z.string().min(6, 'Mínimo 6 caracteres'),
+    name:       z.string().min(2, t('Mínimo 2 caracteres')),
+    email:      z.string().email(t('Email inválido')),
+    password:   z.string().min(6, t('Mínimo 6 caracteres')),
     role:       z.enum(['OWNER', 'EMPLOYEE']),
     businessId: isSuperAdmin
-      ? z.string().uuid('Debe ser un UUID válido').optional().or(z.literal(''))
+      ? z.string().uuid(t('Debe ser un UUID válido')).optional().or(z.literal(''))
       : z.string().optional(),
   })
 }
@@ -187,16 +190,18 @@ function buildSchema(isSuperAdmin) {
 // ── UserFormModal ─────────────────────────────────────────────────────────────
 
 function UserFormModal({ onClose }) {
+  const t = useT()
   const { user: currentUser } = useAuth()
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN'
   const createUser   = useCreateUser()
+  const schema = useMemo(() => buildSchema(isSuperAdmin, t), [isSuperAdmin, t])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(buildSchema(isSuperAdmin)),
+    resolver: zodResolver(schema),
     defaultValues: {
       role:       'EMPLOYEE',
       businessId: currentUser?.businessId ?? '',
@@ -223,7 +228,7 @@ function UserFormModal({ onClose }) {
       <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <h3 className="text-base font-semibold text-gray-900">Nuevo usuario</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t('Nuevo usuario')}</h3>
           <button
             onClick={onClose}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -237,12 +242,12 @@ function UserFormModal({ onClose }) {
             {/* Name */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Nombre <span className="text-red-500">*</span>
+                {t('Nombre')} <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('name')}
                 type="text"
-                placeholder="Ej. Juan Pérez"
+                placeholder={t('Ej. Juan Pérez')}
                 className={inputCls}
               />
               {errors.name && (
@@ -253,7 +258,7 @@ function UserFormModal({ onClose }) {
             {/* Email */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Email <span className="text-red-500">*</span>
+                {t('Email')} <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('email')}
@@ -269,12 +274,12 @@ function UserFormModal({ onClose }) {
             {/* Password */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Contraseña <span className="text-red-500">*</span>
+                {t('Contraseña')} <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('password')}
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t('Mínimo 6 caracteres')}
                 className={inputCls}
               />
               {errors.password && (
@@ -286,11 +291,11 @@ function UserFormModal({ onClose }) {
             {isSuperAdmin && (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Rol <span className="text-red-500">*</span>
+                  {t('Rol')} <span className="text-red-500">*</span>
                 </label>
                 <select {...register('role')} className={inputCls}>
-                  <option value="EMPLOYEE">Empleado</option>
-                  <option value="OWNER">Owner</option>
+                  <option value="EMPLOYEE">{t('Empleado')}</option>
+                  <option value="OWNER">{t('Owner')}</option>
                 </select>
                 {errors.role && (
                   <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>
@@ -302,12 +307,12 @@ function UserFormModal({ onClose }) {
             {isSuperAdmin && !currentUser?.businessId && (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  ID del negocio <span className="text-red-500">*</span>
+                  {t('ID del negocio')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register('businessId')}
                   type="text"
-                  placeholder="UUID del negocio..."
+                  placeholder={t('UUID del negocio...')}
                   className={inputCls}
                 />
                 {errors.businessId && (
@@ -318,7 +323,7 @@ function UserFormModal({ onClose }) {
 
             {createUser.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {createUser.error?.response?.data?.message ?? 'Error al crear el usuario'}
+                {createUser.error?.response?.data?.message ?? t('Error al crear el usuario')}
               </p>
             )}
           </div>
@@ -330,7 +335,7 @@ function UserFormModal({ onClose }) {
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button
               type="submit"
@@ -338,7 +343,7 @@ function UserFormModal({ onClose }) {
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {createUser.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createUser.isPending ? 'Creando...' : 'Crear usuario'}
+              {createUser.isPending ? t('Creando...') : t('Crear usuario')}
             </button>
           </div>
         </form>
@@ -350,6 +355,7 @@ function UserFormModal({ onClose }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const t = useT()
   const { user: currentUser } = useAuth()
   const [showModal, setShowModal]       = useState(false)
   const [togglingId, setTogglingId]     = useState(null)
@@ -376,13 +382,34 @@ export default function UsersPage() {
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-gray-900">Usuarios</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold text-gray-900">{t('Usuarios')}</h2>
+          <HelpDrawer title={t('Cómo usar Usuarios')} autoOpenKey="eazystock_users_help_v1">
+            <p>{t('Aquí ves todas las cuentas que entran a tu negocio: tú (Owner) y tus empleados. Cada uno tiene su propio usuario y contraseña.')}</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
+              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>
+              <p className="mt-1">{t('Permiso pensado para quien cierra el turno: el empleado ve en Balance el cierre de caja del día por medio de pago (efectivo, Yape, Plin, tarjeta…) y el total vendido, pero NO ve ganancias, costos ni márgenes. Así puede cuadrar la caja sin conocer cuánto ganas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🛒 {t('¿Qué ve un vendedor limitado?')}</p>
+              <p className="mt-1">{t('Un empleado con solo "Registrar ventas" entra directo al punto de venta: busca productos (también con escáner de código de barras/QR), cobra y emite el ticket. No ve reportes, costos, precios de compra, proveedores ni empleados; no puede fiar ni aplicar descuentos salvo que le des esos permisos; y solo ve su propio ranking de ventas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">✏️ {t('Editar y desactivar')}</p>
+              <p className="mt-1">{t('Con "Editar" cambias nombre, email o contraseña. Si alguien deja de trabajar contigo, desactívalo: pierde el acceso pero su historial de ventas se conserva. No puedes desactivarte a ti mismo.')}</p>
+            </div>
+          </HelpDrawer>
+        </div>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <UserPlus size={15} />
-          Nuevo usuario
+          {t('Nuevo usuario')}
         </button>
       </div>
 
@@ -392,12 +419,12 @@ export default function UsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <th className="px-4 py-3">Usuario</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3 text-center">Rol</th>
-                <th className="px-4 py-3 text-center">Estado</th>
-                <th className="px-4 py-3">Registrado</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+                <th className="px-4 py-3">{t('Usuario')}</th>
+                <th className="px-4 py-3">{t('Email')}</th>
+                <th className="px-4 py-3 text-center">{t('Rol')}</th>
+                <th className="px-4 py-3 text-center">{t('Estado')}</th>
+                <th className="px-4 py-3">{t('Registrado')}</th>
+                <th className="px-4 py-3 text-center">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -406,7 +433,7 @@ export default function UsersPage() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-sm text-gray-400">
-                    No hay usuarios registrados
+                    {t('No hay usuarios registrados')}
                   </td>
                 </tr>
               ) : (
@@ -428,7 +455,7 @@ export default function UsersPage() {
                           <span className="font-medium text-gray-900 max-w-[140px] truncate">
                             {u.name}
                             {isSelf && (
-                              <span className="ml-1.5 text-xs text-gray-400">(tú)</span>
+                              <span className="ml-1.5 text-xs text-gray-400">{t('(tú)')}</span>
                             )}
                           </span>
                         </div>
@@ -440,7 +467,7 @@ export default function UsersPage() {
 
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${roleCfg.cls}`}>
-                          {roleCfg.label}
+                          {t(roleCfg.label)}
                         </span>
                       </td>
 
@@ -448,7 +475,7 @@ export default function UsersPage() {
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                           u.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {u.active ? 'Activo' : 'Inactivo'}
+                          {u.active ? t('Activo') : t('Inactivo')}
                         </span>
                       </td>
 
@@ -463,11 +490,11 @@ export default function UsersPage() {
                           {canEdit && (
                             <button
                               onClick={() => setEditTarget(u)}
-                              title="Editar usuario"
+                              title={t('Editar usuario')}
                               className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                             >
                               <Pencil size={12} />
-                              Editar
+                              {t('Editar')}
                             </button>
                           )}
 
@@ -475,11 +502,11 @@ export default function UsersPage() {
                           {canEditPerms && (
                             <button
                               onClick={() => setPermTarget(u)}
-                              title="Editar permisos"
+                              title={t('Editar permisos')}
                               className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                             >
                               <Shield size={12} />
-                              Permisos
+                              {t('Permisos')}
                             </button>
                           )}
 
@@ -487,7 +514,7 @@ export default function UsersPage() {
                           <button
                             onClick={() => handleToggle(u.id)}
                             disabled={isSelf || isToggling}
-                            title={isSelf ? 'No puedes desactivarte a ti mismo' : u.active ? 'Desactivar' : 'Activar'}
+                            title={isSelf ? t('No puedes desactivarte a ti mismo') : u.active ? t('Desactivar') : t('Activar')}
                             className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                               u.active
                                 ? 'bg-red-50 text-red-600 hover:bg-red-100'
@@ -499,7 +526,7 @@ export default function UsersPage() {
                             ) : (
                               <Power size={12} />
                             )}
-                            {u.active ? 'Desactivar' : 'Activar'}
+                            {u.active ? t('Desactivar') : t('Activar')}
                           </button>
                         </div>
                       </td>

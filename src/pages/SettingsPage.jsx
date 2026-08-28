@@ -1,6 +1,6 @@
 import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,6 +10,8 @@ import { useTheme } from '../hooks/useTheme'
 import { usersApi } from '../services/endpoints/users'
 import { businessesApi } from '../services/endpoints/businesses'
 import { useInstallApp, promptInstall } from '../utils/installApp'
+import { useT } from '../i18n'
+import LangSwitcher from '../i18n/LangSwitcher'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -63,6 +65,7 @@ function Section({ title, action, children }) {
 }
 
 function EditButton({ editing, onClick }) {
+  const t = useT()
   return (
     <button
       type="button"
@@ -70,23 +73,24 @@ function EditButton({ editing, onClick }) {
       className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
     >
       <Pencil size={12} />
-      {editing ? 'Cancelar' : 'Editar'}
+      {editing ? t('Cancelar') : t('Editar')}
     </button>
   )
 }
 
-const pwSchema = z.object({
-  currentPassword: z.string().min(1, 'Requerido'),
-  newPassword:     z.string().min(6, 'Mínimo 6 caracteres'),
-  confirmPassword: z.string().min(1, 'Requerido'),
+const makePwSchema = (t) => z.object({
+  currentPassword: z.string().min(1, t('Requerido')),
+  newPassword:     z.string().min(6, t('Mínimo 6 caracteres')),
+  confirmPassword: z.string().min(1, t('Requerido')),
 }).refine((d) => d.newPassword === d.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
+  message: t('Las contraseñas no coinciden'),
   path: ['confirmPassword'],
 })
 
 const inputCls = 'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 pr-10'
 
 function PasswordField({ label, name, register, error, showMap, toggleShow }) {
+  const t = useT()
   const show = showMap[name]
   return (
     <div>
@@ -100,6 +104,7 @@ function PasswordField({ label, name, register, error, showMap, toggleShow }) {
         <button
           type="button"
           onClick={() => toggleShow(name)}
+          aria-label={show ? t('Ocultar contraseña') : t('Mostrar contraseña')}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
           {show ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -111,6 +116,8 @@ function PasswordField({ label, name, register, error, showMap, toggleShow }) {
 }
 
 function ChangePasswordForm() {
+  const t = useT()
+  const pwSchema = useMemo(() => makePwSchema(t), [t])
   const [pending, setPending] = useState(false)
   const [show, setShow] = useState({ currentPassword: false, newPassword: false, confirmPassword: false })
   const toggleShow = (field) => setShow((s) => ({ ...s, [field]: !s[field] }))
@@ -123,10 +130,10 @@ function ChangePasswordForm() {
     setPending(true)
     try {
       await usersApi.changePassword({ currentPassword, newPassword })
-      toast.success('Contraseña actualizada')
+      toast.success(t('Contraseña actualizada'))
       reset()
     } catch (err) {
-      toast.error(err?.response?.data?.message ?? 'Error al cambiar la contraseña')
+      toast.error(err?.response?.data?.message ?? t('Error al cambiar la contraseña'))
     } finally {
       setPending(false)
     }
@@ -134,9 +141,9 @@ function ChangePasswordForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
-      <PasswordField label="Contraseña actual"   name="currentPassword" register={register} error={errors.currentPassword} showMap={show} toggleShow={toggleShow} />
-      <PasswordField label="Nueva contraseña"    name="newPassword"     register={register} error={errors.newPassword}     showMap={show} toggleShow={toggleShow} />
-      <PasswordField label="Confirmar contraseña" name="confirmPassword" register={register} error={errors.confirmPassword} showMap={show} toggleShow={toggleShow} />
+      <PasswordField label={t('Contraseña actual')}    name="currentPassword" register={register} error={errors.currentPassword} showMap={show} toggleShow={toggleShow} />
+      <PasswordField label={t('Nueva contraseña')}     name="newPassword"     register={register} error={errors.newPassword}     showMap={show} toggleShow={toggleShow} />
+      <PasswordField label={t('Confirmar contraseña')} name="confirmPassword" register={register} error={errors.confirmPassword} showMap={show} toggleShow={toggleShow} />
       <div className="flex justify-end pt-1">
         <button
           type="submit"
@@ -144,7 +151,7 @@ function ChangePasswordForm() {
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
         >
           {pending && <Loader2 size={14} className="animate-spin" />}
-          {pending ? 'Guardando...' : 'Cambiar contraseña'}
+          {pending ? t('Guardando...') : t('Cambiar contraseña')}
         </button>
       </div>
     </form>
@@ -153,12 +160,14 @@ function ChangePasswordForm() {
 
 // ── Mi perfil (editar nombre / email propios) ──────────────────────────────
 
-const profileSchema = z.object({
-  name:  z.string().min(1, 'Requerido'),
-  email: z.string().email('Email inválido'),
+const makeProfileSchema = (t) => z.object({
+  name:  z.string().min(1, t('Requerido')),
+  email: z.string().email(t('Email inválido')),
 })
 
 function ProfileSection() {
+  const t = useT()
+  const profileSchema = useMemo(() => makeProfileSchema(t), [t])
   const { user, refreshUser, logout } = useAuth()
   const [editing, setEditing] = useState(false)
   const [pending, setPending] = useState(false)
@@ -175,15 +184,15 @@ function ProfileSection() {
       await usersApi.updateMe({ name, email })
       if (emailChanged) {
         // El JWT usa el email: la sesión actual deja de ser válida
-        toast.success('Email actualizado. Inicia sesión de nuevo con tu nuevo email.')
+        toast.success(t('Email actualizado. Inicia sesión de nuevo con tu nuevo email.'))
         await logout()
         return
       }
-      toast.success('Perfil actualizado')
+      toast.success(t('Perfil actualizado'))
       await refreshUser()
       setEditing(false)
     } catch (err) {
-      toast.error(err?.response?.data?.message ?? 'Error al actualizar el perfil')
+      toast.error(err?.response?.data?.message ?? t('Error al actualizar el perfil'))
     } finally {
       setPending(false)
     }
@@ -193,13 +202,13 @@ function ProfileSection() {
 
   return (
     <Section
-      title="Mi perfil"
+      title={t('Mi perfil')}
       action={<EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} />}
     >
       {editing ? (
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')}</label>
             <input {...register('name')} type="text" className={inputCls} />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
@@ -208,7 +217,7 @@ function ProfileSection() {
             <input {...register('email')} type="email" className={inputCls} />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             <p className="mt-1 text-xs text-gray-400">
-              Si cambias tu email tendrás que iniciar sesión de nuevo.
+              {t('Si cambias tu email tendrás que iniciar sesión de nuevo.')}
             </p>
           </div>
           <div className="flex justify-end pt-1">
@@ -218,16 +227,16 @@ function ProfileSection() {
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
             >
               {pending && <Loader2 size={14} className="animate-spin" />}
-              {pending ? 'Guardando...' : 'Guardar cambios'}
+              {pending ? t('Guardando...') : t('Guardar cambios')}
             </button>
           </div>
         </form>
       ) : (
         <>
-          <InfoRow icon={User}      label="Nombre"   value={user?.name} />
-          <InfoRow icon={Mail}      label="Email"    value={user?.email} />
-          <InfoRow icon={Shield}    label="Rol"      value={ROLE_LABEL[displayRole(user)] ?? user?.role} />
-          <InfoRow icon={Building2} label="Negocio"  value={user?.businessName} />
+          <InfoRow icon={User}      label={t('Nombre')}  value={user?.name} />
+          <InfoRow icon={Mail}      label="Email"        value={user?.email} />
+          <InfoRow icon={Shield}    label={t('Rol')}     value={t(ROLE_LABEL[displayRole(user)] ?? user?.role)} />
+          <InfoRow icon={Building2} label={t('Negocio')} value={user?.businessName} />
         </>
       )}
     </Section>
@@ -245,14 +254,16 @@ const COUNTRIES = [
 
 const COUNTRY_NAME = Object.fromEntries(COUNTRIES)
 
-const businessSchema = z.object({
-  name:        z.string().min(1, 'Requerido'),
-  countryCode: z.string().min(2, 'Requerido').max(3),
-  taxIdType:   z.string().min(1, 'Requerido'),
-  taxId:       z.string().min(1, 'Requerido'),
+const makeBusinessSchema = (t) => z.object({
+  name:        z.string().min(1, t('Requerido')),
+  countryCode: z.string().min(2, t('Requerido')).max(3),
+  taxIdType:   z.string().min(1, t('Requerido')),
+  taxId:       z.string().min(1, t('Requerido')),
 })
 
 function BusinessSection() {
+  const t = useT()
+  const businessSchema = useMemo(() => makeBusinessSchema(t), [t])
   const { user, refreshUser } = useAuth()
   const [business, setBusiness] = useState(null)
   const [editing, setEditing]   = useState(false)
@@ -284,11 +295,11 @@ function BusinessSection() {
     try {
       const res = await businessesApi.updateMine(data)
       setBusiness(res.data.data ?? res.data)
-      toast.success('Datos del negocio actualizados')
+      toast.success(t('Datos del negocio actualizados'))
       await refreshUser() // refresca businessName en el header
       setEditing(false)
     } catch (err) {
-      toast.error(err?.response?.data?.message ?? 'Error al actualizar el negocio')
+      toast.error(err?.response?.data?.message ?? t('Error al actualizar el negocio'))
     } finally {
       setPending(false)
     }
@@ -297,41 +308,41 @@ function BusinessSection() {
   const cancel = () => { reset(); setEditing(false) }
 
   const countryLabel = business
-    ? (COUNTRY_NAME[business.countryCode] ?? business.countryCode)
+    ? (COUNTRY_NAME[business.countryCode] ? t(COUNTRY_NAME[business.countryCode]) : business.countryCode)
     : null
 
   return (
     <Section
-      title="Mi negocio"
+      title={t('Mi negocio')}
       action={isOwner ? <EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} /> : null}
     >
       {editing ? (
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-3 py-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre del negocio</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre del negocio')}</label>
             <input {...register('name')} type="text" className={inputCls} />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">País</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('País')}</label>
             <select {...register('countryCode')} className={inputCls}>
               {business?.countryCode && !COUNTRY_NAME[business.countryCode] && (
                 <option value={business.countryCode}>{business.countryCode}</option>
               )}
               {COUNTRIES.map(([code, label]) => (
-                <option key={code} value={code}>{label}</option>
+                <option key={code} value={code}>{t(label)}</option>
               ))}
             </select>
             {errors.countryCode && <p className="mt-1 text-xs text-red-500">{errors.countryCode.message}</p>}
           </div>
           <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Tipo de doc.</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Tipo de doc.')}</label>
               <input {...register('taxIdType')} type="text" placeholder="RUC, CUIT, NIT..." className={inputCls} />
               {errors.taxIdType && <p className="mt-1 text-xs text-red-500">{errors.taxIdType.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Número</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Número')}</label>
               <input {...register('taxId')} type="text" className={inputCls} />
               {errors.taxId && <p className="mt-1 text-xs text-red-500">{errors.taxId.message}</p>}
             </div>
@@ -343,19 +354,19 @@ function BusinessSection() {
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60"
             >
               {pending && <Loader2 size={14} className="animate-spin" />}
-              {pending ? 'Guardando...' : 'Guardar cambios'}
+              {pending ? t('Guardando...') : t('Guardar cambios')}
             </button>
           </div>
         </form>
       ) : business ? (
         <>
-          <InfoRow icon={Building2} label="Nombre"   value={business.name} />
-          <InfoRow icon={Globe}     label="País"     value={countryLabel} />
-          <InfoRow icon={FileDigit} label={business.taxIdType || 'Documento'} value={business.taxId} />
+          <InfoRow icon={Building2} label={t('Nombre')} value={business.name} />
+          <InfoRow icon={Globe}     label={t('País')}   value={countryLabel} />
+          <InfoRow icon={FileDigit} label={business.taxIdType || t('Documento')} value={business.taxId} />
         </>
       ) : (
         <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
-          <Loader2 size={14} className="animate-spin" /> Cargando...
+          <Loader2 size={14} className="animate-spin" /> {t('Cargando...')}
         </div>
       )}
     </Section>
@@ -365,6 +376,7 @@ function BusinessSection() {
 // ── Instalar la app (PWA) ──────────────────────────────────────────────────
 
 function InstallSection() {
+  const t = useT()
   const { canPrompt, installed, ios } = useInstallApp()
   const [installing, setInstalling] = useState(false)
 
@@ -373,7 +385,7 @@ function InstallSection() {
     try {
       const outcome = await promptInstall()
       if (outcome === 'accepted') {
-        toast.success('¡Listo! Busca «Eazy Stock» en tu escritorio o pantalla de inicio')
+        toast.success(t('¡Listo! Busca «Eazy Stock» en tu escritorio o pantalla de inicio'))
       }
     } finally {
       setInstalling(false)
@@ -381,16 +393,16 @@ function InstallSection() {
   }
 
   return (
-    <Section title="Instalar la app">
+    <Section title={t('Instalar la app')}>
       {installed ? (
         <div className="flex items-center gap-3.5 py-4">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50">
             <CheckCircle2 size={15} className="text-emerald-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">La app ya está instalada</p>
+            <p className="text-sm font-semibold text-gray-900">{t('La app ya está instalada')}</p>
             <p className="text-xs text-gray-400">
-              Búscala como «Eazy Stock» en tu escritorio o pantalla de inicio
+              {t('Búscala como «Eazy Stock» en tu escritorio o pantalla de inicio')}
             </p>
           </div>
         </div>
@@ -407,9 +419,9 @@ function InstallSection() {
             }
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-blue-600">Instalar en este dispositivo</p>
+            <p className="text-sm font-semibold text-blue-600">{t('Instalar en este dispositivo')}</p>
             <p className="text-xs text-gray-400">
-              Con su propio ícono y ventana, como cualquier aplicación
+              {t('Con su propio ícono y ventana, como cualquier aplicación')}
             </p>
           </div>
           <ChevronRight size={16} className="text-gray-400" />
@@ -420,11 +432,11 @@ function InstallSection() {
             <Share size={15} className="text-blue-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Instalar en iPhone / iPad</p>
+            <p className="text-sm font-semibold text-gray-900">{t('Instalar en iPhone / iPad')}</p>
             <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
-              Abre esta página en <span className="font-semibold text-gray-700">Safari</span>,
-              toca el botón <span className="font-semibold text-gray-700">Compartir</span> y
-              elige <span className="font-semibold text-gray-700">«Añadir a pantalla de inicio»</span>.
+              {t('Abre esta página en')} <span className="font-semibold text-gray-700">Safari</span>,{' '}
+              {t('toca el botón')} <span className="font-semibold text-gray-700">{t('Compartir')}</span> {t('y elige')}{' '}
+              <span className="font-semibold text-gray-700">{t('«Añadir a pantalla de inicio»')}</span>.
             </p>
           </div>
         </div>
@@ -434,14 +446,13 @@ function InstallSection() {
             <MoreVertical size={15} className="text-gray-500" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Instalar desde el navegador</p>
+            <p className="text-sm font-semibold text-gray-900">{t('Instalar desde el navegador')}</p>
             <p className="mt-0.5 text-xs leading-relaxed text-gray-400">
-              Abre el menú <span className="font-semibold text-gray-700">⋮</span> del navegador
-              (arriba a la derecha) y elige{' '}
-              <span className="font-semibold text-gray-700">«Instalar Eazy Stock»</span>
-              {' '}— en el celular puede llamarse{' '}
-              <span className="font-semibold text-gray-700">«Añadir a pantalla de inicio»</span>.
-              Si no aparece, recarga la página y vuelve a intentar.
+              {t('Abre el menú')} <span className="font-semibold text-gray-700">⋮</span> {t('del navegador (arriba a la derecha) y elige')}{' '}
+              <span className="font-semibold text-gray-700">{t('«Instalar Eazy Stock»')}</span>
+              {' '}— {t('en el celular puede llamarse')}{' '}
+              <span className="font-semibold text-gray-700">{t('«Añadir a pantalla de inicio»')}</span>.{' '}
+              {t('Si no aparece, recarga la página y vuelve a intentar.')}
             </p>
           </div>
         </div>
@@ -451,6 +462,7 @@ function InstallSection() {
 }
 
 export default function SettingsPage() {
+  const t = useT()
   const { user, logout, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
   const [loggingOutAll, setLoggingOutAll] = useState(false)
@@ -460,12 +472,12 @@ export default function SettingsPage() {
   // sessionStorage y navegamos a /productos. ProductsPage la lee al
   // montarse y abre el modal en modo tutorial.
   const openProductTutorial = () => {
-    try { sessionStorage.setItem('eazystock_product_tutorial_pending', '1') } catch {}
+    try { sessionStorage.setItem('eazystock_product_tutorial_pending', '1') } catch { /* storage bloqueado */ }
     navigate('/products')
   }
 
   const handleLogoutAll = async () => {
-    if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return
+    if (!confirm(t('¿Cerrar sesión en todos los dispositivos?'))) return
     setLoggingOutAll(true)
     await logoutAll()
   }
@@ -488,7 +500,7 @@ export default function SettingsPage() {
               {initials}
             </div>
             <span className={`mb-1 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[displayRole(user)] ?? 'bg-gray-100 text-gray-600'}`}>
-              {ROLE_LABEL[displayRole(user)] ?? user?.role}
+              {t(ROLE_LABEL[displayRole(user)] ?? user?.role)}
             </span>
           </div>
           <div className="mt-3">
@@ -505,7 +517,7 @@ export default function SettingsPage() {
       <BusinessSection />
 
       {/* Appearance */}
-      <Section title="Apariencia">
+      <Section title={t('Apariencia')}>
         <button
           onClick={toggleTheme}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
@@ -518,10 +530,10 @@ export default function SettingsPage() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">
-              {isDark ? 'Modo claro' : 'Modo oscuro'}
+              {isDark ? t('Modo claro') : t('Modo oscuro')}
             </p>
             <p className="text-xs text-gray-400">
-              {isDark ? 'Cambiar a interfaz clara' : 'Cambiar a interfaz oscura'}
+              {isDark ? t('Cambiar a interfaz clara') : t('Cambiar a interfaz oscura')}
             </p>
           </div>
           {/* Toggle pill */}
@@ -535,16 +547,32 @@ export default function SettingsPage() {
         </button>
       </Section>
 
+      {/* Language */}
+      <Section title={t('Idioma')}>
+        <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100">
+              <Globe size={15} className="text-slate-500" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{t('Idioma de la app')}</p>
+              <p className="text-xs text-gray-400">{t('Español, inglés o italiano')}</p>
+            </div>
+          </div>
+          <LangSwitcher />
+        </div>
+      </Section>
+
       {/* Install PWA */}
       <InstallSection />
 
       {/* Password */}
-      <Section title="Cambiar contraseña">
+      <Section title={t('Cambiar contraseña')}>
         <ChangePasswordForm />
       </Section>
 
       {/* Help */}
-      <Section title="Ayuda">
+      <Section title={t('Ayuda')}>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-tutorial'))}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors border-b border-gray-50"
@@ -553,8 +581,8 @@ export default function SettingsPage() {
             <BookOpen size={15} className="text-blue-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Ver tutorial</p>
-            <p className="text-xs text-gray-400">Repasa las funciones principales de la app</p>
+            <p className="text-sm font-semibold text-gray-900">{t('Ver tutorial')}</p>
+            <p className="text-xs text-gray-400">{t('Repasa las funciones principales de la app')}</p>
           </div>
           <ChevronRight size={16} className="text-gray-400" />
         </button>
@@ -566,15 +594,15 @@ export default function SettingsPage() {
             <Package size={15} className="text-violet-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Cómo agregar un producto</p>
-            <p className="text-xs text-gray-400">Tutorial interactivo paso a paso sobre el formulario</p>
+            <p className="text-sm font-semibold text-gray-900">{t('Cómo agregar un producto')}</p>
+            <p className="text-xs text-gray-400">{t('Tutorial interactivo paso a paso sobre el formulario')}</p>
           </div>
           <ChevronRight size={16} className="text-gray-400" />
         </button>
       </Section>
 
       {/* Session */}
-      <Section title="Sesión">
+      <Section title={t('Sesión')}>
         <button
           onClick={logout}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
@@ -582,7 +610,7 @@ export default function SettingsPage() {
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 transition-colors group-hover:bg-red-100">
             <LogOut size={15} className="text-red-500" />
           </div>
-          <span className="text-sm font-semibold text-red-500">Cerrar sesión</span>
+          <span className="text-sm font-semibold text-red-500">{t('Cerrar sesión')}</span>
         </button>
         <button
           onClick={handleLogoutAll}
@@ -593,8 +621,8 @@ export default function SettingsPage() {
             <MonitorX size={15} className="text-red-400" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-semibold text-red-400">Cerrar sesión en todos los dispositivos</span>
-            <p className="text-xs text-gray-400">Invalida todas las sesiones activas</p>
+            <span className="text-sm font-semibold text-red-400">{t('Cerrar sesión en todos los dispositivos')}</span>
+            <p className="text-xs text-gray-400">{t('Invalida todas las sesiones activas')}</p>
           </div>
         </button>
       </Section>

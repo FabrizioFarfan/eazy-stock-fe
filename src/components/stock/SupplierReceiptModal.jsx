@@ -16,6 +16,7 @@ import QuantityInput from '../inputs/QuantityInput'
 import { formatPrice } from '../../utils/formatMoney'
 import { formatQty, isDivisibleUnit } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
+import { useT } from '../../i18n'
 
 /**
  * Modal de recepción de mercadería — flujo en 2 pasos:
@@ -35,6 +36,7 @@ import { getErrorMessage } from '../../utils/handleApiError'
  * carrito; el usuario puede sumar más productos del mismo proveedor.
  */
 export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null }) {
+  const t = useT()
   const createReceipt = useCreateSupplierReceipt()
 
   // ── Borrador persistente (caso William: factura con productos nuevos) ────
@@ -256,32 +258,32 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   // Cerrar con carrito != perderlo: avisamos que el borrador queda guardado.
   const handleClose = () => {
     if (itemsRef.current.length > 0) {
-      toast.info('Recepción guardada como borrador — al volver a «Registrar recepción» seguirá aquí')
+      toast.info(t('Recepción guardada como borrador — al volver a «Registrar recepción» seguirá aquí'))
     }
     onClose()
   }
 
   const handleScan = async (code) => {
-    if (!supplier) { toast.warning('Elegí primero el proveedor'); return }
+    if (!supplier) { toast.warning(t('Elegí primero el proveedor')); return }
     if (scanLockRef.current) return
     scanLockRef.current = true
     try {
       const product = (await productsApi.scanCode(code)).data.data
-      if (!product) { toast.error('Producto no encontrado'); return }
+      if (!product) { toast.error(t('Producto no encontrado')); return }
       if (itemsRef.current.some((i) => i.product.id === product.id)) {
         bumpQty(product.id)
         spotlightLine(product.id)
-        toast.info('Cantidad actualizada')
+        toast.info(t('Cantidad actualizada'))
         return
       }
       addProduct(product)
       if (isForeign(product)) {
-        toast.info(`${product.name} es habitual de ${product.supplierName ?? 'otro proveedor'} — se creará la versión de ${supplier.name}`)
+        toast.info(t('{product} es habitual de {other} — se creará la versión de {supplier}', { product: product.name, other: product.supplierName ?? t('otro proveedor'), supplier: supplier.name }))
       } else {
         toast.success(product.name)
       }
     } catch {
-      toast.error('Producto no encontrado')
+      toast.error(t('Producto no encontrado'))
     } finally {
       scanLockRef.current = false
     }
@@ -292,8 +294,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
     e.preventDefault()
     setError(null)
 
-    if (!supplier) { setError('Seleccioná el proveedor'); return }
-    if (items.length === 0) { setError('Agregá al menos un producto'); return }
+    if (!supplier) { setError(t('Seleccioná el proveedor')); return }
+    if (items.length === 0) { setError(t('Agregá al menos un producto')); return }
     const badQty = items.find((i) => {
       const q = Number(i.quantity)
       if (!Number.isFinite(q) || q <= 0) return true
@@ -301,11 +303,11 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       return false
     })
     if (badQty) {
-      setError(`Revisá la cantidad de "${badQty.product.name}"`)
+      setError(t('Revisá la cantidad de "{name}"', { name: badQty.product.name }))
       return
     }
     if (!finalTotal || finalTotal <= 0) {
-      setError('Ingresá el monto total de la compra')
+      setError(t('Ingresá el monto total de la compra'))
       return
     }
 
@@ -328,8 +330,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       try { localStorage.removeItem(draftKey) } catch {}
       toast.success(
         paymentMode === 'CREDIT'
-          ? `Recepción registrada — ${formatPrice(finalTotal)} sumados a la deuda con ${supplier.name}`
-          : `Recepción registrada — ${formatPrice(finalTotal)} pagados al contado a ${supplier.name}`,
+          ? t('Recepción registrada — {amount} sumados a la deuda con {supplier}', { amount: formatPrice(finalTotal), supplier: supplier.name })
+          : t('Recepción registrada — {amount} pagados al contado a {supplier}', { amount: formatPrice(finalTotal), supplier: supplier.name }),
       )
       onClose()
     } catch (err) {
@@ -351,7 +353,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-3">
             <PackagePlus size={20} className="text-emerald-600" />
-            <h3 className="text-base font-bold text-gray-900">Nueva recepción</h3>
+            <h3 className="text-base font-bold text-gray-900">{t('Nueva recepción')}</h3>
           </div>
           <button onClick={handleClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100">
             <X size={18} />
@@ -364,15 +366,15 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             {restoredBanner && (
               <div className="flex items-start justify-between gap-3 rounded-xl bg-blue-50 px-4 py-3 ring-1 ring-blue-100">
                 <p className="text-xs leading-relaxed text-blue-700">
-                  <span className="font-semibold">Retomaste una recepción guardada.</span>{' '}
-                  El carrito se guarda solo: puedes cerrar, crear productos en Productos y volver — nada se pierde.
+                  <span className="font-semibold">{t('Retomaste una recepción guardada.')}</span>{' '}
+                  {t('El carrito se guarda solo: puedes cerrar, crear productos en Productos y volver — nada se pierde.')}
                 </p>
                 <button
                   type="button"
                   onClick={startFresh}
                   className="flex-shrink-0 text-xs font-semibold text-blue-700 underline hover:opacity-80"
                 >
-                  Empezar de cero
+                  {t('Empezar de cero')}
                 </button>
               </div>
             )}
@@ -381,12 +383,12 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             <section>
               <div className="mb-1.5 flex items-center justify-between">
                 <label className="text-sm font-semibold text-gray-900">
-                  1. Proveedor <span className="text-red-500">*</span>
+                  1. {t('Proveedor')} <span className="text-red-500">*</span>
                 </label>
                 {supplier && (
                   <button type="button" onClick={() => setSupplier(null)}
                     className="text-xs font-semibold text-blue-600 hover:text-blue-700">
-                    Cambiar proveedor
+                    {t('Cambiar proveedor')}
                   </button>
                 )}
               </div>
@@ -400,7 +402,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                   )}
                   {Number(supplier.currentDebt ?? 0) > 0 && (
                     <span className="text-xs font-mono text-red-600">
-                      Deuda: {formatPrice(supplier.currentDebt)}
+                      {t('Deuda:')} {formatPrice(supplier.currentDebt)}
                     </span>
                   )}
                 </div>
@@ -410,13 +412,13 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                     value={supplierQuery}
                     onChange={(e) => { setSupplierQuery(e.target.value); setShowSupplierDrop(true) }}
                     onFocus={() => setShowSupplierDrop(true)}
-                    placeholder="Buscar proveedor..."
+                    placeholder={t('Buscar proveedor...')}
                     className={inputCls}
                   />
                   {showSupplierDrop && (supplierResults.length > 0 || debouncedSupplier) && (
                     <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
                       {supplierResults.length === 0 ? (
-                        <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+                        <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                       ) : (
                         supplierResults.map((s) => (
                           <button key={s.id} type="button"
@@ -428,7 +430,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             </div>
                             {Number(s.currentDebt ?? 0) > 0 && (
                               <span className="text-xs font-mono text-red-600">
-                                Deuda: {formatPrice(s.currentDebt)}
+                                {t('Deuda:')} {formatPrice(s.currentDebt)}
                               </span>
                             )}
                           </button>
@@ -443,12 +445,12 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             {/* ── Paso 2: productos ──────────────────────────────────────── */}
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                2. Productos recibidos <span className="text-red-500">*</span>
+                2. {t('Productos recibidos')} <span className="text-red-500">*</span>
               </label>
 
               {step2Disabled ? (
                 <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500 ring-1 ring-gray-100">
-                  Elegí primero el proveedor para continuar.
+                  {t('Elegí primero el proveedor para continuar.')}
                 </p>
               ) : (
                 <>
@@ -458,20 +460,20 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       value={productQuery}
                       onChange={(v) => { setProductQuery(v); setShowProductDrop(true) }}
                       onScan={handleScan}
-                      placeholder={`Buscar productos de ${supplier.name}...`}
+                      placeholder={t('Buscar productos de {supplier}...', { supplier: supplier.name })}
                     />
                     {showProductDrop && debouncedProduct && (
                       <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
                         {productResults.length === 0 && (loadingProducts || fetchingProducts) ? (
-                          <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+                          <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
                         ) : productResults.length === 0 ? (
                           <div className="px-4 py-3 text-sm">
-                            <p className="text-gray-500">Sin resultados para "{debouncedProduct}"</p>
+                            <p className="text-gray-500">{t('Sin resultados para "{q}"', { q: debouncedProduct })}</p>
                             <button type="button"
                               onClick={() => openNewProduct(productQuery.trim())}
                               className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
                               <PackagePlus size={11} />
-                              Crear "{debouncedProduct}" como producto nuevo de {supplier.name}
+                              {t('Crear "{q}" como producto nuevo de {supplier}', { q: debouncedProduct, supplier: supplier.name })}
                             </button>
                           </div>
                         ) : (
@@ -485,7 +487,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                                     {p.sku}
                                     {isForeign(p) && (
                                       <span className="ml-2 font-sans font-semibold text-amber-600">
-                                        habitual de {p.supplierName ?? 'otro proveedor'}
+                                        {t('habitual de {other}', { other: p.supplierName ?? t('otro proveedor') })}
                                       </span>
                                     )}
                                   </p>
@@ -501,8 +503,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                                 className="border-t border-gray-50 px-4 py-2.5 text-center text-xs text-gray-500"
                               >
                                 {fetchingProducts
-                                  ? 'Cargando más...'
-                                  : `${totalProductResults - productResults.length} resultados más — baja para cargarlos o sigue escribiendo para afinar`}
+                                  ? t('Cargando más...')
+                                  : t('{n} resultados más — baja para cargarlos o sigue escribiendo para afinar', { n: totalProductResults - productResults.length })}
                               </div>
                             )}
                           </>
@@ -516,10 +518,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                     type="button"
                     onClick={() => openNewProduct(productQuery.trim())}
                     className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Crear un producto que aún no existe y agregarlo a esta recepción"
+                    title={t('Crear un producto que aún no existe y agregarlo a esta recepción')}
                   >
                     <PackagePlus size={14} />
-                    Nuevo
+                    {t('Nuevo')}
                   </button>
                   </div>
 
@@ -527,7 +529,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                   {/* Carrito */}
                   {items.length === 0 ? (
                     <p className="mt-2 text-xs text-gray-400">
-                      Buscá productos arriba y se irán cargando acá con su precio de compra editable.
+                      {t('Buscá productos arriba y se irán cargando acá con su precio de compra editable.')}
                     </p>
                   ) : (
                     <div className="mt-3 space-y-2">
@@ -556,7 +558,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               ref={(el) => { qtyRefs.current[it.product.id] = el }}
                               value={it.quantity}
                               onChange={(v) => changeQty(it.product.id, v)}
-                              unit={it.product.unit || 'unidad'}
+                              unit={it.product.unit || t('unidad')}
                               maxDecimals={3}
                             />
                             <PriceInput
@@ -574,22 +576,22 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           {!it.product.priceIsVariable && (
                             <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-100 pt-2 text-xs">
                               <span className="text-gray-500">
-                                venta <span className="font-semibold text-gray-800">{formatPrice(effSale(it))}</span>
+                                {t('venta')} <span className="font-semibold text-gray-800">{formatPrice(effSale(it))}</span>
                               </span>
                               <span className={`font-medium ${marginOf(it) > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                margen {formatPrice(marginOf(it))}
+                                {t('margen')} {formatPrice(marginOf(it))}
                                 {effSale(it) > 0 && ` · ${Math.round((marginOf(it) / effSale(it)) * 100)}%`}
                               </span>
                               <button type="button" onClick={() => toggleSale(it.product.id)}
                                 className="ml-auto font-semibold text-blue-600 hover:text-blue-700">
-                                {it.saleOpen ? 'dejar la venta como está' : 'cambiar la venta'}
+                                {it.saleOpen ? t('dejar la venta como está') : t('cambiar la venta')}
                               </button>
                             </div>
                           )}
                           {it.saleOpen && !it.product.priceIsVariable && (
                             <div className="mt-2">
                               <PriceInput
-                                label="Nuevo precio de venta"
+                                label={t('Nuevo precio de venta')}
                                 value={it.salePrice ?? Number(it.product.salePrice ?? 0)}
                                 onChange={(v) => changeSalePrice(it.product.id, v)}
                                 maxDecimals={2}
@@ -598,7 +600,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           )}
                           {it.salePrice != null && Number(it.salePrice) !== Number(it.product.salePrice ?? 0) && (
                             <p className="mt-1.5 text-xs text-blue-600">
-                              El precio de venta pasará de {formatPrice(it.product.salePrice)} a{' '}
+                              {t('El precio de venta pasará de {from} a', { from: formatPrice(it.product.salePrice) })}{' '}
                               <span className="font-semibold">{formatPrice(it.salePrice)}</span>
                             </p>
                           )}
@@ -606,8 +608,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               para este proveedor, con su propio código y este costo. */}
                           {isForeign(it.product) && (
                             <p className="mt-1.5 text-xs font-medium text-violet-600">
-                              Habitual de {it.product.supplierName ?? 'otro proveedor'} — se creará como
-                              producto nuevo de <span className="font-semibold">{supplier?.name}</span> con este costo
+                              {t('Habitual de {other} — se creará como producto nuevo de', { other: it.product.supplierName ?? t('otro proveedor') })}{' '}
+                              <span className="font-semibold">{supplier?.name}</span> {t('con este costo')}
                             </p>
                           )}
                           {/* El costo tipeado pasa a ser el precio de compra del producto:
@@ -615,7 +617,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           {!isForeign(it.product) && it.unitCost != null
                             && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
                             <p className="mt-1.5 text-xs text-blue-600">
-                              El precio de compra pasará de {formatPrice(it.product.purchasePrice)} a{' '}
+                              {t('El precio de compra pasará de {from} a', { from: formatPrice(it.product.purchasePrice) })}{' '}
                               <span className="font-semibold">{formatPrice(it.unitCost)}</span>
                             </p>
                           )}
@@ -623,13 +625,13 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             && effSale(it) > 0 && Number(it.unitCost) >= effSale(it) && (
                             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600">
                               <AlertTriangle size={11} className="flex-shrink-0" />
-                              Este costo iguala o supera el precio de venta ({formatPrice(effSale(it))}) — revisá el margen
+                              {t('Este costo iguala o supera el precio de venta ({price}) — revisá el margen', { price: formatPrice(effSale(it)) })}
                             </p>
                           )}
                         </div>
                       ))}
                       <p className="text-xs text-gray-400">
-                        {items.length} producto{items.length !== 1 ? 's' : ''} · {formatQty(totalItems)} ítem{totalItems !== 1 ? 's' : ''}
+                        {t('{n} producto(s)', { n: items.length })} · {t('{n} ítem(s)', { n: formatQty(totalItems) })}
                       </p>
                     </div>
                   )}
@@ -640,7 +642,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             {/* ── Forma de pago + total + factura ────────────────────────── */}
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Forma de pago <span className="text-red-500">*</span>
+                {t('Forma de pago')} <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setPaymentMode('CASH')}
@@ -649,7 +651,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}>
-                  Al contado
+                  {t('Al contado')}
                 </button>
                 <button type="button" onClick={() => setPaymentMode('CREDIT')}
                   className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
@@ -657,40 +659,40 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       ? 'border-amber-500 bg-amber-50 text-amber-700'
                       : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}>
-                  A crédito (suma deuda)
+                  {t('A crédito (suma deuda)')}
                 </button>
               </div>
             </section>
 
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <PriceInput
-                label={<>Monto total de la compra <span className="text-red-500">*</span></>}
+                label={<>{t('Monto total de la compra')} <span className="text-red-500">*</span></>}
                 value={totalAmount}
                 onChange={(v) => { setTotalAmount(v); setTotalTouched(true) }}
                 maxDecimals={2}
                 helperText={
                   computedTotal > 0 && totalTouched && Math.abs(computedTotal - (totalAmount ?? 0)) > 0.005
-                    ? `Diferencia con la suma de líneas: ${formatPrice(computedTotal)}`
-                    : 'Se autocalcula desde las líneas — podés sobrescribirlo si la factura cobró distinto'
+                    ? t('Diferencia con la suma de líneas: {sum}', { sum: formatPrice(computedTotal) })
+                    : t('Se autocalcula desde las líneas — podés sobrescribirlo si la factura cobró distinto')
                 }
               />
             </section>
 
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Referencia (factura / guía) {paymentMode === 'CREDIT' && <span className="text-gray-400">(recomendado)</span>}
+                {t('Referencia (factura / guía)')} {paymentMode === 'CREDIT' && <span className="text-gray-400">{t('(recomendado)')}</span>}
               </label>
               <input
                 value={referenceDocument}
                 onChange={(e) => setReferenceDocument(e.target.value)}
                 maxLength={100}
-                placeholder="Factura 0023-001234"
+                placeholder={t('Factura 0023-001234')}
                 className={inputCls}
               />
             </section>
 
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Notas (opcional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Notas (opcional)')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -702,14 +704,14 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             {/* Resumen */}
             {supplier && items.length > 0 && finalTotal > 0 && (
               <div className="rounded-xl bg-gray-50 px-4 py-3 text-sm ring-1 ring-gray-100">
-                <p className="font-semibold text-gray-800">Resumen</p>
+                <p className="font-semibold text-gray-800">{t('Resumen')}</p>
                 <p className="mt-1 text-gray-600">
-                  {items.length} producto{items.length !== 1 ? 's' : ''} ({totalItems} unidades) de{' '}
-                  <span className="font-semibold">{supplier.name}</span> por{' '}
+                  {t('{n} producto(s) ({units} unidades) de', { n: items.length, units: totalItems })}{' '}
+                  <span className="font-semibold">{supplier.name}</span> {t('por')}{' '}
                   <span className="font-mono font-semibold">{formatPrice(finalTotal)}</span>{' '}
                   {paymentMode === 'CREDIT'
-                    ? <>al <span className="font-semibold text-amber-700">crédito</span>. Se sumará a la deuda con el proveedor.</>
-                    : <>al <span className="font-semibold text-emerald-700">contado</span>. No genera cuenta por pagar.</>}
+                    ? <>{t('al')} <span className="font-semibold text-amber-700">{t('crédito')}</span>. {t('Se sumará a la deuda con el proveedor.')}</>
+                    : <>{t('al')} <span className="font-semibold text-emerald-700">{t('contado')}</span>. {t('No genera cuenta por pagar.')}</>}
                 </p>
               </div>
             )}
@@ -724,12 +726,12 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           <div className="flex flex-shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4">
             <button type="button" onClick={handleClose}
               className="rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={createReceipt.isPending}
               className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-600/30 hover:bg-emerald-700 disabled:opacity-60">
               {createReceipt.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createReceipt.isPending ? 'Registrando...' : 'Registrar recepción'}
+              {createReceipt.isPending ? t('Registrando...') : t('Registrar recepción')}
             </button>
           </div>
         </form>
@@ -748,7 +750,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             initialName: newProductName,
             onCreated: (p) => {
               addProduct(p, { focusQty: true })
-              toast.success(`${p.name} creado y agregado — escribí su costo en la línea`)
+              toast.success(t('{name} creado y agregado — escribí su costo en la línea', { name: p.name }))
             },
           }}
         />

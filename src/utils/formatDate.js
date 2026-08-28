@@ -1,5 +1,7 @@
+import { dateLocale } from '../i18n'
+
 /**
- * Formatea una fecha ISO 'YYYY-MM-DD' como "dd mmm yy" (es-PE), parseándola
+ * Formatea una fecha ISO 'YYYY-MM-DD' como "dd mmm yy" (locale activo), parseándola
  * como fecha local para evitar el desfase de zona horaria que produce
  * `new Date('YYYY-MM-DD')` (que la interpreta como UTC).
  */
@@ -16,6 +18,6 @@ export function localISODate(d = new Date()) {
 export function formatShortDate(iso) {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-').map(Number)
-  return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: 'short', year: '2-digit' })
+  return new Intl.DateTimeFormat(dateLocale(), { day: '2-digit', month: 'short', year: '2-digit' })
     .format(new Date(y, m - 1, d))
 }

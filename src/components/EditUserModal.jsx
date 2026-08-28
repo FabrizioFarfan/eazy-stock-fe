@@ -6,11 +6,12 @@ import { X, Loader2, Search, Building2 } from 'lucide-react'
 import { useUpdateUser } from '../hooks/useUsers'
 import { useBusinesses } from '../hooks/useBusinesses'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../i18n'
 
-const editSchema = z.object({
-  name:       z.string().min(2, 'Mínimo 2 caracteres'),
-  email:      z.string().email('Email inválido'),
-  password:   z.union([z.string().min(6, 'Mínimo 6 caracteres'), z.literal('')]).optional(),
+const makeSchema = (t) => z.object({
+  name:       z.string().min(2, t('Mínimo 2 caracteres')),
+  email:      z.string().email(t('Email inválido')),
+  password:   z.union([z.string().min(6, t('Mínimo 6 caracteres')), z.literal('')]).optional(),
   businessId: z.string().optional(),
 })
 
@@ -18,9 +19,11 @@ const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 export default function EditUserModal({ targetUser, onClose }) {
+  const t = useT()
   const updateUser = useUpdateUser()
   const { user } = useAuth()
   const [bizSearch, setBizSearch] = useState('')
+  const editSchema = useMemo(() => makeSchema(t), [t])
 
   // Solo un admin de plataforma puede reasignar el negocio de un usuario
   const canChangeBusiness = user?.role === 'SUPER_ADMIN' && !!targetUser.businessId
@@ -73,7 +76,7 @@ export default function EditUserModal({ targetUser, onClose }) {
       <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Editar usuario</h3>
+            <h3 className="text-base font-semibold text-gray-900">{t('Editar usuario')}</h3>
             <p className="mt-0.5 text-xs text-gray-400">{targetUser.email}</p>
           </div>
           <button
@@ -87,21 +90,21 @@ export default function EditUserModal({ targetUser, onClose }) {
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="space-y-4 px-5 py-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')}</label>
               <input {...register('name')} type="text" className={inputCls} />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Email')}</label>
               <input {...register('email')} type="email" className={inputCls} />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Nueva contraseña{' '}
-                <span className="font-normal text-gray-400">(dejar vacío para no cambiar)</span>
+                {t('Nueva contraseña')}{' '}
+                <span className="font-normal text-gray-400">{t('(dejar vacío para no cambiar)')}</span>
               </label>
               <input
                 {...register('password')}
@@ -117,7 +120,7 @@ export default function EditUserModal({ targetUser, onClose }) {
               <div>
                 <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
                   <Building2 size={14} className="text-gray-400" />
-                  Negocio
+                  {t('Negocio')}
                 </label>
                 {bizLoading ? (
                   <div className="h-9 animate-pulse rounded-lg bg-gray-100" />
@@ -128,7 +131,7 @@ export default function EditUserModal({ targetUser, onClose }) {
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Buscar por nombre o RUC..."
+                          placeholder={t('Buscar por nombre o RUC...')}
                           value={bizSearch}
                           onChange={(e) => setBizSearch(e.target.value)}
                           className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
@@ -146,8 +149,7 @@ export default function EditUserModal({ targetUser, onClose }) {
                 )}
                 {businessChanged && (
                   <p className="mt-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700">
-                    ⚠️ Vas a mover este usuario a otro negocio: dejará de ver los
-                    datos del negocio actual y pasará a operar en el nuevo.
+                    ⚠️ {t('Vas a mover este usuario a otro negocio: dejará de ver los datos del negocio actual y pasará a operar en el nuevo.')}
                   </p>
                 )}
               </div>
@@ -155,7 +157,7 @@ export default function EditUserModal({ targetUser, onClose }) {
 
             {updateUser.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {updateUser.error?.response?.data?.message ?? 'Error al actualizar el usuario'}
+                {updateUser.error?.response?.data?.message ?? t('Error al actualizar el usuario')}
               </p>
             )}
           </div>
@@ -166,7 +168,7 @@ export default function EditUserModal({ targetUser, onClose }) {
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button
               type="submit"
@@ -174,7 +176,7 @@ export default function EditUserModal({ targetUser, onClose }) {
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {updateUser.isPending && <Loader2 size={14} className="animate-spin" />}
-              {updateUser.isPending ? 'Guardando...' : 'Guardar cambios'}
+              {updateUser.isPending ? t('Guardando...') : t('Guardar cambios')}
             </button>
           </div>
         </form>

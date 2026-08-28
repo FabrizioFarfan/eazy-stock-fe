@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { usePriceInputMode } from '../../hooks/usePriceInputMode'
+import { useT } from '../../i18n'
 
 const CURRENCY_SYMBOL = {
   PEN: 'S/',
@@ -117,6 +118,7 @@ const SplitBody = forwardRef(function SplitBody(
   },
   ref,
 ) {
+  const t = useT()
   const wholeRef   = useRef(null)
   const decimalRef = useRef(null)
 
@@ -204,9 +206,9 @@ const SplitBody = forwardRef(function SplitBody(
           onKeyDown={handleWholeKeyDown}
           onFocus={(e) => e.target.select()}
           className={`${boxBase} text-right`}
-          aria-label={label ? `${label} — parte entera` : 'Parte entera'}
+          aria-label={label ? `${label} — ${t('parte entera')}` : t('Parte entera')}
         />
-        <span className={caption}>Enteros</span>
+        <span className={caption}>{t('Enteros')}</span>
       </div>
 
       <span className="select-none pt-1.5 text-2xl font-bold leading-none text-gray-400">.</span>
@@ -225,9 +227,9 @@ const SplitBody = forwardRef(function SplitBody(
           onChange={handleDecimalChange}
           onFocus={(e) => e.target.select()}
           className={`${boxBase} text-left`}
-          aria-label={label ? `${label} — decimales` : 'Decimales'}
+          aria-label={label ? `${label} — ${t('decimales')}` : t('Decimales')}
         />
-        <span className={caption}>Decimales</span>
+        <span className={caption}>{t('Decimales')}</span>
       </div>
     </div>
   )
@@ -239,6 +241,7 @@ const CalculatorBody = forwardRef(function CalculatorBody(
   { value, onChange, disabled, autoFocus, placeholder, label },
   ref,
 ) {
+  const t = useT()
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -286,7 +289,7 @@ const CalculatorBody = forwardRef(function CalculatorBody(
       onChange={handleChange}
       onFocus={(e) => e.target.select()}
       className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-gray-900 outline-none placeholder-gray-300 disabled:cursor-not-allowed"
-      aria-label={label ?? 'Precio'}
+      aria-label={label ?? t('Precio')}
     />
   )
 })

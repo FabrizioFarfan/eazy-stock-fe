@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSellerPerformance } from '../hooks/useReports'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { localISODate } from '../utils/formatDate'
+import { useT, dateLocale } from '../i18n'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ function formatNumber(v) {
 
 function formatDay(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     weekday: 'short', day: 'numeric', month: 'short',
   }).format(new Date(`${str}T00:00:00`))
 }
@@ -58,6 +59,7 @@ function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
 // ── seller row (expandable) ────────────────────────────────────────────────
 
 function SellerCard({ seller, rank, maxRevenue }) {
+  const t = useT()
   const [open, setOpen] = useState(rank === 0)
   const pct = maxRevenue > 0 ? Math.round((seller.revenue / maxRevenue) * 100) : 0
   const rankCls = RANK_STYLE[rank] ?? 'bg-gray-100 text-gray-500 ring-1 ring-gray-200'
@@ -82,9 +84,9 @@ function SellerCard({ seller, rank, maxRevenue }) {
             <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" style={{ width: `${pct}%` }} />
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-            <span><b className="text-gray-700">{seller.sales}</b> ventas</span>
-            <span><b className="text-gray-700">{formatNumber(seller.unitsSold)}</b> unidades</span>
-            <span>Ticket prom. <b className="text-gray-700">{formatCurrency(seller.avgTicket)}</b></span>
+            <span><b className="text-gray-700">{seller.sales}</b> {t('ventas')}</span>
+            <span><b className="text-gray-700">{formatNumber(seller.unitsSold)}</b> {t('unidades')}</span>
+            <span>{t('Ticket prom.')} <b className="text-gray-700">{formatCurrency(seller.avgTicket)}</b></span>
           </div>
         </div>
 
@@ -96,18 +98,18 @@ function SellerCard({ seller, rank, maxRevenue }) {
       {open && (
         <div className="border-t border-gray-100 bg-gray-50/40 px-5 py-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
-            Ventas día por día
+            {t('Ventas día por día')}
           </p>
           {seller.byDay.length === 0 ? (
-            <p className="py-3 text-sm text-gray-400">Sin ventas en el período.</p>
+            <p className="py-3 text-sm text-gray-400">{t('Sin ventas en el período.')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-widest text-gray-400">
-                    <th className="py-1.5 pr-4 font-semibold">Día</th>
-                    <th className="py-1.5 pr-4 text-center font-semibold">Ventas</th>
-                    <th className="py-1.5 text-right font-semibold">Ingresos</th>
+                    <th className="py-1.5 pr-4 font-semibold">{t('Día')}</th>
+                    <th className="py-1.5 pr-4 text-center font-semibold">{t('Ventas')}</th>
+                    <th className="py-1.5 text-right font-semibold">{t('Ingresos')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,6 +133,7 @@ function SellerCard({ seller, rank, maxRevenue }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function SellerPerformancePage() {
+  const t = useT()
   const { user } = useAuth()
   const [from, setFrom] = useState(firstOfMonth())
   const [to, setTo]     = useState(today())
@@ -155,31 +158,39 @@ export default function SellerPerformancePage() {
           <div className="flex items-center gap-2">
             <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
               <Trophy size={22} className="text-amber-500" />
-              Rendimiento de vendedores
+              {t('Rendimiento de vendedores')}
             </h2>
-            <HelpDrawer title="Cómo usar Rendimiento" autoOpenKey="eazystock_sellerperf_help_v1">
-              <p>Compara a tu equipo: <strong>quién vendió más y cuánto exactamente</strong>, día por día.</p>
+            <HelpDrawer title={t('Cómo usar Rendimiento')} autoOpenKey="eazystock_sellerperf_help_v2">
+              <p>{t('Compara a tu equipo:')} <strong>{t('quién vendió más y cuánto exactamente')}</strong>, {t('día por día.')}</p>
               <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">📅 Filtra por fechas</p>
-                <p className="mt-1">Elige el rango que quieras (hoy, la semana, el mes) y la tabla se recalcula al instante.</p>
+                <p className="font-semibold text-gray-800">🏅 {t('Ranking de vendedores')}</p>
+                <p className="mt-1">{t('Los tres primeros llevan medalla. La barra azul muestra cuánto vendió cada uno respecto al primero. Toca una fila para desplegar sus ventas día por día con el total de ingresos de cada jornada.')}</p>
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">💡 ¿Para qué sirve?</p>
-                <p className="mt-1">Para premiar al que más vende, detectar días flojos y repartir mejor los turnos.</p>
+                <p className="font-semibold text-gray-800">📊 {t('Qué significa cada número')}</p>
+                <p className="mt-1">{t('Ventas = cantidad de tickets cerrados. Unidades = productos vendidos (respeta la unidad de venta: paquete, gramo, metro…). Ticket promedio = ingresos ÷ ventas: cuánto gasta en promedio cada cliente que atiende ese vendedor.')}</p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                <p className="font-semibold text-gray-800">📅 {t('Filtra por fechas')}</p>
+                <p className="mt-1">{t('Elige el rango que quieras (hoy, la semana, el mes) y la tabla se recalcula al instante.')}</p>
+              </div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                <p className="font-semibold text-gray-800">💡 {t('¿Para qué sirve?')}</p>
+                <p className="mt-1">{t('Para premiar al que más vende, detectar días flojos y repartir mejor los turnos.')}</p>
               </div>
             </HelpDrawer>
           </div>
           <p className="mt-1 text-sm text-gray-400">
-            Quién vendió más y cuánto exactamente cada día.
+            {t('Quién vendió más y cuánto exactamente cada día.')}
           </p>
         </div>
         <div className="flex items-end gap-2">
           <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
-            Desde
+            {t('Desde')}
             <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
-            Hasta
+            {t('Hasta')}
             <input type="date" value={to} min={from} max={today()} onChange={(e) => setTo(e.target.value)} className={inputCls} />
           </label>
         </div>
@@ -187,15 +198,15 @@ export default function SellerPerformancePage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={TrendingUp}  label="Ingresos del período" value={isLoading ? '…' : formatCurrency(data?.totalRevenue)} iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-        <StatCard icon={ShoppingCart} label="Ventas del período"  value={isLoading ? '…' : (data?.totalSales ?? 0)}             iconBg="bg-blue-50"    iconColor="text-blue-500" />
-        <StatCard icon={Users}        label="Vendedores activos"   value={isLoading ? '…' : sellers.length}                       iconBg="bg-indigo-50"  iconColor="text-indigo-500" />
+        <StatCard icon={TrendingUp}  label={t('Ingresos del período')} value={isLoading ? '…' : formatCurrency(data?.totalRevenue)} iconBg="bg-emerald-50" iconColor="text-emerald-500" />
+        <StatCard icon={ShoppingCart} label={t('Ventas del período')}  value={isLoading ? '…' : (data?.totalSales ?? 0)}             iconBg="bg-blue-50"    iconColor="text-blue-500" />
+        <StatCard icon={Users}        label={t('Vendedores activos')}   value={isLoading ? '…' : sellers.length}                       iconBg="bg-indigo-50"  iconColor="text-indigo-500" />
       </div>
 
       {/* Ranking */}
       {isError ? (
         <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center text-sm text-red-600">
-          No se pudo cargar el rendimiento. Intenta de nuevo.
+          {t('No se pudo cargar el rendimiento. Intenta de nuevo.')}
         </div>
       ) : isLoading ? (
         <div className="space-y-3">
@@ -208,8 +219,8 @@ export default function SellerPerformancePage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50">
             <Package size={22} className="text-gray-300" />
           </div>
-          <p className="text-sm font-medium text-gray-500">No hay ventas en este período</p>
-          <p className="text-xs text-gray-400">Ajusta el rango de fechas para ver resultados.</p>
+          <p className="text-sm font-medium text-gray-500">{t('No hay ventas en este período')}</p>
+          <p className="text-xs text-gray-400">{t('Ajusta el rango de fechas para ver resultados.')}</p>
         </div>
       ) : (
         <div className="space-y-3">

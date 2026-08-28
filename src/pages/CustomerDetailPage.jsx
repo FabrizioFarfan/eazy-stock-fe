@@ -20,6 +20,7 @@ import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT, dateLocale } from '../i18n'
 
 function HelpBlock({ title, children }) {
   return (
@@ -31,31 +32,30 @@ function HelpBlock({ title, children }) {
 }
 
 function CustomerHelp() {
+  const t = useT()
   return (
     <>
       <p>
-        Esta es la ficha del cliente: su deuda actual, su historial completo y las herramientas
-        para <span className="font-semibold">cobrarle con delicadeza</span>.
+        {t('Esta es la ficha del cliente: su deuda actual, su historial completo y las herramientas para cobrarle con delicadeza.')}
       </p>
-      <HelpBlock title="PDF de deuda (para entregar al cliente)">
+      <HelpBlock title={t('PDF de deuda (para entregar al cliente)')}>
         <p>
-          El botón <span className="font-semibold">"PDF de deuda"</span> genera una carta cordial a
-          nombre del cliente con el detalle de sus compras al fiado — producto por producto —, los
-          pagos que ya hizo y el saldo pendiente. Descárgalo y mándaselo por WhatsApp o correo, o
-          imprímelo y entrégaselo en mano.
+          {t('El botón "PDF de deuda" genera una carta cordial a nombre del cliente con el detalle de sus compras al fiado — producto por producto —, los pagos que ya hizo y el saldo pendiente. Descárgalo y mándaselo por WhatsApp o correo, o imprímelo y entrégaselo en mano.')}
         </p>
       </HelpBlock>
-      <HelpBlock title="Recordatorio por WhatsApp">
+      <HelpBlock title={t('Recordatorio por WhatsApp')}>
         <p>
-          El botón verde <span className="font-semibold">"WhatsApp"</span> abre el chat del cliente
-          con un mensaje de recordatorio ya escrito. Puedes mandar primero el mensaje y adjuntar
-          después el PDF en el mismo chat. Aparece solo si el cliente tiene teléfono guardado.
+          {t('El botón verde "WhatsApp" abre el chat del cliente con un mensaje de recordatorio ya escrito. Puedes mandar primero el mensaje y adjuntar después el PDF en el mismo chat. Aparece solo si el cliente tiene teléfono guardado.')}
         </p>
       </HelpBlock>
-      <HelpBlock title="Cuando te pague">
+      <HelpBlock title={t('Cuando te pague')}>
         <p>
-          Usa <span className="font-semibold">"Registrar pago"</span> con el monto recibido: la
-          deuda baja al instante y queda asentado en el historial de abajo.
+          {t('Usa "Registrar pago" con el monto recibido: la deuda baja al instante y queda asentado en el historial de abajo.')}
+        </p>
+      </HelpBlock>
+      <HelpBlock title={t('Ajustes y límite de crédito')}>
+        <p>
+          {t('"Ajustar deuda" sube o baja el saldo a mano (con un motivo obligatorio que queda en el historial). Con "Editar" cambias el límite de crédito: si la deuda lo supera verás la etiqueta "Excede límite" y no se le podrá fiar más.')}
         </p>
       </HelpBlock>
     </>
@@ -64,7 +64,7 @@ function CustomerHelp() {
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
@@ -92,6 +92,7 @@ function StatCard({ label, value, tone = 'default' }) {
 export default function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const t = useT()
   const { can, user } = useAuth()
   const canManage = can('canManageCustomers')
 
@@ -112,7 +113,7 @@ export default function CustomerDetailPage() {
       const statement = (await customersApi.getStatement(id)).data.data
       downloadDebtStatementPdf(statement)
     } catch {
-      toast.error('No pudimos generar el PDF. Intenta de nuevo.')
+      toast.error(t('No pudimos generar el PDF. Intenta de nuevo.'))
     } finally {
       setGeneratingPdf(false)
     }
@@ -124,7 +125,7 @@ export default function CustomerDetailPage() {
   if (isError || !customer) {
     return (
       <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-600">
-        No pudimos cargar el cliente. <button onClick={() => navigate('/customers')} className="ml-1 underline">Volver al listado</button>
+        {t('No pudimos cargar el cliente.')} <button onClick={() => navigate('/customers')} className="ml-1 underline">{t('Volver al listado')}</button>
       </div>
     )
   }
@@ -144,21 +145,21 @@ export default function CustomerDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate('/customers')}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          <ArrowLeft size={14} />Volver
+          <ArrowLeft size={14} />{t('Volver')}
         </button>
         <div className="flex flex-wrap items-center gap-2">
           {debt > 0 && (
             <>
               <button onClick={handleDownloadPdf} disabled={generatingPdf}
-                title="Descargar la carta de deuda en PDF con el detalle de productos, para enviársela al cliente"
+                title={t('Descargar la carta de deuda en PDF con el detalle de productos, para enviársela al cliente')}
                 className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
                 {generatingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-                PDF de deuda
+                {t('PDF de deuda')}
               </button>
               {reminderWhatsAppUrl(user?.businessName, customer) && (
                 <a href={reminderWhatsAppUrl(user?.businessName, customer)}
                   target="_blank" rel="noopener noreferrer"
-                  title="Enviar recordatorio de deuda por WhatsApp"
+                  title={t('Enviar recordatorio de deuda por WhatsApp')}
                   className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600">
                   <MessageCircle size={14} />WhatsApp
                 </a>
@@ -169,19 +170,19 @@ export default function CustomerDetailPage() {
             <>
               <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
                 className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
-                <DollarSign size={14} />Registrar pago
+                <DollarSign size={14} />{t('Registrar pago')}
               </button>
               <button onClick={() => setShowAdjustment(true)}
                 className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-                <Sliders size={14} />Ajustar deuda
+                <Sliders size={14} />{t('Ajustar deuda')}
               </button>
               <button onClick={() => setShowEdit(true)}
                 className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                <Edit size={14} />Editar
+                <Edit size={14} />{t('Editar')}
               </button>
             </>
           )}
-          <HelpDrawer title="Cómo cobrarle a este cliente" autoOpenKey="eazystock_customer_help_v1">
+          <HelpDrawer title={t('Cómo cobrarle a este cliente')} autoOpenKey="eazystock_customer_help_v1">
             <CustomerHelp />
           </HelpDrawer>
         </div>
@@ -209,7 +210,7 @@ export default function CustomerDetailPage() {
           </div>
           {exceeds && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100">
-              <AlertTriangle size={12} />Excede límite
+              <AlertTriangle size={12} />{t('Excede límite')}
             </span>
           )}
         </div>
@@ -220,60 +221,60 @@ export default function CustomerDetailPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Deuda actual"
+        <StatCard label={t('Deuda actual')}
           value={formatPrice(debt)}
           tone={debt > 0 ? (exceeds ? 'danger' : 'default') : 'positive'} />
-        <StatCard label="Límite de crédito"
+        <StatCard label={t('Límite de crédito')}
           value={limit != null ? formatPrice(limit) : '—'} />
-        <StatCard label="% del límite usado"
+        <StatCard label={t('% del límite usado')}
           value={usage != null ? `${usage}%` : '—'}
           tone={exceeds ? 'danger' : 'default'} />
-        <StatCard label="Última transacción"
+        <StatCard label={t('Última transacción')}
           value={lastTxn ? formatDate(lastTxn.createdAt) : '—'} />
       </div>
 
       {/* Timeline */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-bold text-gray-900">Historial de transacciones</h3>
+        <h3 className="mb-4 text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
         {loadingTxns ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
           </div>
         ) : txns.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-400">Sin transacciones aún</p>
+          <p className="py-8 text-center text-sm text-gray-400">{t('Sin transacciones aún')}</p>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {txns.map((t) => {
-              const cfg = TYPE_CONFIG[t.type] ?? TYPE_CONFIG.ADJUSTMENT
+            {txns.map((tx) => {
+              const cfg = TYPE_CONFIG[tx.type] ?? TYPE_CONFIG.ADJUSTMENT
               const Icon = cfg.icon
-              const isDecrease = t.type === 'PAYMENT'
-                || (t.type === 'ADJUSTMENT' && t.adjustmentDirection === 'DECREASE')
+              const isDecrease = tx.type === 'PAYMENT'
+                || (tx.type === 'ADJUSTMENT' && tx.adjustmentDirection === 'DECREASE')
               const sign = isDecrease ? '−' : '+'
               return (
-                <li key={t.id} className="flex items-start gap-3 py-3">
+                <li key={tx.id} className="flex items-start gap-3 py-3">
                   <div className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ring-1 ${cfg.cls}`}>
                     <Icon size={14} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${cfg.cls}`}>
-                        {cfg.label}{t.adjustmentDirection ? ` · ${t.adjustmentDirection === 'INCREASE' ? '+' : '−'}` : ''}
+                        {t(cfg.label)}{tx.adjustmentDirection ? ` · ${tx.adjustmentDirection === 'INCREASE' ? '+' : '−'}` : ''}
                       </span>
-                      {t.saleId && (
-                        <button onClick={() => setOpenSaleId(t.saleId)}
+                      {tx.saleId && (
+                        <button onClick={() => setOpenSaleId(tx.saleId)}
                           className="text-xs font-mono text-blue-600 hover:underline">
-                          Venta #{String(t.saleId).slice(0, 8)}
+                          {t('Venta')} #{String(tx.saleId).slice(0, 8)}
                         </button>
                       )}
-                      <span className="text-xs text-gray-400">{formatDate(t.createdAt)} · {t.createdByName}</span>
+                      <span className="text-xs text-gray-400">{formatDate(tx.createdAt)} · {tx.createdByName}</span>
                     </div>
-                    {t.notes && <p className="mt-1 text-sm text-gray-600">{t.notes}</p>}
+                    {tx.notes && <p className="mt-1 text-sm text-gray-600">{tx.notes}</p>}
                   </div>
                   <div className="text-right">
                     <p className={`text-sm font-bold ${isDecrease ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {sign}{formatPrice(t.amount)}
+                      {sign}{formatPrice(tx.amount)}
                     </p>
-                    <p className="text-xs text-gray-400">Balance: {formatPrice(t.balanceAfter)}</p>
+                    <p className="text-xs text-gray-400">{t('Balance')}: {formatPrice(tx.balanceAfter)}</p>
                   </div>
                 </li>
               )

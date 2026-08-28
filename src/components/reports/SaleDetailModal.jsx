@@ -5,6 +5,7 @@ import { useSaleDetail } from '../../hooks/useReports'
 import { useSaleReturns, useCreateSaleReturn } from '../../hooks/useSales'
 import { useAuth } from '../../context/AuthContext'
 import { formatPrice } from '../../utils/formatMoney'
+import { useT, dateLocale } from '../../i18n'
 
 // Per-line prices may carry up to 6 decimals (extended price precision);
 // aggregates (subtotal/discount/total) are always 2-decimal from the BE.
@@ -13,13 +14,14 @@ const formatCurrency = formatPrice
 
 function formatDateFull(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
 
 export default function SaleDetailModal({ saleId, onClose }) {
+  const t = useT()
   const { can } = useAuth()
   const { data: sale, isLoading } = useSaleDetail(saleId)
   const { data: returns = [] } = useSaleReturns(saleId)
@@ -63,14 +65,14 @@ export default function SaleDetailModal({ saleId, onClose }) {
       .filter((i) => Number.isFinite(i.quantity) && i.quantity > 0)
 
     if (items.length === 0) {
-      toast.error('Indica la cantidad a devolver en al menos un producto')
+      toast.error(t('Indica la cantidad a devolver en al menos un producto'))
       return
     }
     for (const i of items) {
       const saleItem = sale.items.find((s) => s.id === i.saleItemId)
       const remaining = Number(saleItem.quantity) - (returnedByItem[i.saleItemId] ?? 0)
       if (i.quantity > remaining) {
-        toast.error(`'${saleItem.productName}': solo quedan ${remaining} por devolver`)
+        toast.error(t("'{name}': solo quedan {n} por devolver", { name: saleItem.productName, n: remaining }))
         return
       }
     }
@@ -79,13 +81,13 @@ export default function SaleDetailModal({ saleId, onClose }) {
       { items, notes: returnNotes || undefined },
       {
         onSuccess: (data) => {
-          toast.success(`Devolución registrada · ${formatCurrency(data.totalRefund)}`)
+          toast.success(`${t('Devolución registrada')} · ${formatCurrency(data.totalRefund)}`)
           setReturnMode(false)
           setReturnQty({})
           setReturnNotes('')
         },
         onError: (err) => {
-          toast.error(err?.response?.data?.message ?? 'No pudimos registrar la devolución')
+          toast.error(err?.response?.data?.message ?? t('No pudimos registrar la devolución'))
         },
       },
     )
@@ -104,7 +106,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
               <ShoppingCart size={20} className="text-blue-600" />
             </div>
             <div>
-              <h3 className="font-bold leading-tight text-gray-900">Detalle de venta</h3>
+              <h3 className="font-bold leading-tight text-gray-900">{t('Detalle de venta')}</h3>
               {sale && (
                 <p className="mt-0.5 text-xs text-gray-400">{formatDateFull(sale.createdAt)}</p>
               )}
@@ -147,7 +149,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     debtPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     <Wallet size={11} />
-                    {debtPending ? 'Fiado' : 'Fiado · pagado'}
+                    {debtPending ? t('Fiado') : t('Fiado · pagado')}
                   </span>
                 )}
                 {!sale?.onCredit && sale?.paymentMethod && (
@@ -172,9 +174,9 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   <div className="mb-4 flex items-center gap-2.5 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800 ring-1 ring-amber-200">
                     <Wallet size={15} className="flex-shrink-0 text-amber-600" />
                     <span>
-                      Venta al fiado — cobro pendiente.
+                      {t('Venta al fiado — cobro pendiente.')}
                       {sale.customerName && (
-                        <> Deuda actual de <span className="font-semibold">{sale.customerName}</span>:{' '}
+                        <> {t('Deuda actual de')} <span className="font-semibold">{sale.customerName}</span>:{' '}
                         <span className="font-bold">{formatCurrency(sale.customerDebtAfter)}</span></>
                       )}
                     </span>
@@ -183,8 +185,8 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   <div className="mb-4 flex items-center gap-2.5 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 ring-1 ring-emerald-200">
                     <CheckCircle2 size={15} className="flex-shrink-0 text-emerald-600" />
                     <span>
-                      Fue al fiado y ya está saldado
-                      {sale.customerName && <> — <span className="font-semibold">{sale.customerName}</span> no tiene deuda pendiente</>}.
+                      {t('Fue al fiado y ya está saldado')}
+                      {sale.customerName && <> — <span className="font-semibold">{sale.customerName}</span> {t('no tiene deuda pendiente')}</>}.
                     </span>
                   </div>
                 )
@@ -193,11 +195,11 @@ export default function SaleDetailModal({ saleId, onClose }) {
               <table className={returnMode ? 'w-full min-w-[30rem] text-sm' : 'w-full min-w-[24rem] text-sm'}>
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    <th className="pb-2">Producto</th>
-                    <th className="pb-2 text-center">Cant.</th>
-                    <th className="pb-2 text-right">P. unitario</th>
-                    <th className="pb-2 text-right">Subtotal</th>
-                    {returnMode && <th className="pb-2 text-right">Devolver</th>}
+                    <th className="pb-2">{t('Producto')}</th>
+                    <th className="pb-2 text-center">{t('Cant.')}</th>
+                    <th className="pb-2 text-right">{t('P. unitario')}</th>
+                    <th className="pb-2 text-right">{t('Subtotal')}</th>
+                    {returnMode && <th className="pb-2 text-right">{t('Devolver')}</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -214,13 +216,13 @@ export default function SaleDetailModal({ saleId, onClose }) {
                           <p className="font-mono text-xs text-gray-400">{item.productSku}</p>
                           {hasOverride && (
                             <p className="mt-0.5 text-xs text-orange-600">
-                              <Tag size={10} className="-mt-0.5 inline" /> Precio modificado de{' '}
+                              <Tag size={10} className="-mt-0.5 inline" /> {t('Precio modificado de')}{' '}
                               <span className="line-through">{formatCurrency(item.unitPrice)}</span>
                             </p>
                           )}
                           {returned > 0 && (
                             <p className="mt-0.5 text-xs text-purple-600">
-                              <Undo2 size={10} className="-mt-0.5 inline" /> Devuelto: {returned}
+                              <Undo2 size={10} className="-mt-0.5 inline" /> {t('Devuelto')}: {returned}
                             </p>
                           )}
                         </td>
@@ -240,11 +242,11 @@ export default function SaleDetailModal({ saleId, onClose }) {
                                 step="any"
                                 value={returnQty[item.id] ?? ''}
                                 onChange={(e) => setQty(item.id, e.target.value)}
-                                placeholder={`máx ${remaining}`}
+                                placeholder={t('máx {n}', { n: remaining })}
                                 className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 sm:w-24"
                               />
                             ) : (
-                              <span className="text-xs text-gray-300">Devuelto</span>
+                              <span className="text-xs text-gray-300">{t('Devuelto')}</span>
                             )}
                           </td>
                         )}
@@ -261,7 +263,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     type="text"
                     value={returnNotes}
                     onChange={(e) => setReturnNotes(e.target.value)}
-                    placeholder="Motivo de la devolución (opcional)"
+                    placeholder={t('Motivo de la devolución (opcional)')}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                   />
                 </div>
@@ -271,7 +273,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
               {returns.length > 0 && !returnMode && (
                 <div className="mt-5 rounded-xl border border-purple-100 bg-purple-50/50 px-4 py-3">
                   <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-purple-600">
-                    <Undo2 size={11} /> Devoluciones
+                    <Undo2 size={11} /> {t('Devoluciones')}
                   </p>
                   <ul className="space-y-1">
                     {returns.map((r) => (
@@ -296,12 +298,12 @@ export default function SaleDetailModal({ saleId, onClose }) {
             {hasDiscount && (
               <>
                 <div className="flex items-center justify-between text-gray-500">
-                  <span>Subtotal</span>
+                  <span>{t('Subtotal')}</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-orange-600">
                   <span>
-                    Descuento{sale.discountType === 'PERCENTAGE' ? ` (${sale.discountValue}%)` : ''}
+                    {t('Descuento')}{sale.discountType === 'PERCENTAGE' ? ` (${sale.discountValue}%)` : ''}
                   </span>
                   <span>−{formatCurrency(sale.discountAmount)}</span>
                 </div>
@@ -310,13 +312,13 @@ export default function SaleDetailModal({ saleId, onClose }) {
             )}
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-700">
-                {sale.onCredit && debtPending ? 'Total de la venta' : 'Total cobrado'}
+                {sale.onCredit && debtPending ? t('Total de la venta') : t('Total cobrado')}
               </span>
               <span className="text-lg font-bold text-gray-900">{formatCurrency(sale.total)}</span>
             </div>
             {totalReturned > 0 && (
               <div className="flex items-center justify-between text-purple-700">
-                <span>Total devuelto</span>
+                <span>{t('Total devuelto')}</span>
                 <span className="font-semibold">−{formatCurrency(totalReturned)}</span>
               </div>
             )}
@@ -330,7 +332,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                       disabled={createReturn.isPending}
                       className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
                     >
-                      Cancelar
+                      {t('Cancelar')}
                     </button>
                     <button
                       onClick={submitReturn}
@@ -340,7 +342,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                       {createReturn.isPending
                         ? <Loader2 size={14} className="animate-spin" />
                         : <Undo2 size={14} />}
-                      Confirmar devolución
+                      {t('Confirmar devolución')}
                     </button>
                   </>
                 ) : (
@@ -349,7 +351,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     className="flex items-center justify-center gap-2 rounded-xl border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 hover:bg-purple-100 transition-colors"
                   >
                     <Undo2 size={14} />
-                    Registrar devolución
+                    {t('Registrar devolución')}
                   </button>
                 )}
               </div>

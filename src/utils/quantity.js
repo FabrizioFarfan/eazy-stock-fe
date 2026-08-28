@@ -6,6 +6,8 @@
 //  - cómo formatear una cantidad sin ceros sobrantes (5.000 → "5", 1.300 → "1.3")
 //  - la ayuda en gramos para productos en kilo
 
+import { dateLocale } from '../i18n'
+
 const KILO_UNITS = new Set(['kilo', 'kg', 'kilogramo', 'kilogramos'])
 
 /**
@@ -55,5 +57,5 @@ export function gramsEquivalent(kg) {
   const n = typeof kg === 'number' ? kg : parseFloat(kg)
   if (!Number.isFinite(n) || n <= 0) return null
   const grams = Math.round(n * 1000)
-  return `${grams.toLocaleString('es-PE')} g`
+  return `${grams.toLocaleString(dateLocale())} g`
 }

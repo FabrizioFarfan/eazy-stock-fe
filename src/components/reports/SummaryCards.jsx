@@ -1,4 +1,5 @@
 import { ShoppingCart, TrendingUp, Package, Receipt } from 'lucide-react'
+import { useT } from '../../i18n'
 
 function formatCurrency(v) {
   if (v == null) return '—'
@@ -24,6 +25,7 @@ function SkeletonCard() {
 }
 
 export default function SummaryCards({ summary, isLoading }) {
+  const t = useT()
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -36,25 +38,25 @@ export default function SummaryCards({ summary, isLoading }) {
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <Card
         icon={ShoppingCart}
-        label="Total ventas"
+        label={t('Total ventas')}
         value={summary?.totalSales ?? 0}
         colorCls="bg-blue-500"
       />
       <Card
         icon={TrendingUp}
-        label="Ingresos totales"
+        label={t('Ingresos totales')}
         value={formatCurrency(summary?.totalRevenue)}
         colorCls="bg-green-500"
       />
       <Card
         icon={Package}
-        label="Unidades vendidas"
+        label={t('Unidades vendidas')}
         value={summary?.totalUnits ?? 0}
         colorCls="bg-indigo-500"
       />
       <Card
         icon={Receipt}
-        label="Ticket promedio"
+        label={t('Ticket promedio')}
         value={formatCurrency(summary?.ticketAvg)}
         colorCls="bg-blue-600"
       />

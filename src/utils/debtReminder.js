@@ -1,4 +1,5 @@
 import { formatPrice } from './formatMoney'
+import { t } from '../i18n'
 
 /**
  * Normaliza un teléfono peruano para wa.me: solo dígitos y con código de país.
@@ -13,10 +14,9 @@ export function waPhone(phone) {
 /** Recordatorio cordial de deuda — mismo tono que la carta del PDF. */
 export function reminderMessage(businessName, customerName, debt) {
   const amount = formatPrice(debt)
-  return (
-    `Estimado(a) ${customerName}, le saludamos de ${businessName || 'nuestro negocio'}. ` +
-    `Le recordamos que mantiene una deuda pendiente con nosotros por ${amount}. ` +
-    `Agradecemos de antemano su puntualidad. ¡Muchas gracias!`
+  return t(
+    'Estimado(a) {customer}, le saludamos de {business}. Le recordamos que mantiene una deuda pendiente con nosotros por {amount}. Agradecemos de antemano su puntualidad. ¡Muchas gracias!',
+    { customer: customerName, business: businessName || t('nuestro negocio'), amount },
   )
 }
 

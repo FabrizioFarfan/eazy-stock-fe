@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,25 +10,22 @@ import { adminBizParam } from '../../utils/adminBiz'
 import PriceInput from '../inputs/PriceInput'
 import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
+import { useT } from '../../i18n'
 
 // Teléfono opcional: 9 dígitos (formato Lima) si se ingresa.
-const peruvianPhone = z.string()
-  .optional()
-  .refine((v) => !v || /^\d{9}$/.test(v.trim()), 'Debe ser 9 dígitos')
-
-const schema = z.object({
-  name:        z.string().min(2, 'Mínimo 2 caracteres'),
-  documentId:  z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
-  phone:       peruvianPhone,
-  email:       z.string().email('Email inválido').optional().or(z.literal('')),
+const makeSchema = (t) => z.object({
+  name:        z.string().min(2, t('Mínimo 2 caracteres')),
+  documentId:  z.string().max(20, t('Máximo 20 caracteres')).optional().or(z.literal('')),
+  phone:       z.string().optional().refine((v) => !v || /^\d{9}$/.test(v.trim()), t('Debe ser 9 dígitos')),
+  email:       z.string().email(t('Email inválido')).optional().or(z.literal('')),
   address:     z.string().max(500).optional().or(z.literal('')),
   // Obligatorio: 0 es válido (significa "no se le fía"), pero no puede quedar vacío.
   creditLimit: z.preprocess(
                 (v) => (v === '' || v == null ? undefined : v),
                 z.coerce.number({
-                  invalid_type_error: 'Número inválido',
-                  required_error: 'El límite de crédito es obligatorio',
-                }).min(0, 'No puede ser negativo'),
+                  invalid_type_error: t('Número inválido'),
+                  required_error: t('El límite de crédito es obligatorio'),
+                }).min(0, t('No puede ser negativo')),
               ),
   notes:       z.string().optional(),
 })
@@ -48,11 +45,13 @@ function Field({ label, required, error, children }) {
 }
 
 export default function CustomerFormModal({ customer, onClose, onCreated, initialName }) {
+  const t = useT()
   const { user } = useAuth()
   const isEdit = !!customer
   const create = useCreateCustomer()
   const update = useUpdateCustomer()
   const mutation = isEdit ? update : create
+  const schema = useMemo(() => makeSchema(t), [t])
 
   const {
     register, control, handleSubmit, reset, setError,
@@ -92,10 +91,10 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
       }
       if (isEdit) {
         await update.mutateAsync({ id: customer.id, data: payload, params: adminBizParam(user) })
-        toast.success('Cliente actualizado')
+        toast.success(t('Cliente actualizado'))
       } else {
         const created = await create.mutateAsync({ ...payload, ...adminBizParam(user) })
-        toast.success('Cliente creado')
+        toast.success(t('Cliente creado'))
         onCreated?.(created)
       }
       onClose()
@@ -114,7 +113,7 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
 
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
           <h3 className="text-base font-semibold text-gray-900">
-            {isEdit ? 'Editar cliente' : 'Nuevo cliente'}
+            {isEdit ? t('Editar cliente') : t('Nuevo cliente')}
           </h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
             <X size={18} />
@@ -124,34 +123,34 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
 
-            <Field label="Nombre" required error={errors.name?.message}>
+            <Field label={t('Nombre')} required error={errors.name?.message}>
               <input {...register('name')} placeholder="Pedro González" className={inputCls} />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Documento (DNI/RUC)" error={errors.documentId?.message}>
+              <Field label={t('Documento (DNI/RUC)')} error={errors.documentId?.message}>
                 <input {...register('documentId')} placeholder="12345678" className={inputCls} />
               </Field>
-              <Field label="Teléfono" error={errors.phone?.message}>
+              <Field label={t('Teléfono')} error={errors.phone?.message}>
                 <input {...register('phone')} placeholder="987654321" className={inputCls} />
               </Field>
             </div>
 
-            <Field label="Email" error={errors.email?.message}>
+            <Field label={t('Email')} error={errors.email?.message}>
               <input {...register('email')} type="email" placeholder="cliente@example.com" className={inputCls} />
             </Field>
 
-            <Field label="Dirección" error={errors.address?.message}>
-              <input {...register('address')} placeholder="Av. siempre viva 742" className={inputCls} />
+            <Field label={t('Dirección')} error={errors.address?.message}>
+              <input {...register('address')} placeholder={t('Av. siempre viva 742')} className={inputCls} />
             </Field>
 
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <span className="text-sm font-medium text-gray-700">
-                  Límite de crédito<span className="ml-0.5 text-red-500">*</span>
+                  {t('Límite de crédito')}<span className="ml-0.5 text-red-500">*</span>
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-gray-400">Formato del precio</span>
+                  <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
                   <PriceInputModeToggle />
                 </div>
               </div>
@@ -160,7 +159,7 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
                 name="creditLimit"
                 render={({ field }) => (
                   <PriceInput
-                    helperText="0 → el cliente existe pero no puede operar al fiado."
+                    helperText={t('0 → el cliente existe pero no puede operar al fiado.')}
                     value={field.value === '' ? null : field.value}
                     onChange={(v) => field.onChange(v ?? '')}
                     error={errors.creditLimit?.message}
@@ -170,8 +169,8 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
               />
             </div>
 
-            <Field label="Notas" error={errors.notes?.message}>
-              <textarea {...register('notes')} rows={2} placeholder="Notas (opcional)..."
+            <Field label={t('Notas')} error={errors.notes?.message}>
+              <textarea {...register('notes')} rows={2} placeholder={t('Notas (opcional)...')}
                 className={`${inputCls} resize-none`} />
             </Field>
 
@@ -185,12 +184,12 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
           <div className="flex flex-shrink-0 justify-end gap-2 border-t border-gray-200 px-5 py-4">
             <button type="button" onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={mutation.isPending}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
               {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
-              {mutation.isPending ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear cliente')}
+              {mutation.isPending ? t('Guardando...') : (isEdit ? t('Guardar cambios') : t('Crear cliente'))}
             </button>
           </div>
         </form>

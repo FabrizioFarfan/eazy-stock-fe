@@ -14,6 +14,7 @@ import { useCategories } from '../../hooks/useCategories'
 import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import UnitBadge from '../../components/common/UnitBadge'
+import { useT } from '../../i18n'
 
 const PAGE_SIZE = 20
 
@@ -66,6 +67,7 @@ function SkeletonRow() {
  * fila abre el detalle del producto con acciones de stock directas.
  */
 export default function InventoryTab() {
+  const t = useT()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [detail, setDetail]     = useState(null)
@@ -145,18 +147,18 @@ export default function InventoryTab() {
     return `${prefix}: ≤ ${fmt(max)}`
   }
   const activeChips = []
-  if (colFilters.name)       activeChips.push({ label: `Producto: "${colFilters.name}"`, onRemove: () => clearFields('name') })
+  if (colFilters.name)       activeChips.push({ label: `${t('Producto')}: "${colFilters.name}"`, onRemove: () => clearFields('name') })
   if (colFilters.sku)        activeChips.push({ label: `SKU: "${colFilters.sku}"`, onRemove: () => clearFields('sku') })
-  if (colFilters.supplierId) activeChips.push({ label: `Proveedor: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
-  if (colFilters.brandId)    activeChips.push({ label: `Marca: ${labelOf(brandOpts, colFilters.brandId)}`, onRemove: () => clearFields('brandId') })
+  if (colFilters.supplierId) activeChips.push({ label: `${t('Proveedor')}: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
+  if (colFilters.brandId)    activeChips.push({ label: `${t('Marca')}: ${labelOf(brandOpts, colFilters.brandId)}`, onRemove: () => clearFields('brandId') })
   if (colFilters.purchaseMin !== '' || colFilters.purchaseMax !== '')
-    activeChips.push({ label: rangeChip(colFilters.purchaseMin, colFilters.purchaseMax, 'Costo', true), onRemove: () => clearFields('purchaseMin', 'purchaseMax') })
+    activeChips.push({ label: rangeChip(colFilters.purchaseMin, colFilters.purchaseMax, t('Costo'), true), onRemove: () => clearFields('purchaseMin', 'purchaseMax') })
   if (colFilters.stockMin !== '' || colFilters.stockMax !== '')
-    activeChips.push({ label: rangeChip(colFilters.stockMin, colFilters.stockMax, 'Stock', false), onRemove: () => clearFields('stockMin', 'stockMax') })
+    activeChips.push({ label: rangeChip(colFilters.stockMin, colFilters.stockMax, t('Stock'), false), onRemove: () => clearFields('stockMin', 'stockMax') })
   if (colFilters.status !== 'active')
-    activeChips.push({ label: `Estado: ${colFilters.status === 'inactive' ? 'Inactivos' : 'Todos'}`, onRemove: () => clearFields('status') })
+    activeChips.push({ label: `${t('Estado')}: ${colFilters.status === 'inactive' ? t('Inactivos') : t('Todos')}`, onRemove: () => clearFields('status') })
   if (colFilters.expiryStatus)
-    activeChips.push({ label: `Vencimiento: ${EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label}`, onRemove: () => clearFields('expiryStatus') })
+    activeChips.push({ label: `${t('Vencimiento')}: ${t(EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label)}`, onRemove: () => clearFields('expiryStatus') })
 
   const selectCls = 'rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
 
@@ -172,14 +174,14 @@ export default function InventoryTab() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, SKU o código..."
+              placeholder={t('Buscar por nombre, SKU o código...')}
               className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
             />
           </div>
 
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
             className={`${selectCls} min-w-44`}>
-            <option value="">Todas las categorías</option>
+            <option value="">{t('Todas las categorías')}</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
@@ -189,7 +191,7 @@ export default function InventoryTab() {
             <input type="checkbox" checked={lowStock}
               onChange={(e) => setLowStock(e.target.checked)}
               className="accent-blue-600" />
-            Solo stock bajo
+            {t('Solo stock bajo')}
           </label>
         </div>
       </div>
@@ -201,7 +203,7 @@ export default function InventoryTab() {
             <span key={i}
               className="flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-3 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
               {chip.label}
-              <button onClick={chip.onRemove} title="Quitar filtro"
+              <button onClick={chip.onRemove} title={t('Quitar filtro')}
                 className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
                 <X size={11} />
               </button>
@@ -209,7 +211,7 @@ export default function InventoryTab() {
           ))}
           <button onClick={() => setColFilters(EMPTY_COL_FILTERS)}
             className="text-xs font-medium text-gray-500 hover:text-red-600 transition-colors">
-            Limpiar todo
+            {t('Limpiar todo')}
           </button>
         </div>
       )}
@@ -220,46 +222,46 @@ export default function InventoryTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <ColumnFilter label="SKU" type="text" align="left"
+                <ColumnFilter label={t('SKU')} type="text" align="left"
                   value={colFilters.sku} onChange={(v) => setField('sku', v)}
-                  placeholder="Buscar código..." active={!!colFilters.sku}
+                  placeholder={t('Buscar código...')} active={!!colFilters.sku}
                   sortState={sortStateFor('sku')} onSort={onSortBy('sku')} ascLabel="A–Z" descLabel="Z–A"
                   onClear={() => clearFields('sku')} />
-                <ColumnFilter label="Producto" type="text" align="left"
+                <ColumnFilter label={t('Producto')} type="text" align="left"
                   value={colFilters.name} onChange={(v) => setField('name', v)}
-                  placeholder="Buscar nombre..." active={!!colFilters.name}
+                  placeholder={t('Buscar nombre...')} active={!!colFilters.name}
                   sortState={sortStateFor('name')} onSort={onSortBy('name')} ascLabel="A–Z" descLabel="Z–A"
                   onClear={() => clearFields('name')} />
-                <ColumnFilter label="Proveedor" type="select" align="left"
+                <ColumnFilter label={t('Proveedor')} type="select" align="left"
                   value={colFilters.supplierId} onChange={(v) => setField('supplierId', v)}
                   options={supplierOpts} active={!!colFilters.supplierId}
                   onClear={() => clearFields('supplierId')} />
-                <ColumnFilter label="Marca" type="select" align="left"
+                <ColumnFilter label={t('Marca')} type="select" align="left"
                   value={colFilters.brandId} onChange={(v) => setField('brandId', v)}
                   options={brandOpts} active={!!colFilters.brandId}
                   onClear={() => clearFields('brandId')} />
-                <ColumnFilter label="Stock actual" type="range" align="center"
+                <ColumnFilter label={t('Stock actual')} type="range" align="center"
                   rangeMin={colFilters.stockMin} rangeMax={colFilters.stockMax}
                   onRangeChange={setRange('stockMin', 'stockMax')}
                   active={colFilters.stockMin !== '' || colFilters.stockMax !== ''}
                   sortState={sortStateFor('currentStock')} onSort={onSortBy('currentStock')}
-                  ascLabel="Menor" descLabel="Mayor"
+                  ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('stockMin', 'stockMax')} />
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Mín.</th>
-                <ColumnFilter label="Último costo" type="range" align="right"
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Mín.')}</th>
+                <ColumnFilter label={t('Último costo')} type="range" align="right"
                   rangeMin={colFilters.purchaseMin} rangeMax={colFilters.purchaseMax}
                   onRangeChange={setRange('purchaseMin', 'purchaseMax')}
                   active={colFilters.purchaseMin !== '' || colFilters.purchaseMax !== ''}
                   sortState={sortStateFor('purchasePrice')} onSort={onSortBy('purchasePrice')}
-                  ascLabel="Menor" descLabel="Mayor"
+                  ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('purchaseMin', 'purchaseMax')} />
-                <ColumnFilter label="Vence" type="select" align="center"
+                <ColumnFilter label={t('Vence')} type="select" align="center"
                   value={colFilters.expiryStatus} onChange={(v) => setField('expiryStatus', v)}
-                  options={EXPIRY_OPTS} active={!!colFilters.expiryStatus}
+                  options={EXPIRY_OPTS.map((o) => ({ ...o, label: t(o.label) }))} active={!!colFilters.expiryStatus}
                   onClear={() => clearFields('expiryStatus')} />
-                <ColumnFilter label="Estado" type="select" align="center"
+                <ColumnFilter label={t('Estado')} type="select" align="center"
                   value={colFilters.status} onChange={(v) => setField('status', v)}
-                  options={[{ value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }]}
+                  options={[{ value: 'active', label: t('Activos') }, { value: 'inactive', label: t('Inactivos') }]}
                   active={colFilters.status !== 'active'}
                   onClear={() => clearFields('status')} />
               </tr>
@@ -274,7 +276,7 @@ export default function InventoryTab() {
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <Package size={28} className="text-gray-400" />
                       </div>
-                      <p className="text-sm font-semibold text-gray-700">No hay productos con estos filtros</p>
+                      <p className="text-sm font-semibold text-gray-700">{t('No hay productos con estos filtros')}</p>
                     </div>
                   </td>
                 </tr>
@@ -285,7 +287,7 @@ export default function InventoryTab() {
                     <tr
                       key={p.id}
                       onClick={() => setDetail(p)}
-                      title="Ver detalle del producto"
+                      title={t('Ver detalle del producto')}
                       className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}
                     >
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{p.sku}</td>
@@ -325,7 +327,7 @@ export default function InventoryTab() {
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {p.active ? 'Activo' : 'Inactivo'}
+                          {p.active ? t('Activo') : t('Inactivo')}
                         </span>
                       </td>
                     </tr>
@@ -339,18 +341,18 @@ export default function InventoryTab() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
             <p className="text-sm text-gray-400">
-              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-semibold text-gray-700">{totalElements}</span> productos
+              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
+              <span className="font-semibold text-gray-700">{totalElements}</span> {t('productos')}
             </p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                <ChevronLeft size={14} />Anterior
+                <ChevronLeft size={14} />{t('Anterior')}
               </button>
               <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
               <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                Siguiente<ChevronRight size={14} />
+                {t('Siguiente')}<ChevronRight size={14} />
               </button>
             </div>
           </div>

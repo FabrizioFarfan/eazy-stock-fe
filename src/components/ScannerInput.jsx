@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Camera, CameraOff, Search } from 'lucide-react'
+import { useT } from '../i18n'
 
 /**
  * Search input with physical barcode scanner + optional camera scanning.
@@ -16,6 +17,7 @@ import { Camera, CameraOff, Search } from 'lucide-react'
  *   placeholder {string}
  */
 export default function ScannerInput({ value, onChange, onScan, placeholder }) {
+  const t = useT()
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
 
@@ -155,7 +157,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             }`}
           >
             {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
-            {cameraOpen ? 'Cerrar' : 'Cámara'}
+            {cameraOpen ? t('Cerrar') : t('Cámara')}
           </button>
         )}
       </div>
@@ -179,7 +181,7 @@ export default function ScannerInput({ value, onChange, onScan, placeholder }) {
             </div>
           </div>
           <p className="mt-1 text-center text-sm text-gray-500">
-            Apunta la cámara al código de barras o QR
+            {t('Apunta la cámara al código de barras o QR')}
           </p>
         </div>
       )}

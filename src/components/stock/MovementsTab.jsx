@@ -4,10 +4,11 @@ import { useAuth } from '../../context/AuthContext'
 import { useMovements, useSalesSummary } from '../../hooks/useStock'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatPrice } from '../../utils/formatMoney'
+import { useT, dateLocale } from '../../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
@@ -20,6 +21,7 @@ const TYPE_CONFIG = {
 }
 
 function QuantityCell({ type, quantity, stockAfter }) {
+  const t = useT()
   const isPositive = type === 'PURCHASE_ENTRY' || type === 'RETURN' || (type === 'ADJUSTMENT' && quantity > 0)
   const isNegative = type === 'SALE'           || (type === 'ADJUSTMENT' && quantity < 0)
   const cls = isPositive ? 'font-bold text-emerald-600'
@@ -31,7 +33,7 @@ function QuantityCell({ type, quantity, stockAfter }) {
       {sign}{Math.abs(quantity)}
       {stockAfter != null && (
         // Idea de William: el stock que QUEDÓ del producto tras este movimiento
-        <span className="ml-1 text-xs font-normal text-gray-500" title="Stock del producto tras este movimiento">
+        <span className="ml-1 text-xs font-normal text-gray-500" title={t('Stock del producto tras este movimiento')}>
           ({fmtQty(stockAfter)})
         </span>
       )}
@@ -57,11 +59,11 @@ function fmtQty(q) {
   return String(parseFloat(q))
 }
 
-function rangeLabel(from, to) {
-  const fmt = (d) => new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long' }).format(new Date(`${d}T12:00:00`))
-  if (from && to) return from === to ? `del ${fmt(from)}` : `del ${fmt(from)} al ${fmt(to)}`
-  if (from) return `desde el ${fmt(from)}`
-  if (to)   return `hasta el ${fmt(to)}`
+function rangeLabel(t, from, to) {
+  const fmt = (d) => new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'long' }).format(new Date(`${d}T12:00:00`))
+  if (from && to) return from === to ? t('del {from}', { from: fmt(from) }) : t('del {from} al {to}', { from: fmt(from), to: fmt(to) })
+  if (from) return t('desde el {from}', { from: fmt(from) })
+  if (to)   return t('hasta el {to}', { to: fmt(to) })
   return null
 }
 
@@ -73,7 +75,8 @@ const thCls = 'px-4 py-3.5 text-xs font-semibold uppercase tracking-widest text-
  * única tabla en pantalla (decisión de Frank: nunca dos tablas a la vez).
  */
 function ProductSalesModal({ row, from, to, onClose }) {
-  const range = rangeLabel(from, to)
+  const t = useT()
+  const range = rangeLabel(t, from, to)
   const { data, isLoading } = useMovements({
     type: 'SALE', productId: row.productId, size: 100,
     ...(from && { from }), ...(to && { to }),
@@ -98,12 +101,12 @@ function ProductSalesModal({ row, from, to, onClose }) {
             <div className="min-w-0">
               <h3 className="truncate text-base font-bold text-gray-900">{row.productName}</h3>
               <p className="text-xs text-gray-500">
-                Ventas una por una {range ?? '· todo el historial'}
-                {row.providerCode && <> · cód. proveedor <span className="font-mono font-semibold text-gray-700">{row.providerCode}</span></>}
+                {t('Ventas una por una')} {range ?? t('· todo el historial')}
+                {row.providerCode && <> · {t('cód. proveedor')} <span className="font-mono font-semibold text-gray-700">{row.providerCode}</span></>}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors" aria-label="Cerrar">
+          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors" aria-label={t('Cerrar')}>
             <X size={18} />
           </button>
         </div>
@@ -112,16 +115,16 @@ function ProductSalesModal({ row, from, to, onClose }) {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white">
               <tr className="border-b border-gray-100">
-                <th className={`${thCls} text-left whitespace-nowrap`}>Fecha</th>
-                <th className={`${thCls} text-center`}>Cantidad</th>
-                <th className={`${thCls} text-left`}>Vendedor</th>
+                <th className={`${thCls} text-left whitespace-nowrap`}>{t('Fecha')}</th>
+                <th className={`${thCls} text-center`}>{t('Cantidad')}</th>
+                <th className={`${thCls} text-left`}>{t('Vendedor')}</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={3} />)
               ) : sales.length === 0 ? (
-                <tr><td colSpan={3} className="py-12 text-center text-sm font-medium text-gray-400">No hay ventas en este período</td></tr>
+                <tr><td colSpan={3} className="py-12 text-center text-sm font-medium text-gray-400">{t('No hay ventas en este período')}</td></tr>
               ) : (
                 sales.map((m) => (
                   <tr key={m.id} className="border-b border-gray-50">
@@ -129,7 +132,7 @@ function ProductSalesModal({ row, from, to, onClose }) {
                     <td className="px-4 py-3 text-center whitespace-nowrap font-bold text-red-500">
                       -{fmtQty(m.quantity)}
                       {m.stockAfter != null && (
-                        <span className="ml-1 text-xs font-normal text-gray-500" title="Stock del producto tras esta venta">
+                        <span className="ml-1 text-xs font-normal text-gray-500" title={t('Stock del producto tras esta venta')}>
                           ({fmtQty(m.stockAfter)})
                         </span>
                       )}
@@ -141,16 +144,16 @@ function ProductSalesModal({ row, from, to, onClose }) {
             </tbody>
           </table>
           {totalElements > 100 && (
-            <p className="px-5 py-2 text-center text-xs text-gray-400">Mostrando las 100 ventas más recientes de {totalElements}</p>
+            <p className="px-5 py-2 text-center text-xs text-gray-400">{t('Mostrando las 100 ventas más recientes de {n}', { n: totalElements })}</p>
           )}
         </div>
 
         <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
           <p className="text-sm text-gray-500">
-            Total vendido: <span className="font-bold text-blue-600">{fmtQty(row.totalSold)}</span>
+            {t('Total vendido:')} <span className="font-bold text-blue-600">{fmtQty(row.totalSold)}</span>
           </p>
           <p className="text-sm text-gray-500">
-            Stock actual: <span className="font-bold text-gray-900">{fmtQty(row.currentStock)}</span>
+            {t('Stock actual:')} <span className="font-bold text-gray-900">{fmtQty(row.currentStock)}</span>
           </p>
         </div>
       </div>
@@ -164,32 +167,33 @@ function ProductSalesModal({ row, from, to, onClose }) {
  * no solo la página visible. Click en una fila → modal con el detalle.
  */
 function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
-  const range = rangeLabel(from, to)
+  const t = useT()
+  const range = rangeLabel(t, from, to)
   const list = rows ?? []
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-gray-100 px-5 py-3.5">
         <ClipboardList size={16} className="flex-shrink-0 text-blue-600" />
-        <h3 className="text-sm font-bold text-gray-900">Resumen de reposición</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Resumen de reposición')}</h3>
         <p className="text-xs text-gray-500">
           {range ? (
-            <>Ventas <span className="font-semibold text-gray-700">{range}</span> sumadas por producto — la lista para armar tu pedido.</>
+            <>{t('Ventas')} <span className="font-semibold text-gray-700">{range}</span> {t('sumadas por producto — la lista para armar tu pedido.')}</>
           ) : (
-            <>Todas tus ventas sumadas por producto — elige fechas arriba para armar el pedido de la semana.</>
+            <>{t('Todas tus ventas sumadas por producto — elige fechas arriba para armar el pedido de la semana.')}</>
           )}
-          {' '}<span className="text-gray-400">Click en un producto para ver sus ventas una por una.</span>
+          {' '}<span className="text-gray-400">{t('Click en un producto para ver sus ventas una por una.')}</span>
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/60">
-              <th className={`${thCls} text-left whitespace-nowrap`}>Cód. proveedor</th>
-              <th className={`${thCls} text-left`}>Producto</th>
-              <th className={`${thCls} text-left`}>Proveedor</th>
-              <th className={`${thCls} text-center`}>Vendido</th>
-              <th className={`${thCls} text-center whitespace-nowrap`}>Stock actual</th>
-              <th className={`${thCls} w-10`}><span className="sr-only">Detalle</span></th>
+              <th className={`${thCls} text-left whitespace-nowrap`}>{t('Cód. proveedor')}</th>
+              <th className={`${thCls} text-left`}>{t('Producto')}</th>
+              <th className={`${thCls} text-left`}>{t('Proveedor')}</th>
+              <th className={`${thCls} text-center`}>{t('Vendido')}</th>
+              <th className={`${thCls} text-center whitespace-nowrap`}>{t('Stock actual')}</th>
+              <th className={`${thCls} w-10`}><span className="sr-only">{t('Detalle')}</span></th>
             </tr>
           </thead>
           <tbody>
@@ -198,14 +202,14 @@ function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
             ) : list.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-10 text-center text-sm font-medium text-gray-400">
-                  No hay ventas en este período
+                  {t('No hay ventas en este período')}
                 </td>
               </tr>
             ) : (
               list.map((r) => {
                 const low = parseFloat(r.currentStock ?? 0) <= parseFloat(r.minStock ?? 0)
                 return (
-                  <tr key={r.productId} onClick={() => onRowClick(r)} title="Ver ventas una por una"
+                  <tr key={r.productId} onClick={() => onRowClick(r)} title={t('Ver ventas una por una')}
                     className="cursor-pointer border-b border-gray-50 hover:bg-gray-50/70 transition-colors">
                     <td className="px-4 py-3.5 font-mono text-xs font-semibold text-gray-700 whitespace-nowrap">{r.providerCode ?? '—'}</td>
                     <td className="max-w-[220px] truncate px-4 py-3.5 font-semibold text-gray-900">{r.productName}</td>
@@ -229,6 +233,7 @@ function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
 const PAGE_SIZE = 20
 
 export default function MovementsTab() {
+  const t = useT()
   const { user } = useAuth()
   const [typeFilter, setTypeFilter]   = useState('')
   const [supplierId, setSupplierId]   = useState('')
@@ -279,30 +284,30 @@ export default function MovementsTab() {
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
         <Calendar size={15} className="flex-shrink-0 text-gray-400" />
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className={selectCls}>
-          <option value="">Todos los tipos</option>
-          <option value="PURCHASE_ENTRY">Entradas</option>
-          <option value="SALE">Ventas</option>
-          <option value="ADJUSTMENT">Ajustes</option>
-          <option value="RETURN">Devoluciones</option>
+          <option value="">{t('Todos los tipos')}</option>
+          <option value="PURCHASE_ENTRY">{t('Entradas')}</option>
+          <option value="SALE">{t('Ventas')}</option>
+          <option value="ADJUSTMENT">{t('Ajustes')}</option>
+          <option value="RETURN">{t('Devoluciones')}</option>
         </select>
         <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} min-w-48`}>
-          <option value="">Todos los proveedores</option>
+          <option value="">{t('Todos los proveedores')}</option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Desde</span>
+          <span className="text-sm font-medium text-gray-500">{t('Desde')}</span>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={selectCls} />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Hasta</span>
+          <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={selectCls} />
         </div>
         {(typeFilter || supplierId || from || to) && (
           <button onClick={() => { setTypeFilter(''); setSupplierId(''); setFrom(''); setTo('') }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            Limpiar
+            {t('Limpiar')}
           </button>
         )}
       </div>
@@ -312,9 +317,8 @@ export default function MovementsTab() {
         <p className="flex items-start gap-2 px-1 text-[13px] leading-snug text-gray-500">
           <Lightbulb size={15} className="mt-0.5 flex-shrink-0 text-amber-500" />
           <span>
-            ¿Quieres el <span className="font-semibold text-gray-700">Resumen de reposición</span>?
-            Filtra por <span className="font-semibold text-gray-700">Ventas</span>: verás cuánto vendiste
-            de cada producto con su código de proveedor, listo para armar tu pedido.
+            {t('¿Quieres el')} <span className="font-semibold text-gray-700">{t('Resumen de reposición')}</span>?{' '}
+            {t('Filtra por')} <span className="font-semibold text-gray-700">{t('Ventas')}</span>: {t('verás cuánto vendiste de cada producto con su código de proveedor, listo para armar tu pedido.')}
           </span>
         </p>
       )}
@@ -329,14 +333,14 @@ export default function MovementsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
-                  <th className={`${thCls} text-left whitespace-nowrap`}>Fecha</th>
-                  <th className={`${thCls} text-left`}>Producto</th>
-                  <th className={`${thCls} text-left whitespace-nowrap`}>Cód. prov.</th>
-                  <th className={`${thCls} text-left`}>Proveedor</th>
-                  <th className={`${thCls} text-center`}>Tipo</th>
-                  <th className={`${thCls} text-center`}>Cantidad</th>
-                  <th className={`${thCls} text-right whitespace-nowrap`} title="Entradas: costo de compra · Ventas: precio de venta">Precio unit.</th>
-                  <th className={`${thCls} text-right`}>Subtotal</th>
+                  <th className={`${thCls} text-left whitespace-nowrap`}>{t('Fecha')}</th>
+                  <th className={`${thCls} text-left`}>{t('Producto')}</th>
+                  <th className={`${thCls} text-left whitespace-nowrap`}>{t('Cód. prov.')}</th>
+                  <th className={`${thCls} text-left`}>{t('Proveedor')}</th>
+                  <th className={`${thCls} text-center`}>{t('Tipo')}</th>
+                  <th className={`${thCls} text-center`}>{t('Cantidad')}</th>
+                  <th className={`${thCls} text-right whitespace-nowrap`} title={t('Entradas: costo de compra · Ventas: precio de venta')}>{t('Precio unit.')}</th>
+                  <th className={`${thCls} text-right`}>{t('Subtotal')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -345,7 +349,7 @@ export default function MovementsTab() {
                 ) : movements.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-14 text-center text-sm font-medium text-gray-400">
-                      No hay movimientos en este período
+                      {t('No hay movimientos en este período')}
                     </td>
                   </tr>
                 ) : (
@@ -358,7 +362,7 @@ export default function MovementsTab() {
                         <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
                         <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>
                         <td className="px-4 py-3.5 text-center">
-                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{cfg.label}</span>
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
                         </td>
                         <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} /></td>
                         <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
@@ -374,18 +378,18 @@ export default function MovementsTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
               <p className="text-sm text-gray-400">
-                <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
-                <span className="font-semibold text-gray-700">{totalElements}</span> movimientos
+                <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
+                <span className="font-semibold text-gray-700">{totalElements}</span> {t('movimientos')}
               </p>
               <div className="flex items-center gap-1">
                 <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
                   className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                  <ChevronLeft size={14} />Anterior
+                  <ChevronLeft size={14} />{t('Anterior')}
                 </button>
                 <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
                 <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
                   className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                  Siguiente<ChevronRight size={14} />
+                  {t('Siguiente')}<ChevronRight size={14} />
                 </button>
               </div>
             </div>

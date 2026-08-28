@@ -7,6 +7,7 @@ import Topbar from './Topbar'
 import TutorialModal from '../components/tutorial/TutorialModal'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
+import { useT } from '../i18n'
 
 function formatCurrency(v) {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v ?? 0)
@@ -15,6 +16,7 @@ function formatCurrency(v) {
 export default function AppLayout({ children }) {
   const { user, seenTutorials, markTutorialSeen } = useAuth()
   const queryClient = useQueryClient()
+  const t = useT()
   const [sidebarOpen,    setSidebarOpen]    = useState(false)
   const [showTutorial,   setShowTutorial]   = useState(false)
 
@@ -27,8 +29,8 @@ export default function AppLayout({ children }) {
         const items = sale.items?.length ?? 0
 
         if (user?.role === 'OWNER') {
-          toast.success(`Nueva venta · ${formatCurrency(sale.total)}`, {
-            description: `${sale.employeeName} · ${items} producto${items !== 1 ? 's' : ''}`,
+          toast.success(`${t('Nueva venta')} · ${formatCurrency(sale.total)}`, {
+            description: `${sale.employeeName} · ${t('{n} producto(s)', { n: items })}`,
             icon: <ShoppingCart size={16} />,
             duration: 6000,
           })
@@ -37,8 +39,8 @@ export default function AppLayout({ children }) {
           queryClient.invalidateQueries({ queryKey: ['reports', 'daily-summary'] })
           queryClient.invalidateQueries({ queryKey: ['reports', 'sales'] })
         } else if (user?.role === 'EMPLOYEE' && sale.employeeId === user?.id) {
-          toast.success(`Venta registrada · ${formatCurrency(sale.total)}`, {
-            description: `${items} producto${items !== 1 ? 's' : ''} · procesado correctamente`,
+          toast.success(`${t('Venta registrada')} · ${formatCurrency(sale.total)}`, {
+            description: `${t('{n} producto(s)', { n: items })} · ${t('procesado correctamente')}`,
             icon: <ShoppingCart size={16} />,
             duration: 4000,
           })
@@ -50,8 +52,8 @@ export default function AppLayout({ children }) {
       if (event.type === 'STOCK_UPDATE') {
         const mov = event.payload
         if (user?.role === 'EMPLOYEE') {
-          toast.info(`Nuevo stock disponible`, {
-            description: `${mov.productName} · ${mov.stockAfter} unidades ahora disponibles`,
+          toast.info(t('Nuevo stock disponible'), {
+            description: `${mov.productName} · ${t('{n} unidades ahora disponibles', { n: mov.stockAfter })}`,
             icon: <Package size={16} />,
             duration: 5000,
           })

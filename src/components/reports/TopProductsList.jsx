@@ -1,3 +1,5 @@
+import { useT } from '../../i18n'
+
 function formatCurrency(v) {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
 }
@@ -27,10 +29,11 @@ function SkeletonRow() {
 }
 
 export default function TopProductsList({ topProducts, isLoading }) {
+  const t = useT()
   if (isLoading) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h4 className="mb-3 text-sm font-semibold text-gray-700">Top 10 productos</h4>
+        <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
         <div className="divide-y divide-gray-100">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
         </div>
@@ -41,15 +44,15 @@ export default function TopProductsList({ topProducts, isLoading }) {
   if (!topProducts?.length) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h4 className="mb-3 text-sm font-semibold text-gray-700">Top 10 productos</h4>
-        <p className="py-4 text-center text-sm text-gray-400">Sin datos</p>
+        <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
+        <p className="py-4 text-center text-sm text-gray-400">{t('Sin datos')}</p>
       </div>
     )
   }
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 className="mb-3 text-sm font-semibold text-gray-700">Top 10 productos</h4>
+      <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
       <ul className="divide-y divide-gray-100">
         {topProducts.map((p, i) => (
           <li key={p.productId} className="flex items-center gap-3 py-2.5">
@@ -57,10 +60,10 @@ export default function TopProductsList({ topProducts, isLoading }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-gray-800">{p.productName}</p>
               <p className="truncate font-mono text-[11px] text-gray-400">
-                Cód. proveedor: {p.providerCode || '—'}
+                {t('Cód. proveedor')}: {p.providerCode || '—'}
               </p>
             </div>
-            <span className="font-mono text-xs text-gray-500">{p.units} u.</span>
+            <span className="font-mono text-xs text-gray-500">{p.units} {t('u.')}</span>
             <span className="text-sm font-semibold text-gray-900">{formatCurrency(p.revenue)}</span>
           </li>
         ))}

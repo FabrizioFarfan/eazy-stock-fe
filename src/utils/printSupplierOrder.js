@@ -4,6 +4,7 @@
 // necesita (su código, producto, marca y cantidad solicitada) — nunca el stock
 // actual, el mínimo ni precios, que son información interna del negocio.
 // Mismo enfoque que printQuote: HTML limpio con su propio CSS, sin librería PDF.
+import { t, dateLocale, getLang } from '../i18n'
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => (
@@ -25,7 +26,8 @@ export function printSupplierOrder({ businessName, authorName, supplier = {}, it
 
   const now = new Date()
   const orderNumber = `PED-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
-  const dateStr = now.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })
+  const dateStr = now.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
+  const e = (s) => escapeHtml(t(s))
 
   const rowsHtml = items.map((it, i) => `<tr>
       <td class="c muted">${i + 1}</td>
@@ -35,8 +37,8 @@ export function printSupplierOrder({ businessName, authorName, supplier = {}, it
       <td class="c strong">${escapeHtml(String(it.qty))}${it.unit ? ` ${escapeHtml(it.unit)}` : ''}</td>
     </tr>`).join('')
 
-  win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
-    <title>Orden de pedido ${escapeHtml(orderNumber)} — ${escapeHtml(supplier.name || '')}</title>
+  win.document.write(`<!doctype html><html lang="${getLang()}"><head><meta charset="utf-8">
+    <title>${e('Orden de pedido')} ${escapeHtml(orderNumber)} — ${escapeHtml(supplier.name || '')}</title>
     <style>
       * { box-sizing: border-box; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }
       body { margin: 0; color: #1f2937; }
@@ -71,40 +73,40 @@ export function printSupplierOrder({ businessName, authorName, supplier = {}, it
     <div class="page">
       <div class="top">
         <div class="brand">
-          <h1>${escapeHtml(businessName || 'Mi negocio')}</h1>
-          <p>Solicitado por ${escapeHtml(authorName || '—')}</p>
+          <h1>${escapeHtml(businessName || t('Mi negocio'))}</h1>
+          <p>${e('Solicitado por')} ${escapeHtml(authorName || '—')}</p>
         </div>
         <div class="doc">
-          <p class="title">ORDEN DE PEDIDO</p>
-          <p class="meta">N.° <strong>${escapeHtml(orderNumber)}</strong></p>
-          <p class="meta">Fecha: <strong>${escapeHtml(dateStr)}</strong></p>
+          <p class="title">${e('ORDEN DE PEDIDO')}</p>
+          <p class="meta">${e('N.°')} <strong>${escapeHtml(orderNumber)}</strong></p>
+          <p class="meta">${e('Fecha')}: <strong>${escapeHtml(dateStr)}</strong></p>
         </div>
       </div>
 
       <div class="parties">
         <div class="party">
-          <p class="label">Proveedor</p>
+          <p class="label">${e('Proveedor')}</p>
           <p class="value">${escapeHtml(supplier.name || '—')}</p>
-          ${supplier.contact ? `<p class="sub">Atención: ${escapeHtml(supplier.contact)}</p>` : ''}
+          ${supplier.contact ? `<p class="sub">${e('Atención')}: ${escapeHtml(supplier.contact)}</p>` : ''}
           ${supplier.phone ? `<p class="sub">Tel: ${escapeHtml(supplier.phone)}</p>` : ''}
           ${supplier.ruc ? `<p class="sub">RUC: ${escapeHtml(supplier.ruc)}</p>` : ''}
         </div>
       </div>
 
-      <p class="intro">Por medio de la presente solicitamos cotización y despacho de los siguientes productos:</p>
+      <p class="intro">${e('Por medio de la presente solicitamos cotización y despacho de los siguientes productos:')}</p>
 
       <table>
         <thead><tr>
-          <th class="c">#</th><th>Código proveedor</th><th>Producto</th><th>Marca</th><th class="c">Cantidad solicitada</th>
+          <th class="c">#</th><th>${e('Código proveedor')}</th><th>${e('Producto')}</th><th>${e('Marca')}</th><th class="c">${e('Cantidad solicitada')}</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      <p class="count">${items.length} producto(s) en este pedido</p>
+      <p class="count">${escapeHtml(t('{n} producto(s) en este pedido', { n: items.length }))}</p>
 
-      ${notes ? `<div class="notes"><p class="label">Notas</p><p>${escapeHtml(notes).replace(/\n/g, '<br>')}</p></div>` : ''}
+      ${notes ? `<div class="notes"><p class="label">${e('Notas')}</p><p>${escapeHtml(notes).replace(/\n/g, '<br>')}</p></div>` : ''}
 
       <div class="foot">
-        Orden de pedido referencial — sujeta a confirmación de disponibilidad y precios por parte del proveedor.
+        ${e('Orden de pedido referencial — sujeta a confirmación de disponibilidad y precios por parte del proveedor.')}
       </div>
     </div>
   </body></html>`)

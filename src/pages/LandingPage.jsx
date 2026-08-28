@@ -1,110 +1,39 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Package, BarChart2, ShoppingCart, ArrowUpDown,
-  Shield, QrCode, Bell, FileSpreadsheet,
-  MessageCircle, Smartphone, Globe,
-  Check, Star, Users,
-  Truck, Receipt, CreditCard, Sparkles,
-  Wallet, Boxes, ScanLine, TrendingUp,
-  ArrowRight, PlayCircle, Quote, Wrench,
-  Tag, ClipboardCheck, AlertTriangle,
-  FileText, Trophy, Pill, BookOpen, ChevronDown,
-  Play, Store, CheckCircle2,
+  BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
+  MessageCircle, Smartphone, Check, Star, Users, Truck, Receipt,
+  CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight, Quote, Wrench,
+  Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
+  Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
+  Menu, X, Landmark, Bot, Coffee, Apple,
 } from 'lucide-react'
+import { useT } from '../i18n'
+import LangSwitcher from '../i18n/LangSwitcher'
+import { Reveal, Counter, GridPattern, GlowOrbs, SectionHead, LandingStyles } from './landing/shared'
+import {
+  AppMockup, CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
+} from './landing/mockups'
+
+const CTA = '/login'
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Reveal — aparición suave al hacer scroll (respeta prefers-reduced-motion)
+//  Navbar
 // ═══════════════════════════════════════════════════════════════════════════
 
-function Reveal({ children, delay = 0, className = '' }) {
-  const ref = useRef(null)
-  const [visible, setVisible] = useState(() =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  )
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return undefined
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          obs.disconnect()
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
-  return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-out will-change-transform ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-      } ${className}`}
-    >
-      {children}
-    </div>
-  )
-}
-
-// Keyframes locales de la landing (flotación del mockup, etc.)
-function LandingStyles() {
-  return (
-    <style>{`
-      @keyframes floaty {
-        0%, 100% { transform: translateY(0px); }
-        50%      { transform: translateY(-8px); }
-      }
-      @media (prefers-reduced-motion: no-preference) {
-        .animate-floaty      { animation: floaty 5s ease-in-out infinite; }
-        .animate-floaty-slow { animation: floaty 7s ease-in-out 1.2s infinite; }
-      }
-      html { scroll-behavior: smooth; }
-    `}</style>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Background patterns — used by hero + section dividers
-// ═══════════════════════════════════════════════════════════════════════════
-
-function GridPattern() {
-  return (
-    <div
-      aria-hidden
-      className="absolute inset-0 opacity-[0.08]"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
-        backgroundSize: '36px 36px',
-        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
-      }}
-    />
-  )
-}
-
-function GlowOrbs() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-600/30 blur-[120px]" />
-      <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]" />
-      <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-[140px]" />
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Navbar — sticky con efecto scroll
-// ═══════════════════════════════════════════════════════════════════════════
+const NAV = [
+  { href: '#producto',   label: 'Producto' },
+  { href: '#funciones',  label: 'Funciones' },
+  { href: '#fiado',      label: 'Fiado' },
+  { href: '#para-quien', label: 'Para quién' },
+  { href: '#roadmap',    label: 'Lo que viene' },
+  { href: '#faq',        label: 'FAQ' },
+]
 
 function Navbar() {
+  const t = useT()
   const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -113,196 +42,58 @@ function Navbar() {
 
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-      scrolled
-        ? 'border-b border-white/10 bg-[#0a0e1a]/85 backdrop-blur-xl'
-        : 'border-b border-transparent bg-transparent'
+      scrolled || open ? 'border-b border-white/10 bg-[#0a0e1a]/90 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'
     }`}>
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 sm:px-8">
         <Link to="/" className="flex items-center gap-2.5">
           <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
           <span className="text-lg font-bold text-white">Eazy Stock</span>
         </Link>
-        <nav className="hidden items-center gap-8 md:flex">
-          <a href="#features"  className="text-sm text-slate-400 hover:text-white transition-colors">Funciones</a>
-          <a href="#showcase"  className="text-sm text-slate-400 hover:text-white transition-colors">Producto</a>
-          <a href="#industries" className="text-sm text-slate-400 hover:text-white transition-colors">Para quién</a>
-          <a href="#roadmap"   className="text-sm text-slate-400 hover:text-white transition-colors">Roadmap</a>
-          <a href="#faq"       className="text-sm text-slate-400 hover:text-white transition-colors">FAQ</a>
+
+        <nav className="hidden items-center gap-7 lg:flex">
+          {NAV.map((n) => (
+            <a key={n.href} href={n.href} className="text-sm text-slate-400 transition-colors hover:text-white">{t(n.label)}</a>
+          ))}
         </nav>
-        <Link
-          to="/login"
-          className="group flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a0e1a] hover:bg-blue-100 transition-all"
-        >
-          Iniciar sesión
-          <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-        </Link>
+
+        <div className="flex items-center gap-2">
+          <LangSwitcher compact className="!border-white/15 !bg-white/5 !text-slate-200 [&_select]:text-slate-200 [&_option]:text-gray-900" />
+          <Link
+            to={CTA}
+            className="group hidden items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a0e1a] transition-all hover:bg-blue-50 sm:flex"
+          >
+            {t('Probar gratis')}
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? t('Cerrar menú') : t('Abrir menú')}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 text-white lg:hidden"
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
+
+      {open && (
+        <div className="border-t border-white/10 bg-[#0a0e1a] px-5 pb-5 pt-3 lg:hidden">
+          <nav className="flex flex-col">
+            {NAV.map((n) => (
+              <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t(n.label)}</a>
+            ))}
+          </nav>
+          <div className="mt-4 flex gap-2">
+            <Link to={CTA} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#0a0e1a]">
+              {t('Probar gratis')} <ArrowRight size={14} />
+            </Link>
+            <Link to={CTA} className="flex items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-200">
+              {t('Iniciar sesión')}
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  App mockup — dashboard preview en el hero
-// ═══════════════════════════════════════════════════════════════════════════
-
-function AppMockup() {
-  return (
-    <div className="relative w-full max-w-2xl">
-      {/* Halo decoration */}
-      <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-emerald-500/20 blur-2xl" />
-
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f172a] shadow-2xl shadow-blue-900/40">
-        {/* Window chrome */}
-        <div className="flex items-center gap-1.5 border-b border-white/5 bg-[#0a0e1a] px-4 py-2.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-          <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-          <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-          <div className="ml-3 flex h-5 flex-1 items-center gap-1 rounded bg-white/5 px-2 text-[10px] text-slate-500">
-            <span className="text-emerald-400">●</span> eazy-stock.com/dashboard
-          </div>
-        </div>
-
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="hidden w-44 flex-shrink-0 flex-col gap-1 border-r border-white/5 bg-[#0a0e1a] p-3 sm:flex">
-            <div className="mb-2 flex items-center gap-2 px-2 py-1">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-blue-500 to-indigo-600">
-                <Package size={11} className="text-white" />
-              </div>
-              <span className="text-xs font-bold text-white">Eazy Stock</span>
-            </div>
-            {[
-              { icon: BarChart2,   label: 'Dashboard',  active: true },
-              { icon: Package,     label: 'Productos',   badge: '148' },
-              { icon: ShoppingCart,label: 'Ventas' },
-              { icon: ArrowUpDown, label: 'Stock' },
-              { icon: Users,       label: 'Clientes' },
-              { icon: Truck,       label: 'Proveedores' },
-              { icon: BarChart2,   label: 'Reportes' },
-            ].map(({ icon: Icon, label, active, badge }) => (
-              <div key={label} className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
-                active ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/50' : 'text-slate-400'
-              }`}>
-                <div className="flex items-center gap-2">
-                  <Icon size={11} />
-                  {label}
-                </div>
-                {badge && <span className="rounded bg-white/10 px-1 text-[9px]">{badge}</span>}
-              </div>
-            ))}
-          </div>
-
-          {/* Content area */}
-          <div className="flex-1 p-4">
-            {/* Stats row */}
-            <div className="mb-3 grid grid-cols-3 gap-2">
-              {[
-                { label: 'Ventas hoy', value: 'S/ 2,430', delta: '+18%', color: 'text-emerald-400' },
-                { label: 'Stock bajo', value: '3', delta: '↑ 2', color: 'text-amber-400' },
-                { label: 'Cobrar',     value: 'S/ 4,820', delta: '7 clientes', color: 'text-blue-400' },
-              ].map(({ label, value, delta, color }) => (
-                <div key={label} className="rounded-lg border border-white/5 bg-white/[0.03] p-2.5">
-                  <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
-                  <p className="mt-0.5 text-sm font-bold text-white">{value}</p>
-                  <p className={`text-[9px] ${color}`}>{delta}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Chart strip */}
-            <div className="mb-3 flex h-12 items-end gap-1 rounded-lg border border-white/5 bg-white/[0.03] p-2">
-              {[35, 50, 28, 65, 40, 80, 55, 70, 45, 60, 90, 75, 50, 88].map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-sm bg-gradient-to-t from-blue-700 to-blue-400"
-                  style={{ height: `${h}%` }}
-                />
-              ))}
-            </div>
-
-            {/* Table header */}
-            <div className="grid grid-cols-12 gap-2 rounded-t bg-white/[0.03] px-3 py-1.5">
-              <span className="col-span-2 text-[9px] font-semibold uppercase text-slate-500">SKU</span>
-              <span className="col-span-5 text-[9px] font-semibold uppercase text-slate-500">Producto</span>
-              <span className="col-span-2 text-[9px] font-semibold uppercase text-slate-500">Stock</span>
-              <span className="col-span-3 text-right text-[9px] font-semibold uppercase text-slate-500">Precio</span>
-            </div>
-
-            {/* Table rows */}
-            {[
-              { sku: 'F03', name: 'Abrazadera 1/2 S/Fin', sub: 'Saco de 25kg', stock: 23, price: 'S/ 0.40', low: false, variable: false },
-              { sku: 'F121', name: 'Cemento Frontera', sub: null, stock: 100, price: 'S/ 25.50', low: false, variable: false },
-              { sku: 'F87', name: 'Filtro aceite K&N', sub: null, stock: 3, price: 'S/ 12.50', low: true, variable: false },
-              { sku: 'F250', name: 'Tornillo 1/4 × 2"', sub: null, stock: 524, price: 'Variable', low: false, variable: true },
-            ].map((row) => (
-              <div key={row.sku} className="grid grid-cols-12 gap-2 border-b border-white/5 px-3 py-2">
-                <span className="col-span-2 font-mono text-[9px] text-slate-500">{row.sku}</span>
-                <div className="col-span-5 min-w-0">
-                  <p className="truncate text-[10px] font-medium text-white">{row.name}</p>
-                  {row.sub && <p className="truncate text-[9px] text-slate-500">{row.sub}</p>}
-                </div>
-                <span className="col-span-2 self-center">
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
-                    row.low ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'
-                  }`}>
-                    {row.low ? '↓ ' : ''}{row.stock}
-                  </span>
-                </span>
-                <span className="col-span-3 self-center text-right text-[10px]">
-                  {row.variable ? (
-                    <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-orange-400">
-                      Variable
-                    </span>
-                  ) : (
-                    <span className="text-slate-300">{row.price}</span>
-                  )}
-                </span>
-              </div>
-            ))}
-
-            {/* Footer badges */}
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                En vivo · WebSocket
-              </span>
-              <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[9px] font-semibold text-blue-400">
-                3 alertas
-              </span>
-              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-400">
-                7 clientes al fiado
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating notification */}
-      <div className="animate-floaty absolute -bottom-4 -right-4 hidden max-w-[220px] rounded-xl border border-white/10 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
-        <div className="flex items-start gap-2">
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/15">
-            <AlertTriangle size={13} className="text-amber-400" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-white">Stock bajo</p>
-            <p className="mt-0.5 text-[9px] text-slate-400">"Filtro aceite K&N" — solo quedan 3 unidades</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating sale toast */}
-      <div className="animate-floaty-slow absolute -left-6 -top-5 hidden max-w-[210px] rounded-xl border border-emerald-400/20 bg-[#0f172a] p-3 shadow-2xl shadow-black/50 lg:block">
-        <div className="flex items-start gap-2">
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/15">
-            <CheckCircle2 size={13} className="text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-white">Venta registrada</p>
-            <p className="mt-0.5 text-[9px] text-slate-400">S/ 45.50 · efectivo — stock actualizado</p>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -311,71 +102,66 @@ function AppMockup() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Hero() {
+  const t = useT()
   return (
-    <section className="relative overflow-hidden bg-[#0a0e1a] pb-24 pt-32 sm:pb-32 sm:pt-40">
+    <section className="relative overflow-hidden bg-[#0a0e1a] pb-20 pt-28 sm:pb-28 sm:pt-36">
       <GlowOrbs />
       <GridPattern />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="flex flex-col items-center gap-14 lg:flex-row lg:items-center lg:gap-12">
-          {/* Text */}
+        <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-10">
           <div className="flex-1 text-center lg:text-left">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 backdrop-blur">
+            <a href="#producto" className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-200 backdrop-blur transition-colors hover:bg-amber-300/20">
               <Sparkles size={12} />
-              Nuevo · Import masivo desde Excel ya disponible
-            </div>
+              {t('Nuevo: vencimientos, cierre de caja por medio de pago y pedidos al proveedor en PDF')}
+              <ArrowRight size={12} />
+            </a>
 
-            <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Vende, controla stock y cobra<br />
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-300 bg-clip-text text-transparent">
-                desde un solo lugar.
+            <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.6rem]">
+              {t('Tu negocio, ordenado.')}<br />
+              <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">
+                {t('Vende, cobra y controla el stock sin cuaderno.')}
               </span>
             </h1>
 
-            <p className="mb-9 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg">
-              Eazy Stock es el sistema de inventario, ventas, fiado y cuentas
-              corrientes para ferreterías, farmacias, bodegas y distribuidoras
-              en Latinoamérica. Tan intuitivo que se aprende solo — con
-              tutorial guiado en cada pantalla.
+            <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
+              {t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con Yape o efectivo, y al cierre sabes exactamente cuánto hay en caja. Se aprende en una tarde.')}
             </p>
 
-            <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start lg:justify-start">
+            <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
-                to="/login"
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:shadow-xl hover:shadow-blue-900/60 hover:scale-[1.02]"
+                to={CTA}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/60 sm:w-auto"
               >
-                Empezar ahora — es gratis
+                {t('Probar gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
-                href="#showcase"
-                className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/10"
+                href="#producto"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/10 sm:w-auto"
               >
-                <PlayCircle size={16} />
-                Ver el producto
+                {t('Ver cómo funciona')}
               </a>
             </div>
 
-            {/* Trust strip */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 lg:justify-start">
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 lg:justify-start">
               {[
-                'Sin tarjeta requerida',
-                'Multi-usuario incluido',
-                'Se aprende sin capacitación',
-                'Soporte en español',
-              ].map((t) => (
-                <div key={t} className="flex items-center gap-1.5">
+                'Sin tarjeta, sin instalar nada',
+                'Desde el celular o la PC',
+                'Español · English · Italiano',
+                'Hecho con una ferretería real',
+              ].map((k) => (
+                <div key={k} className="flex items-center gap-1.5">
                   <Check size={12} className="text-emerald-400" />
-                  {t}
+                  {t(k)}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Mockup */}
-          <div className="w-full flex-1 lg:flex lg:justify-end">
+          <Reveal className="w-full flex-1 lg:flex lg:justify-end" delay={120}>
             <AppMockup />
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>
@@ -383,57 +169,66 @@ function Hero() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Customer logos strip — "trusted by"
+//  Marquee — todo lo que hace, en una cinta
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CustomersStrip() {
+const MARQUEE = [
+  [QrCode, 'Escaneo con la cámara'],
+  [CalendarClock, 'Reporte «Por vencer»'],
+  [Wallet, 'Cierre de caja por Yape, Plin, efectivo'],
+  [CreditCard, 'Fiado con recordatorio por WhatsApp'],
+  [FileText, 'Pedido al proveedor en PDF'],
+  [Filter, 'Filtros tipo Excel por columna'],
+  [Hash, 'Códigos automáticos y liberados'],
+  [FileSpreadsheet, 'Importa tu Excel en minutos'],
+  [Trophy, 'Ranking de vendedores'],
+  [Shield, 'Permisos por empleado'],
+  [Bell, 'Alertas de stock mínimo'],
+  [Smartphone, 'Instálala como app'],
+  [Moon, 'Modo oscuro'],
+  [Languages, 'ES · EN · IT'],
+]
+
+function Marquee() {
+  const t = useT()
+  const items = [...MARQUEE, ...MARQUEE]
   return (
-    <section className="border-y border-gray-100 bg-white py-10">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400">
-          Usado por negocios reales en Perú
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-          {[
-            { name: 'Ferretería en Lima', sub: 'Catálogo de miles de productos' },
-            { name: 'Farmacia en Perú',   sub: 'Recién sumada al piloto' },
-            { name: 'Tu negocio',         sub: 'Próximo en la lista' },
-          ].map((c) => (
-            <div key={c.name} className="text-center">
-              <p className="text-sm font-bold text-gray-700">{c.name}</p>
-              <p className="text-xs text-gray-400">{c.sub}</p>
-            </div>
-          ))}
-        </div>
+    <section className="overflow-hidden border-y border-gray-100 bg-white py-4">
+      <div className="lp-marquee flex w-max gap-3">
+        {items.map(([Icon, label], i) => (
+          <span key={i} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-gray-200 bg-gray-50 px-4 py-1.5 text-xs font-semibold text-gray-700">
+            <Icon size={13} className="text-blue-600" />
+            {t(label)}
+          </span>
+        ))}
       </div>
     </section>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Stats
+//  Stats con contadores
 // ═══════════════════════════════════════════════════════════════════════════
 
 function Stats() {
+  const t = useT()
   const stats = [
-    { value: 'Miles', label: 'Productos por catálogo', sub: 'Probado con catálogos grandes' },
-    { value: '< 200ms', label: 'Búsqueda en vivo',     sub: 'Search-as-you-type indexado' },
-    { value: '11',      label: 'Permisos granulares',  sub: 'Control fino por empleado' },
-    { value: '6',       label: 'Decimales en precios', sub: 'Para tornillos a S/ 0.0357' },
+    { to: 7,  label: 'reportes listos',   sub: 'Ventas, día, producto, proveedor, stock bajo, por vencer, resurtido' },
+    { to: 14, label: 'permisos finos',    sub: 'Hasta «solo ver el cierre de caja»' },
+    { to: 3,  label: 'idiomas',           sub: 'Español, inglés e italiano' },
+    { to: 6,  label: 'decimales en precios', sub: 'Para el tornillo a S/ 0.0357' },
   ]
   return (
-    <section className="bg-gradient-to-b from-white to-gray-50 py-14">
+    <section className="bg-white py-14">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {stats.map(({ value, label, sub }, i) => (
-            <Reveal key={label} delay={i * 90}>
-              <div className="text-center">
-                <p className="bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
-                  {value}
-                </p>
-                <p className="mt-1.5 text-sm font-semibold text-gray-900">{label}</p>
-                <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
-              </div>
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          {stats.map(({ to, label, sub }, i) => (
+            <Reveal key={label} delay={i * 90} className="text-center">
+              <p className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+                <Counter to={to} />
+              </p>
+              <p className="mt-1.5 text-sm font-bold text-gray-900">{t(label)}</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(sub)}</p>
             </Reveal>
           ))}
         </div>
@@ -443,110 +238,334 @@ function Stats() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Features — agrupado por categoría
+//  Producto — "Un día en tu negocio": 3 showcases con mockups
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Showcase({ id, kicker, kickerIcon: KIcon, tone, title, desc, bullets, mockup, flip = false, cta }) {
+  const t = useT()
+  const tones = {
+    amber:   { pill: 'border-amber-200 bg-amber-50 text-amber-700',     icon: 'bg-amber-100 text-amber-700',     check: 'text-amber-500' },
+    emerald: { pill: 'border-emerald-200 bg-emerald-50 text-emerald-700', icon: 'bg-emerald-100 text-emerald-700', check: 'text-emerald-500' },
+    blue:    { pill: 'border-blue-200 bg-blue-50 text-blue-700',       icon: 'bg-blue-100 text-blue-700',       check: 'text-blue-500' },
+    violet:  { pill: 'border-violet-200 bg-violet-50 text-violet-700', icon: 'bg-violet-100 text-violet-700',   check: 'text-violet-500' },
+  }[tone]
+  return (
+    <div id={id} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      <Reveal className={flip ? 'lg:order-2' : ''}>
+        <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${tones.pill}`}>
+          <KIcon size={12} /> {t(kicker)}
+        </div>
+        <h3 className="mb-4 text-2xl font-extrabold leading-tight tracking-tight text-gray-900 sm:text-3xl lg:text-4xl">{t(title)}</h3>
+        <p className="mb-6 text-base leading-relaxed text-gray-600">{t(desc)}</p>
+        <ul className="mb-7 space-y-2.5">
+          {bullets.map((b) => (
+            <li key={b} className="flex items-start gap-2.5 text-sm text-gray-700">
+              <Check size={16} className={`mt-0.5 flex-shrink-0 ${tones.check}`} />
+              <span>{t(b)}</span>
+            </li>
+          ))}
+        </ul>
+        {cta && (
+          <Link to={CTA} className="group inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-800">
+            {t(cta)} <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )}
+      </Reveal>
+      <Reveal delay={150} className={`${flip ? 'lg:order-1' : ''} relative`}>{mockup}</Reveal>
+    </div>
+  )
+}
+
+function ProductShowcases() {
+  const t = useT()
+  return (
+    <section id="producto" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <SectionHead
+            kicker={t('Un día con Eazy Stock')}
+            title={t('De la venta al cierre de caja, sin hojas sueltas')}
+            sub={t('Así se ve el día a día real: cobras rápido, sabes qué se acaba, pides al proveedor con un PDF y cierras la caja sabiendo cuánto entró por cada medio.')}
+          />
+        </Reveal>
+
+        <div className="space-y-24">
+          <Showcase
+            kicker="Nueva venta"
+            kickerIcon={ScanLine}
+            tone="emerald"
+            title="Escaneas, cobras, listo. Sin lector, sin calculadora."
+            desc="La cámara del celular lee el código de barras o el QR del producto. Vendes por unidad, por paquete, por metro o por gramo; aplicas descuento y eliges cómo te pagaron: efectivo, Yape, Plin, tarjeta, transferencia o al fiado. El stock se descuenta al instante."
+            bullets={[
+              'Búsqueda instantánea por nombre, código o código de barras',
+              'Descuentos por porcentaje o monto, con permiso aparte',
+              'Medios de pago que tú defines (Yape, Plin, tarjeta…) y se recuerdan',
+              'Precio variable para lo que se negocia en el momento',
+              'Devoluciones totales o parciales, marcadas en la venta',
+            ]}
+            mockup={<PosMockup />}
+          />
+
+          <Showcase
+            kicker="Cierre de caja"
+            kickerIcon={Wallet}
+            tone="blue"
+            flip
+            title="Al final del día sabes cuánto entró por Yape, cuánto en efectivo y cuánto quedó fiado."
+            desc="El cierre de caja separa cada medio de pago y te dice cuánto efectivo debería haber en el cajón. Puedes darle a un vendedor el permiso de ver solo el cierre, sin ganancias ni costos."
+            bullets={[
+              'Desglose por medio de pago del día o del rango que elijas',
+              'Ventas al fiado y devoluciones separadas del efectivo',
+              'Permiso «solo cierre de caja» para el vendedor de turno',
+              'Balance completo con ganancias y costos, solo para el dueño',
+            ]}
+            mockup={<CashClosingMockup />}
+          />
+
+          <Showcase
+            kicker="Reportes › Stock bajo"
+            kickerIcon={Truck}
+            tone="amber"
+            title="Lo que se acaba se convierte en un pedido al proveedor, en PDF, en dos clics."
+            desc="El reporte de stock bajo agrupa por proveedor lo que está bajo el mínimo. Editas cantidades, agregas una nota, y sale un PDF listo para mandar por WhatsApp. Cuando llega la mercadería, registras la recepción y la deuda con el proveedor queda anotada."
+            bullets={[
+              'Stock mínimo por producto con alerta en vivo cuando se cruza',
+              'Previsual del pedido editable antes de generar el PDF',
+              'Recepción de mercadería que suma stock y cuentas por pagar',
+              'Reporte de resurtido: qué comprar según lo que vendes',
+            ]}
+            mockup={<SupplierOrderMockup />}
+            cta="Probar con mi inventario"
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Vencimientos + filtros + códigos (bloque bento sobre el catálogo)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function CatalogBento() {
+  const t = useT()
+  const cards = [
+    {
+      icon: CalendarClock, tone: 'bg-amber-500',
+      title: 'Fecha de vencimiento y reporte «Por vencer»',
+      desc: 'Cada producto puede tener fecha de vencimiento. Te avisa 30 días antes con un badge en la tabla y un reporte para sacar a promoción lo que está por vencer antes de perderlo.',
+      big: true,
+      demo: (
+        <div className="mt-5 space-y-2">
+          {[
+            { n: 'Yogurt frutado 1L',   d: 3,  tone: 'bg-red-100 text-red-700' },
+            { n: 'Leche Gloria 400g',   d: 12, tone: 'bg-amber-100 text-amber-700' },
+            { n: 'Paracetamol 500mg',   d: 27, tone: 'bg-amber-50 text-amber-600' },
+          ].map((r, i) => (
+            <div key={r.n} className="lp-row flex items-center justify-between rounded-lg border border-gray-100 bg-white px-3 py-2 text-xs" style={{ animationDelay: `${i * 120}ms` }}>
+              <span className="font-medium text-gray-800">{r.n}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${r.tone}`}>{t('vence en {n} días', { n: r.d })}</span>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      icon: Filter, tone: 'bg-blue-600',
+      title: 'Filtros tipo Excel y cabeceras fijas',
+      desc: 'Cada columna tiene su embudo: filtra por marca, unidad, proveedor o estado como en Excel. La cabecera se queda fija aunque bajes mil filas.',
+    },
+    {
+      icon: Hash, tone: 'bg-indigo-600',
+      title: 'Códigos automáticos y «liberados»',
+      desc: 'Al crear un producto te sugiere el siguiente código (F2963 → F2964). Si borras uno sin historial, su código queda libre y se vuelve a ofrecer. Nunca renumera.',
+    },
+    {
+      icon: Boxes, tone: 'bg-emerald-600',
+      title: 'Presentación y unidad de venta',
+      desc: '«Saco de 25 kg», «Rollo de 50 m». Vendes por unidad, paquete, metro, gramo o la unidad que definas — y filtras por ella.',
+    },
+    {
+      icon: QrCode, tone: 'bg-violet-600',
+      title: 'QR y código de barras por producto',
+      desc: 'Genera e imprime el QR o el Code 128 de cada producto; o usa el código de barras que ya trae del fabricante.',
+    },
+  ]
+  return (
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <SectionHead
+            kicker={t('Catálogo')}
+            title={t('Un catálogo que se cuida solo')}
+            sub={t('Miles de productos, cada uno con su código, su unidad, su mínimo y su fecha de vencimiento. Y encuentras cualquiera en un segundo.')}
+          />
+        </Reveal>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {cards.map(({ icon: Icon, tone, title, desc, big, demo }, i) => (
+            <Reveal
+              key={title}
+              delay={i * 80}
+              className={`group relative overflow-hidden rounded-3xl border border-gray-200 bg-gray-50/60 p-6 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 ${big ? 'md:col-span-2 lg:row-span-2' : ''}`}
+            >
+              <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-md ${tone}`}>
+                <Icon size={20} />
+              </div>
+              <h3 className={`font-extrabold tracking-tight text-gray-900 ${big ? 'text-2xl' : 'text-base'}`}>{t(title)}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">{t(desc)}</p>
+              {demo}
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Fiado
+// ═══════════════════════════════════════════════════════════════════════════
+
+function FiadoSection() {
+  return (
+    <section id="fiado" className="bg-gradient-to-b from-gray-50 to-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Showcase
+          kicker="Fiado y cuentas por cobrar"
+          kickerIcon={CreditCard}
+          tone="violet"
+          flip
+          title="Fía sin miedo: cada sol prestado tiene nombre, fecha y recordatorio."
+          desc="Cada cliente tiene su línea de crédito y su deuda al día. Cuando toca cobrar, mandas el recordatorio por WhatsApp con un clic o le imprimes su estado de cuenta en PDF. Los abonos parciales van bajando la deuda solos."
+          bullets={[
+            'Límite de crédito por cliente: avisa si la venta lo excede',
+            'Recordatorio de deuda por WhatsApp con el mensaje ya redactado',
+            'Estado de cuenta en PDF con todos los movimientos',
+            'Reporte de cuentas por cobrar con el total que te deben',
+            'Permiso «vender al fiado» separado del resto',
+          ]}
+          mockup={<FiadoMockup />}
+        />
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Import
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ImportSection() {
+  return (
+    <section id="importar" className="bg-white py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Showcase
+          kicker="Importar y exportar"
+          kickerIcon={FileSpreadsheet}
+          tone="emerald"
+          title="Ya tienes tu inventario en Excel. Súbelo tal cual."
+          desc="El importador detecta tus columnas, corrige las tildes rotas, separa códigos de proveedor pegados al nombre y te muestra fila por fila qué va a entrar antes de tocar nada. Miles de productos en minutos, con historial de cada importación."
+          bullets={[
+            'Acepta .xlsx y .csv; mapeo automático de columnas',
+            'Importa también fecha de vencimiento, código de barras y unidad',
+            'Historial de importaciones con reporte descargable por fila',
+            'Exporta tu catálogo y tus ventas a Excel cuando quieras',
+          ]}
+          mockup={<ImportMockup />}
+          cta="Importar mi Excel"
+        />
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Todas las funciones
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FEATURE_GROUPS = [
   {
-    title: 'Inventario inteligente',
-    desc: 'Todo lo que necesitas para que tu catálogo viva ordenado.',
+    title: 'Inventario',
     color: 'from-blue-500 to-indigo-600',
     items: [
-      { icon: Boxes,      title: 'Productos con SKU único',          desc: 'Cada producto con código generado, QR y código de barras Code 128.' },
-      { icon: Tag,        title: 'Marcas, categorías, atributos',    desc: 'Modelo flexible — agrega los atributos personalizados que necesites por categoría.' },
-      { icon: Truck,      title: 'Proveedores',                      desc: 'Asocia productos a proveedores con código interno propio y dedupe de duplicados.' },
-      { icon: ScanLine,   title: 'Precio variable',                  desc: 'Para productos que se negocian en el momento — el POS lo pide al cobrar.' },
-      { icon: Package,    title: 'Presentación informativa',         desc: '"Saco de 25kg", "Caja de 100", "Rollo de 50m" — al lado del nombre.' },
-      { icon: AlertTriangle, title: 'Stock mínimo + alertas',        desc: 'Notificaciones automáticas cuando un producto cae bajo el mínimo.' },
+      [Boxes,          'Productos con presentación y unidad', 'Paquete, metro, gramo o la que definas. Precio con hasta 6 decimales.'],
+      [Hash,           'Códigos automáticos y SKU editable',  'Sugerencia del siguiente código, huecos liberados, código de barras del fabricante.'],
+      [CalendarClock,  'Vencimiento + reporte «Por vencer»',  'Badge en la tabla y aviso 30 días antes.'],
+      [AlertTriangle,  'Stock mínimo y alertas en vivo',      'Notificación en el acto cuando un producto cae bajo el mínimo.'],
+      [Tag,            'Marcas y categorías',                 'Con atributos personalizados por categoría (talla, laboratorio, medida…).'],
+      [ClipboardCheck, 'Recepción de mercadería',             'Un solo recibo, varios productos: entra el stock y se anota la deuda.'],
     ],
   },
   {
-    title: 'POS y ventas rápidas',
-    desc: 'El cajero abre el POS y vende. Punto.',
+    title: 'Ventas',
     color: 'from-emerald-500 to-teal-600',
     items: [
-      { icon: ShoppingCart, title: 'Búsqueda instantánea',           desc: 'Por nombre, SKU, código de proveedor o QR — debounce a 400ms.' },
-      { icon: QrCode,       title: 'Cámara como escáner',            desc: 'BarcodeDetector nativo + ZXing fallback. Sin app, sin lector externo.' },
-      { icon: TrendingUp,   title: 'Descuentos flexibles',           desc: 'Porcentaje o monto fijo, por venta o por item. Permiso aparte para aplicar.' },
-      { icon: Wallet,       title: 'Override de precio',             desc: 'El cajero puede ajustar precio por item — con permiso y queda flageado.' },
-      { icon: CreditCard,   title: 'Venta al fiado',                 desc: 'Asocia la venta a un cliente con línea de crédito; el sistema actualiza la deuda.' },
-      { icon: Receipt,      title: 'Precios con 6 decimales',        desc: 'Para tornillos a S/ 0.0357 — los aggregates se redondean a 2 decimales al cobrar.' },
-      { icon: FileText,     title: 'Presupuestos en PDF',            desc: 'Arma una cotización y expórtala en PDF para enviarla por WhatsApp o correo — sin tocar el stock.' },
+      [ScanLine,   'Venta rápida con escáner',       'Cámara del celular como lector de barras y QR. Sin hardware.'],
+      [Percent,    'Descuentos y precio variable',   'Por venta o por ítem; lo negociado queda registrado.'],
+      [Wallet,     'Medios de pago a tu medida',     'Efectivo, Yape, Plin, tarjeta, transferencia… y los que agregues.'],
+      [FileText,   'Cotizaciones en PDF',            'Arma el presupuesto, mándalo por WhatsApp; no toca el stock.'],
+      [Receipt,    'Devoluciones',                   'Totales o parciales, con su burbuja en la lista de ventas.'],
+      [Trophy,     'Ranking de vendedores',          'Quién vendió cuánto, por día, con desglose.'],
     ],
   },
   {
-    title: 'Cuentas corrientes',
-    desc: 'Cuánto te deben y cuánto debes — siempre en vivo.',
+    title: 'Dinero',
     color: 'from-violet-500 to-fuchsia-600',
     items: [
-      { icon: Users,         title: 'Clientes y crédito',            desc: 'Ficha completa con documento, límite de crédito y deuda actual.' },
-      { icon: CreditCard,    title: 'Pagos y ajustes',               desc: 'Registra pagos parciales o ajustes manuales — todo audit-loggeado.' },
-      { icon: Truck,         title: 'Proveedores con deuda',         desc: 'Recepciones multi-producto → entran al stock y suman a la deuda con el proveedor.' },
-      { icon: ClipboardCheck,title: 'Recepción multi-producto',      desc: 'Un solo recibo, varios productos — el stock se actualiza por línea.' },
-      { icon: BarChart2,     title: 'Reportes de cobranza',          desc: 'Cuentas por cobrar (clientes) y por pagar (proveedores) listas para revisar.' },
-      { icon: Wallet,        title: 'Pagos parciales',               desc: 'Soporta abonos parciales que reducen la deuda gradualmente.' },
+      [CreditCard,    'Fiado con límite de crédito',      'Deuda al día por cliente, abonos parciales, estado de cuenta PDF.'],
+      [MessageCircle, 'Recordatorio por WhatsApp',        'Mensaje de cobro listo para enviar desde la ficha del cliente.'],
+      [Landmark,      'Cuentas por pagar',                'Lo que le debes a cada proveedor, con pagos parciales.'],
+      [Wallet,        'Cierre de caja por medio de pago', 'Cuánto entró por cada medio y cuánto debe haber en el cajón.'],
+      [BarChart2,     'Siete reportes',                   'Análisis de ventas, resumen del día, por producto, por proveedor, stock bajo, por vencer, resurtido.'],
+      [Truck,         'Pedido al proveedor en PDF',       'Desde el stock bajo, con previsual editable.'],
     ],
   },
   {
-    title: 'Operaciones y control',
-    desc: 'Seguridad, auditoría y herramientas para escalar.',
+    title: 'Equipo y control',
     color: 'from-amber-500 to-orange-600',
     items: [
-      { icon: Shield,        title: 'Permisos granulares',           desc: '11 permisos individuales por empleado: vender, cancelar, ver reportes, etc.' },
-      { icon: ClipboardCheck,title: 'Auditoría completa',            desc: 'Cada CREATE/UPDATE/DELETE queda registrado con quién, cuándo, antes y después.' },
-      { icon: Bell,          title: 'Notificaciones en vivo',        desc: 'WebSocket + STOMP — alertas de stock bajo se ven en el acto.' },
-      { icon: Users,         title: 'Multi-usuario',                 desc: 'Dueño + empleados con roles claros. Cada uno ve solo lo que le toca.' },
-      { icon: FileSpreadsheet, title: 'Import masivo desde Excel',   desc: 'Sube tu inventario actual (3,000+ filas) y empieza a operar en minutos.' },
-      { icon: Globe,         title: 'Multi-tenant + multi-moneda',   desc: 'Cada negocio aislado. Soporta PEN, USD, EUR, PLN out-of-the-box.' },
-      { icon: Trophy,        title: 'Rendimiento de vendedores',     desc: 'El dueño ve quién vendió más y cuánto exactamente cada día, con ranking y desglose diario.' },
-      { icon: BookOpen,      title: 'Se aprende sola',               desc: 'Tutorial guiado en cada pantalla, se abre solo la primera vez. Tu equipo opera sin capacitación.' },
-      { icon: Smartphone,    title: 'Desde cualquier dispositivo',   desc: 'PC, tablet o celular — sin instalar nada. La cámara del teléfono es tu escáner.' },
+      [Shield,          'Permisos finos por empleado',   '14 permisos: vender, descontar, cancelar, fiar, ver reportes, solo cierre de caja…'],
+      [Users,           'Clientes y proveedores',        'Fichas completas con historial y saldo.'],
+      [Filter,          'Filtros tipo Excel',            'Embudo por columna y cabeceras fijas en todas las tablas.'],
+      [FileSpreadsheet, 'Importar y exportar',           'Excel/CSV con historial; exporta cuando quieras.'],
+      [Bell,            'Notificaciones en vivo',        'Stock bajo y novedades al instante, en todos los dispositivos.'],
+      [Smartphone,      'App instalable, modo oscuro, 3 idiomas', 'Instálala en el celular como app; ES, EN e IT; claro u oscuro.'],
     ],
   },
 ]
 
 function Features() {
+  const t = useT()
   return (
-    <section id="features" className="bg-gray-50 py-24">
+    <section id="funciones" className="bg-gray-50 py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
-          <div className="mb-16 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Funcionalidades</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-              Todo lo que tu negocio necesita,<br />
-              en una sola plataforma
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base text-gray-500">
-              Diseñado y probado con negocios reales en Perú. Cada feature
-              resuelve un problema que vimos en vivo — no funciones de catálogo.
-            </p>
-          </div>
+          <SectionHead
+            kicker={t('Todas las funciones')}
+            title={t('Todo lo que necesita una tienda de verdad')}
+            sub={t('Nada salió de un catálogo de funciones. Cada una resolvió un problema concreto en un negocio real: primero una ferretería, luego los que siguieron.')}
+          />
         </Reveal>
 
-        <div className="space-y-16">
+        <div className="space-y-14">
           {FEATURE_GROUPS.map((group) => (
             <Reveal key={group.title}>
-              <div className="mb-6 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <div className={`mb-3 inline-block h-1 w-12 rounded-full bg-gradient-to-r ${group.color}`} />
-                  <h3 className="text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl">{group.title}</h3>
-                  <p className="mt-1 text-sm text-gray-500">{group.desc}</p>
-                </div>
+              <div className="mb-5 flex items-center gap-3">
+                <div className={`h-1.5 w-10 rounded-full bg-gradient-to-r ${group.color}`} />
+                <h3 className="text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl">{t(group.title)}</h3>
               </div>
-
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {group.items.map(({ icon: Icon, title, desc }) => (
-                  <div
-                    key={title}
-                    className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50"
-                  >
+                {group.items.map(([Icon, title, desc]) => (
+                  <div key={title} className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50">
                     <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${group.color} opacity-0 blur-2xl transition-opacity group-hover:opacity-20`} />
-                    <div className="relative">
-                      <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${group.color} text-white shadow-md`}>
+                    <div className="relative flex gap-4">
+                      <div className={`inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${group.color} text-white shadow-md`}>
                         <Icon size={18} />
                       </div>
-                      <h4 className="mb-1.5 text-sm font-bold text-gray-900">{title}</h4>
-                      <p className="text-xs leading-relaxed text-gray-500">{desc}</p>
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">{t(title)}</h4>
+                        <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(desc)}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -560,301 +579,34 @@ function Features() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Showcase — Excel import (feature destacada nueva)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function ImportShowcase() {
-  return (
-    <section id="showcase" className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <Reveal>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-              <Sparkles size={12} />
-              Nuevo — Junio 2026
-            </div>
-            <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Migra tu inventario en <span className="text-emerald-600">10 minutos</span>,
-              no en 3 semanas.
-            </h2>
-            <p className="mb-8 text-base leading-relaxed text-gray-600">
-              Sube el Excel que ya tienes. El sistema detecta tus columnas
-              automáticamente, limpia el encoding roto, deduplica proveedores
-              por capitalización, extrae códigos de proveedor pegados al
-              nombre, y te muestra fila por fila qué se va a importar antes
-              de tocar nada.
-            </p>
-
-            <ul className="mb-8 space-y-3">
-              {[
-                'Acepta .xlsx y .csv hasta 10MB',
-                'Auto-mapeo inteligente por nombre de columna',
-                'Limpia mojibake (Ã¡ → á, Ã± → ñ) automáticamente',
-                'Detecta SKUs duplicados antes de importar',
-                'Reporte Excel descargable del resultado por fila',
-                'Procesa fila por fila — un error no aborta todo el import',
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-2 text-sm text-gray-700">
-                  <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-500" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors"
-            >
-              Importa tu Excel ahora
-              <ArrowRight size={14} />
-            </Link>
-          </Reveal>
-
-          {/* Mockup: import wizard preview */}
-          <Reveal delay={150} className="relative">
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-emerald-200/40 to-blue-200/40 blur-2xl" />
-            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-              {/* Stepper */}
-              <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
-                {[
-                  { num: 1, label: 'Subir', done: true },
-                  { num: 2, label: 'Mapear', done: true },
-                  { num: 3, label: 'Revisar', active: true },
-                  { num: 4, label: 'Importar', done: false },
-                ].map((s) => (
-                  <div key={s.num} className="flex items-center gap-1.5">
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                      s.done    ? 'bg-emerald-500 text-white' :
-                      s.active  ? 'bg-blue-600 text-white' :
-                                  'bg-gray-200 text-gray-500'
-                    }`}>
-                      {s.done ? '✓' : s.num}
-                    </div>
-                    <span className={`text-[11px] font-medium ${
-                      s.active ? 'text-gray-900' : s.done ? 'text-emerald-700' : 'text-gray-400'
-                    }`}>
-                      {s.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Counters */}
-              <div className="grid grid-cols-4 gap-2 border-b border-gray-100 px-5 py-3">
-                {[
-                  { label: 'Totales',  value: '3,435',  color: 'text-gray-900' },
-                  { label: 'Listas',   value: '3,429',  color: 'text-emerald-600' },
-                  { label: 'Warnings', value: '742',    color: 'text-amber-600' },
-                  { label: 'Errores',  value: '0',      color: 'text-red-600' },
-                ].map((c) => (
-                  <div key={c.label} className="rounded-lg border border-gray-100 bg-white p-2 text-center">
-                    <p className="text-[9px] uppercase tracking-widest text-gray-400">{c.label}</p>
-                    <p className={`text-base font-extrabold ${c.color}`}>{c.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Rows */}
-              <div className="space-y-px">
-                {[
-                  { n: 1,  name: 'Abrazadera 1/2 S/Fin',          sku: 'F03',  cls: 'emerald', issue: '—' },
-                  { n: 2,  name: 'Cemento Frontera',               sku: 'F121', cls: 'emerald', issue: '—' },
-                  { n: 3,  name: 'Abasto 1/2 × 1/2',               sku: 'F47',  cls: 'amber',   issue: 'Encoding corregido' },
-                  { n: 4,  name: 'Tornillo 1/4 × 2"',              sku: 'F250', cls: 'amber',   issue: 'Precio variable' },
-                  { n: 5,  name: 'Filtro K&N',                     sku: 'F89',  cls: 'amber',   issue: 'Stock −5 ajustado a 0' },
-                ].map((r) => {
-                  const bg = r.cls === 'emerald' ? 'bg-emerald-50' : 'bg-amber-50'
-                  const txt = r.cls === 'emerald' ? 'text-emerald-700' : 'text-amber-700'
-                  return (
-                    <div key={r.n} className={`grid grid-cols-12 gap-2 px-5 py-2 text-[11px] ${bg}`}>
-                      <span className="col-span-1 font-mono text-gray-400">{r.n}</span>
-                      <span className="col-span-5 truncate text-gray-900">{r.name}</span>
-                      <span className="col-span-2 font-mono text-gray-500">{r.sku}</span>
-                      <span className={`col-span-4 truncate text-right ${txt}`}>{r.issue}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Showcase — Fiado + Cuentas
-// ═══════════════════════════════════════════════════════════════════════════
-
-function FiadoShowcase() {
-  return (
-    <section className="bg-gradient-to-b from-gray-50 to-white py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Mockup */}
-          <Reveal delay={150} className="relative order-2 lg:order-1">
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-violet-200/40 to-blue-200/40 blur-2xl" />
-            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-              {/* Customer card */}
-              <div className="bg-gradient-to-br from-violet-50 to-blue-50 p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">Cliente</p>
-                    <p className="mt-1 text-lg font-bold text-gray-900">Juan Quispe</p>
-                    <p className="text-xs text-gray-500">DNI 12345678 · Cel +51 987 654 321</p>
-                  </div>
-                  <span className="rounded-full bg-violet-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-                    Activo
-                  </span>
-                </div>
-
-                <div className="mt-5 grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'Deuda actual', value: 'S/ 580', color: 'text-amber-600' },
-                    { label: 'Límite',       value: 'S/ 1,000', color: 'text-gray-900' },
-                    { label: 'Disponible',   value: 'S/ 420',   color: 'text-emerald-600' },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-lg border border-white/60 bg-white p-3">
-                      <p className="text-[9px] uppercase tracking-widest text-gray-400">{s.label}</p>
-                      <p className={`mt-0.5 font-mono text-sm font-extrabold ${s.color}`}>{s.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Transactions */}
-              <div className="divide-y divide-gray-100">
-                <p className="px-5 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-                  Historial reciente
-                </p>
-                {[
-                  { type: 'SALE',    label: 'Venta',  amount: '+S/ 250', date: 'Hoy 14:30', color: 'text-amber-600' },
-                  { type: 'PAYMENT', label: 'Pago',   amount: '−S/ 200', date: 'Ayer',      color: 'text-emerald-600' },
-                  { type: 'SALE',    label: 'Venta',  amount: '+S/ 530', date: '2 jun',      color: 'text-amber-600' },
-                ].map((t, i) => (
-                  <div key={i} className="flex items-center justify-between px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-                        t.type === 'SALE' ? 'bg-amber-50' : 'bg-emerald-50'
-                      }`}>
-                        {t.type === 'SALE'
-                          ? <ShoppingCart size={13} className="text-amber-600" />
-                          : <Wallet size={13} className="text-emerald-600" />}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-gray-900">{t.label}</p>
-                        <p className="text-[10px] text-gray-400">{t.date}</p>
-                      </div>
-                    </div>
-                    <span className={`font-mono text-sm font-bold ${t.color}`}>{t.amount}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Text */}
-          <Reveal className="order-1 lg:order-2">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700">
-              <CreditCard size={12} />
-              Cuentas corrientes
-            </div>
-            <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Vende al fiado sin perder el control.
-            </h2>
-            <p className="mb-8 text-base leading-relaxed text-gray-600">
-              Cada cliente tiene su línea de crédito, su deuda actual y su
-              historial de pagos. Cuando el cajero registra una venta al
-              fiado, el sistema valida el límite, suma a la deuda y deja todo
-              auditado. Cuando el cliente paga, se actualiza al instante.
-            </p>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { icon: Users,      title: 'Ficha completa', desc: 'Documento, contacto, dirección, deuda y límite.' },
-                { icon: AlertTriangle, title: 'Validación de límite', desc: 'Avisa si la venta excede el crédito.' },
-                { icon: Wallet,     title: 'Pagos parciales', desc: 'Abonos que reducen la deuda gradualmente.' },
-                { icon: ClipboardCheck, title: 'Audit log', desc: 'Cada movimiento queda registrado con quién y cuándo.' },
-              ].map(({ icon: Icon, title, desc }) => (
-                <div key={title} className="rounded-xl border border-gray-100 bg-white p-4">
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
-                    <Icon size={15} className="text-violet-600" />
-                  </div>
-                  <p className="text-sm font-bold text-gray-900">{title}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Industries — Para quién
+//  Industrias
 // ═══════════════════════════════════════════════════════════════════════════
 
 const INDUSTRIES = [
-  {
-    icon: Wrench,
-    title: 'Ferreterías',
-    desc: 'Miles de SKUs, proveedores múltiples, precios pequeños (S/ 0.05 el tornillo) y clientes habituales al fiado.',
-    color: 'from-orange-500 to-red-500',
-  },
-  {
-    icon: Pill,
-    title: 'Farmacias y boticas',
-    desc: 'Catálogo con presentaciones (caja, blíster, unidad), alertas de stock mínimo y venta rápida escaneando el código de barras.',
-    color: 'from-rose-500 to-pink-600',
-  },
-  {
-    icon: Truck,
-    title: 'Distribuidoras',
-    desc: 'Recepciones masivas multi-producto, cuentas con proveedores, márgenes ajustados por categoría.',
-    color: 'from-blue-500 to-indigo-600',
-  },
-  {
-    icon: Boxes,
-    title: 'Tiendas mayoristas',
-    desc: 'Catálogos grandes, descuentos por volumen, ventas al fiado a comerciantes con línea de crédito.',
-    color: 'from-emerald-500 to-teal-600',
-  },
-  {
-    icon: Store,
-    title: 'Bodegas y minimarkets',
-    desc: 'Venta al paso con escáner, fiado del barrio con cuenta al día y control de lo que se acaba.',
-    color: 'from-amber-500 to-orange-600',
-  },
-  {
-    icon: Tag,
-    title: 'Boutiques y minoristas',
-    desc: 'Atributos custom por categoría (talla, color, material), control fino del stock por presentación.',
-    color: 'from-violet-500 to-fuchsia-600',
-  },
+  [Wrench, 'Ferreterías',           'Miles de códigos, tornillos a céntimos, metros de cable y el cliente de siempre que paga a fin de mes.', 'from-orange-500 to-red-500'],
+  [Store,  'Bodegas y minimarkets', 'Venta al paso con escáner, fiado del barrio con recordatorio y aviso de lo que vence.', 'from-amber-500 to-orange-600'],
+  [Pill,   'Farmacias y boticas',   'Fecha de vencimiento en cada caja, reporte «Por vencer» y venta por blíster o unidad.', 'from-rose-500 to-pink-600'],
+  [Truck,  'Distribuidoras',        'Recepciones grandes, cuentas por pagar a proveedores y pedidos en PDF.', 'from-blue-500 to-indigo-600'],
+  [Apple,  'Abarrotes y alimentos', 'Venta por kilo o gramo, lo perecible controlado y cierre de caja por Yape y efectivo.', 'from-emerald-500 to-teal-600'],
+  [Coffee, 'Cualquier tienda de barrio', 'Si vendes y anotas en cuaderno, esto es para ti. Se aprende en una tarde.', 'from-violet-500 to-fuchsia-600'],
 ]
 
 function Industries() {
+  const t = useT()
   return (
-    <section id="industries" className="bg-[#0a0e1a] py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+    <section id="para-quien" className="relative overflow-hidden bg-[#0a0e1a] py-24">
+      <GridPattern />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
-          <div className="mb-12 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-400">Diseñado para</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Hecho para negocios que venden de verdad
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
-              Cada feature salió de problemas reales que vimos en negocios
-              de Perú. No te vendemos un ERP — te damos lo que necesitas.
-            </p>
-          </div>
+          <SectionHead
+            dark
+            kicker={t('Para quién')}
+            title={t('Hecho para negocios que venden de verdad')}
+            sub={t('No es un ERP para contadores. Es la herramienta del que atiende el mostrador.')}
+          />
         </Reveal>
-
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {INDUSTRIES.map(({ icon: Icon, title, desc, color }, i) => (
+          {INDUSTRIES.map(([Icon, title, desc, color], i) => (
             <Reveal
               key={title}
               delay={(i % 3) * 90}
@@ -865,8 +617,8 @@ function Industries() {
                 <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
                   <Icon size={22} className="text-white" />
                 </div>
-                <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{desc}</p>
+                <h3 className="mb-2 text-base font-bold text-white">{t(title)}</h3>
+                <p className="text-sm leading-relaxed text-slate-400">{t(desc)}</p>
               </div>
             </Reveal>
           ))}
@@ -877,327 +629,41 @@ function Industries() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Testimonial — reseña anónima (sin datos de cliente)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function Testimonial() {
-  return (
-    <section className="bg-white py-24">
-      <div className="mx-auto max-w-4xl px-5 sm:px-8">
-        <Reveal>
-        <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-8 sm:p-12">
-          <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
-
-          <div className="relative">
-            <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
-              "Antes anotaba en cuaderno y se nos pasaban ventas al fiado.
-              Con Eazy Stock subimos <span className="font-bold text-blue-700">todo el catálogo</span> en
-              una tarde y mis hijos ya pueden cobrar desde el celular —
-              hasta los precios que se negocian quedan registrados."
-            </p>
-
-            <div className="mt-8 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-                <Wrench size={22} />
-              </div>
-              <div>
-                <p className="text-base font-bold text-gray-900">Ferretería</p>
-                <p className="text-sm text-gray-500">Lima, Perú</p>
-              </div>
-              <div className="ml-auto hidden flex-col items-end sm:flex">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map((s) => (
-                    <Star key={s} size={16} className="fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="mt-1 text-xs text-gray-500">Cliente verificado</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Reel teaser — el video se estrena pronto; esta sección le da su lugar
-// ═══════════════════════════════════════════════════════════════════════════
-
-function ReelTeaser() {
-  return (
-    <section id="reel" className="bg-gray-50 py-24">
-      <div className="mx-auto max-w-5xl px-5 sm:px-8">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0e1a] via-[#101a33] to-[#0a0e1a] shadow-2xl">
-            <GridPattern />
-            <div aria-hidden className="absolute inset-0 opacity-40">
-              <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-600/40 blur-3xl" />
-              <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-emerald-500/30 blur-3xl" />
-            </div>
-
-            <div className="relative flex flex-col items-center px-6 py-16 text-center sm:py-20">
-              {/* Play button con halo */}
-              <div className="relative mb-8">
-                <span className="absolute inset-0 animate-ping rounded-full bg-white/10" />
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition-transform hover:scale-105">
-                  <Play size={30} className="ml-1 fill-white text-white" />
-                </div>
-              </div>
-
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-400/10 px-3 py-1.5 text-xs font-semibold text-blue-300">
-                <Sparkles size={12} />
-                Muy pronto
-              </div>
-              <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Eazy Stock en 60 segundos
-              </h2>
-              <p className="max-w-xl text-base leading-relaxed text-slate-400">
-                Estamos grabando el reel donde te mostramos cómo un negocio
-                real pasa del cuaderno al control total: catálogo, ventas,
-                fiado y reportes. Mientras tanto, la mejor demo es probarlo tú.
-              </p>
-              <Link
-                to="/login"
-                className="group mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0a0e1a] transition-all hover:scale-[1.02]"
-              >
-                Probarlo ahora
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  FAQ
-// ═══════════════════════════════════════════════════════════════════════════
-
-const FAQS = [
-  {
-    q: '¿Cuánto cuesta Eazy Stock?',
-    a: 'Durante el lanzamiento puedes probarlo gratis, sin tarjeta. Pronto lanzaremos planes de suscripción mensual — todos con 14 días de prueba gratis para que decidas con calma.',
-  },
-  {
-    q: '¿Necesito instalar algo?',
-    a: 'No. Eazy Stock corre en el navegador: funciona en tu PC, laptop, tablet o celular. Y la cámara de tu teléfono sirve como escáner de códigos de barras, sin comprar lectores.',
-  },
-  {
-    q: 'Ya tengo mi inventario en Excel, ¿lo pierdo?',
-    a: 'Al contrario: lo subes tal cual está. El importador detecta tus columnas automáticamente, limpia errores de tildes y te muestra fila por fila qué se va a importar antes de tocar nada. Miles de productos en minutos.',
-  },
-  {
-    q: '¿Sirve para mi rubro? No soy ferretería.',
-    a: 'Sí. Farmacias, bodegas, distribuidoras, boutiques, mayoristas… Las categorías y atributos se adaptan a lo que vendas (talla, presentación, laboratorio, lo que necesites).',
-  },
-  {
-    q: '¿Es difícil de aprender? Mi personal no es muy tecnológico.',
-    a: 'Esa es nuestra obsesión: cada pantalla trae un tutorial guiado que se abre solo la primera vez. Nuestros clientes reales operan sin capacitación — si saben usar WhatsApp, saben usar Eazy Stock.',
-  },
-  {
-    q: '¿Mis empleados pueden ver o tocar todo?',
-    a: 'No. Tú decides con permisos individuales qué puede hacer cada uno: vender, aplicar descuentos, ver reportes, recibir mercadería… Y cada acción queda registrada en la auditoría con quién y cuándo.',
-  },
-  {
-    q: '¿Mis datos están seguros?',
-    a: 'Cada negocio vive completamente aislado de los demás, la conexión va cifrada (HTTPS) y toda modificación queda auditada. Tus datos son tuyos.',
-  },
-]
-
-function FaqItem({ faq, open, onToggle }) {
-  return (
-    <div className={`overflow-hidden rounded-2xl border bg-white transition-all ${
-      open ? 'border-blue-200 shadow-lg shadow-blue-50' : 'border-gray-200'
-    }`}>
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-      >
-        <span className="text-sm font-bold text-gray-900 sm:text-base">{faq.q}</span>
-        <ChevronDown
-          size={18}
-          className={`flex-shrink-0 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180 text-blue-600' : ''}`}
-        />
-      </button>
-      <div className={`grid transition-all duration-300 ease-in-out ${
-        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}>
-        <div className="overflow-hidden">
-          <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{faq.a}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Faq() {
-  const [openIdx, setOpenIdx] = useState(0)
-  return (
-    <section id="faq" className="bg-white py-24">
-      <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <Reveal>
-          <div className="mb-12 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Preguntas frecuentes</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Lo que todos preguntan
-            </h2>
-          </div>
-        </Reveal>
-        <Reveal delay={100}>
-          <div className="space-y-3">
-            {FAQS.map((faq, i) => (
-              <FaqItem
-                key={faq.q}
-                faq={faq}
-                open={openIdx === i}
-                onToggle={() => setOpenIdx(openIdx === i ? -1 : i)}
-              />
-            ))}
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  How it works
+//  Cómo funciona
 // ═══════════════════════════════════════════════════════════════════════════
 
 function HowItWorks() {
+  const t = useT()
   const steps = [
-    {
-      num: '01',
-      icon: Users,
-      title: 'Registra tu negocio',
-      desc: 'Crea tu cuenta, agrega el nombre del negocio e invita a tus empleados con permisos a medida.',
-    },
-    {
-      num: '02',
-      icon: FileSpreadsheet,
-      title: 'Sube tu Excel actual',
-      desc: 'O carga productos uno por uno desde el formulario. El sistema detecta columnas y limpia data sucia.',
-    },
-    {
-      num: '03',
-      icon: ShoppingCart,
-      title: 'Empieza a vender',
-      desc: 'POS listo desde el primer día. Stock en vivo, ventas al fiado, descuentos y reportes.',
-    },
+    [Users,           'Crea tu negocio',       'Abres tu cuenta, pones el nombre de la tienda e invitas a tu gente con los permisos que tú decidas.'],
+    [FileSpreadsheet, 'Sube tu Excel',         'O carga productos uno por uno. El sistema te sugiere el código y guarda unidad, mínimo y vencimiento.'],
+    [ShoppingCart,    'Vende desde el día uno','Escaneas, cobras por Yape o efectivo, fías con control y cierras la caja cada noche.'],
   ]
   return (
-    <section id="how" className="bg-gray-50 py-24">
+    <section id="como-funciona" className="bg-white py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <Reveal>
-          <div className="mb-16 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Proceso</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-              Arrancá en 3 pasos
-            </h2>
-          </div>
+          <SectionHead kicker={t('Cómo empezar')} title={t('Listo en una tarde, no en tres semanas')} />
         </Reveal>
         <div className="relative grid gap-10 md:grid-cols-3">
           <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent md:block" />
-
-          {steps.map(({ num, icon: Icon, title, desc }, i) => (
-            <Reveal key={num} delay={i * 130} className="relative flex flex-col items-center text-center">
+          {steps.map(([Icon, title, desc], i) => (
+            <Reveal key={title} delay={i * 130} className="relative flex flex-col items-center text-center">
               <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xl shadow-blue-200">
                 <Icon size={34} className="text-white" />
-                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-gray-50">
-                  {num}
+                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-white">
+                  {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
-              <h3 className="mb-2 text-lg font-bold text-gray-900">{title}</h3>
-              <p className="text-sm leading-relaxed text-gray-500">{desc}</p>
+              <h3 className="mb-2 text-lg font-bold text-gray-900">{t(title)}</h3>
+              <p className="text-sm leading-relaxed text-gray-500">{t(desc)}</p>
             </Reveal>
           ))}
         </div>
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  WhatsApp Highlight
-// ═══════════════════════════════════════════════════════════════════════════
-
-function WhatsAppHighlight() {
-  return (
-    <section className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <Reveal>
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0e1a] via-[#0f172a] to-[#0a0e1a]">
-          <div aria-hidden className="absolute inset-0 opacity-30">
-            <div className="absolute -left-20 top-1/4 h-60 w-60 rounded-full bg-emerald-500/40 blur-3xl" />
-            <div className="absolute -right-20 bottom-1/4 h-60 w-60 rounded-full bg-green-400/30 blur-3xl" />
-          </div>
-
-          <div className="relative flex flex-col items-center gap-10 p-8 md:flex-row md:p-14">
-            <div className="flex-1 text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1.5 text-xs font-semibold text-green-300">
-                <MessageCircle size={12} />
-                Próximamente · Q3 2026
-              </div>
-              <h2 className="mb-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Tu stock habla por{' '}
-                <span className="bg-gradient-to-r from-green-300 to-emerald-400 bg-clip-text text-transparent">
-                  WhatsApp
-                </span>
-              </h2>
-              <p className="mb-7 text-base leading-relaxed text-slate-300">
-                Recibe alertas en WhatsApp cuando un producto se agota.
-                Pregúntale al asistente IA cuánto vendiste, qué productos
-                están vendiendo más, o cuáles necesitas reponer — todo desde
-                tu chat.
-              </p>
-              <div className="flex flex-wrap gap-2 text-sm">
-                {[
-                  '🔔 Alertas de stock en vivo',
-                  '🤖 Asistente IA',
-                  '📊 Reportes por chat',
-                  '👥 Mensajes a clientes deudores',
-                ].map((f) => (
-                  <span key={f} className="rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-200 backdrop-blur">
-                    {f}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="w-full max-w-xs flex-shrink-0">
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#111b21] shadow-2xl">
-                <div className="flex items-center gap-3 border-b border-white/10 bg-[#202c33] px-4 py-3">
-                  <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-full object-contain" />
-                  <div>
-                    <p className="text-sm font-semibold text-white">Eazy Stock Bot</p>
-                    <p className="text-xs text-green-400">en línea</p>
-                  </div>
-                </div>
-                <div className="space-y-3 p-4">
-                  {[
-                    { text: '⚠️ Stock bajo: Filtro K&N (3 unid.)',                                bot: true },
-                    { text: '¿Cuánto vendí hoy?',                                                  bot: false },
-                    { text: '📊 S/ 2,430 en 18 ventas. Top: Aceite 5W30 (12 unid.)',              bot: true },
-                    { text: 'Envíale recordatorio de pago a Juan',                                  bot: false },
-                    { text: '✅ Listo. Le envié un mensaje recordando su deuda de S/ 580.',         bot: true },
-                  ].map(({ text, bot }, i) => (
-                    <div key={i} className={`flex ${bot ? 'justify-start' : 'justify-end'}`}>
-                      <div className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
-                        bot ? 'bg-[#202c33] text-white' : 'bg-[#005c4b] text-white'
-                      }`}>
-                        {text}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Reveal delay={200} className="mt-14 text-center">
+          <Link to={CTA} className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+            {t('Probar gratis')} <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </Reveal>
       </div>
     </section>
@@ -1205,107 +671,117 @@ function WhatsAppHighlight() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Roadmap
+//  Testimonio (genérico, sin nombres reales)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function Testimonial() {
+  const t = useT()
+  return (
+    <section className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-amber-50 p-8 sm:p-12">
+            <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
+            <div className="relative">
+              <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
+                {t('«Antes anotaba el fiado en un cuaderno y se me perdían ventas. Ahora subí todo el catálogo desde mi Excel en una tarde, mis hijos cobran desde el celular y al cierre sé cuánto entró por Yape y cuánto en efectivo.»')}
+              </p>
+              <div className="mt-8 flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                  <Wrench size={22} />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-gray-900">{t('Dueño de ferretería')}</p>
+                  <p className="text-sm text-gray-500">{t('Lima, Perú · cliente desde el piloto')}</p>
+                </div>
+                <div className="ml-auto hidden flex-col items-end sm:flex">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={16} className="fill-amber-400 text-amber-400" />)}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">{t('Más de 1,000 productos migrados')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Roadmap — lo que viene
 // ═══════════════════════════════════════════════════════════════════════════
 
 const ROADMAP = [
   {
-    period: 'Disponible hoy',
-    status: 'done',
+    period: 'Disponible hoy', status: 'done',
     items: [
-      'Productos con SKU/QR/barcode, marcas, categorías, proveedores',
-      'POS con búsqueda, escáner de cámara, descuentos y override de precio',
-      'Presupuestos / cotizaciones en PDF para enviar por WhatsApp o correo',
-      'Rendimiento de vendedores — ranking y desglose diario por vendedor',
-      'Precio variable + presentación informativa',
-      'Ventas al fiado con líneas de crédito',
-      'Recepciones multi-producto + cuentas con proveedores',
-      'Reportes (ventas por día, top productos, cuentas por cobrar/pagar)',
-      'Notificaciones en vivo (WebSocket)',
-      'Permisos granulares + auditoría completa',
-      'Import masivo desde Excel/CSV (miles de filas)',
+      'Catálogo con unidad de venta, vencimiento, códigos automáticos, QR y barras',
+      'Venta rápida con escáner, descuentos y medios de pago a medida',
+      'Fiado con recordatorio por WhatsApp y estado de cuenta PDF',
+      'Cierre de caja por medio de pago y 7 reportes',
+      'Pedido al proveedor en PDF, recepciones y cuentas por pagar',
+      'Importar/exportar Excel con historial, filtros tipo Excel',
+      'Empleados con 14 permisos, ranking de vendedores, cotizaciones',
+      'App instalable (PWA), modo oscuro, ES/EN/IT',
     ],
   },
   {
-    period: 'Q3 2026',
-    status: 'next',
+    period: 'Pronto', status: 'next',
     items: [
-      'Integración WhatsApp — alertas + asistente IA + cobranza automatizada',
-      'Export masivo — descarga de ventas/inventario/reportes en Excel',
-      'App móvil nativa — iOS y Android',
+      'Apps móviles nativas para Android e iOS',
+      'Asistente con IA: pregúntale cuánto vendiste o qué reponer',
+      'Alertas de stock y cobranza automática por WhatsApp',
     ],
   },
   {
-    period: 'Q4 2026',
-    status: 'planned',
+    period: 'Después', status: 'planned',
     items: [
-      'Vencimientos y lotes — alertas de productos por vencer (farmacias y alimentos)',
-      'Facturación electrónica — SUNAT (Perú), SRI (Ecuador), AFIP (Argentina)',
-      'Compras con orden de pedido + sugerencia de reposición',
-      'Modo offline / PWA — sigue vendiendo sin internet',
-    ],
-  },
-  {
-    period: '2027',
-    status: 'future',
-    items: [
-      'Multi-negocio — gestiona varios negocios desde una sola cuenta',
-      'Multi-sucursal — gestión centralizada de N tiendas',
-      'API pública — conectá tu e-commerce o sistema externo',
-      'Marketplace de integraciones — pagos, envíos, contabilidad',
+      'Facturación electrónica (SUNAT)',
+      'Multi-sucursal y multi-negocio desde una cuenta',
+      'Modo sin conexión: sigue vendiendo sin internet',
     ],
   },
 ]
 
 const STATUS_STYLE = {
-  done:    { dot: 'bg-emerald-500',           badge: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
-  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-100 text-blue-700',       border: 'border-blue-200'    },
-  planned: { dot: 'bg-blue-400',              badge: 'bg-blue-100 text-blue-700',       border: 'border-blue-200'    },
-  future:  { dot: 'bg-gray-300',              badge: 'bg-gray-100 text-gray-500',       border: 'border-gray-200'    },
+  done:    { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
+  next:    { dot: 'bg-blue-600 animate-pulse', badge: 'bg-blue-600 text-white', border: 'border-blue-200' },
+  planned: { dot: 'bg-gray-300', badge: 'bg-gray-100 text-gray-500', border: 'border-gray-200' },
 }
-
-const STATUS_LABEL = {
-  done: 'Disponible', next: 'Próximamente', planned: 'En diseño', future: 'Futuro',
-}
+const STATUS_LABEL = { done: 'Disponible', next: 'PRONTO', planned: 'En diseño' }
 
 function Roadmap() {
+  const t = useT()
   return (
-    <section id="roadmap" className="bg-gray-50 py-24">
+    <section id="roadmap" className="bg-white py-24">
       <div className="mx-auto max-w-4xl px-5 sm:px-8">
         <Reveal>
-          <div className="mb-14 text-center">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-600">Roadmap</p>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-              Lo que viene
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
-              Construimos junto a clientes reales — cada feature sale de algo
-              que vimos en negocios de Perú. Sin features de catálogo.
-            </p>
-          </div>
+          <SectionHead
+            kicker={t('Roadmap')}
+            title={t('Lo que viene')}
+            sub={t('Construimos con los clientes, de a una observación por vez. Esto es lo que hay y lo que sigue.')}
+          />
         </Reveal>
-
         <div className="relative space-y-6 pl-8">
           <div className="absolute bottom-0 left-2 top-2 w-0.5 bg-gradient-to-b from-emerald-300 via-blue-300 to-gray-200" />
-
           {ROADMAP.map(({ period, status, items }) => {
             const s = STATUS_STYLE[status]
             return (
               <Reveal key={period} className="relative">
                 <div className={`absolute -left-7 top-5 h-4 w-4 rounded-full border-2 border-white shadow ${s.dot}`} />
-
                 <div className={`rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg ${s.border}`}>
                   <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg font-extrabold text-gray-900">{period}</h3>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.badge}`}>
-                      {STATUS_LABEL[status]}
-                    </span>
+                    <h3 className="text-lg font-extrabold text-gray-900">{t(period)}</h3>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${s.badge}`}>{t(STATUS_LABEL[status])}</span>
+                    {status === 'next' && <Bot size={16} className="text-blue-600" />}
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="grid gap-2 sm:grid-cols-2">
                     {items.map((item) => (
                       <li key={item} className="flex items-start gap-2 text-sm text-gray-600">
                         <Check size={15} className={`mt-0.5 flex-shrink-0 ${status === 'done' ? 'text-emerald-500' : 'text-gray-300'}`} />
-                        {item}
+                        {t(item)}
                       </li>
                     ))}
                   </ul>
@@ -1320,41 +796,51 @@ function Roadmap() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  CTA banner
+//  FAQ
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CtaBanner() {
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 py-20">
-      <div aria-hidden className="absolute inset-0 opacity-30">
-        <div className="absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-white/30 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl" />
-      </div>
+const FAQS = [
+  ['¿Cuánto cuesta Eazy Stock?', 'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Cuando salgan los planes mensuales, todos tendrán prueba gratis para que decidas con calma.'],
+  ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
+  ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
+  ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
+  ['¿Cómo controlo el fiado?', 'Cada cliente tiene límite de crédito y deuda al día. Le mandas el recordatorio por WhatsApp con un clic o le imprimes su estado de cuenta en PDF. Los abonos parciales bajan la deuda solos.'],
+  ['¿Mis empleados pueden ver todo?', 'No. Tienes 14 permisos individuales: vender, aplicar descuentos, cancelar, fiar, ver reportes, recibir mercadería… incluso «solo ver el cierre de caja», sin ganancias ni costos.'],
+  ['¿Es difícil de aprender?', 'Cada pantalla trae un tutorial que se abre solo la primera vez. Si sabes usar WhatsApp, sabes usar Eazy Stock. Y está en español, inglés e italiano.'],
+  ['¿Mis datos están seguros?', 'Cada negocio vive aislado de los demás, la conexión va cifrada y cada cambio queda registrado con quién y cuándo. Tus datos son tuyos.'],
+]
 
-      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
-        <Reveal>
-        <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          Pruébalo gratis hoy.
-        </h2>
-        <p className="mb-9 text-base text-blue-100 sm:text-lg">
-          Sin tarjeta, sin compromiso. Empieza a operar en minutos —
-          si no te convence, no nos debes nada.
-        </p>
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link
-            to="/login"
-            className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-2xl shadow-blue-900/30 transition-all hover:scale-[1.02]"
-          >
-            Crear cuenta gratis
-            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <a
-            href="#features"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/20"
-          >
-            Volver a explorar
-          </a>
+function FaqItem({ q, a, open, onToggle }) {
+  return (
+    <div className={`overflow-hidden rounded-2xl border bg-white transition-all ${open ? 'border-blue-200 shadow-lg shadow-blue-50' : 'border-gray-200'}`}>
+      <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded={open}>
+        <span className="text-sm font-bold text-gray-900 sm:text-base">{q}</span>
+        <ChevronDown size={18} className={`flex-shrink-0 text-gray-400 transition-transform duration-300 ${open ? 'rotate-180 text-blue-600' : ''}`} />
+      </button>
+      <div className={`grid transition-all duration-300 ease-in-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{a}</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function Faq() {
+  const t = useT()
+  const [openIdx, setOpenIdx] = useState(0)
+  return (
+    <section id="faq" className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-3xl px-5 sm:px-8">
+        <Reveal>
+          <SectionHead kicker={t('Preguntas frecuentes')} title={t('Lo que todos preguntan')} />
+        </Reveal>
+        <Reveal delay={100}>
+          <div className="space-y-3">
+            {FAQS.map(([q, a], i) => (
+              <FaqItem key={q} q={t(q)} a={t(a)} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
+            ))}
+          </div>
         </Reveal>
       </div>
     </section>
@@ -1362,60 +848,85 @@ function CtaBanner() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Footer
+//  CTA + Footer
 // ═══════════════════════════════════════════════════════════════════════════
 
+function CtaBanner() {
+  const t = useT()
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 py-20">
+      <div aria-hidden className="absolute inset-0 opacity-30">
+        <div className="absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-white/30 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-amber-300/30 blur-3xl" />
+      </div>
+      <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-8">
+        <Reveal>
+          <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            {t('Pruébalo hoy con tu propio inventario.')}
+          </h2>
+          <p className="mb-9 text-base text-blue-100 sm:text-lg">
+            {t('Sin tarjeta, sin compromiso. Si en una tarde no te ordena la tienda, no nos debes nada.')}
+          </p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link to={CTA} className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-blue-700 shadow-2xl shadow-blue-900/30 transition-all hover:scale-[1.02]">
+              {t('Probar gratis')} <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link to={CTA} className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/20">
+              {t('Ya tengo cuenta')}
+            </Link>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 function Footer() {
+  const t = useT()
   return (
     <footer className="bg-[#0a0e1a] py-16">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid gap-8 md:grid-cols-4">
-          <div className="md:col-span-1">
+          <div>
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-lg object-contain" />
               <span className="text-lg font-bold text-white">Eazy Stock</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Sistema de inventario, ventas y cuentas corrientes para PYMEs
-              latinoamericanas. Construido con clientes reales.
+              {t('Inventario, ventas y fiado para tiendas de Perú y Latinoamérica. Construido con clientes reales.')}
             </p>
+            <div className="mt-4"><LangSwitcher compact className="!border-white/15 !bg-white/5 !text-slate-200 [&_select]:text-slate-200 [&_option]:text-gray-900" /></div>
           </div>
-
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Producto</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Producto')}</p>
             <ul className="space-y-2 text-sm">
-              <li><a href="#features"   className="text-slate-500 hover:text-white transition-colors">Funciones</a></li>
-              <li><a href="#showcase"   className="text-slate-500 hover:text-white transition-colors">Excel import</a></li>
-              <li><a href="#industries" className="text-slate-500 hover:text-white transition-colors">Para quién</a></li>
-              <li><a href="#roadmap"    className="text-slate-500 hover:text-white transition-colors">Roadmap</a></li>
-              <li><a href="#faq"        className="text-slate-500 hover:text-white transition-colors">Preguntas frecuentes</a></li>
+              {NAV.map((n) => (
+                <li key={n.href}><a href={n.href} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</a></li>
+              ))}
             </ul>
           </div>
-
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Empezar</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Empezar')}</p>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/login" className="text-slate-500 hover:text-white transition-colors">Iniciar sesión</Link></li>
-              <li><Link to="/login" className="text-slate-500 hover:text-white transition-colors">Crear cuenta</Link></li>
+              <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Probar gratis')}</Link></li>
+              <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Iniciar sesión')}</Link></li>
             </ul>
           </div>
-
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Soporte</p>
-            <ul className="space-y-2 text-sm">
-              <li className="text-slate-500">Documentación</li>
-              <li className="text-slate-500">Contacto · soporte@eazylife.com</li>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Soporte')}</p>
+            <ul className="space-y-2 text-sm text-slate-500">
+              <li>{t('Tutorial en cada pantalla')}</li>
+              <li><a href="mailto:kontakt.eazylife@gmail.com" className="transition-colors hover:text-white">kontakt.eazylife@gmail.com</a></li>
             </ul>
           </div>
         </div>
-
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 md:flex-row">
           <p className="text-xs text-slate-500">
-            © 2026 Eazy Stock — by EazyLife. Hecho en Latinoamérica.
+            © {new Date().getFullYear()} Eazy Stock · {t('una app de Eazy Life Company')} · {t('Hecho en Latinoamérica')}
           </p>
           <div className="flex items-center gap-2 text-xs text-slate-600">
             <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            Todos los sistemas operativos
+            {t('Todos los sistemas operativos')}
           </div>
         </div>
       </div>
@@ -1424,25 +935,25 @@ function Footer() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Main export
+//  Página
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <LandingStyles />
       <Navbar />
       <Hero />
-      <CustomersStrip />
+      <Marquee />
       <Stats />
+      <ProductShowcases />
+      <CatalogBento />
+      <FiadoSection />
+      <ImportSection />
       <Features />
-      <ImportShowcase />
-      <FiadoShowcase />
       <Industries />
-      <Testimonial />
-      <ReelTeaser />
       <HowItWorks />
-      <WhatsAppHighlight />
+      <Testimonial />
       <Roadmap />
       <Faq />
       <CtaBanner />

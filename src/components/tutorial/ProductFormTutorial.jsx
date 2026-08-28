@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronRight, ChevronLeft, X, Sparkles } from 'lucide-react'
+import { useT } from '../../i18n'
 
 /**
  * Tutorial interactivo del ProductFormModal.
@@ -45,13 +46,13 @@ const STEPS = [
   },
   {
     target: 'prices',
-    title: '6. Precios, formato y stock mínimo',
-    desc: 'P. compra es lo que pagas; P. venta es lo que cobras. Con el botón "Formato del precio" eliges cómo escribirlo: "2 decimales" es estilo calculadora (escribes 1150 y se muestra 11.50, siempre 2 decimales); "hasta 6 dec." te deja escribir la parte entera y hasta 6 decimales por separado, útil para precios al detalle (ej. 0.0357). Stock mínimo dispara una alerta cuando el stock baja a esa cantidad.',
+    title: '6. Precios, formato, stock mínimo y vencimiento',
+    desc: 'P. compra es lo que pagas; P. venta es lo que cobras. Con el botón "Formato del precio" eliges cómo escribirlo: "2 decimales" es estilo calculadora (escribes 1150 y se muestra 11.50, siempre 2 decimales); "hasta 6 dec." te deja escribir la parte entera y hasta 6 decimales por separado, útil para precios al detalle (ej. 0.0357). Stock mínimo dispara una alerta cuando el stock baja a esa cantidad. Si el producto caduca, ponle fecha de vencimiento: la app te avisa 30 días antes.',
   },
   {
     target: 'save-button',
     title: '7. Guardar',
-    desc: 'Cuando termines, haz clic en Guardar. El sistema le asigna un código (SKU) automáticamente y lo agrega a tu catálogo. Listo para vender.',
+    desc: 'Cuando termines, haz clic en Guardar. Si dejaste vacío el código (SKU), el sistema sigue tu numeración automáticamente; si hay códigos liberados de productos borrados, te los sugiere arriba. Listo para vender.',
   },
   {
     target: null,
@@ -66,6 +67,7 @@ const CALLOUT_H = 220
 const GAP = 14
 
 export default function ProductFormTutorial({ onClose }) {
+  const t = useT()
   const [step, setStep]             = useState(0)
   const [targetRect, setTargetRect] = useState(null)
   const [, forceRerender]           = useState(0)
@@ -172,12 +174,12 @@ export default function ProductFormTutorial({ onClose }) {
           <div className="flex items-center gap-2">
             {!targetRect && <Sparkles size={16} className="text-blue-600" />}
             <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
-              Paso {step + 1} / {STEPS.length}
+              {t('Paso')} {step + 1} / {STEPS.length}
             </span>
           </div>
           <button
             onClick={onClose}
-            title="Cerrar tutorial"
+            title={t('Cerrar tutorial')}
             className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             <X size={14} />
@@ -186,8 +188,8 @@ export default function ProductFormTutorial({ onClose }) {
 
         {/* Body */}
         <div className="px-5 pb-3">
-          <h3 className="mb-1.5 text-base font-bold text-gray-900">{current.title}</h3>
-          <p className="text-sm leading-relaxed text-gray-600">{current.desc}</p>
+          <h3 className="mb-1.5 text-base font-bold text-gray-900">{t(current.title)}</h3>
+          <p className="text-sm leading-relaxed text-gray-600">{t(current.desc)}</p>
         </div>
 
         {/* Dots */}
@@ -210,14 +212,14 @@ export default function ProductFormTutorial({ onClose }) {
             className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100"
           >
             {step > 0 && <ChevronLeft size={13} />}
-            {step === 0 ? 'Omitir' : 'Atrás'}
+            {step === 0 ? t('Omitir') : t('Atrás')}
           </button>
 
           <button
             onClick={next}
             className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
           >
-            {isLast ? '¡Entendido!' : 'Siguiente'}
+            {isLast ? t('¡Entendido!') : t('Siguiente')}
             {!isLast && <ChevronRight size={13} />}
           </button>
         </div>

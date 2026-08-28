@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, X, Check, Search, Loader2, AlertTriangle } from 'lucide-react'
 import { getErrorMessage } from '../../utils/handleApiError'
+import { useT } from '../../i18n'
 
 /**
  * Chip picker (los chips envuelven en filas, con scroll vertical) + quick-add inline.
@@ -18,13 +19,18 @@ export default function EntityPicker({
   onChange,
   onCreate,
   extraFields = [],
-  placeholder = 'Buscar...',
-  createLabel = 'Nuevo',
-  createButtonLabel = 'Crear',
-  newNamePlaceholder = 'Nombre *',
+  placeholder,
+  createLabel,
+  createButtonLabel,
+  newNamePlaceholder,
   warnIfLikely,
   isCreating = false,
 }) {
+  const t = useT()
+  const searchPlaceholder = placeholder        ?? t('Buscar...')
+  const createText        = createLabel        ?? t('Nuevo')
+  const createButtonText  = createButtonLabel  ?? t('Crear')
+  const namePlaceholder   = newNamePlaceholder ?? t('Nombre *')
   const [search, setSearch]     = useState('')
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName]   = useState('')
@@ -74,7 +80,7 @@ export default function EntityPicker({
             className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-red-500 transition-colors"
           >
             <X size={11} />
-            Quitar
+            {t('Quitar')}
           </button>
         )}
       </div>
@@ -97,7 +103,7 @@ export default function EntityPicker({
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={placeholder}
+          placeholder={searchPlaceholder}
           className="w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
         />
       </div>
@@ -107,7 +113,7 @@ export default function EntityPicker({
       <div className="flex max-h-40 flex-wrap content-start gap-2 overflow-y-auto pb-0.5 pr-1">
         {filtered.length === 0 ? (
           <span className="py-1 text-xs text-gray-400 flex-shrink-0">
-            {search ? 'Sin resultados' : 'No hay elementos'}
+            {search ? t('Sin resultados') : t('No hay elementos')}
           </span>
         ) : (
           filtered.map((item) => (
@@ -135,7 +141,7 @@ export default function EntityPicker({
           className="flex w-fit items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-blue-500 hover:text-blue-700 transition-colors"
         >
           <Plus size={11} />
-          {createLabel}
+          {createText}
         </button>
       ) : (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-2.5 space-y-2">
@@ -144,7 +150,7 @@ export default function EntityPicker({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleCreate())}
-            placeholder={newNamePlaceholder}
+            placeholder={namePlaceholder}
             autoFocus
             className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600/20"
           />
@@ -177,14 +183,14 @@ export default function EntityPicker({
               className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isCreating ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-              {createButtonLabel}
+              {createButtonText}
             </button>
             <button
               type="button"
               onClick={cancelForm}
               className="rounded-md px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
           </div>
         </div>

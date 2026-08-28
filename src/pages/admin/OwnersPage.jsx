@@ -8,12 +8,13 @@ import { useOwners, useCreateOwner, useDeleteOwner } from '../../hooks/useOwners
 import { useBusinesses } from '../../hooks/useBusinesses'
 import EditUserModal from '../../components/EditUserModal'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
+import { useT, dateLocale } from '../../i18n'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
   }).format(new Date(str))
 }
@@ -47,19 +48,21 @@ const inputCls =
 
 // ── form schema ───────────────────────────────────────────────────────────────
 
-const schema = z.object({
-  firstName:  z.string().min(2, 'Mínimo 2 caracteres'),
-  lastName:   z.string().min(2, 'Mínimo 2 caracteres'),
-  email:      z.string().email('Email inválido'),
-  password:   z.string().min(6, 'Mínimo 6 caracteres'),
-  businessId: z.string().uuid('Seleccioná un negocio'),
+const makeSchema = (t) => z.object({
+  firstName:  z.string().min(2, t('Mínimo 2 caracteres')),
+  lastName:   z.string().min(2, t('Mínimo 2 caracteres')),
+  email:      z.string().email(t('Email inválido')),
+  password:   z.string().min(6, t('Mínimo 6 caracteres')),
+  businessId: z.string().uuid(t('Seleccioná un negocio')),
 })
 
 // ── CreateOwnerModal ──────────────────────────────────────────────────────────
 
 function CreateOwnerModal({ onClose }) {
+  const t = useT()
   const createOwner = useCreateOwner()
   const [bizSearch, setBizSearch] = useState('')
+  const schema = useMemo(() => makeSchema(t), [t])
 
   // Fetch all active businesses for the dropdown (max 200 for now)
   const { data: bizPage, isLoading: bizLoading } = useBusinesses({ page: 0, size: 200 })
@@ -102,7 +105,7 @@ function CreateOwnerModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-          <h3 className="text-base font-semibold text-gray-900">Nuevo Owner</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t('Nuevo Owner')}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
             <X size={18} />
           </button>
@@ -114,7 +117,7 @@ function CreateOwnerModal({ onClose }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Nombre <span className="text-red-500">*</span>
+                  {t('Nombre')} <span className="text-red-500">*</span>
                 </label>
                 <input {...register('firstName')} placeholder="Juan" className={inputCls} />
                 {errors.firstName && (
@@ -123,7 +126,7 @@ function CreateOwnerModal({ onClose }) {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Apellido <span className="text-red-500">*</span>
+                  {t('Apellido')} <span className="text-red-500">*</span>
                 </label>
                 <input {...register('lastName')} placeholder="Pérez" className={inputCls} />
                 {errors.lastName && (
@@ -134,7 +137,7 @@ function CreateOwnerModal({ onClose }) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Email <span className="text-red-500">*</span>
+                {t('Email')} <span className="text-red-500">*</span>
               </label>
               <input {...register('email')} type="email" placeholder="owner@negocio.com" className={inputCls} />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
@@ -142,23 +145,23 @@ function CreateOwnerModal({ onClose }) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Contraseña <span className="text-red-500">*</span>
+                {t('Contraseña')} <span className="text-red-500">*</span>
               </label>
-              <input {...register('password')} type="password" placeholder="Mínimo 6 caracteres" className={inputCls} />
+              <input {...register('password')} type="password" placeholder={t('Mínimo 6 caracteres')} className={inputCls} />
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
             {/* Business dropdown */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Negocio <span className="text-red-500">*</span>
+                {t('Negocio')} <span className="text-red-500">*</span>
               </label>
 
               {bizLoading ? (
                 <div className="h-9 animate-pulse rounded-lg bg-gray-100" />
               ) : allBusinesses.length === 0 ? (
                 <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                  No hay negocios creados todavía. Crea uno primero desde "Negocios".
+                  {t('No hay negocios creados todavía. Crea uno primero desde "Negocios".')}
                 </p>
               ) : (
                 <>
@@ -167,7 +170,7 @@ function CreateOwnerModal({ onClose }) {
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Buscar por nombre o RUC..."
+                        placeholder={t('Buscar por nombre o RUC...')}
                         value={bizSearch}
                         onChange={(e) => setBizSearch(e.target.value)}
                         className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
@@ -175,7 +178,7 @@ function CreateOwnerModal({ onClose }) {
                     </div>
                   )}
                   <select {...register('businessId')} className={inputCls}>
-                    <option value="">— Seleccioná un negocio —</option>
+                    <option value="">{t('— Seleccioná un negocio —')}</option>
                     {filteredBiz.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name} · {b.taxIdType} {b.taxId}
@@ -202,7 +205,7 @@ function CreateOwnerModal({ onClose }) {
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button
               type="submit"
@@ -210,7 +213,7 @@ function CreateOwnerModal({ onClose }) {
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {createOwner.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createOwner.isPending ? 'Creando...' : 'Crear Owner'}
+              {createOwner.isPending ? t('Creando...') : t('Crear Owner')}
             </button>
           </div>
         </form>
@@ -224,6 +227,7 @@ function CreateOwnerModal({ onClose }) {
 // del owner, y el BE la rechaza (409) si el owner ya tiene actividad de negocio.
 
 function DeleteOwnerModal({ owner, onClose }) {
+  const t = useT()
   const deleteOwner = useDeleteOwner()
   const [confirmEmail, setConfirmEmail] = useState('')
 
@@ -233,7 +237,7 @@ function DeleteOwnerModal({ owner, onClose }) {
     if (!matches) return
     try {
       await deleteOwner.mutateAsync({ id: owner.id, confirmEmail: confirmEmail.trim() })
-      toast.success(`Owner ${owner.name} eliminado permanentemente`)
+      toast.success(t('Owner {name} eliminado permanentemente', { name: owner.name }))
       onClose()
     } catch { /* error mostrado inline */ }
   }
@@ -247,8 +251,8 @@ function DeleteOwnerModal({ owner, onClose }) {
             <ShieldAlert size={20} className="text-red-600" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-bold text-red-700">Eliminar owner permanentemente</h3>
-            <p className="mt-0.5 text-xs text-red-500">Esta acción no se puede deshacer.</p>
+            <h3 className="text-base font-bold text-red-700">{t('Eliminar owner permanentemente')}</h3>
+            <p className="mt-0.5 text-xs text-red-500">{t('Esta acción no se puede deshacer.')}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-red-300 hover:bg-red-100 hover:text-red-500">
             <X size={18} />
@@ -261,24 +265,23 @@ function DeleteOwnerModal({ owner, onClose }) {
             <p className="text-sm font-bold text-gray-900">{owner.name}</p>
             <p className="text-xs text-gray-500">{owner.email}</p>
             {owner.businessName && (
-              <p className="mt-1 text-xs text-gray-400">Negocio: {owner.businessName}</p>
+              <p className="mt-1 text-xs text-gray-400">{t('Negocio')}: {owner.businessName}</p>
             )}
           </div>
 
           <div className="flex gap-2.5 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-700">
             <AlertTriangle size={15} className="mt-0.5 flex-shrink-0" />
             <div>
-              <p>La cuenta y sus accesos se borran de forma <strong>definitiva</strong>.</p>
+              <p>{t('La cuenta y sus accesos se borran de forma definitiva.')}</p>
               <p className="mt-1">
-                Si el owner ya registró ventas, stock o compras, la eliminación se
-                bloquea automáticamente — en ese caso solo puede desactivarse.
+                {t('Si el owner ya registró ventas, stock o compras, la eliminación se bloquea automáticamente — en ese caso solo puede desactivarse.')}
               </p>
             </div>
           </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Escribe el email del owner para confirmar
+              {t('Escribe el email del owner para confirmar')}
             </label>
             <input
               type="email"
@@ -303,7 +306,7 @@ function DeleteOwnerModal({ owner, onClose }) {
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
           >
-            Cancelar
+            {t('Cancelar')}
           </button>
           <button
             type="button"
@@ -314,7 +317,7 @@ function DeleteOwnerModal({ owner, onClose }) {
             {deleteOwner.isPending
               ? <Loader2 size={14} className="animate-spin" />
               : <Trash2 size={14} />}
-            {deleteOwner.isPending ? 'Eliminando...' : 'Eliminar definitivamente'}
+            {deleteOwner.isPending ? t('Eliminando...') : t('Eliminar definitivamente')}
           </button>
         </div>
       </div>
@@ -327,6 +330,7 @@ function DeleteOwnerModal({ owner, onClose }) {
 const PAGE_SIZE = 20
 
 export default function OwnersPage() {
+  const t = useT()
   const [page, setPage]           = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
@@ -347,13 +351,13 @@ export default function OwnersPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-gray-900">Owners</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{t('Owners')}</h2>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <UserPlus size={15} />
-          Nuevo Owner
+          {t('Nuevo Owner')}
         </button>
       </div>
 
@@ -362,12 +366,12 @@ export default function OwnersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <th className="px-4 py-3">Owner</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Negocio</th>
-                <th className="px-4 py-3 text-center">Estado</th>
-                <th className="px-4 py-3">Registrado</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+                <th className="px-4 py-3">{t('Owner')}</th>
+                <th className="px-4 py-3">{t('Email')}</th>
+                <th className="px-4 py-3">{t('Negocio')}</th>
+                <th className="px-4 py-3 text-center">{t('Estado')}</th>
+                <th className="px-4 py-3">{t('Registrado')}</th>
+                <th className="px-4 py-3 text-center">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -376,7 +380,7 @@ export default function OwnersPage() {
               ) : owners.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-sm text-gray-400">
-                    No hay owners registrados
+                    {t('No hay owners registrados')}
                   </td>
                 </tr>
               ) : (
@@ -401,7 +405,7 @@ export default function OwnersPage() {
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                         u.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {u.active ? 'Activo' : 'Inactivo'}
+                        {u.active ? t('Activo') : t('Inactivo')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(u.createdAt)}</td>
@@ -409,15 +413,15 @@ export default function OwnersPage() {
                       <div className="inline-flex items-center gap-1.5">
                         <button
                           onClick={() => setEditTarget(u)}
-                          title="Editar usuario"
+                          title={t('Editar usuario')}
                           className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
                         >
                           <Pencil size={12} />
-                          Editar
+                          {t('Editar')}
                         </button>
                         <button
                           onClick={() => setDeleteTarget(u)}
-                          title="Eliminar owner permanentemente"
+                          title={t('Eliminar owner permanentemente')}
                           className="inline-flex items-center rounded-lg bg-red-50 p-1.5 text-red-500 transition-colors hover:bg-red-100"
                         >
                           <Trash2 size={13} />
@@ -434,8 +438,8 @@ export default function OwnersPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
             <p className="text-sm text-gray-500">
-              Mostrando <span className="font-medium">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-medium">{totalElements}</span> owners
+              {t('Mostrando')} <span className="font-medium">{fromRow}–{toRow}</span> {t('de')}{' '}
+              <span className="font-medium">{totalElements}</span> {t('owners')}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -443,7 +447,7 @@ export default function OwnersPage() {
                 disabled={page === 0}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
-                <ChevronLeft size={14} />Anterior
+                <ChevronLeft size={14} />{t('Anterior')}
               </button>
               <span className="px-2 text-sm text-gray-500">{page + 1} / {totalPages}</span>
               <button
@@ -451,7 +455,7 @@ export default function OwnersPage() {
                 disabled={page >= totalPages - 1}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
-                Siguiente<ChevronRight size={14} />
+                {t('Siguiente')}<ChevronRight size={14} />
               </button>
             </div>
           </div>

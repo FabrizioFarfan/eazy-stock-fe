@@ -2,6 +2,7 @@ import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
+import { useT } from '../../i18n'
 
 function formatCurrency(v) {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
@@ -13,17 +14,19 @@ function formatDay(dateStr) {
 }
 
 function CustomTooltip({ active, payload, label }) {
+  const t = useT()
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg text-xs">
       <p className="font-semibold text-gray-700 mb-1">{label}</p>
-      <p className="text-blue-600">Ingresos: {formatCurrency(payload[0]?.value)}</p>
-      {payload[1] && <p className="text-indigo-500">Unidades: {payload[1].value}</p>}
+      <p className="text-blue-600">{t('Ingresos')}: {formatCurrency(payload[0]?.value)}</p>
+      {payload[1] && <p className="text-indigo-500">{t('Unidades')}: {payload[1].value}</p>}
     </div>
   )
 }
 
 export default function SalesByDayChart({ byDay, isLoading }) {
+  const t = useT()
   if (isLoading) {
     return <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
   }
@@ -31,7 +34,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
   if (!byDay?.length) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-gray-200 bg-white">
-        <p className="text-sm text-gray-400">Sin datos para el período seleccionado</p>
+        <p className="text-sm text-gray-400">{t('Sin datos para el período seleccionado')}</p>
       </div>
     )
   }
@@ -47,7 +50,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h4 className="mb-4 text-sm font-semibold text-gray-700">Ingresos por día</h4>
+      <h4 className="mb-4 text-sm font-semibold text-gray-700">{t('Ingresos por día')}</h4>
       <ResponsiveContainer width="100%" height={240}>
         {useBar ? (
           <BarChart data={data} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
@@ -55,7 +58,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => `S/ ${v}`} tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} name="Ingresos" />
+            <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} name={t('Ingresos')} />
           </BarChart>
         ) : (
           <LineChart data={data} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
@@ -70,7 +73,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
               strokeWidth={2}
               dot={{ r: 3, fill: '#f97316' }}
               activeDot={{ r: 5 }}
-              name="Ingresos"
+              name={t('Ingresos')}
             />
           </LineChart>
         )}

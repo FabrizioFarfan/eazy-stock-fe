@@ -5,10 +5,11 @@ import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import ReceiptDetailModal from './ReceiptDetailModal'
+import { useT, dateLocale } from '../../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
@@ -16,6 +17,7 @@ function formatDate(str) {
 const PAGE_SIZE = 20
 
 export default function ReceiptsTab() {
+  const t = useT()
   const [page, setPage]                 = useState(0)
   const [supplierId, setSupplierId]     = useState('')
   const [from, setFrom]                 = useState('')
@@ -58,19 +60,19 @@ export default function ReceiptsTab() {
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
         <select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(0) }}
           className={`${selectCls} min-w-48`}>
-          <option value="">Todos los proveedores</option>
+          <option value="">{t('Todos los proveedores')}</option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Desde</span>
+          <span className="text-sm font-medium text-gray-500">{t('Desde')}</span>
           <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0) }}
             className={selectCls} />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">Hasta</span>
+          <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
           <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0) }}
             className={selectCls} />
         </div>
@@ -82,22 +84,22 @@ export default function ReceiptsTab() {
             type="text"
             value={reference}
             onChange={(e) => { setReference(e.target.value); setPage(0) }}
-            placeholder="Nº de factura / guía..."
+            placeholder={t('Nº de factura / guía...')}
             className={`${selectCls} pl-8 min-w-44`}
           />
         </div>
 
         <select value={paymentMode} onChange={(e) => { setPaymentMode(e.target.value); setPage(0) }}
           className={selectCls}>
-          <option value="">Contado y crédito</option>
-          <option value="CASH">Al contado</option>
-          <option value="CREDIT">A crédito</option>
+          <option value="">{t('Contado y crédito')}</option>
+          <option value="CASH">{t('Al contado')}</option>
+          <option value="CREDIT">{t('A crédito')}</option>
         </select>
 
         {hasFilters && (
           <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setPage(0) }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            Limpiar
+            {t('Limpiar')}
           </button>
         )}
       </div>
@@ -108,12 +110,12 @@ export default function ReceiptsTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Fecha</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Proveedor</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Factura/Guía</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400"># Productos</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Modalidad</th>
-                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">Total</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Fecha')}</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Proveedor')}</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Factura/Guía')}</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('# Productos')}</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Modalidad')}</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Total')}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,8 +129,8 @@ export default function ReceiptsTab() {
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50">
                         <AlertTriangle size={28} className="text-amber-600" />
                       </div>
-                      <p className="text-sm font-semibold text-gray-700">No pudimos cargar las recepciones</p>
-                      <p className="text-xs text-gray-400">Revisá tu conexión y volvé a intentar.</p>
+                      <p className="text-sm font-semibold text-gray-700">{t('No pudimos cargar las recepciones')}</p>
+                      <p className="text-xs text-gray-400">{t('Revisá tu conexión y volvé a intentar.')}</p>
                     </div>
                   </td>
                 </tr>
@@ -141,13 +143,13 @@ export default function ReceiptsTab() {
                       </div>
                       {hasFilters ? (
                         <>
-                          <p className="text-sm font-semibold text-gray-700">Sin recepciones con estos filtros</p>
-                          <p className="text-xs text-gray-400">Probá ampliar las fechas o tocá "Limpiar".</p>
+                          <p className="text-sm font-semibold text-gray-700">{t('Sin recepciones con estos filtros')}</p>
+                          <p className="text-xs text-gray-400">{t('Probá ampliar las fechas o tocá "Limpiar".')}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-sm font-semibold text-gray-700">Aún no registraste recepciones</p>
-                          <p className="text-xs text-gray-400">Hacé click en "Registrar recepción" arriba.</p>
+                          <p className="text-sm font-semibold text-gray-700">{t('Aún no registraste recepciones')}</p>
+                          <p className="text-xs text-gray-400">{t('Hacé click en "Registrar recepción" arriba.')}</p>
                         </>
                       )}
                     </div>
@@ -168,7 +170,7 @@ export default function ReceiptsTab() {
                           ? 'bg-amber-100 text-amber-700'
                           : 'bg-emerald-100 text-emerald-700'
                       }`}>
-                        {r.paymentMode === 'CREDIT' ? 'Crédito' : 'Contado'}
+                        {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right font-bold text-gray-900">{formatPrice(r.totalAmount)}</td>
@@ -182,18 +184,18 @@ export default function ReceiptsTab() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
             <p className="text-sm text-gray-400">
-              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-semibold text-gray-700">{totalElements}</span> recepciones
+              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
+              <span className="font-semibold text-gray-700">{totalElements}</span> {t('recepciones')}
             </p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                <ChevronLeft size={14} />Anterior
+                <ChevronLeft size={14} />{t('Anterior')}
               </button>
               <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
               <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                Siguiente<ChevronRight size={14} />
+                {t('Siguiente')}<ChevronRight size={14} />
               </button>
             </div>
           </div>

@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, X, Loader2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBusinesses, useCreateBusiness, useUpdateBusiness } from '../../hooks/useBusinesses'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
+import { useT, dateLocale } from '../../i18n'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
   }).format(new Date(str))
 }
@@ -22,11 +23,11 @@ const PAGE_SIZE = 20
 
 // ── form schema ───────────────────────────────────────────────────────────────
 
-const schema = z.object({
-  name:        z.string().min(2, 'Mínimo 2 caracteres'),
-  countryCode: z.string().min(2).max(3, 'Código de 2-3 letras'),
-  taxIdType:   z.string().min(1, 'Requerido'),
-  taxId:       z.string().min(1, 'Requerido'),
+const makeSchema = (t) => z.object({
+  name:        z.string().min(2, t('Mínimo 2 caracteres')),
+  countryCode: z.string().min(2).max(3, t('Código de 2-3 letras')),
+  taxIdType:   z.string().min(1, t('Requerido')),
+  taxId:       z.string().min(1, t('Requerido')),
 })
 
 // Common country options
@@ -59,11 +60,13 @@ function SkeletonRow() {
 // ── BusinessFormModal ─────────────────────────────────────────────────────────
 
 function BusinessFormModal({ business, onClose }) {
+  const t             = useT()
   const isEdit        = !!business
   const createBiz     = useCreateBusiness()
   const updateBiz     = useUpdateBusiness()
   const mutation      = isEdit ? updateBiz : createBiz
   const isPending     = mutation.isPending
+  const schema        = useMemo(() => makeSchema(t), [t])
 
   const {
     register,
@@ -104,7 +107,7 @@ function BusinessFormModal({ business, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <h3 className="text-base font-semibold text-gray-900">
-            {isEdit ? 'Editar negocio' : 'Nuevo negocio'}
+            {isEdit ? t('Editar negocio') : t('Nuevo negocio')}
           </h3>
           <button
             onClick={onClose}
@@ -119,12 +122,12 @@ function BusinessFormModal({ business, onClose }) {
             {/* Name */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Nombre del negocio <span className="text-red-500">*</span>
+                {t('Nombre del negocio')} <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('name')}
                 type="text"
-                placeholder="Ej. Ferretería El Sol"
+                placeholder={t('Ej. Ferretería El Sol')}
                 className={inputCls}
               />
               {errors.name && (
@@ -136,11 +139,11 @@ function BusinessFormModal({ business, onClose }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  País <span className="text-red-500">*</span>
+                  {t('País')} <span className="text-red-500">*</span>
                 </label>
                 <select {...register('countryCode')} className={inputCls}>
                   {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>{c.label}</option>
+                    <option key={c.code} value={c.code}>{t(c.label)}</option>
                   ))}
                 </select>
                 {errors.countryCode && (
@@ -150,7 +153,7 @@ function BusinessFormModal({ business, onClose }) {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Tipo ID tributario <span className="text-red-500">*</span>
+                  {t('Tipo ID tributario')} <span className="text-red-500">*</span>
                 </label>
                 <select {...register('taxIdType')} className={inputCls}>
                   {TAX_TYPES.map((t) => (
@@ -166,12 +169,12 @@ function BusinessFormModal({ business, onClose }) {
             {/* Tax ID */}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Número de identificación <span className="text-red-500">*</span>
+                {t('Número de identificación')} <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('taxId')}
                 type="text"
-                placeholder="Ej. 20601234567"
+                placeholder={t('Ej. 20601234567')}
                 className={inputCls}
               />
               {errors.taxId && (
@@ -193,7 +196,7 @@ function BusinessFormModal({ business, onClose }) {
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button
               type="submit"
@@ -201,7 +204,7 @@ function BusinessFormModal({ business, onClose }) {
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isPending && <Loader2 size={14} className="animate-spin" />}
-              {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Crear negocio'}
+              {isPending ? t('Guardando...') : isEdit ? t('Guardar cambios') : t('Crear negocio')}
             </button>
           </div>
         </form>
@@ -213,6 +216,7 @@ function BusinessFormModal({ business, onClose }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function BusinessesPage() {
+  const t = useT()
   const [page, setPage]       = useState(0)
   const [modal, setModal]     = useState(null) // null | 'create' | business object
 
@@ -232,13 +236,13 @@ export default function BusinessesPage() {
     <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-gray-900">Negocios</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{t('Negocios')}</h2>
         <button
           onClick={() => setModal('create')}
           className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
         >
           <Plus size={15} />
-          Nuevo negocio
+          {t('Nuevo negocio')}
         </button>
       </div>
 
@@ -248,13 +252,13 @@ export default function BusinessesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">País</th>
-                <th className="px-4 py-3">Tipo ID</th>
-                <th className="px-4 py-3">Nro. Identificación</th>
-                <th className="px-4 py-3 text-center">Estado</th>
-                <th className="px-4 py-3">Registrado</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+                <th className="px-4 py-3">{t('Nombre')}</th>
+                <th className="px-4 py-3">{t('País')}</th>
+                <th className="px-4 py-3">{t('Tipo ID')}</th>
+                <th className="px-4 py-3">{t('Nro. Identificación')}</th>
+                <th className="px-4 py-3 text-center">{t('Estado')}</th>
+                <th className="px-4 py-3">{t('Registrado')}</th>
+                <th className="px-4 py-3 text-center">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -263,7 +267,7 @@ export default function BusinessesPage() {
               ) : businesses.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center text-sm text-gray-400">
-                    No hay negocios registrados
+                    {t('No hay negocios registrados')}
                   </td>
                 </tr>
               ) : (
@@ -284,18 +288,18 @@ export default function BusinessesPage() {
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                         b.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {b.active ? 'Activo' : 'Inactivo'}
+                        {b.active ? t('Activo') : t('Inactivo')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">{formatDate(b.createdAt)}</td>
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => setModal(b)}
-                        title="Editar"
+                        title={t('Editar')}
                         className="inline-flex items-center gap-1 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100"
                       >
                         <Pencil size={12} />
-                        Editar
+                        {t('Editar')}
                       </button>
                     </td>
                   </tr>
@@ -309,9 +313,9 @@ export default function BusinessesPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
             <p className="text-sm text-gray-500">
-              Mostrando{' '}
-              <span className="font-medium">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-medium">{totalElements}</span> negocios
+              {t('Mostrando')}{' '}
+              <span className="font-medium">{fromRow}–{toRow}</span> {t('de')}{' '}
+              <span className="font-medium">{totalElements}</span> {t('negocios')}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -319,7 +323,7 @@ export default function BusinessesPage() {
                 disabled={page === 0}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
-                <ChevronLeft size={14} />Anterior
+                <ChevronLeft size={14} />{t('Anterior')}
               </button>
               <span className="px-2 text-sm text-gray-500">{page + 1} / {totalPages}</span>
               <button
@@ -327,7 +331,7 @@ export default function BusinessesPage() {
                 disabled={page >= totalPages - 1}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
-                Siguiente<ChevronRight size={14} />
+                {t('Siguiente')}<ChevronRight size={14} />
               </button>
             </div>
           </div>

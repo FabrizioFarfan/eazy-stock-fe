@@ -12,11 +12,13 @@ import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import { formatPrice } from '../utils/formatMoney'
 import { printQuote } from '../utils/printQuote'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT } from '../i18n'
 
 const inputCls = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 export default function QuotePage() {
   const navigate = useNavigate()
+  const t = useT()
   const { user, can } = useAuth()
 
   // Permiso: igual que registrar ventas (el owner puede dárselo al trabajador).
@@ -69,7 +71,7 @@ export default function QuotePage() {
       const product = (await productsApi.scanCode(code)).data.data
       addProduct(product)
     } catch {
-      toast.error('No se encontró un producto con ese código')
+      toast.error(t('No se encontró un producto con ese código'))
     } finally {
       scanLock.current = false
     }
@@ -88,7 +90,7 @@ export default function QuotePage() {
 
   const handleGenerate = () => {
     if (items.length === 0) {
-      toast.error('Agrega al menos un producto a la cotización')
+      toast.error(t('Agrega al menos un producto a la cotización'))
       return
     }
     const ok = printQuote({
@@ -99,7 +101,7 @@ export default function QuotePage() {
       notes: notes.trim(),
       validityDays: Number(validityDays) || 0,
     })
-    if (!ok) toast.error('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.')
+    if (!ok) toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
   }
 
   return (
@@ -110,30 +112,41 @@ export default function QuotePage() {
           <button onClick={() => navigate('/sales')}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
-            <span className="hidden sm:inline">Volver</span>
+            <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">Nueva cotización</h2>
-          <HelpDrawer title="Qué es una cotización" autoOpenKey="eazystock_quote_help_v1">
-            <p>Un <strong>presupuesto para tu cliente</strong>: mismos productos y precios que una venta, pero <strong>sin descontar stock ni registrar dinero</strong>.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Nueva cotización')}</h2>
+          <HelpDrawer title={t('Qué es una cotización')} autoOpenKey="eazystock_quote_help_v2">
+            <p><strong>{t('Un presupuesto para tu cliente')}</strong>: {t('mismos productos y precios que una venta, pero')} <strong>{t('sin descontar stock ni registrar dinero')}</strong>.</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🖨️ Imprimir o compartir</p>
-              <p className="mt-1">Al terminar puedes imprimirla o guardarla en PDF para enviársela al cliente por WhatsApp.</p>
+              <p className="font-semibold text-gray-800">{t('🔍 Busca o escanea')}</p>
+              <p className="mt-1">{t('Escribe el nombre o código del producto, o escanea su código de barras/QR con la cámara o tu lector. Cada resultado se agrega a la lista con un click.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">✅ Si el cliente acepta</p>
-              <p className="mt-1">Registra la venta normalmente en <strong>"Nueva venta"</strong> — ahí sí se descuenta el stock.</p>
+              <p className="font-semibold text-gray-800">{t('💲 Cantidad y precio')}</p>
+              <p className="mt-1">{t('Ajusta la cantidad y el precio de cada línea. Los productos de precio variable entran en 0: define tú el precio a cotizar. El selector «Formato del precio» cambia entre 2 decimales fijos o casillas separadas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('👤 Cliente y validez')}</p>
+              <p className="mt-1">{t('El nombre y teléfono del cliente son opcionales y salen impresos. Indica los días de validez y notas (condiciones, entrega, etc.).')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('🖨️ Imprimir o compartir')}</p>
+              <p className="mt-1">{t('Al terminar puedes imprimirla o guardarla en PDF para enviársela al cliente por WhatsApp.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('✅ Si el cliente acepta')}</p>
+              <p className="mt-1">{t('Registra la venta normalmente en')} <strong>{t('"Nueva venta"')}</strong> — {t('ahí sí se descuenta el stock.')}</p>
             </div>
           </HelpDrawer>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="hidden text-[11px] text-gray-400 sm:inline">Formato del precio</span>
+          <span className="hidden text-[11px] text-gray-400 sm:inline">{t('Formato del precio')}</span>
           <PriceInputModeToggle />
         </div>
       </div>
 
       <p className="-mt-2 text-sm text-gray-500">
-        Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp /
-        correo. No registra una venta ni descuenta stock.
+        {t('Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp / correo. No registra una venta ni descuenta stock.')}
       </p>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -146,14 +159,14 @@ export default function QuotePage() {
                 value={query}
                 onChange={(v) => { setQuery(v); setShowDrop(true) }}
                 onScan={handleScan}
-                placeholder="Buscar producto o escanear código..."
+                placeholder={t('Buscar producto o escanear código...')}
               />
               {showDrop && debounced && (
                 <div className="absolute z-20 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
                   {loadingProds ? (
-                    <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+                    <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
                   ) : results.length === 0 ? (
-                    <p className="px-4 py-3 text-sm text-gray-400">Sin resultados</p>
+                    <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                   ) : (
                     <>
                       {results.map((p) => (
@@ -163,14 +176,14 @@ export default function QuotePage() {
                           <span className="ml-2 flex items-center gap-2 flex-shrink-0">
                             <span className="font-mono text-xs text-gray-400">{p.sku}</span>
                             <span className="text-xs font-semibold text-gray-600">
-                              {p.priceIsVariable ? 'Variable' : formatPrice(p.salePrice)}
+                              {p.priceIsVariable ? t('Variable') : formatPrice(p.salePrice)}
                             </span>
                           </span>
                         </button>
                       ))}
                       {totalMatches > results.length && (
                         <p className="px-4 py-2 text-center text-xs text-gray-400">
-                          Mostrando {results.length} de {totalMatches} — escribe más letras para afinar
+                          {t('Mostrando {shown} de {total} — escribe más letras para afinar', { shown: results.length, total: totalMatches })}
                         </p>
                       )}
                     </>
@@ -185,17 +198,17 @@ export default function QuotePage() {
             {items.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-16">
                 <Package size={36} className="text-gray-200" />
-                <p className="text-sm text-gray-400">Busca y agrega productos para cotizar</p>
+                <p className="text-sm text-gray-400">{t('Busca y agrega productos para cotizar')}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/60 text-xs uppercase tracking-widest text-gray-400">
-                      <th className="px-4 py-3 text-left">Producto</th>
-                      <th className="px-4 py-3 text-center">Cantidad</th>
-                      <th className="px-4 py-3 text-left">Precio unit.</th>
-                      <th className="px-4 py-3 text-right">Subtotal</th>
+                      <th className="px-4 py-3 text-left">{t('Producto')}</th>
+                      <th className="px-4 py-3 text-center">{t('Cantidad')}</th>
+                      <th className="px-4 py-3 text-left">{t('Precio unit.')}</th>
+                      <th className="px-4 py-3 text-right">{t('Subtotal')}</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -227,7 +240,7 @@ export default function QuotePage() {
                           {formatPrice((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button onClick={() => removeItem(it.productId)} title="Quitar"
+                          <button onClick={() => removeItem(it.productId)} title={t('Quitar')}
                             className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
                             <Trash2 size={14} />
                           </button>
@@ -244,32 +257,32 @@ export default function QuotePage() {
         {/* Right: customer + meta + total */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900">Datos del cliente (opcional)</h3>
+            <h3 className="text-sm font-bold text-gray-900">{t('Datos del cliente (opcional)')}</h3>
             <div className="mt-3 space-y-3">
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Nombre del cliente" className={inputCls} />
+                placeholder={t('Nombre del cliente')} className={inputCls} />
               <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="Teléfono (opcional)" className={inputCls} />
+                placeholder={t('Teléfono (opcional)')} className={inputCls} />
             </div>
           </div>
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900">Detalles</h3>
+            <h3 className="text-sm font-bold text-gray-900">{t('Detalles')}</h3>
             <div className="mt-3 space-y-3">
               <label className="flex items-center justify-between gap-3 text-sm text-gray-600">
-                <span>Validez (días)</span>
+                <span>{t('Validez (días)')}</span>
                 <input type="number" min="0" value={validityDays}
                   onChange={(e) => setValidityDays(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
               </label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
-                placeholder="Notas (condiciones, entrega, etc.)" className={`${inputCls} resize-none`} />
+                placeholder={t('Notas (condiciones, entrega, etc.)')} className={`${inputCls} resize-none`} />
             </div>
           </div>
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm font-semibold text-gray-600">Total</span>
+              <span className="text-sm font-semibold text-gray-600">{t('Total')}</span>
               <span className="text-2xl font-extrabold text-gray-900">{formatPrice(total)}</span>
             </div>
             <button
@@ -278,10 +291,10 @@ export default function QuotePage() {
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
             >
               <Printer size={16} />
-              Generar cotización (PDF)
+              {t('Generar cotización (PDF)')}
             </button>
             <p className="mt-2 flex items-center justify-center gap-1 text-center text-[11px] text-gray-400">
-              <FileText size={11} /> Se abre el diálogo de impresión — elige "Guardar como PDF" para enviarlo.
+              <FileText size={11} /> {t('Se abre el diálogo de impresión — elige "Guardar como PDF" para enviarlo.')}
             </p>
           </div>
         </div>

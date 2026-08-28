@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -10,10 +10,11 @@ import { useEmployees, useCreateEmployee, useToggleEmployee } from '../hooks/use
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
+  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
 }
 
 function initials(name = '') {
@@ -55,6 +56,7 @@ const PERMISSION_META = [
 ]
 
 function PermissionsPanel({ targetUser, onClose }) {
+  const t = useT()
   const qc = useQueryClient()
 
   const { data: perms, isLoading } = useQuery({
@@ -72,7 +74,7 @@ function PermissionsPanel({ targetUser, onClose }) {
       <div className="flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div>
-            <h3 className="text-base font-bold text-gray-900">Permisos</h3>
+            <h3 className="text-base font-bold text-gray-900">{t('Permisos')}</h3>
             <p className="mt-0.5 text-sm text-gray-400">{targetUser.name}</p>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
@@ -81,7 +83,7 @@ function PermissionsPanel({ targetUser, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          <p className="mb-4 text-xs text-gray-400">Los cambios se aplican de inmediato</p>
+          <p className="mb-4 text-xs text-gray-400">{t('Los cambios se aplican de inmediato')}</p>
           {isLoading ? (
             <div className="space-y-5">
               {Array.from({ length: 11 }).map((_, i) => (
@@ -97,7 +99,7 @@ function PermissionsPanel({ targetUser, onClose }) {
                 const value = perms?.[key] ?? false
                 return (
                   <li key={key} className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-gray-700">{label}</span>
+                    <span className="text-sm font-medium text-gray-700">{t(label)}</span>
                     <button
                       role="switch"
                       aria-checked={value}
@@ -127,15 +129,17 @@ function PermissionsPanel({ targetUser, onClose }) {
 
 // ── Create employee modal ─────────────────────────────────────────────────────
 
-const schema = z.object({
-  firstName: z.string().min(2, 'Mínimo 2 caracteres'),
-  lastName:  z.string().min(2, 'Mínimo 2 caracteres'),
-  email:     z.string().email('Email inválido'),
-  password:  z.string().min(6, 'Mínimo 6 caracteres'),
+const makeSchema = (t) => z.object({
+  firstName: z.string().min(2, t('Mínimo 2 caracteres')),
+  lastName:  z.string().min(2, t('Mínimo 2 caracteres')),
+  email:     z.string().email(t('Email inválido')),
+  password:  z.string().min(6, t('Mínimo 6 caracteres')),
 })
 
 function CreateEmployeeModal({ businessName, onClose }) {
+  const t = useT()
   const createEmployee = useCreateEmployee()
+  const schema = useMemo(() => makeSchema(t), [t])
   const { register, handleSubmit, setError, formState: { errors } } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ firstName, lastName, email, password }) => {
@@ -143,7 +147,7 @@ function CreateEmployeeModal({ businessName, onClose }) {
       const employee = await createEmployee.mutateAsync({
         name: `${firstName} ${lastName}`.trim(), email, password,
       })
-      toast.success(`Empleado ${employee.name} creado`)
+      toast.success(t('Empleado {name} creado', { name: employee.name }))
       onClose()
     } catch (err) {
       const field = getErrorField(err)
@@ -158,8 +162,8 @@ function CreateEmployeeModal({ businessName, onClose }) {
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div>
-            <h3 className="text-base font-bold text-gray-900">Nuevo empleado</h3>
-            {businessName && <p className="mt-0.5 text-xs text-gray-400">para {businessName}</p>}
+            <h3 className="text-base font-bold text-gray-900">{t('Nuevo empleado')}</h3>
+            {businessName && <p className="mt-0.5 text-xs text-gray-400">{t('para {name}', { name: businessName })}</p>}
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X size={18} />
@@ -171,14 +175,14 @@ function CreateEmployeeModal({ businessName, onClose }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Nombre <span className="text-red-400">*</span>
+                  {t('Nombre')} <span className="text-red-400">*</span>
                 </label>
                 <input {...register('firstName')} placeholder="Maria" className={inputCls} />
                 {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Apellido <span className="text-red-400">*</span>
+                  {t('Apellido')} <span className="text-red-400">*</span>
                 </label>
                 <input {...register('lastName')} placeholder="García" className={inputCls} />
                 {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>}
@@ -187,7 +191,7 @@ function CreateEmployeeModal({ businessName, onClose }) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Email <span className="text-red-400">*</span>
+                {t('Email')} <span className="text-red-400">*</span>
               </label>
               <input {...register('email')} type="email" placeholder="maria@empresa.com" className={inputCls} />
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
@@ -195,9 +199,9 @@ function CreateEmployeeModal({ businessName, onClose }) {
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Contraseña temporal <span className="text-red-400">*</span>
+                {t('Contraseña temporal')} <span className="text-red-400">*</span>
               </label>
-              <input {...register('password')} type="password" placeholder="Mínimo 6 caracteres" className={inputCls} />
+              <input {...register('password')} type="password" placeholder={t('Mínimo 6 caracteres')} className={inputCls} />
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
@@ -211,12 +215,12 @@ function CreateEmployeeModal({ businessName, onClose }) {
           <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
             <button type="button" onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={createEmployee.isPending}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {createEmployee.isPending && <Loader2 size={14} className="animate-spin" />}
-              {createEmployee.isPending ? 'Creando...' : 'Crear empleado'}
+              {createEmployee.isPending ? t('Creando...') : t('Crear empleado')}
             </button>
           </div>
         </form>
@@ -231,31 +235,32 @@ const PAGE_SIZE = 20
 const BANNER_DISMISSED_KEY = 'permissions_banner_dismissed'
 
 function PermissionsBanner({ onDismiss }) {
+  const t = useT()
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 shadow-sm">
       <Lightbulb size={20} className="mt-0.5 flex-shrink-0 text-orange-500" />
       <div className="flex-1 text-sm text-orange-900">
-        <p className="font-semibold">Tip: configurá qué puede hacer cada empleado</p>
+        <p className="font-semibold">{t('Tip: configurá qué puede hacer cada empleado')}</p>
         <p className="mt-0.5 text-orange-800">
-          Hacé click en el botón{' '}
+          {t('Hacé click en el botón')}{' '}
           <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500 px-1.5 py-0.5 align-middle text-xs font-semibold text-white">
-            <Shield size={11} /> Permisos
+            <Shield size={11} /> {t('Permisos')}
           </span>{' '}
-          al lado de cada empleado para activar o desactivar acciones individuales
-          (vender, modificar stock, aplicar descuentos, ver reportes y más).
+          {t('al lado de cada empleado para activar o desactivar acciones individuales (vender, modificar stock, aplicar descuentos, ver reportes y más).')}
         </p>
       </div>
       <button
         onClick={onDismiss}
         className="flex-shrink-0 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-orange-600 transition-colors"
       >
-        Entendido
+        {t('Entendido')}
       </button>
     </div>
   )
 }
 
 export default function EmployeesPage() {
+  const t = useT()
   const { user: currentUser } = useAuth()
   const [page, setPage]           = useState(0)
   const [search, setSearch]       = useState('')
@@ -297,20 +302,28 @@ export default function EmployeesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Empleados</h2>
-          <HelpDrawer title="Cómo usar Empleados" autoOpenKey="eazystock_employees_help_v1">
-            <p>Crea cuentas para tu equipo: cada uno entra <strong>con su propio usuario</strong> y tú controlas qué puede hacer.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Empleados')}</h2>
+          <HelpDrawer title={t('Cómo usar Empleados')} autoOpenKey="eazystock_employees_help_v2">
+            <p>{t('Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🔐 Permisos</p>
-              <p className="mt-1">En cada empleado defines permisos puntuales: <strong>aplicar descuentos, ver reportes, recibir mercadería…</strong> Lo que no le actives, no lo ve.</p>
+              <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
+              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">📈 Seguimiento</p>
-              <p className="mt-1">Cada venta queda registrada con su vendedor. En "Rendimiento" ves <strong>quién vendió cuánto</strong> cada día.</p>
+              <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>
+              <p className="mt-1">{t('Permiso pensado para quien cierra el turno: el empleado ve en Balance el cierre de caja del día por medio de pago (efectivo, Yape, Plin, tarjeta…) y el total vendido, pero NO ve ganancias, costos ni márgenes. Así puede cuadrar la caja sin conocer cuánto ganas.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🚫 Desactivar</p>
-              <p className="mt-1">Si alguien deja de trabajar contigo, desactívalo: pierde el acceso pero <strong>su historial de ventas se conserva</strong>.</p>
+              <p className="font-semibold text-gray-800">🛒 {t('¿Qué ve un vendedor limitado?')}</p>
+              <p className="mt-1">{t('Un empleado con solo "Registrar ventas" entra directo al punto de venta: busca productos (también con escáner de código de barras/QR), cobra y emite el ticket. No ve reportes, costos, precios de compra, proveedores ni empleados; no puede fiar ni aplicar descuentos salvo que le des esos permisos; y solo ve su propio ranking de ventas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📈 {t('Seguimiento')}</p>
+              <p className="mt-1">{t('Cada venta queda registrada con su vendedor. En Reportes ves el ranking de vendedores: quién vendió cuánto cada día.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🚫 {t('Desactivar')}</p>
+              <p className="mt-1">{t('Si alguien deja de trabajar contigo, desactívalo: pierde el acceso pero su historial de ventas se conserva.')}</p>
             </div>
           </HelpDrawer>
           {!isLoading && (
@@ -322,7 +335,7 @@ export default function EmployeesPage() {
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
           <UserPlus size={15} />
-          Nuevo empleado
+          {t('Nuevo empleado')}
         </button>
       </div>
 
@@ -333,7 +346,7 @@ export default function EmployeesPage() {
       {/* Search */}
       <div className="relative max-w-sm">
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder="Buscar por nombre o email..." value={search}
+        <input type="text" placeholder={t('Buscar por nombre o email...')} value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0) }}
           className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
       </div>
@@ -344,11 +357,11 @@ export default function EmployeesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Empleado</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Email</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Estado</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Registrado</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Acciones</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Empleado')}</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Email')}</th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Estado')}</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Registrado')}</th>
+                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody>
@@ -367,14 +380,13 @@ export default function EmployeesPage() {
                   <td colSpan={5} className="py-14 text-center text-sm">
                     {search ? (
                       <span className="font-medium text-gray-400">
-                        Sin resultados para "{search}"
+                        {t('Sin resultados para "{q}"', { q: search })}
                       </span>
                     ) : (
                       <div className="mx-auto max-w-md space-y-2">
-                        <p className="font-semibold text-gray-700">Aún no tenés empleados</p>
+                        <p className="font-semibold text-gray-700">{t('Aún no tenés empleados')}</p>
                         <p className="text-gray-500">
-                          Creá empleados y asignales permisos individuales: vender,
-                          modificar stock, aplicar descuentos, ver reportes y más.
+                          {t('Creá empleados y asignales permisos individuales: vender, modificar stock, aplicar descuentos, ver reportes y más.')}
                         </p>
                       </div>
                     )}
@@ -402,7 +414,7 @@ export default function EmployeesPage() {
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {emp.active ? 'Activo' : 'Inactivo'}
+                          {emp.active ? t('Activo') : t('Inactivo')}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-xs text-gray-400">{formatDate(emp.createdAt)}</td>
@@ -410,21 +422,21 @@ export default function EmployeesPage() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => setPermTarget(emp)}
-                            title="Configurar permisos"
+                            title={t('Configurar permisos')}
                             className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/40 active:scale-[0.97]">
-                            <Shield size={14} />Permisos
+                            <Shield size={14} />{t('Permisos')}
                           </button>
                           <button
                             onClick={() => handleToggle(emp.id)}
                             disabled={isSelf || isToggling}
-                            title={isSelf ? 'No puedes desactivarte a ti mismo' : emp.active ? 'Desactivar empleado' : 'Activar empleado'}
+                            title={isSelf ? t('No puedes desactivarte a ti mismo') : emp.active ? t('Desactivar empleado') : t('Activar empleado')}
                             className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                               emp.active
                                 ? 'bg-red-50 text-red-600 hover:bg-red-100'
                                 : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                             }`}>
                             {isToggling ? <Loader2 size={12} className="animate-spin" /> : <Power size={12} />}
-                            {emp.active ? 'Desactivar' : 'Activar'}
+                            {emp.active ? t('Desactivar') : t('Activar')}
                           </button>
                         </div>
                       </td>
@@ -439,18 +451,18 @@ export default function EmployeesPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
             <p className="text-sm text-gray-400">
-              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> de{' '}
-              <span className="font-semibold text-gray-700">{totalElements}</span> empleados
+              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
+              <span className="font-semibold text-gray-700">{totalElements}</span> {t('empleados')}
             </p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                <ChevronLeft size={14} />Anterior
+                <ChevronLeft size={14} />{t('Anterior')}
               </button>
               <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
               <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
                 className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                Siguiente<ChevronRight size={14} />
+                {t('Siguiente')}<ChevronRight size={14} />
               </button>
             </div>
           </div>

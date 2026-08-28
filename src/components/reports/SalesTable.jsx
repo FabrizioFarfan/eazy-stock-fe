@@ -1,26 +1,27 @@
 import { useState } from 'react'
 import SaleDetailModal from './SaleDetailModal'
+import { useT, dateLocale } from '../../i18n'
 
 function formatCurrency(v) {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
 }
 
-function formatRelative(dateStr) {
+function formatRelative(dateStr, t) {
   if (!dateStr) return '—'
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins  = Math.floor(diff / 60000)
   const hours = Math.floor(mins / 60)
   const days  = Math.floor(hours / 24)
-  if (days === 0 && hours === 0) return `hace ${mins} min`
-  if (days === 0) return `hace ${hours} h`
-  if (days === 1) return 'ayer'
-  if (days < 30)  return `hace ${days} días`
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(new Date(dateStr))
+  if (days === 0 && hours === 0) return t('hace {n} min', { n: mins })
+  if (days === 0) return t('hace {n} h', { n: hours })
+  if (days === 1) return t('ayer')
+  if (days < 30)  return t('hace {n} días', { n: days })
+  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short' }).format(new Date(dateStr))
 }
 
 function formatDateFull(dateStr) {
   if (!dateStr) return ''
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(dateStr))
@@ -57,6 +58,7 @@ function SkeletonRow() {
 const PAGE_SIZES = [10, 20, 50, 100]
 
 export default function SalesTable({ items, isLoading, isError, page, onPageChange, onSizeChange, pageSize }) {
+  const t = useT()
   const [selectedSaleId, setSelectedSaleId] = useState(null)
 
   const content       = items?.content ?? []
@@ -71,12 +73,12 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-              <th className="px-4 py-3">Fecha</th>
-              <th className="px-4 py-3">Empleado</th>
-              <th className="px-4 py-3 text-center">Items</th>
-              <th className="px-4 py-3">Proveedores</th>
-              <th className="px-4 py-3">Marcas</th>
-              <th className="px-4 py-3 text-right">Total</th>
+              <th className="px-4 py-3">{t('Fecha')}</th>
+              <th className="px-4 py-3">{t('Empleado')}</th>
+              <th className="px-4 py-3 text-center">{t('Items')}</th>
+              <th className="px-4 py-3">{t('Proveedores')}</th>
+              <th className="px-4 py-3">{t('Marcas')}</th>
+              <th className="px-4 py-3 text-right">{t('Total')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -85,14 +87,14 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
             ) : isError ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-sm text-red-500">
-                  No pudimos cargar el reporte.
+                  {t('No pudimos cargar el reporte.')}
                 </td>
               </tr>
             ) : content.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-16 text-center">
-                  <p className="text-sm text-gray-500">No hay ventas en este período.</p>
-                  <p className="mt-1 text-xs text-gray-400">Probá ampliar el rango o limpiar filtros.</p>
+                  <p className="text-sm text-gray-500">{t('No hay ventas en este período.')}</p>
+                  <p className="mt-1 text-xs text-gray-400">{t('Probá ampliar el rango o limpiar filtros.')}</p>
                 </td>
               </tr>
             ) : (
@@ -107,7 +109,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
                       title={formatDateFull(row.date)}
                       className="text-gray-700"
                     >
-                      {formatRelative(row.date)}
+                      {formatRelative(row.date, t)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-800">{row.employeeName}</td>
@@ -128,7 +130,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
       {!isLoading && totalElements > 0 && (
         <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
           <div className="flex items-center gap-2">
-            <span>Filas por página:</span>
+            <span>{t('Filas por página:')}</span>
             <select
               value={pageSize}
               onChange={(e) => onSizeChange(Number(e.target.value))}
@@ -140,7 +142,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
             </select>
           </div>
           <span>
-            Página {currentPage + 1} de {totalPages} · {totalElements} ventas
+            {t('Página {page} de {pages} · {n} ventas', { page: currentPage + 1, pages: totalPages, n: totalElements })}
           </span>
           <div className="flex gap-1">
             <button
@@ -148,14 +150,14 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
               disabled={currentPage === 0}
               className="rounded px-3 py-1 hover:bg-gray-100 disabled:opacity-40"
             >
-              Prev
+              {t('Prev')}
             </button>
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage >= totalPages - 1}
               className="rounded px-3 py-1 hover:bg-gray-100 disabled:opacity-40"
             >
-              Next
+              {t('Next')}
             </button>
           </div>
         </div>

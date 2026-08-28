@@ -16,6 +16,7 @@ import CustomerFormModal from '../components/customers/CustomerFormModal'
 import { formatPrice } from '../utils/formatMoney'
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT } from '../i18n'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
 // decimals from the BE — `formatPrice` falls through to the same formatting.
@@ -32,6 +33,7 @@ function parseNumber(s) {
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
 function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
+  const t = useT()
   const noStock    = product.currentStock === 0
   const isVariable = !!product.priceIsVariable
 
@@ -81,14 +83,14 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
       <div className="mt-3 flex items-end justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs text-gray-400">
-            Stock:{' '}
+            {t('Stock')}:{' '}
             <span className={`font-bold ${noStock ? 'text-red-500' : 'text-gray-700'}`}>
-              {formatQty(product.currentStock)} {product.unit || 'unidad'}
+              {formatQty(product.currentStock)} {product.unit || t('unidad')}
             </span>
           </p>
           {isVariable ? (
             <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-              Precio variable
+              {t('Precio variable')}
             </span>
           ) : (
             <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
@@ -100,32 +102,32 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
             <button type="button"
               onClick={() => { setPriceOpen((o) => !o); setPrice(null) }}
               className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
-              {priceOpen ? 'dejar precio de lista' : isVariable ? 'Definir precio de venta' : 'Cambiar precio de venta'}
+              {priceOpen ? t('dejar precio de lista') : isVariable ? t('Definir precio de venta') : t('Cambiar precio de venta')}
             </button>
           )}
         </div>
 
         {inCart ? (
           <button disabled className="flex items-center gap-1.5 rounded-xl border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-            <Check size={12} />En carrito
+            <Check size={12} />{t('En carrito')}
           </button>
         ) : noStock ? (
           <button disabled className="cursor-not-allowed rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-400">
-            Sin stock
+            {t('Sin stock')}
           </button>
         ) : (
           <div className="flex flex-shrink-0 items-center gap-2">
             <QuantityInput
               value={qty}
               onChange={setQty}
-              unit={product.unit || 'unidad'}
+              unit={product.unit || t('unidad')}
               max={product.currentStock}
               maxDecimals={3}
               className="w-32"
             />
             <button onClick={handleAdd} disabled={qtyInvalid}
               className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-50">
-              <Plus size={12} />Agregar
+              <Plus size={12} />{t('Agregar')}
             </button>
           </div>
         )}
@@ -134,7 +136,7 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
       {priceOpen && !inCart && !noStock && (
         <div className="mt-2.5 border-t border-gray-100 pt-2.5">
           <PriceInput
-            label={isVariable ? 'Precio de venta de esta venta' : 'Nuevo precio de venta'}
+            label={isVariable ? t('Precio de venta de esta venta') : t('Nuevo precio de venta')}
             value={price ?? (isVariable ? null : Number(product.salePrice ?? 0))}
             onChange={setPrice}
             maxDecimals={6}
@@ -149,6 +151,7 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
 // ── CartItem ──────────────────────────────────────────────────────────────────
 
 function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange }) {
+  const t = useT()
   const { product, quantity, unitPrice } = item
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
@@ -178,11 +181,11 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
         <QuantityInput
           value={quantity}
           onChange={(v) => onQtyChange(product.id, v)}
-          unit={product.unit || 'unidad'}
+          unit={product.unit || t('unidad')}
           max={product.currentStock}
           maxDecimals={3}
           className="w-36"
-          label="Cantidad"
+          label={t('Cantidad')}
         />
         <p className="pb-2 text-sm font-bold text-gray-900">{formatPrice(subtotal)}</p>
       </div>
@@ -194,26 +197,26 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
           disabled={priceInputDisabled}
           maxDecimals={6}
           autoFocus={isVariable && variableMissing}
-          placeholderWhole={isVariable ? 'Definir' : '0'}
+          placeholderWhole={isVariable ? t('Definir') : '0'}
           placeholderDecimals={isVariable ? '00' : '00'}
         />
         {isVariable ? (
           variableMissing ? (
             <p className="mt-1 text-[11px] font-medium text-orange-700">
-              Este producto tiene precio variable — definir antes de cobrar
+              {t('Este producto tiene precio variable — definir antes de cobrar')}
             </p>
           ) : (
             <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-              <Tag size={10} />Precio definido en la venta
+              <Tag size={10} />{t('Precio definido en la venta')}
             </span>
           )
         ) : !canApplyDiscount ? (
           <p className="mt-1 text-[10px] text-gray-400">
-            Tu administrador no te ha autorizado a modificar precios
+            {t('Tu administrador no te ha autorizado a modificar precios')}
           </p>
         ) : isModified ? (
           <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-            <Tag size={10} />Precio modificado
+            <Tag size={10} />{t('Precio modificado')}
           </span>
         ) : null}
       </div>
@@ -224,6 +227,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
 // ── DiscountSection ───────────────────────────────────────────────────────────
 
 function DiscountSection({ subtotal, discountType, setDiscountType, discountValue, setDiscountValue }) {
+  const t = useT()
   const numericValue   = parseNumber(discountValue)
   const discountAmount = discountType === 'PERCENTAGE'
     ? Math.min(subtotal, subtotal * Math.min(numericValue, 100) / 100)
@@ -233,7 +237,7 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-bold text-gray-900">Descuento total</h3>
+      <h3 className="mb-3 text-sm font-bold text-gray-900">{t('Descuento total')}</h3>
 
       <div className="mb-3 grid grid-cols-2 gap-2">
         <button
@@ -245,7 +249,7 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
               : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
           }`}
         >
-          % Porcentaje
+          % {t('Porcentaje')}
         </button>
         <button
           type="button"
@@ -256,7 +260,7 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
               : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
           }`}
         >
-          Monto fijo
+          {t('Monto fijo')}
         </button>
       </div>
 
@@ -280,12 +284,12 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
       {safeAmount > 0 && (
         <div className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-sm">
           <div className="flex items-center justify-between text-gray-500">
-            <span>Subtotal</span>
+            <span>{t('Subtotal')}</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between text-orange-600">
             <span>
-              Descuento{discountType === 'PERCENTAGE' ? ` (${numericValue}%)` : ''}
+              {t('Descuento')}{discountType === 'PERCENTAGE' ? ` (${numericValue}%)` : ''}
             </span>
             <span>−{formatCurrency(safeAmount)}</span>
           </div>
@@ -298,6 +302,7 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
 // ── CreditSection — vender al fiado ───────────────────────────────────────────
 
 function CustomerPicker({ value, onSelect, onRequestCreate }) {
+  const t = useT()
   const [query, setQuery] = useState('')
   const [open, setOpen]   = useState(false)
   const debounced = useDebounce(query, 350)
@@ -314,7 +319,7 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-blue-900">{value.name}</p>
           <p className="truncate text-xs text-blue-700">
-            {[value.documentId, value.phone].filter(Boolean).join(' · ') || 'Cliente seleccionado'}
+            {[value.documentId, value.phone].filter(Boolean).join(' · ') || t('Cliente seleccionado')}
           </p>
         </div>
         <button type="button"
@@ -332,7 +337,7 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
         type="text"
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
-        placeholder="Buscar cliente por nombre, documento o teléfono..."
+        placeholder={t('Buscar cliente por nombre, documento o teléfono...')}
         className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
       />
       <button
@@ -341,18 +346,18 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
         className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
       >
         <UserPlus size={13} />
-        Registrar nuevo cliente
+        {t('Registrar nuevo cliente')}
       </button>
       {open && debounced && (
         <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
           {isLoading ? (
-            <p className="px-4 py-3 text-sm text-gray-400">Buscando...</p>
+            <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
           ) : results.length === 0 ? (
             <button type="button"
               onClick={() => onRequestCreate(query.trim())}
               className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm text-blue-700 hover:bg-blue-50">
               <UserPlus size={14} />
-              <span>Sin resultados — registrar <strong>{debounced}</strong> como nuevo cliente</span>
+              <span>{t('Sin resultados — registrar')} <strong>{debounced}</strong> {t('como nuevo cliente')}</span>
             </button>
           ) : (
             results.map((c) => (
@@ -376,6 +381,7 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
 }
 
 function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onRequestNewCustomer, total }) {
+  const t = useT()
   const debt   = customer ? Number(customer.currentDebt ?? 0) : 0
   const limit  = customer && customer.creditLimit != null ? Number(customer.creditLimit) : null
   const noCredit  = customer && (limit == null || limit <= 0)
@@ -387,7 +393,7 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onReques
       <label className="flex items-center justify-between gap-3 cursor-pointer">
         <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
           <User size={14} className="text-blue-600" />
-          Vender al fiado
+          {t('Vender al fiado')}
         </span>
         <span className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
           <input type="checkbox" checked={enabled} onChange={(e) => onToggle(e.target.checked)} className="sr-only" />
@@ -403,21 +409,20 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onReques
             <>
               {noCredit ? (
                 <p className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-100">
-                  Este cliente no tiene crédito habilitado. Editá su ficha para
-                  habilitarlo o vendé al contado.
+                  {t('Este cliente no tiene crédito habilitado. Editá su ficha para habilitarlo o vendé al contado.')}
                 </p>
               ) : (
                 <div className="space-y-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-xs">
                   <div className="flex items-center justify-between text-gray-500">
-                    <span>Deuda actual</span>
+                    <span>{t('Deuda actual')}</span>
                     <span className="font-mono">{formatPrice(debt)}</span>
                   </div>
                   <div className="flex items-center justify-between text-gray-500">
-                    <span>Límite</span>
+                    <span>{t('Límite')}</span>
                     <span className="font-mono">{formatPrice(limit)}</span>
                   </div>
                   <div className="flex items-center justify-between font-semibold text-gray-900">
-                    <span>Después de esta venta</span>
+                    <span>{t('Después de esta venta')}</span>
                     <span className="font-mono">{formatPrice(projected)}</span>
                   </div>
                 </div>
@@ -426,8 +431,7 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onReques
               {exceeds && (
                 <p className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100">
                   <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-                  Esta venta dejaría al cliente con {formatPrice(projected)} de deuda,
-                  excediendo su límite de {formatPrice(limit)}. Podés continuar igual.
+                  {t('Esta venta dejaría al cliente con {debt} de deuda, excediendo su límite de {limit}. Podés continuar igual.', { debt: formatPrice(projected), limit: formatPrice(limit) })}
                 </p>
               )}
             </>
@@ -456,6 +460,7 @@ function loadSaleDraft(userId) {
 
 export default function NewSalePage() {
   const navigate      = useNavigate()
+  const t             = useT()
   const { user, can } = useAuth()
   const canApplyDiscount = can('canApplyDiscount')
   const canSellOnCredit  = can('canSellOnCredit')
@@ -522,7 +527,8 @@ export default function NewSalePage() {
     setCustomer(d.customer ?? null)
     setPayMethod(d.payMethod ?? 'Efectivo')
     setPayOther(d.payOther ?? '')
-    toast.info(`Se restauró tu venta en curso (${d.cart.length} producto${d.cart.length === 1 ? '' : 's'})`)
+    toast.info(t('Se restauró tu venta en curso ({n} producto(s))', { n: d.cart.length }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   // Autosave del borrador en cada cambio; carrito vacío = no hay venta que guardar.
@@ -585,17 +591,17 @@ export default function NewSalePage() {
     scanLockRef.current = true
     try {
       const product = (await productsApi.scanCode(code)).data.data
-      if (!product)                   { toast.error('Producto no encontrado'); return }
-      if (product.currentStock === 0) { toast.warning('Sin stock disponible'); return }
+      if (!product)                   { toast.error(t('Producto no encontrado')); return }
+      if (product.currentStock === 0) { toast.warning(t('Sin stock disponible')); return }
       if (cartStateRef.current.some((i) => i.product.id === product.id)) {
         bumpQty(product.id)
-        toast.info('Cantidad actualizada')
+        toast.info(t('Cantidad actualizada'))
         return
       }
       addToCart(product)
       toast.success(product.name)
     } catch {
-      toast.error('Producto no encontrado')
+      toast.error(t('Producto no encontrado'))
     } finally {
       scanLockRef.current = false
     }
@@ -638,19 +644,19 @@ export default function NewSalePage() {
   const handleSubmit = async () => {
     if (cart.length === 0) return
     if (hasVariableWithoutPrice) {
-      toast.error('Definí el precio de los productos variables antes de cobrar')
+      toast.error(t('Definí el precio de los productos variables antes de cobrar'))
       return
     }
     if (invalidQtyItem) {
-      toast.error(`Revisá la cantidad de "${invalidQtyItem.product.name}"`)
+      toast.error(t('Revisá la cantidad de "{name}"', { name: invalidQtyItem.product.name }))
       return
     }
     if (fiadoMissingCustomer) {
-      toast.error('Seleccioná un cliente para la venta al fiado')
+      toast.error(t('Seleccioná un cliente para la venta al fiado'))
       return
     }
     if (fiadoCustomerNoCredit) {
-      toast.error('El cliente no tiene crédito habilitado')
+      toast.error(t('El cliente no tiene crédito habilitado'))
       return
     }
     try {
@@ -688,9 +694,9 @@ export default function NewSalePage() {
 
       if (sale?.onCredit && sale?.customerName) {
         toast.success(
-          `Venta al fiado registrada. ${sale.customerName} ahora debe ${formatPrice(sale.customerDebtAfter)}`,
+          t('Venta al fiado registrada. {name} ahora debe {debt}', { name: sale.customerName, debt: formatPrice(sale.customerDebtAfter) }),
           sale.exceedsCreditLimit
-            ? { description: 'Excede el límite de crédito configurado.' }
+            ? { description: t('Excede el límite de crédito configurado.') }
             : undefined,
         )
       }
@@ -706,24 +712,40 @@ export default function NewSalePage() {
         <button onClick={requestLeave}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
           <ArrowLeft size={14} />
-          <span className="hidden sm:inline">Volver</span>
+          <span className="hidden sm:inline">{t('Volver')}</span>
         </button>
-        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">Nueva venta</h2>
-        <HelpDrawer title="Cómo registrar una venta" autoOpenKey="eazystock_newsale_help_v1">
-          <p>Vender toma <strong>segundos</strong>: busca, agrega y cobra.</p>
+        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Nueva venta')}</h2>
+        <HelpDrawer title={t('Cómo registrar una venta')} autoOpenKey="eazystock_newsale_help_v2">
+          <p>{t('Vender toma')} <strong>{t('segundos')}</strong>: {t('busca, agrega y cobra.')}</p>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">1️⃣ Busca el producto</p>
-            <p className="mt-1">Escribe el nombre, el código, o <strong>escanea el código de barras</strong> con la cámara o tu lector. Click y se agrega al carrito.</p>
+            <p className="font-semibold text-gray-800">{t('1️⃣ Busca o escanea el producto')}</p>
+            <p className="mt-1">{t('Escribe el nombre, el código o el SKU, o')} <strong>{t('escanea el código de barras o QR')}</strong> {t('con la cámara del celular o tu lector físico. Con el lector, cada lectura agrega 1 unidad; si vuelves a escanear el mismo producto, la cantidad sube sola.')}</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">2️⃣ Ajusta el carrito</p>
-            <p className="mt-1">Cambia cantidades, aplica <strong>descuentos</strong> por producto o al total.</p>
+            <p className="font-semibold text-gray-800">{t('2️⃣ Cantidad y unidad de venta')}</p>
+            <p className="mt-1">{t('En la tarjeta indicas cuánto lleva antes de agregar. Los productos por kilo, litro, metro o gramo aceptan decimales (1.5 kg); los que se venden por unidad, solo enteros. Nunca podrás superar el stock disponible.')}</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">3️⃣ Cobra</p>
-            <p className="mt-1">Elige la forma de pago. Si es <strong>al fiado</strong>, selecciona el cliente y la deuda se anota sola en su cuenta.</p>
+            <p className="font-semibold text-gray-800">{t('💲 Precio variable y cambio de precio')}</p>
+            <p className="mt-1">{t('Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). Con permiso de modificar precios también puedes cambiar el precio de lista de cualquier producto; queda marcado como «Precio modificado».')}</p>
           </div>
-          <p className="text-xs text-gray-400">Tip: al confirmar, el stock se descuenta automáticamente — no tienes que tocar nada más.</p>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">{t('🏷️ Descuentos')}</p>
+            <p className="mt-1">{t('Con permiso, aplica un descuento al total en porcentaje o monto fijo. Verás subtotal, descuento y total a cobrar antes de confirmar.')}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">{t('💳 ¿Cómo pagó?')}</p>
+            <p className="mt-1">{t('Elige Efectivo, Yape, Transferencia u «Otro…» (Plin, tarjeta…). Lo que escribas en «Otro» queda guardado como botón para las próximas ventas; quítalo con su X. El medio de pago sale como burbuja en el historial y en el cierre de caja.')}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">{t('🧾 Vender al fiado')}</p>
+            <p className="mt-1">{t('Activa «Vender al fiado», busca al cliente (o regístralo ahí mismo) y la deuda se anota sola en su cuenta. Verás su deuda actual, el límite y cómo queda después de esta venta. Los cobros y recordatorios por WhatsApp se gestionan en Cuentas por cobrar.')}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">{t('📄 Cotización → venta')}</p>
+            <p className="mt-1">{t('Si el cliente aceptó una cotización, registra la venta aquí con los mismos productos y precios: la cotización no descuenta stock, la venta sí.')}</p>
+          </div>
+          <p className="text-xs text-gray-400">{t('Tip: la venta en curso se guarda sola — puedes ir a otra página y volver donde la dejaste. Al confirmar, el stock se descuenta automáticamente.')}</p>
         </HelpDrawer>
       </div>
 
@@ -738,7 +760,7 @@ export default function NewSalePage() {
             value={search}
             onChange={setSearch}
             onScan={scanCode}
-            placeholder="Buscar por nombre, código o escanear..."
+            placeholder={t('Buscar por nombre, código o escanear...')}
           />
 
          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
@@ -747,8 +769,8 @@ export default function NewSalePage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                 <Search size={28} className="text-gray-400" />
               </div>
-              <p className="text-sm font-medium text-gray-500">Busca un producto o escanea su código</p>
-              <p className="text-xs text-gray-400">Escribe el nombre, código o usa el lector de códigos</p>
+              <p className="text-sm font-medium text-gray-500">{t('Busca un producto o escanea su código')}</p>
+              <p className="text-xs text-gray-400">{t('Escribe el nombre, código o usa el lector de códigos')}</p>
             </div>
           ) : loadingProducts ? (
             <div className="space-y-3">
@@ -758,8 +780,8 @@ export default function NewSalePage() {
             </div>
           ) : searchResults.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12">
-              <p className="text-sm font-medium text-gray-500">Sin resultados</p>
-              <p className="text-xs text-gray-400">No se encontraron productos para "{debouncedSearch}"</p>
+              <p className="text-sm font-medium text-gray-500">{t('Sin resultados')}</p>
+              <p className="text-xs text-gray-400">{t('No se encontraron productos para "{q}"', { q: debouncedSearch })}</p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -769,7 +791,7 @@ export default function NewSalePage() {
               ))}
               {totalMatches > searchResults.length && (
                 <p className="py-2 text-center text-xs text-gray-400">
-                  Mostrando {searchResults.length} de {totalMatches} — escribe más letras para afinar la búsqueda
+                  {t('Mostrando {shown} de {total} — escribe más letras para afinar la búsqueda', { shown: searchResults.length, total: totalMatches })}
                 </p>
               )}
             </div>
@@ -787,7 +809,7 @@ export default function NewSalePage() {
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-gray-900">Carrito</h3>
+              <h3 className="text-sm font-bold text-gray-900">{t('Carrito')}</h3>
               {cart.length > 0 && (
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
                   {cart.length}
@@ -799,13 +821,13 @@ export default function NewSalePage() {
               <div className="flex flex-col items-center gap-2 py-8">
                 <ShoppingCart size={32} className="text-gray-200" />
                 <p className="text-center text-xs text-gray-400">
-                  Agrega productos para completar la venta
+                  {t('Agrega productos para completar la venta')}
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-end gap-2 pb-0.5">
-                  <span className="text-[11px] text-gray-400">Formato de precio</span>
+                  <span className="text-[11px] text-gray-400">{t('Formato de precio')}</span>
                   <PriceInputModeToggle />
                 </div>
                 {cart.map((item) => (
@@ -846,7 +868,7 @@ export default function NewSalePage() {
           {/* ¿Cómo pagó? — no aplica al fiado (todavía no pagó) */}
           {cart.length > 0 && !isFiado && (
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <h3 className="mb-2.5 text-sm font-bold text-gray-900">¿Cómo pagó?</h3>
+              <h3 className="mb-2.5 text-sm font-bold text-gray-900">{t('¿Cómo pagó?')}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {DEFAULT_METHODS.map((m) => (
                   <button key={m} type="button" onClick={() => setPayMethod(m)}
@@ -855,7 +877,7 @@ export default function NewSalePage() {
                         ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                         : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                     }`}>
-                    {m}
+                    {t(m)}
                   </button>
                 ))}
                 {/* Chips guardados del negocio: un click y listo, X para quitar */}
@@ -871,7 +893,7 @@ export default function NewSalePage() {
                       {m}
                     </button>
                     <button type="button" onClick={() => forgetMethod(m)}
-                      title={`Quitar "${m}" de los métodos guardados`}
+                      title={t('Quitar "{m}" de los métodos guardados', { m })}
                       className="border-l border-gray-100 px-1.5 py-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500">
                       <X size={11} />
                     </button>
@@ -883,7 +905,7 @@ export default function NewSalePage() {
                       ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                       : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                   }`}>
-                  Otro...
+                  {t('Otro...')}
                 </button>
               </div>
               {payMethod === '__otro__' && (
@@ -892,12 +914,12 @@ export default function NewSalePage() {
                     value={payOther}
                     onChange={(e) => setPayOther(e.target.value)}
                     maxLength={40}
-                    placeholder="Escribe cómo pagó (ej. Plin, tarjeta...)"
+                    placeholder={t('Escribe cómo pagó (ej. Plin, tarjeta...)')}
                     autoFocus
                     className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   />
                   <p className="mt-1 text-[11px] text-gray-400">
-                    Al confirmar la venta queda guardado como botón para las próximas
+                    {t('Al confirmar la venta queda guardado como botón para las próximas')}
                   </p>
                 </>
               )}
@@ -907,7 +929,7 @@ export default function NewSalePage() {
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notas (opcional)..."
+            placeholder={t('Notas (opcional)...')}
             rows={2}
             className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
           />
@@ -917,23 +939,23 @@ export default function NewSalePage() {
             {discountAmount > 0 && (
               <div className="mb-3 space-y-1 border-b border-gray-100 pb-3 text-sm">
                 <div className="flex items-center justify-between text-gray-500">
-                  <span>Subtotal</span>
+                  <span>{t('Subtotal')}</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-orange-600">
-                  <span>Descuento</span>
+                  <span>{t('Descuento')}</span>
                   <span>−{formatCurrency(discountAmount)}</span>
                 </div>
               </div>
             )}
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Total a cobrar</span>
+              <span className="text-sm font-medium text-gray-500">{t('Total a cobrar')}</span>
               <span className="text-2xl font-extrabold text-gray-900">{formatCurrency(total)}</span>
             </div>
 
             {createSale.isError && (
               <p className="mb-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600 ring-1 ring-red-100">
-                {createSale.error?.response?.data?.message ?? 'Error al registrar la venta'}
+                {createSale.error?.response?.data?.message ?? t('Error al registrar la venta')}
               </p>
             )}
 
@@ -944,8 +966,8 @@ export default function NewSalePage() {
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
               {createSale.isPending
-                ? 'Registrando...'
-                : isFiado ? 'Confirmar venta al fiado' : 'Confirmar venta'}
+                ? t('Registrando...')
+                : isFiado ? t('Confirmar venta al fiado') : t('Confirmar venta')}
             </button>
           </div>
         </div>
@@ -958,8 +980,8 @@ export default function NewSalePage() {
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <p className="text-xs text-gray-500">
-                {cart.length} producto{cart.length !== 1 ? 's' : ''}
-                {discountAmount > 0 && ` · −${formatCurrency(discountAmount)} desc.`}
+                {t('{n} producto(s)', { n: cart.length })}
+                {discountAmount > 0 && ` · −${formatCurrency(discountAmount)} ${t('desc.')}`}
               </p>
               <p className="text-lg font-extrabold text-gray-900 leading-none">
                 {formatCurrency(total)}
@@ -972,8 +994,8 @@ export default function NewSalePage() {
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}
               {createSale.isPending
-                ? 'Registrando...'
-                : isFiado ? 'Confirmar venta al fiado' : 'Confirmar venta'}
+                ? t('Registrando...')
+                : isFiado ? t('Confirmar venta al fiado') : t('Confirmar venta')}
             </button>
           </div>
         </div>
@@ -1001,6 +1023,7 @@ export default function NewSalePage() {
 // ── ConfirmLeaveModal — evita perder una venta en proceso por error ───────────
 
 function ConfirmLeaveModal({ onStay, onLeaveKeep, onDiscard }) {
+  const t = useT()
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
@@ -1009,10 +1032,9 @@ function ConfirmLeaveModal({ onStay, onLeaveKeep, onDiscard }) {
             <AlertTriangle size={18} className="text-orange-600" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-base font-bold text-gray-900">¿Salir de la venta?</h3>
+            <h3 className="text-base font-bold text-gray-900">{t('¿Salir de la venta?')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Tienes productos en el carrito. Puedes salir tranquilo: la venta
-              queda guardada y sigue donde la dejaste cuando vuelvas.
+              {t('Tienes productos en el carrito. Puedes salir tranquilo: la venta queda guardada y sigue donde la dejaste cuando vuelvas.')}
             </p>
           </div>
         </div>
@@ -1021,19 +1043,19 @@ function ConfirmLeaveModal({ onStay, onLeaveKeep, onDiscard }) {
             onClick={onLeaveKeep}
             className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
           >
-            Salir — la venta queda guardada
+            {t('Salir — la venta queda guardada')}
           </button>
           <button
             onClick={onStay}
             className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
           >
-            Seguir con la venta
+            {t('Seguir con la venta')}
           </button>
           <button
             onClick={onDiscard}
             className="rounded-xl px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
           >
-            Descartar la venta
+            {t('Descartar la venta')}
           </button>
         </div>
       </div>

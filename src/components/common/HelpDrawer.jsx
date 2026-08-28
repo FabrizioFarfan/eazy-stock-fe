@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { HelpCircle, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useT } from '../../i18n'
 
 /**
  * Panel lateral de ayuda contextual. Un botón (?) abre un drawer a la derecha
@@ -14,8 +15,11 @@ import { useAuth } from '../../context/AuthContext'
  * (con migración de los flags viejos de localStorage) — así no se repite
  * entre dispositivos ni después de un deploy.
  */
-export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLabel = '¿Cómo funciona?', autoOpenKey = null, children }) {
+export default function HelpDrawer({ title, buttonLabel, autoOpenKey = null, children }) {
   const { seenTutorials, markTutorialSeen } = useAuth()
+  const t = useT()
+  const resolvedTitle  = title ?? t('¿Cómo funciona esto?')
+  const resolvedButton = buttonLabel ?? t('¿Cómo funciona?')
   const [open, setOpen] = useState(false)
   const autoOpenedRef = useRef(false)
 
@@ -40,11 +44,11 @@ export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLab
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Abrir ayuda de este paso"
+        title={t('Abrir ayuda de este paso')}
         className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
       >
         <HelpCircle size={15} />
-        {buttonLabel}
+        {resolvedButton}
       </button>
 
       {open && (
@@ -59,10 +63,11 @@ export default function HelpDrawer({ title = '¿Cómo funciona esto?', buttonLab
             <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
               <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
                 <HelpCircle size={18} className="text-blue-600" />
-                {title}
+                {resolvedTitle}
               </h3>
               <button
                 onClick={() => setOpen(false)}
+                aria-label={t('Cerrar')}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <X size={18} />

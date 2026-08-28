@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { toast } from 'sonner'
+import { t } from '../i18n'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -71,7 +72,7 @@ api.interceptors.response.use(
         processQueue(refreshError, null)
         localStorage.removeItem('eazystock_token')
         localStorage.removeItem('eazystock_refresh_token')
-        toast.error('Tu sesión expiró. Por favor inicia sesión nuevamente.')
+        toast.error(t('Tu sesión expiró. Por favor inicia sesión nuevamente.'))
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {
@@ -81,7 +82,7 @@ api.interceptors.response.use(
 
     // Granular permission denial — show friendly toast, don't redirect
     if (status === 403 && data?.code === 'FORBIDDEN_BY_PERMISSION') {
-      toast.error(data.message ?? 'No tienes permiso para realizar esta acción')
+      toast.error(data.message ?? t('No tienes permiso para realizar esta acción'))
       return Promise.reject(error)
     }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Search, FolderOpen, Edit, Trash2, Loader2, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,9 +9,10 @@ import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT } from '../i18n'
 
-const schema = z.object({
-  name:        z.string().min(2, 'Mínimo 2 caracteres'),
+const makeSchema = (t) => z.object({
+  name:        z.string().min(2, t('Mínimo 2 caracteres')),
   description: z.string().optional(),
 })
 
@@ -34,11 +35,13 @@ const catColor = (name = '') => CAT_COLORS[(name.charCodeAt(0) || 0) % CAT_COLOR
 // ── Category modal ────────────────────────────────────────────────────────────
 
 function CategoryModal({ category, onClose }) {
+  const t = useT()
   const { user } = useAuth()
   const isEdit   = !!category
   const create   = useCreateCategory()
   const update   = useUpdateCategory()
   const mutation = isEdit ? update : create
+  const schema   = useMemo(() => makeSchema(t), [t])
 
   const [attrInput, setAttrInput]         = useState('')
   const [suggestedAttrs, setSuggestedAttrs] = useState(
@@ -80,7 +83,7 @@ function CategoryModal({ category, onClose }) {
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <h3 className="text-base font-bold text-gray-900">
-            {isEdit ? 'Editar categoría' : 'Nueva categoría'}
+            {isEdit ? t('Editar categoría') : t('Nueva categoría')}
           </h3>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X size={18} />
@@ -90,31 +93,31 @@ function CategoryModal({ category, onClose }) {
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="space-y-4 px-6 py-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre *</label>
-              <input {...register('name')} placeholder="Ej. Herramientas manuales" className={inputCls} />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')} *</label>
+              <input {...register('name')} placeholder={t('Ej. Herramientas manuales')} className={inputCls} />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Descripción</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Descripción')}</label>
               <textarea {...register('description')} rows={2}
-                placeholder="Descripción opcional"
+                placeholder={t('Descripción opcional')}
                 className={`${inputCls} resize-none`} />
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Atributos sugeridos
+                {t('Atributos sugeridos')}
               </label>
               <p className="mb-2 text-xs text-gray-400">
-                Los atributos que aparecerán como chips al crear productos de esta categoría.
+                {t('Los atributos que aparecerán como chips al crear productos de esta categoría.')}
               </p>
               <div className="flex gap-2">
                 <input
                   value={attrInput}
                   onChange={(e) => setAttrInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttr() } }}
-                  placeholder="Ej. material, longitud..."
+                  placeholder={t('Ej. material, longitud...')}
                   className={`${inputCls} flex-1`}
                 />
                 <button type="button" onClick={addAttr}
@@ -148,12 +151,12 @@ function CategoryModal({ category, onClose }) {
           <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
             <button type="button" onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={mutation.isPending}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
-              {mutation.isPending ? 'Guardando...' : 'Guardar'}
+              {mutation.isPending ? t('Guardando...') : t('Guardar')}
             </button>
           </div>
         </form>
@@ -165,6 +168,7 @@ function CategoryModal({ category, onClose }) {
 // ── Category card ─────────────────────────────────────────────────────────────
 
 function CategoryCard({ category, onEdit, onDelete }) {
+  const t = useT()
   const [expanded, setExpanded] = useState(false)
   const initial  = category.name[0]?.toUpperCase() ?? '?'
   const colorCls = catColor(category.name)
@@ -182,7 +186,7 @@ function CategoryCard({ category, onEdit, onDelete }) {
             <p className="mt-0.5 text-xs text-gray-400 truncate">{category.description}</p>
           )}
           {attrs.length > 0 && (
-            <p className="mt-0.5 text-xs text-gray-400">{attrs.length} atributo{attrs.length !== 1 ? 's' : ''}</p>
+            <p className="mt-0.5 text-xs text-gray-400">{attrs.length !== 1 ? t('{n} atributos', { n: attrs.length }) : t('1 atributo')}</p>
           )}
         </div>
         <div className="flex gap-1 items-center">
@@ -192,11 +196,11 @@ function CategoryCard({ category, onEdit, onDelete }) {
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
           )}
-          <button onClick={(e) => { e.stopPropagation(); onEdit(category) }} title="Editar"
+          <button onClick={(e) => { e.stopPropagation(); onEdit(category) }} title={t('Editar')}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
             <Edit size={14} />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(category) }} title="Eliminar"
+          <button onClick={(e) => { e.stopPropagation(); onDelete(category) }} title={t('Eliminar')}
             className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
             <Trash2 size={14} />
           </button>
@@ -221,6 +225,7 @@ function CategoryCard({ category, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CategoriesPage() {
+  const t = useT()
   const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [modal, setModal]   = useState(null)
@@ -235,7 +240,7 @@ export default function CategoriesPage() {
   const categories = data?.content ?? []
 
   const handleDelete = async (c) => {
-    if (!window.confirm(`¿Eliminar "${c.name}"?\nEsto fallará si tiene productos asociados.`)) return
+    if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asociados.', { name: c.name }))) return
     try { await deleteCategory.mutateAsync({ id: c.id, params: adminBizParam(user) }) }
     catch (err) { alert(getErrorMessage(err)) }
   }
@@ -245,16 +250,16 @@ export default function CategoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Categorías</h2>
-          <HelpDrawer title="Cómo usar Categorías" autoOpenKey="eazystock_categories_help_v1">
-            <p>Las categorías <strong>ordenan tu catálogo</strong> y hacen que buscar y filtrar sea mucho más rápido.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Categorías')}</h2>
+          <HelpDrawer title={t('Cómo usar Categorías')} autoOpenKey="eazystock_categories_help_v1">
+            <p>{t('Las categorías ordenan tu catálogo y hacen que buscar y filtrar sea mucho más rápido.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🏷️ Atributos sugeridos</p>
-              <p className="mt-1">Cada categoría puede sugerir campos al crear un producto (talla, color, presentación…). Así todos los productos de una categoría <strong>quedan completos y parejos</strong>.</p>
+              <p className="font-semibold text-gray-800">🏷️ {t('Atributos sugeridos')}</p>
+              <p className="mt-1">{t('Cada categoría puede sugerir campos al crear un producto (talla, color, presentación…). Así todos los productos de una categoría quedan completos y parejos.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">✏️ Editar</p>
-              <p className="mt-1">Click en una categoría para renombrarla o ajustar sus atributos. Los productos existentes no se pierden.</p>
+              <p className="font-semibold text-gray-800">✏️ {t('Editar')}</p>
+              <p className="mt-1">{t('Click en una categoría para renombrarla o ajustar sus atributos. Los productos existentes no se pierden.')}</p>
             </div>
           </HelpDrawer>
           {!isLoading && (
@@ -266,14 +271,14 @@ export default function CategoriesPage() {
         <button onClick={() => setModal({ category: null })}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
           <Plus size={15} />
-          Nueva categoría
+          {t('Nueva categoría')}
         </button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-sm">
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder="Buscar categoría..." value={search}
+        <input type="text" placeholder={t('Buscar categoría...')} value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
       </div>
@@ -291,16 +296,16 @@ export default function CategoriesPage() {
             <FolderOpen size={28} className="text-gray-400" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-gray-700">No hay categorías aún</p>
+            <p className="text-sm font-semibold text-gray-700">{t('No hay categorías aún')}</p>
             <p className="mt-1 text-xs text-gray-400">
-              {search ? `Sin resultados para "${search}"` : 'Crea categorías para organizar tus productos'}
+              {search ? t('Sin resultados para "{q}"', { q: search }) : t('Crea categorías para organizar tus productos')}
             </p>
           </div>
           {!search && (
             <button onClick={() => setModal({ category: null })}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98]">
               <Plus size={14} />
-              Agregar categoría
+              {t('Agregar categoría')}
             </button>
           )}
         </div>

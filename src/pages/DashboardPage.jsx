@@ -13,13 +13,14 @@ import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { localISODate } from '../utils/formatDate'
+import { useT, dateLocale } from '../i18n'
 
 function todayStr() {
   return localISODate()
 }
 
 function todayLabel() {
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).format(new Date())
 }
@@ -33,7 +34,7 @@ function formatCurrency(amount) {
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
   }).format(new Date(str))
 }
@@ -67,23 +68,32 @@ function StatCardSkeleton() {
 }
 
 function PageHeader({ name }) {
+  const t = useT()
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">
-          Bienvenido{name ? `, ${name.split(' ')[0]}` : ''} 👋
+          {name ? t('Bienvenido, {name}', { name: name.split(' ')[0] }) : t('Bienvenido')} 👋
         </h2>
         <p className="mt-1 text-sm capitalize text-gray-400">{todayLabel()}</p>
       </div>
-      <HelpDrawer title="Qué muestra el Dashboard" autoOpenKey="eazystock_dashboard_help_v1">
-        <p>Tu negocio <strong>de un vistazo</strong>, actualizado en tiempo real.</p>
+      <HelpDrawer title={t('Qué muestra el Dashboard')} autoOpenKey="eazystock_dashboard_help_v2">
+        <p>{t('Tu negocio')} <strong>{t('de un vistazo')}</strong>, {t('actualizado en tiempo real.')}</p>
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-          <p className="font-semibold text-gray-800">📊 Tarjetas de arriba</p>
-          <p className="mt-1">Las ventas de hoy, productos bajo stock y los números clave del día. Es lo primero que conviene mirar al abrir la app.</p>
+          <p className="font-semibold text-gray-800">📊 {t('Tarjetas de arriba')}</p>
+          <p className="mt-1">{t('Ventas del día (cuántos tickets), unidades vendidas, ingresos del día y movimientos de hoy (entradas, ventas, ajustes y devoluciones de stock). Es lo primero que conviene mirar al abrir la app.')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-          <p className="font-semibold text-gray-800">🧭 ¿Y después?</p>
-          <p className="mt-1">Todo lo que ves acá tiene su página completa en el menú de la izquierda: Ventas, Stock, Reportes… Este es solo el resumen.</p>
+          <p className="font-semibold text-gray-800">🕒 {t('«Hoy» según tu hora local')}</p>
+          <p className="mt-1">{t('El día se calcula con la hora de tu dispositivo, no la del servidor: lo que vendas por la tarde o la noche cuenta para hoy.')}</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">⚠️ {t('Stock bajo y por vencer')}</p>
+          <p className="mt-1">{t('Alertas de stock bajo lista los productos por debajo de su stock mínimo con el déficit. Productos por vencer aparece solo si hay productos que vencen dentro de 30 días o ya vencieron (según la fecha de vencimiento que cargas en cada producto). Ambos tienen su reporte completo en Reportes.')}</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <p className="font-semibold text-gray-800">🧭 {t('¿Y después?')}</p>
+          <p className="mt-1">{t('Todo lo que ves acá tiene su página completa en el menú de la izquierda: Ventas, Stock, Reportes… Este es solo el resumen. Desde Acciones rápidas creas una venta o una cotización en un toque.')}</p>
         </div>
       </HelpDrawer>
     </div>
@@ -93,6 +103,7 @@ function PageHeader({ name }) {
 // ── Super Admin ───────────────────────────────────────────────────────────────
 
 function SuperAdminDashboard({ name }) {
+  const t = useT()
   const navigate = useNavigate()
 
   const { data: bizPage, isLoading: loadingBiz } = useBusinesses({ page: 0, size: 5, sort: 'createdAt,desc' })
@@ -113,31 +124,31 @@ function SuperAdminDashboard({ name }) {
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <StatCard icon={Building2}    label="Total negocios"   value={totalBiz}         iconBg="bg-blue-50"   iconColor="text-blue-500" />
-            <StatCard icon={CheckCircle2} label="Negocios activos" value={activeBiz}         iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-            <StatCard icon={Users}        label="Total usuarios"   value={totalUsers}        iconBg="bg-indigo-50" iconColor="text-indigo-500" />
-            <StatCard icon={TrendingUp}   label="Nuevos este mes"  value={businesses.length} iconBg="bg-amber-50"  iconColor="text-amber-500" />
+            <StatCard icon={Building2}    label={t('Total negocios')}   value={totalBiz}         iconBg="bg-blue-50"   iconColor="text-blue-500" />
+            <StatCard icon={CheckCircle2} label={t('Negocios activos')} value={activeBiz}         iconBg="bg-emerald-50" iconColor="text-emerald-500" />
+            <StatCard icon={Users}        label={t('Total usuarios')}   value={totalUsers}        iconBg="bg-indigo-50" iconColor="text-indigo-500" />
+            <StatCard icon={TrendingUp}   label={t('Nuevos este mes')}  value={businesses.length} iconBg="bg-amber-50"  iconColor="text-amber-500" />
           </>
         )}
       </div>
 
       {/* Quick actions */}
       <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
+        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate('/admin/businesses')}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
           >
             <Building2 size={15} />
-            Nuevo negocio
+            {t('Nuevo negocio')}
           </button>
           <button
             onClick={() => navigate('/admin/owners')}
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <Users size={15} />
-            Nuevo owner
+            {t('Nuevo owner')}
           </button>
         </div>
       </div>
@@ -145,7 +156,7 @@ function SuperAdminDashboard({ name }) {
       {/* Recent businesses */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-6 py-4">
-          <h3 className="text-sm font-semibold text-gray-900">Negocios recientes</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t('Negocios recientes')}</h3>
         </div>
         {loadingBiz ? (
           <div className="space-y-3 p-6">
@@ -154,17 +165,17 @@ function SuperAdminDashboard({ name }) {
             ))}
           </div>
         ) : businesses.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-400">No hay negocios registrados aún</p>
+          <p className="py-12 text-center text-sm text-gray-400">{t('No hay negocios registrados aún')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60 text-left">
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Nombre</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">País</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Nombre')}</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('País')}</th>
                   <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">RUC</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400 text-center">Estado</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">Registrado</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400 text-center">{t('Estado')}</th>
+                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Registrado')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,7 +190,7 @@ function SuperAdminDashboard({ name }) {
                           ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                           : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {b.active ? 'Activo' : 'Inactivo'}
+                        {b.active ? t('Activo') : t('Inactivo')}
                       </span>
                     </td>
                     <td className="px-6 py-3.5 text-xs text-gray-400">{formatDate(b.createdAt)}</td>
@@ -194,7 +205,7 @@ function SuperAdminDashboard({ name }) {
             onClick={() => navigate('/admin/businesses')}
             className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
           >
-            Ver todos los negocios →
+            {t('Ver todos los negocios')} →
           </button>
         </div>
       </div>
@@ -213,6 +224,7 @@ const TYPE_CLS   = {
 }
 
 function OwnerDashboard({ name, businessId }) {
+  const t = useT()
   const navigate    = useNavigate()
   const scopeParams = businessId ? { businessId } : {}
 
@@ -235,10 +247,10 @@ function OwnerDashboard({ name, businessId }) {
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <StatCard icon={ShoppingCart} label="Ventas del día"      value={summary?.totalSales ?? 0}                   iconBg="bg-blue-50"   iconColor="text-blue-500" />
-            <StatCard icon={Package}      label="Unidades vendidas"   value={summary?.totalItemsSold ?? 0}               iconBg="bg-indigo-50" iconColor="text-indigo-500" />
-            <StatCard icon={TrendingUp}   label="Ingresos del día"    value={formatCurrency(summary?.totalRevenue)}      iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-            <StatCard icon={ArrowUpDown}  label="Movimientos de hoy"  value={movements.length}                           iconBg="bg-amber-50"  iconColor="text-amber-500" />
+            <StatCard icon={ShoppingCart} label={t('Ventas del día')}      value={summary?.totalSales ?? 0}                   iconBg="bg-blue-50"   iconColor="text-blue-500" />
+            <StatCard icon={Package}      label={t('Unidades vendidas')}   value={summary?.totalItemsSold ?? 0}               iconBg="bg-indigo-50" iconColor="text-indigo-500" />
+            <StatCard icon={TrendingUp}   label={t('Ingresos del día')}    value={formatCurrency(summary?.totalRevenue)}      iconBg="bg-emerald-50" iconColor="text-emerald-500" />
+            <StatCard icon={ArrowUpDown}  label={t('Movimientos de hoy')}  value={movements.length}                           iconBg="bg-amber-50"  iconColor="text-amber-500" />
           </>
         )}
       </div>
@@ -252,12 +264,11 @@ function OwnerDashboard({ name, businessId }) {
             </div>
             <div>
               <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-                <Sparkles size={10} /> Nuevo
+                <Sparkles size={10} /> {t('Nuevo')}
               </div>
-              <h3 className="text-base font-bold text-gray-900">Crea presupuestos para tus clientes</h3>
+              <h3 className="text-base font-bold text-gray-900">{t('Crea presupuestos para tus clientes')}</h3>
               <p className="mt-0.5 text-sm text-gray-500">
-                Arma una cotización en segundos y expórtala en PDF para enviarla por WhatsApp o correo.
-                No descuenta stock ni registra una venta.
+                {t('Arma una cotización en segundos y expórtala en PDF para enviarla por WhatsApp o correo. No descuenta stock ni registra una venta.')}
               </p>
             </div>
           </div>
@@ -266,7 +277,7 @@ function OwnerDashboard({ name, businessId }) {
             className="group flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
           >
             <FileText size={15} />
-            Crear presupuesto
+            {t('Crear presupuesto')}
             <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
@@ -274,28 +285,28 @@ function OwnerDashboard({ name, businessId }) {
 
       {/* Acciones rápidas */}
       <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
+        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate('/sales/new')}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
           >
             <ShoppingCart size={15} />
-            Nueva venta
+            {t('Nueva venta')}
           </button>
           <button
             onClick={() => navigate('/cotizaciones')}
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
             <FileText size={15} />
-            Nuevo presupuesto
+            {t('Nuevo presupuesto')}
           </button>
           <button
             onClick={() => navigate('/reports/sellers')}
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
             <Trophy size={15} />
-            Rendimiento de vendedores
+            {t('Rendimiento de vendedores')}
           </button>
         </div>
       </div>
@@ -306,10 +317,10 @@ function OwnerDashboard({ name, businessId }) {
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
             <AlertTriangle size={15} className="text-amber-500" />
           </div>
-          <h3 className="text-sm font-semibold text-gray-900">Alertas de stock bajo</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t('Alertas de stock bajo')}</h3>
           {!loadingLow && lowStockPage?.totalElements > 0 && (
             <span className="ml-auto rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">
-              {lowStockPage.totalElements} productos
+              {t('{n} productos', { n: lowStockPage.totalElements })}
             </span>
           )}
         </div>
@@ -325,19 +336,19 @@ function OwnerDashboard({ name, businessId }) {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50">
               <CheckCircle2 size={22} className="text-emerald-500" />
             </div>
-            <p className="text-sm font-medium text-gray-500">Todo el stock está en orden</p>
-            <p className="text-xs text-gray-400">Ningún producto está por debajo del mínimo</p>
+            <p className="text-sm font-medium text-gray-500">{t('Todo el stock está en orden')}</p>
+            <p className="text-xs text-gray-400">{t('Ningún producto está por debajo del mínimo')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Mínimo</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Déficit</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Código')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Stock')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Mínimo')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Déficit')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -371,10 +382,10 @@ function OwnerDashboard({ name, businessId }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
               <CalendarClock size={15} className="text-amber-500" />
             </div>
-            <h3 className="text-sm font-semibold text-gray-900">Productos por vencer</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('Productos por vencer')}</h3>
             {!loadingExp && expiringPage?.totalElements > 0 && (
               <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">
-                {expiringPage.totalElements} productos
+                {t('{n} productos', { n: expiringPage.totalElements })}
               </span>
             )}
           </div>
@@ -390,10 +401,10 @@ function OwnerDashboard({ name, businessId }) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-50 bg-gray-50/60">
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Código</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Stock</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Vence</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Código')}</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Stock')}</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Vence')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -423,16 +434,16 @@ function OwnerDashboard({ name, businessId }) {
       {movements.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h3 className="text-sm font-semibold text-gray-900">Movimientos de hoy</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('Movimientos de hoy')}</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-50 bg-gray-50/60">
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Producto</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Tipo</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">Cantidad</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">Usuario</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Tipo')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Cantidad')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Usuario')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -441,7 +452,7 @@ function OwnerDashboard({ name, businessId }) {
                     <td className="max-w-[220px] truncate px-6 py-3.5 font-medium text-gray-900">{m.productName}</td>
                     <td className="px-6 py-3.5 text-center">
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${TYPE_CLS[m.type] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {TYPE_LABEL[m.type] ?? m.type}
+                        {TYPE_LABEL[m.type] ? t(TYPE_LABEL[m.type]) : m.type}
                       </span>
                     </td>
                     <td className="px-6 py-3.5 text-center font-semibold text-gray-800">
@@ -462,6 +473,7 @@ function OwnerDashboard({ name, businessId }) {
 // ── Employee ──────────────────────────────────────────────────────────────────
 
 function EmployeeDashboard({ name }) {
+  const t = useT()
   const navigate = useNavigate()
   const { can }  = useAuth()
   const today    = todayStr()
@@ -478,25 +490,25 @@ function EmployeeDashboard({ name }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {loadingSales ? <StatCardSkeleton /> : (
-          <StatCard icon={ShoppingCart} label="Mis ventas hoy" value={myVentasHoy}
+          <StatCard icon={ShoppingCart} label={t('Mis ventas hoy')} value={myVentasHoy}
             iconBg="bg-blue-50" iconColor="text-blue-600" />
         )}
         {loadingLowStock ? <StatCardSkeleton /> : (
-          <StatCard icon={AlertTriangle} label="Productos bajo stock" value={bajosDeStock}
+          <StatCard icon={AlertTriangle} label={t('Productos bajo stock')} value={bajosDeStock}
             iconBg={bajosDeStock > 0 ? 'bg-red-50' : 'bg-emerald-50'}
             iconColor={bajosDeStock > 0 ? 'text-red-500' : 'text-emerald-500'} />
         )}
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">Acciones rápidas</h3>
+        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate('/sales/new')}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
           >
             <ShoppingCart size={15} />
-            Nueva venta
+            {t('Nueva venta')}
           </button>
           {can('canRegisterSale') && (
             <button
@@ -504,7 +516,7 @@ function EmployeeDashboard({ name }) {
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
               <FileText size={15} />
-              Nuevo presupuesto
+              {t('Nuevo presupuesto')}
             </button>
           )}
         </div>

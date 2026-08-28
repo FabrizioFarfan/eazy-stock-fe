@@ -2,6 +2,8 @@ import { useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from '../components/NotificationBell'
+import LangSwitcher from '../i18n/LangSwitcher'
+import { useT } from '../i18n'
 
 const PAGE_TITLES = {
   '/dashboard':          'Dashboard',
@@ -34,8 +36,9 @@ const ROLE_LABEL = {
 export default function Topbar({ onMenuClick }) {
   const { pathname } = useLocation()
   const { user }     = useAuth()
+  const t            = useT()
 
-  const title      = PAGE_TITLES[pathname] ?? 'Eazy Stock'
+  const title      = PAGE_TITLES[pathname] ? t(PAGE_TITLES[pathname]) : 'Eazy Stock'
   const badgeClass = ROLE_BADGE[user?.role] ?? 'bg-gray-100 text-gray-600'
   const showBell   = user?.role === 'OWNER' || user?.role === 'EMPLOYEE'
 
@@ -46,22 +49,23 @@ export default function Topbar({ onMenuClick }) {
         <button
           onClick={onMenuClick}
           className="rounded-xl p-1.5 text-gray-500 hover:bg-gray-100 md:hidden transition-colors"
-          aria-label="Abrir menú"
+          aria-label={t('Abrir menú')}
         >
           <Menu size={20} />
         </button>
         <h1 className="text-sm font-semibold text-gray-800">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         {user?.businessName && (
           <span className="hidden text-sm font-medium text-gray-400 sm:block">{user.businessName}</span>
         )}
         {user?.role && (
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClass}`}>
-            {ROLE_LABEL[user.role] ?? user.role}
+          <span className={`hidden rounded-full px-2.5 py-1 text-xs font-semibold sm:inline-block ${badgeClass}`}>
+            {t(ROLE_LABEL[user.role] ?? user.role)}
           </span>
         )}
+        <LangSwitcher compact />
         {showBell && <NotificationBell />}
       </div>
     </header>

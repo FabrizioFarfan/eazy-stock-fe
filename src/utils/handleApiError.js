@@ -1,4 +1,6 @@
-// Mapa código BE → mensaje en español para el usuario.
+import { t } from '../i18n'
+
+// Mapa código BE → mensaje en español para el usuario (se traduce con t() al devolverlo).
 // El BE lleva su propio mensaje en `data.message`; este mapa es el fallback
 // cuando solo viene el code, o cuando queremos un mensaje uniforme en el FE.
 const MESSAGE_BY_CODE = {
@@ -32,9 +34,9 @@ const MESSAGE_BY_CODE = {
 export function getErrorMessage(error) {
   const body = error?.response?.data
   if (body?.message) return body.message
-  if (body?.code && MESSAGE_BY_CODE[body.code]) return MESSAGE_BY_CODE[body.code]
+  if (body?.code && MESSAGE_BY_CODE[body.code]) return t(MESSAGE_BY_CODE[body.code])
   if (error?.message) return error.message
-  return 'Ocurrió un error inesperado. Intentá de nuevo.'
+  return t('Ocurrió un error inesperado. Intentá de nuevo.')
 }
 
 /** Devuelve el `code` estructurado del BE si está disponible. */

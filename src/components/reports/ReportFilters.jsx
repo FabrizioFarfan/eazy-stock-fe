@@ -4,6 +4,7 @@ import { useSuppliers } from '../../hooks/useSuppliers'
 import { useBrands } from '../../hooks/useBrands'
 import { useEmployees } from '../../hooks/useEmployees'
 import { localISODate } from '../../utils/formatDate'
+import { useT } from '../../i18n'
 
 function today() {
   return localISODate()
@@ -26,6 +27,7 @@ const PRESETS = [
 ]
 
 export default function ReportFilters({ businessId }) {
+  const t = useT()
   const [params, setParams] = useSearchParams()
 
   const [from, setFrom]           = useState(params.get('from') || firstOfMonth())
@@ -104,7 +106,7 @@ export default function ReportFilters({ businessId }) {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {p.label}
+            {t(p.label)}
           </button>
         ))}
         <button
@@ -115,14 +117,14 @@ export default function ReportFilters({ businessId }) {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Elegir fechas
+          {t('Elegir fechas')}
         </button>
       </div>
 
       {/* Date range + dropdowns */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500">Desde</label>
+          <label className="text-xs text-gray-500">{t('Desde')}</label>
           <input
             type="date"
             value={from}
@@ -131,7 +133,7 @@ export default function ReportFilters({ businessId }) {
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500">Hasta</label>
+          <label className="text-xs text-gray-500">{t('Hasta')}</label>
           <input
             type="date"
             value={to}
@@ -145,7 +147,7 @@ export default function ReportFilters({ businessId }) {
           onChange={(e) => handleFilterChange('supplierId', e.target.value)}
           className={selectCls}
         >
-          <option value="">Todos los proveedores</option>
+          <option value="">{t('Todos los proveedores')}</option>
           {(suppliers || []).map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
@@ -156,7 +158,7 @@ export default function ReportFilters({ businessId }) {
           onChange={(e) => handleFilterChange('brandId', e.target.value)}
           className={selectCls}
         >
-          <option value="">Todas las marcas</option>
+          <option value="">{t('Todas las marcas')}</option>
           {(brands || []).map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
@@ -167,7 +169,7 @@ export default function ReportFilters({ businessId }) {
           onChange={(e) => handleFilterChange('employeeId', e.target.value)}
           className={selectCls}
         >
-          <option value="">Todos los empleados</option>
+          <option value="">{t('Todos los empleados')}</option>
           {(employees || []).map((e) => (
             <option key={e.id} value={e.id}>{e.name}</option>
           ))}
@@ -178,7 +180,7 @@ export default function ReportFilters({ businessId }) {
             onClick={clear}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
           >
-            Limpiar filtros
+            {t('Limpiar filtros')}
           </button>
 
           {/* Export Excel — visible pero deshabilitado (Bloque 5) */}
@@ -187,10 +189,10 @@ export default function ReportFilters({ businessId }) {
               disabled
               className="rounded-lg bg-green-500/40 px-3 py-2 text-sm font-medium text-white cursor-not-allowed"
             >
-              Exportar Excel
+              {t('Exportar Excel')}
             </button>
             <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white">
-              Próximamente
+              {t('Próximamente')}
             </div>
           </div>
         </div>

@@ -15,10 +15,11 @@ import { formatPrice } from '../utils/formatMoney'
 import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import DebtAddModal from '../components/accounts/DebtAddModal'
+import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
@@ -44,6 +45,7 @@ function StatCard({ label, value, tone = 'default' }) {
 }
 
 export default function SupplierDetailPage() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const { can } = useAuth()
@@ -70,8 +72,8 @@ export default function SupplierDetailPage() {
   if (isError || !supplier) {
     return (
       <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-600">
-        No pudimos cargar el proveedor.
-        <button onClick={() => navigate(-1)} className="ml-1 underline">Volver</button>
+        {t('No pudimos cargar el proveedor.')}
+        <button onClick={() => navigate(-1)} className="ml-1 underline">{t('Volver')}</button>
       </div>
     )
   }
@@ -82,7 +84,7 @@ export default function SupplierDetailPage() {
   const usage   = limit != null && limit > 0 ? Math.round((debt / limit) * 100) : null
 
   const txns = txnsPage?.content ?? []
-  const lastPay = txns.find((t) => t.type === 'PAYMENT')
+  const lastPay = txns.find((tx) => tx.type === 'PAYMENT')
 
   return (
     <div className="flex flex-col gap-5">
@@ -90,21 +92,21 @@ export default function SupplierDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          <ArrowLeft size={14} />Volver
+          <ArrowLeft size={14} />{t('Volver')}
         </button>
         {canManage && (
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setShowDebt(true)}
               className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-              <PackagePlus size={14} />Recepción a crédito
+              <PackagePlus size={14} />{t('Recepción a crédito')}
             </button>
             <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
               className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
-              <DollarSign size={14} />Registrar pago
+              <DollarSign size={14} />{t('Registrar pago')}
             </button>
             <button onClick={() => setShowAdjustment(true)}
               className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-              <Sliders size={14} />Ajustar
+              <Sliders size={14} />{t('Ajustar')}
             </button>
           </div>
         )}
@@ -119,12 +121,12 @@ export default function SupplierDetailPage() {
             <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
               {supplier.ruc && <span className="flex items-center gap-1.5"><FileText size={13} />RUC {supplier.ruc}</span>}
               {supplier.phone && <span className="flex items-center gap-1.5"><Phone size={13} />{supplier.phone}</span>}
-              {supplier.contact && <span>Contacto: {supplier.contact}</span>}
+              {supplier.contact && <span>{t('Contacto:')} {supplier.contact}</span>}
             </div>
           </div>
           {exceeds && (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100">
-              <AlertTriangle size={12} />Excede crédito
+              <AlertTriangle size={12} />{t('Excede crédito')}
             </span>
           )}
         </div>
@@ -134,58 +136,58 @@ export default function SupplierDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Le debemos"
+        <StatCard label={t('Le debemos')}
           value={formatPrice(debt)}
           tone={debt > 0 ? (exceeds ? 'danger' : 'default') : 'positive'} />
-        <StatCard label="Crédito que nos da"
+        <StatCard label={t('Crédito que nos da')}
           value={limit != null ? formatPrice(limit) : '—'} />
-        <StatCard label="% usado"
+        <StatCard label={t('% usado')}
           value={usage != null ? `${usage}%` : '—'}
           tone={exceeds ? 'danger' : 'default'} />
-        <StatCard label="Último pago"
+        <StatCard label={t('Último pago')}
           value={lastPay ? formatDate(lastPay.createdAt) : '—'} />
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-bold text-gray-900">Historial de transacciones</h3>
+        <h3 className="mb-4 text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
         {loadingTxns ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
           </div>
         ) : txns.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-400">Sin transacciones aún</p>
+          <p className="py-8 text-center text-sm text-gray-400">{t('Sin transacciones aún')}</p>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {txns.map((t) => {
-              const cfg = TYPE_CONFIG[t.type] ?? TYPE_CONFIG.ADJUSTMENT
+            {txns.map((tx) => {
+              const cfg = TYPE_CONFIG[tx.type] ?? TYPE_CONFIG.ADJUSTMENT
               const Icon = cfg.icon
-              const isDecrease = t.type === 'PAYMENT'
-                || (t.type === 'ADJUSTMENT' && t.adjustmentDirection === 'DECREASE')
+              const isDecrease = tx.type === 'PAYMENT'
+                || (tx.type === 'ADJUSTMENT' && tx.adjustmentDirection === 'DECREASE')
               const sign = isDecrease ? '−' : '+'
               return (
-                <li key={t.id} className="flex items-start gap-3 py-3">
+                <li key={tx.id} className="flex items-start gap-3 py-3">
                   <div className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ring-1 ${cfg.cls}`}>
                     <Icon size={14} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${cfg.cls}`}>
-                        {cfg.label}{t.adjustmentDirection ? ` · ${t.adjustmentDirection === 'INCREASE' ? '+' : '−'}` : ''}
+                        {t(cfg.label)}{tx.adjustmentDirection ? ` · ${tx.adjustmentDirection === 'INCREASE' ? '+' : '−'}` : ''}
                       </span>
-                      {t.referenceDocument && (
+                      {tx.referenceDocument && (
                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
-                          {t.referenceDocument}
+                          {tx.referenceDocument}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400">{formatDate(t.createdAt)} · {t.createdByName}</span>
+                      <span className="text-xs text-gray-400">{formatDate(tx.createdAt)} · {tx.createdByName}</span>
                     </div>
-                    {t.notes && <p className="mt-1 text-sm text-gray-600">{t.notes}</p>}
+                    {tx.notes && <p className="mt-1 text-sm text-gray-600">{tx.notes}</p>}
                   </div>
                   <div className="text-right">
                     <p className={`text-sm font-bold ${isDecrease ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {sign}{formatPrice(t.amount)}
+                      {sign}{formatPrice(tx.amount)}
                     </p>
-                    <p className="text-xs text-gray-400">Saldo: {formatPrice(t.balanceAfter)}</p>
+                    <p className="text-xs text-gray-400">{t('Saldo:')} {formatPrice(tx.balanceAfter)}</p>
                   </div>
                 </li>
               )

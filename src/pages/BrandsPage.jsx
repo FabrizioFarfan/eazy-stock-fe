@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Search, Tag, Edit, Trash2, Loader2, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,9 +9,10 @@ import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT } from '../i18n'
 
-const schema = z.object({
-  name:  z.string().min(2, 'Mínimo 2 caracteres'),
+const makeSchema = (t) => z.object({
+  name:  z.string().min(2, t('Mínimo 2 caracteres')),
   notes: z.string().optional(),
 })
 
@@ -35,11 +36,13 @@ function brandColor(name = '') {
 // ── Brand modal ───────────────────────────────────────────────────────────────
 
 function BrandModal({ brand, onClose }) {
+  const t = useT()
   const { user } = useAuth()
   const isEdit   = !!brand
   const create   = useCreateBrand()
   const update   = useUpdateBrand()
   const mutation = isEdit ? update : create
+  const schema   = useMemo(() => makeSchema(t), [t])
 
   const { register, handleSubmit, setError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -64,7 +67,7 @@ function BrandModal({ brand, onClose }) {
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <h3 className="text-base font-bold text-gray-900">
-            {isEdit ? 'Editar marca' : 'Nueva marca'}
+            {isEdit ? t('Editar marca') : t('Nueva marca')}
           </h3>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X size={18} />
@@ -74,14 +77,14 @@ function BrandModal({ brand, onClose }) {
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="space-y-4 px-6 py-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Nombre *</label>
-              <input {...register('name')} placeholder="Ej. Castrol, 3M, Bosch" className={inputCls} />
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')} *</label>
+              <input {...register('name')} placeholder={t('Ej. Castrol, 3M, Bosch')} className={inputCls} />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">Notas</label>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Notas')}</label>
               <textarea {...register('notes')} rows={2}
-                placeholder="Observaciones opcionales"
+                placeholder={t('Observaciones opcionales')}
                 className={`${inputCls} resize-none`} />
             </div>
             {mutation.isError && (
@@ -93,12 +96,12 @@ function BrandModal({ brand, onClose }) {
           <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
             <button type="button" onClick={onClose}
               className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button type="submit" disabled={mutation.isPending}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
               {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
-              {mutation.isPending ? 'Guardando...' : 'Guardar'}
+              {mutation.isPending ? t('Guardando...') : t('Guardar')}
             </button>
           </div>
         </form>
@@ -110,6 +113,7 @@ function BrandModal({ brand, onClose }) {
 // ── Brand card ────────────────────────────────────────────────────────────────
 
 function BrandCard({ brand, onEdit, onDelete }) {
+  const t = useT()
   const initial = brand.name[0]?.toUpperCase() ?? '?'
   const colorCls = brandColor(brand.name)
 
@@ -126,11 +130,11 @@ function BrandCard({ brand, onEdit, onDelete }) {
         )}
       </div>
       <div className="flex gap-1">
-        <button onClick={(e) => { e.stopPropagation(); onEdit(brand) }} title="Editar"
+        <button onClick={(e) => { e.stopPropagation(); onEdit(brand) }} title={t('Editar')}
           className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
           <Edit size={14} />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(brand) }} title="Eliminar"
+        <button onClick={(e) => { e.stopPropagation(); onDelete(brand) }} title={t('Eliminar')}
           className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
           <Trash2 size={14} />
         </button>
@@ -142,6 +146,7 @@ function BrandCard({ brand, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function BrandsPage() {
+  const t = useT()
   const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [modal, setModal]   = useState(null)
@@ -156,7 +161,7 @@ export default function BrandsPage() {
   const brands = data?.content ?? []
 
   const handleDelete = async (b) => {
-    if (!window.confirm(`¿Eliminar "${b.name}"?\nEsto fallará si tiene productos asociados.`)) return
+    if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asociados.', { name: b.name }))) return
     try { await deleteBrand.mutateAsync({ id: b.id, params: adminBizParam(user) }) }
     catch (err) { alert(getErrorMessage(err)) }
   }
@@ -166,12 +171,12 @@ export default function BrandsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Marcas</h2>
-          <HelpDrawer title="Cómo usar Marcas" autoOpenKey="eazystock_brands_help_v1">
-            <p>Registra las <strong>marcas</strong> de lo que vendes y asígnalas a tus productos.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Marcas')}</h2>
+          <HelpDrawer title={t('Cómo usar Marcas')} autoOpenKey="eazystock_brands_help_v1">
+            <p>{t('Registra las marcas de lo que vendes y asígnalas a tus productos.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🔎 ¿Para qué sirven?</p>
-              <p className="mt-1">Para <strong>filtrar el catálogo</strong> y para los reportes: puedes ver cuánto vendes de cada marca y decidir cuáles te convienen más.</p>
+              <p className="font-semibold text-gray-800">🔎 {t('¿Para qué sirven?')}</p>
+              <p className="mt-1">{t('Para filtrar el catálogo y para los reportes: puedes ver cuánto vendes de cada marca y decidir cuáles te convienen más.')}</p>
             </div>
           </HelpDrawer>
           {!isLoading && (
@@ -183,14 +188,14 @@ export default function BrandsPage() {
         <button onClick={() => setModal({ brand: null })}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
           <Plus size={15} />
-          Nueva marca
+          {t('Nueva marca')}
         </button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-sm">
         <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder="Buscar marca..." value={search}
+        <input type="text" placeholder={t('Buscar marca...')} value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
       </div>
@@ -208,13 +213,13 @@ export default function BrandsPage() {
             <Tag size={28} className="text-gray-400" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-gray-700">No hay marcas aún</p>
-            <p className="mt-1 text-xs text-gray-400">Agrega marcas para organizarlas en tus productos</p>
+            <p className="text-sm font-semibold text-gray-700">{t('No hay marcas aún')}</p>
+            <p className="mt-1 text-xs text-gray-400">{t('Agrega marcas para organizarlas en tus productos')}</p>
           </div>
           <button onClick={() => setModal({ brand: null })}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98]">
             <Plus size={14} />
-            Agregar marca
+            {t('Agregar marca')}
           </button>
         </div>
       ) : (

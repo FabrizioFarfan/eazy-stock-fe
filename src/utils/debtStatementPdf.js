@@ -1,10 +1,11 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatPrice } from './formatMoney'
+import { t, dateLocale } from '../i18n'
 
 function fmtDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' })
     .format(new Date(str))
 }
 
@@ -29,23 +30,25 @@ export function downloadDebtStatementPdf(statement) {
   // ── Encabezado ──
   doc.setFontSize(15)
   doc.setFont(undefined, 'bold')
-  doc.text(statement.businessName || 'Estado de cuenta', marginX, y)
+  doc.text(statement.businessName || t('Estado de cuenta'), marginX, y)
   y += 6
   doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
   doc.setTextColor(110)
-  doc.text(`Estado de cuenta · ${fmtDate(statement.generatedAt)}`, marginX, y)
+  doc.text(`${t('Estado de cuenta')} · ${fmtDate(statement.generatedAt)}`, marginX, y)
   y += 9
 
   // ── Carta cordial (mismo tono que el recordatorio de WhatsApp) ──
   doc.setTextColor(30)
   doc.setFontSize(11)
-  const saludo =
-    `Estimado(a) ${statement.customerName}${statement.documentId ? ` (${statement.documentId})` : ''}, ` +
-    `le saludamos de ${statement.businessName || 'nuestro negocio'}. ` +
-    `A la fecha usted mantiene un saldo pendiente de ${formatPrice(statement.currentDebt)}. ` +
-    `A continuación le presentamos el detalle de sus compras y pagos. ` +
-    `Agradecemos de antemano su puntualidad.`
+  const saludo = t(
+    'Estimado(a) {customer}, le saludamos de {business}. A la fecha usted mantiene un saldo pendiente de {amount}. A continuación le presentamos el detalle de sus compras y pagos. Agradecemos de antemano su puntualidad.',
+    {
+      customer: `${statement.customerName}${statement.documentId ? ` (${statement.documentId})` : ''}`,
+      business: statement.businessName || t('nuestro negocio'),
+      amount:   formatPrice(statement.currentDebt),
+    },
+  )
   const saludoLines = doc.splitTextToSize(saludo, pageW - marginX * 2)
   doc.text(saludoLines, marginX, y)
   y += saludoLines.length * 5.4 + 6
@@ -72,9 +75,9 @@ export function downloadDebtStatementPdf(statement) {
     autoTable(doc, {
       startY: y,
       head: [[
-        { content: 'Detalle de compras pendientes', colSpan: 4,
+        { content: t('Detalle de compras pendientes'), colSpan: 4,
           styles: { halign: 'left', fillColor: [37, 99, 235] } },
-      ], ['Producto', 'Cant.', 'P. unitario', 'Importe']],
+      ], [t('Producto'), t('Cant.'), t('P. unitario'), t('Importe')]],
       body: chargeBody,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [37, 99, 235] },
@@ -90,9 +93,9 @@ export function downloadDebtStatementPdf(statement) {
     autoTable(doc, {
       startY: y,
       head: [[
-        { content: 'Pagos y abonos realizados', colSpan: 2,
+        { content: t('Pagos y abonos realizados'), colSpan: 2,
           styles: { halign: 'left', fillColor: [5, 150, 105] } },
-      ], ['Fecha y detalle', 'Monto']],
+      ], [t('Fecha y detalle'), t('Monto')]],
       body: credits.map((c) => [
         `${fmtDate(c.date)} — ${c.description}`,
         `− ${formatPrice(c.amount)}`,
@@ -115,10 +118,10 @@ export function downloadDebtStatementPdf(statement) {
   doc.setFontSize(12)
   doc.setFont(undefined, 'bold')
   doc.setTextColor(153, 27, 27)
-  doc.text('SALDO PENDIENTE', marginX + 4, y + 4)
+  doc.text(t('SALDO PENDIENTE'), marginX + 4, y + 4)
   doc.text(formatPrice(statement.currentDebt), pageW - marginX - 4, y + 4, { align: 'right' })
 
-  const safeName = (statement.customerName || 'cliente')
+  const safeName = (statement.customerName || t('cliente'))
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()
   doc.save(`deuda-${safeName}-${new Date().toISOString().slice(0, 10)}.pdf`)

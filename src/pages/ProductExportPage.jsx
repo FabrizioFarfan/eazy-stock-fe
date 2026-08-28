@@ -10,6 +10,7 @@ import { useCategories } from '../hooks/useCategories'
 import { useAuth } from '../context/AuthContext'
 import { getErrorMessage } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { useT } from '../i18n'
 
 const STEP_LABELS = ['Configurar', 'Descargar']
 
@@ -50,6 +51,7 @@ const STOCK_OPTIONS = [
 // ── Stepper ─────────────────────────────────────────────────────────────────
 
 function Stepper({ current }) {
+  const t = useT()
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
       {STEP_LABELS.map((label, idx) => {
@@ -67,7 +69,7 @@ function Stepper({ current }) {
             <span className={`text-sm font-medium ${
               isActive ? 'text-gray-900' : isDone ? 'text-emerald-700' : 'text-gray-400'
             }`}>
-              {label}
+              {t(label)}
             </span>
             {idx < STEP_LABELS.length - 1 && <ChevronRight size={14} className="text-gray-300" />}
           </div>
@@ -80,6 +82,7 @@ function Stepper({ current }) {
 // ── Step 1 — Configure ────────────────────────────────────────────────────────
 
 function ConfigureStep({ onStarted }) {
+  const t = useT()
   const { user } = useAuth()
   const businessId = user?.role === 'SUPER_ADMIN' ? user?.businessId : undefined
 
@@ -111,11 +114,11 @@ function ConfigureStep({ onStarted }) {
 
   const handleGenerate = async () => {
     if (selectedKeys.length === 0) {
-      toast.error('Elige al menos una columna para exportar')
+      toast.error(t('Elige al menos una columna para exportar'))
       return
     }
     if (!reimportable) {
-      toast.error('Incluye SKU y Nombre, o la columna "Nombre + código (SKU)", para que el archivo se pueda volver a importar')
+      toast.error(t('Incluye SKU y Nombre, o la columna "Nombre + código (SKU)", para que el archivo se pueda volver a importar'))
       return
     }
     try {
@@ -140,35 +143,35 @@ function ConfigureStep({ onStarted }) {
     <div className="space-y-4">
       {/* Filtros */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900">Filtros (opcionales)</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Filtros (opcionales)')}</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Elige qué productos exportar. Por defecto se exportan los activos.
+          {t('Elige qué productos exportar. Por defecto se exportan los activos.')}
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-gray-600">Proveedor</span>
+            <span className="text-xs font-semibold text-gray-600">{t('Proveedor')}</span>
             <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={selectCls}>
-              <option value="">Todos los proveedores</option>
+              <option value="">{t('Todos los proveedores')}</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-gray-600">Categoría</span>
+            <span className="text-xs font-semibold text-gray-600">{t('Categoría')}</span>
             <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectCls}>
-              <option value="">Todas las categorías</option>
+              <option value="">{t('Todas las categorías')}</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-gray-600">Estado</span>
+            <span className="text-xs font-semibold text-gray-600">{t('Estado')}</span>
             <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectCls}>
-              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(o.label)}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-gray-600">Stock</span>
+            <span className="text-xs font-semibold text-gray-600">{t('Stock')}</span>
             <select value={stock} onChange={(e) => setStock(e.target.value)} className={selectCls}>
-              {STOCK_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {STOCK_OPTIONS.map((o) => <option key={o.value} value={o.value}>{t(o.label)}</option>)}
             </select>
           </label>
         </div>
@@ -176,10 +179,9 @@ function ConfigureStep({ onStarted }) {
 
       {/* Columnas */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900">Columnas a incluir</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Columnas a incluir')}</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Si vas a editar el archivo y volver a subirlo, deja marcadas SKU, Nombre y
-          Código del proveedor — son las que el sistema usa para identificar cada producto.
+          {t('Si vas a editar el archivo y volver a subirlo, deja marcadas SKU, Nombre y Código del proveedor — son las que el sistema usa para identificar cada producto.')}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {COLUMN_OPTIONS.map((c) => (
@@ -188,7 +190,7 @@ function ConfigureStep({ onStarted }) {
                 columns[c.key] ? 'border-blue-500 bg-blue-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}>
               <input type="checkbox" checked={columns[c.key]} onChange={() => toggleColumn(c.key)} className="accent-blue-600" />
-              {c.label}
+              {t(c.label)}
             </label>
           ))}
         </div>
@@ -196,17 +198,18 @@ function ConfigureStep({ onStarted }) {
         {!reimportable && (
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
             <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-            Para que este archivo se pueda volver a importar, incluye{' '}
-            <span className="font-semibold">SKU y Nombre</span>, o la columna{' '}
-            <span className="font-semibold">"Nombre + código (SKU) juntos"</span>. Si no, el sistema
-            no podrá identificar cada producto al subirlo de nuevo.
+            <span>
+              {t('Para que este archivo se pueda volver a importar, incluye')}{' '}
+              <span className="font-semibold">{t('SKU y Nombre')}</span>, {t('o la columna')}{' '}
+              <span className="font-semibold">{t('"Nombre + código (SKU) juntos"')}</span>. {t('Si no, el sistema no podrá identificar cada producto al subirlo de nuevo.')}
+            </span>
           </p>
         )}
       </div>
 
       {/* Formato */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900">Formato</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Formato')}</h3>
         <div className="mt-3 flex gap-2">
           {[
             { value: 'XLSX', label: 'Excel (.xlsx)', desc: 'Mejor para abrir en la computadora' },
@@ -221,7 +224,7 @@ function ConfigureStep({ onStarted }) {
                 className="mt-0.5 accent-blue-600" />
               <div>
                 <p className="text-sm font-semibold text-gray-900">{opt.label}</p>
-                <p className="text-xs text-gray-500">{opt.desc}</p>
+                <p className="text-xs text-gray-500">{t(opt.desc)}</p>
               </div>
             </label>
           ))}
@@ -234,7 +237,7 @@ function ConfigureStep({ onStarted }) {
           disabled={starting || selectedKeys.length === 0 || !reimportable}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
           {starting ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
-          {starting ? 'Generando...' : 'Generar export'}
+          {starting ? t('Generando...') : t('Generar export')}
         </button>
       </div>
     </div>
@@ -244,6 +247,7 @@ function ConfigureStep({ onStarted }) {
 // ── Step 2 — Download ─────────────────────────────────────────────────────────
 
 function DownloadStep({ jobId, onRestart }) {
+  const t = useT()
   const navigate = useNavigate()
   const [status, setStatus] = useState(null)
   const [downloading, setDownloading] = useState(false)
@@ -301,7 +305,7 @@ function DownloadStep({ jobId, onRestart }) {
           <>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-900">
-                {isDone ? '¡Tu archivo está listo!' : 'Generando tu archivo...'}
+                {isDone ? t('¡Tu archivo está listo!') : t('Generando tu archivo...')}
               </h3>
               {!isDone
                 ? <Loader2 size={16} className="animate-spin text-blue-600" />
@@ -316,8 +320,8 @@ function DownloadStep({ jobId, onRestart }) {
             </div>
             <p className="mt-2 text-xs text-gray-500">
               {isDone
-                ? <>Se exportaron <span className="font-semibold text-gray-700">{total}</span> producto(s) en formato {status.format === 'CSV' ? 'CSV' : 'Excel'}.</>
-                : <>{processed} / {total || '...'} filas · {pct}%</>}
+                ? <>{t('Se exportaron')} <span className="font-semibold text-gray-700">{total}</span> {t('producto(s) en formato {fmt}.', { fmt: status.format === 'CSV' ? 'CSV' : 'Excel' })}</>
+                : <>{processed} / {total || '...'} {t('filas')} · {pct}%</>}
             </p>
 
             {isDone && (
@@ -327,7 +331,7 @@ function DownloadStep({ jobId, onRestart }) {
                   disabled={downloading}
                   className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
                   {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                  Descargar archivo
+                  {t('Descargar archivo')}
                 </button>
               </div>
             )}
@@ -336,8 +340,8 @@ function DownloadStep({ jobId, onRestart }) {
 
         {isFailed && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-            <p className="font-semibold">No se pudo generar el archivo.</p>
-            <p className="mt-1 text-xs">{status?.error ?? 'Error desconocido.'}</p>
+            <p className="font-semibold">{t('No se pudo generar el archivo.')}</p>
+            <p className="mt-1 text-xs">{status?.error ?? t('Error desconocido.')}</p>
           </div>
         )}
       </div>
@@ -346,7 +350,7 @@ function DownloadStep({ jobId, onRestart }) {
       {isDone && status?.previewHeaders?.length > 0 && (
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Vista previa {total > status.previewRows.length && <>(primeras {status.previewRows.length} de {total} filas)</>}
+            {t('Vista previa')} {total > status.previewRows.length && <>({t('primeras {n} de {total} filas', { n: status.previewRows.length, total })})</>}
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -376,11 +380,11 @@ function DownloadStep({ jobId, onRestart }) {
           <button onClick={onRestart}
             className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <RotateCcw size={14} />
-            Generar otro export
+            {t('Generar otro export')}
           </button>
           <button onClick={() => navigate('/products')}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            Volver a productos
+            {t('Volver a productos')}
           </button>
         </div>
       )}
@@ -400,37 +404,31 @@ function HelpSection({ title, children }) {
 }
 
 function ConfigureHelp() {
+  const t = useT()
   return (
     <>
       <p>
-        Exportar te permite bajar tu inventario a un archivo Excel o CSV: para tener un respaldo,
-        compartirlo, o editarlo y volver a subirlo en lote.
+        {t('Exportar te permite bajar tu inventario a un archivo Excel o CSV: para tener un respaldo, compartirlo, o editarlo y volver a subirlo en lote.')}
       </p>
-      <HelpSection title="Filtros">
+      <HelpSection title={t('Filtros')}>
         <p>
-          Eliges qué productos entran al archivo: por proveedor, por estado (activos/inactivos) y
-          por stock (con stock, sin stock, o bajo el mínimo). Si no tocas nada, se exportan los
-          productos activos.
+          {t('Eliges qué productos entran al archivo: por proveedor, por categoría, por estado (activos/inactivos) y por stock (con stock, sin stock, o bajo el mínimo). Si no tocas nada, se exportan los productos activos.')}
         </p>
       </HelpSection>
-      <HelpSection title="Columnas">
+      <HelpSection title={t('Columnas')}>
         <p>
-          Marcas qué datos quieres incluir. Si solo necesitas una lista para imprimir, con Nombre y
-          precio alcanza. Si vas a editar y volver a subir, conviene incluir{' '}
-          <span className="font-semibold">SKU</span>, <span className="font-semibold">Nombre</span> y{' '}
-          <span className="font-semibold">Código del proveedor</span>: son las que el sistema usa
-          para reconocer cada producto al re-importar.
+          {t('Marcas qué datos quieres incluir. Si solo necesitas una lista para imprimir, con Nombre y precio alcanza. Si vas a editar y volver a subir, conviene incluir SKU, Nombre y Código del proveedor: son las que el sistema usa para reconocer cada producto al re-importar.')}
         </p>
         <p>
-          La columna <span className="font-semibold">"Nombre + código (SKU) juntos"</span> combina el
-          nombre y el código interno en una sola celda — útil para listados rápidos o etiquetas.
+          {t('La columna "Nombre + código (SKU) juntos" combina el nombre y el código interno en una sola celda — útil para listados rápidos o etiquetas.')}
+        </p>
+        <p>
+          {t('También puedes incluir Presentación, Stock mínimo, Precio variable y las Notas de importación (las observaciones que dejó el último import) para revisarlas en Excel.')}
         </p>
       </HelpSection>
-      <HelpSection title="Formato">
+      <HelpSection title={t('Formato')}>
         <p>
-          <span className="font-semibold">Excel (.xlsx)</span>: ideal para abrir y editar en la
-          computadora. <span className="font-semibold">CSV</span>: más simple, ideal para pasarlo a
-          otros programas o sistemas.
+          {t('Excel (.xlsx): ideal para abrir y editar en la computadora. CSV: más simple, ideal para pasarlo a otros programas o sistemas.')}
         </p>
       </HelpSection>
     </>
@@ -438,26 +436,20 @@ function ConfigureHelp() {
 }
 
 function DownloadHelp() {
+  const t = useT()
   return (
     <>
       <p>
-        Tu archivo está listo. Antes de descargarlo te mostramos una vista previa con las primeras
-        filas, para que confirmes que salió lo que esperabas.
+        {t('Tu archivo está listo. Antes de descargarlo te mostramos una vista previa con las primeras filas, para que confirmes que salió lo que esperabas.')}
       </p>
-      <HelpSection title="Editar y volver a subir">
+      <HelpSection title={t('Editar y volver a subir')}>
         <p>
-          Si modificas el archivo y quieres volver a cargarlo, usa la función de{' '}
-          <span className="font-semibold">Importar</span>. El sistema reconoce los nombres de las
-          columnas automáticamente, así que no necesitas cambiar los encabezados: bajas, editas y
-          subes.
+          {t('Si modificas el archivo y quieres volver a cargarlo, usa la función de Importar. El sistema reconoce los nombres de las columnas automáticamente, así que no necesitas cambiar los encabezados: bajas, editas y subes. Cada import queda en el "Historial" con su resultado y su reporte.')}
         </p>
       </HelpSection>
-      <HelpSection title="Si exportaste la columna combinada">
+      <HelpSection title={t('Si exportaste la columna combinada')}>
         <p>
-          Cuando vuelvas a importar un archivo con la columna "Nombre + código (SKU)", asígnala a{' '}
-          <span className="font-semibold">Nombre</span> y activa, en Opciones avanzadas del import,
-          "El nombre trae el código pegado al final": el sistema separa el nombre y el SKU
-          automáticamente.
+          {t('Cuando vuelvas a importar un archivo con la columna "Nombre + código (SKU)", asígnala a Nombre y activa, en Opciones avanzadas del import, "El nombre trae el código pegado al final": el sistema separa el nombre y el SKU automáticamente.')}
         </p>
       </HelpSection>
     </>
@@ -470,6 +462,7 @@ const selectCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray
 
 export default function ProductExportPage() {
   const navigate = useNavigate()
+  const t = useT()
   const [step, setStep] = useState(0)
   const [jobId, setJobId] = useState(null)
 
@@ -480,11 +473,11 @@ export default function ProductExportPage() {
           <button onClick={() => navigate('/products')}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
-            <span className="hidden sm:inline">Volver</span>
+            <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">Exportar productos</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Exportar productos')}</h2>
         </div>
-        <HelpDrawer title={step === 0 ? 'Configurar el export' : 'Descargar el archivo'}>
+        <HelpDrawer title={step === 0 ? t('Configurar el export') : t('Descargar el archivo')} buttonLabel={t('¿Cómo funciona?')}>
           {step === 0 ? <ConfigureHelp /> : <DownloadHelp />}
         </HelpDrawer>
       </div>

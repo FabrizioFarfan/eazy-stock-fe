@@ -7,6 +7,7 @@ import {
   Wallet, HandCoins, FileText, Trophy, Scale, Crown,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../i18n'
 
 const BOSS_ITEM = { icon: Crown, label: 'Panel Boss', path: '/boss' }
 
@@ -68,6 +69,7 @@ function navItemsForRole(role) {
 export default function Sidebar({ open = false, onClose = () => {} }) {
   const { user, can, logout } = useAuth()
   const { pathname }          = useLocation()
+  const t                     = useT()
 
   useEffect(() => {
     onClose()
@@ -110,6 +112,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         {/* Mobile close button */}
         <button
           onClick={onClose}
+          aria-label={t('Cerrar menú')}
           className="absolute right-3 top-3 rounded-xl p-1.5 text-gray-400 hover:bg-gray-200/70 hover:text-gray-700 md:hidden transition-colors"
         >
           <X size={18} />
@@ -137,7 +140,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
                   }
                 >
                   <Icon size={16} strokeWidth={1.8} />
-                  {label}
+                  {t(label)}
                 </NavLink>
               </li>
             ))}
@@ -153,12 +156,12 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-gray-900">{user?.name}</p>
               <span className="text-xs text-gray-500">
-                {user?.isBoss ? '👑 Boss' : (ROLE_LABEL[user?.role] ?? user?.role)}
+                {user?.isBoss ? '👑 Boss' : t(ROLE_LABEL[user?.role] ?? user?.role)}
               </span>
             </div>
             <button
               onClick={logout}
-              title="Cerrar sesión"
+              title={t('Cerrar sesión')}
               className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-red-500"
             >
               <LogOut size={15} />

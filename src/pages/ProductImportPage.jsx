@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { getErrorMessage } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
 import ImportHistoryModal from '../components/products/ImportHistoryModal'
+import { useT } from '../i18n'
 
 const STEP_LABELS = [
   'Subir archivo',
@@ -48,6 +49,7 @@ const REQUIRED_FIELDS = ['name']
 // ── Stepper ─────────────────────────────────────────────────────────────────
 
 function Stepper({ current }) {
+  const t = useT()
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
       {STEP_LABELS.map((label, idx) => {
@@ -65,7 +67,7 @@ function Stepper({ current }) {
             <span className={`text-sm font-medium ${
               isActive ? 'text-gray-900' : isDone ? 'text-emerald-700' : 'text-gray-400'
             }`}>
-              {label}
+              {t(label)}
             </span>
             {idx < STEP_LABELS.length - 1 && (
               <ChevronRight size={14} className="text-gray-300" />
@@ -80,6 +82,7 @@ function Stepper({ current }) {
 // ── Step 1 — Upload ─────────────────────────────────────────────────────────
 
 function UploadStep({ onUploaded }) {
+  const t = useT()
   const inputRef = useRef(null)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -89,11 +92,11 @@ function UploadStep({ onUploaded }) {
     const isXlsx = file.name.toLowerCase().endsWith('.xlsx')
     const isCsv  = file.name.toLowerCase().endsWith('.csv')
     if (!isXlsx && !isCsv) {
-      toast.error('Formato no soportado. Usa .xlsx o .csv.')
+      toast.error(t('Formato no soportado. Usa .xlsx o .csv.'))
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Archivo muy grande (máx 10MB).')
+      toast.error(t('Archivo muy grande (máx 10MB).'))
       return
     }
     try {
@@ -126,10 +129,10 @@ function UploadStep({ onUploaded }) {
         </div>
         <div className="text-center">
           <p className="text-base font-semibold text-gray-900">
-            Arrastra un Excel o CSV
+            {t('Arrastra un Excel o CSV')}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            Formatos .xlsx o .csv hasta 10MB · El sistema detecta columnas automáticamente
+            {t('Formatos .xlsx o .csv hasta 10MB · El sistema detecta columnas automáticamente')}
           </p>
         </div>
         <input
@@ -146,7 +149,7 @@ function UploadStep({ onUploaded }) {
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-          {uploading ? 'Subiendo...' : 'Seleccionar archivo'}
+          {uploading ? t('Subiendo...') : t('Seleccionar archivo')}
         </button>
       </div>
     </div>
@@ -156,6 +159,7 @@ function UploadStep({ onUploaded }) {
 // ── Step 2 — Mapping ────────────────────────────────────────────────────────
 
 function MappingStep({ upload, onSaved, onBack }) {
+  const t = useT()
   const [mapping, setMapping] = useState(upload.suggestedMapping ?? {})
   // Siempre desactivado por defecto: casi ningún Excel trae el código pegado al
   // nombre. Es una opción avanzada manual (sobre todo para re-importar un export
@@ -205,20 +209,20 @@ function MappingStep({ upload, onSaved, onBack }) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900">Mapear columnas del archivo</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Mapear columnas del archivo')}</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Detectamos {upload.headers.length} columna{upload.headers.length !== 1 ? 's' : ''}.
-          Asocia cada una con un campo del producto (o elige "No importar esta columna" si no aplica).
-          Solo el Nombre es obligatorio — si falta el código, proveedor, stock o precio, el sistema
-          los completa automáticamente.
+          {upload.headers.length !== 1
+            ? t('Detectamos {n} columnas.', { n: upload.headers.length })
+            : t('Detectamos {n} columna.', { n: upload.headers.length })}{' '}
+          {t('Asocia cada una con un campo del producto (o elige "No importar esta columna" si no aplica). Solo el Nombre es obligatorio — si falta el código, proveedor, stock o precio, el sistema los completa automáticamente.')}
         </p>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-gray-100">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-xs uppercase tracking-widest text-gray-400">
-                <th className="px-4 py-2.5 text-left font-semibold">Columna del archivo</th>
-                <th className="px-4 py-2.5 text-left font-semibold">Campo del producto</th>
+                <th className="px-4 py-2.5 text-left font-semibold">{t('Columna del archivo')}</th>
+                <th className="px-4 py-2.5 text-left font-semibold">{t('Campo del producto')}</th>
               </tr>
             </thead>
             <tbody>
@@ -234,7 +238,7 @@ function MappingStep({ upload, onSaved, onBack }) {
                       className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                     >
                       {FIELD_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value}>{t(opt.label)}</option>
                       ))}
                     </select>
                   </td>
@@ -248,13 +252,13 @@ function MappingStep({ upload, onSaved, onBack }) {
           <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
             <p className="flex items-start gap-2">
               <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-              Faltan campos obligatorios: {missingRequired.map((f) => FIELD_LABELS[f] ?? f).join(', ')}
+              {t('Faltan campos obligatorios:')} {missingRequired.map((f) => (FIELD_LABELS[f] ? t(FIELD_LABELS[f]) : f)).join(', ')}
             </p>
             {missingRequired.includes('sku') && mappedFields.includes('name') && (
               <p className="mt-1.5 pl-5 text-amber-700">
-                ¿Tu columna de Nombre ya incluye el código (SKU) al final? Mapéala a "Nombre del
-                producto" y activa <span className="font-semibold">"El nombre trae el código pegado
-                al final"</span> en Opciones avanzadas — así el SKU se toma de ahí.
+                {t('¿Tu columna de Nombre ya incluye el código (SKU) al final? Mapéala a "Nombre del producto" y activa')}{' '}
+                <span className="font-semibold">{t('"El nombre trae el código pegado al final"')}</span>{' '}
+                {t('en Opciones avanzadas — así el SKU se toma de ahí.')}
               </p>
             )}
           </div>
@@ -262,20 +266,20 @@ function MappingStep({ upload, onSaved, onBack }) {
         {dupFields.length > 0 && (
           <p className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-100">
             <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-            Campos duplicados: {dupFields.map((f) => FIELD_LABELS[f] ?? f).join(', ')}. Cada campo solo puede asignarse a una columna.
+            {t('Campos duplicados:')} {dupFields.map((f) => (FIELD_LABELS[f] ? t(FIELD_LABELS[f]) : f)).join(', ')}. {t('Cada campo solo puede asignarse a una columna.')}
           </p>
         )}
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-gray-900">Opciones</h3>
+        <h3 className="text-sm font-bold text-gray-900">{t('Opciones')}</h3>
 
         <div className="mt-3">
           <p className="text-sm font-semibold text-gray-900">
-            Si el SKU ya existe en tu inventario
+            {t('Si el SKU ya existe en tu inventario')}
           </p>
           <p className="text-xs text-gray-500">
-            Elige qué hacer cuando una fila del archivo coincide con un producto que ya tienes.
+            {t('Elige qué hacer cuando una fila del archivo coincide con un producto que ya tienes.')}
           </p>
           <div className="mt-2 space-y-2">
             {[
@@ -298,8 +302,8 @@ function MappingStep({ upload, onSaved, onBack }) {
                   className="mt-0.5 accent-blue-600"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{opt.label}</p>
-                  <p className="text-xs text-gray-500">{opt.desc}</p>
+                  <p className="text-sm font-semibold text-gray-900">{t(opt.label)}</p>
+                  <p className="text-xs text-gray-500">{t(opt.desc)}</p>
                 </div>
               </label>
             ))}
@@ -314,7 +318,7 @@ function MappingStep({ upload, onSaved, onBack }) {
             className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700"
           >
             <ChevronDown size={14} className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-            Opciones avanzadas
+            {t('Opciones avanzadas')}
           </button>
 
           {showAdvanced && (
@@ -327,25 +331,22 @@ function MappingStep({ upload, onSaved, onBack }) {
               />
               <div>
                 <p className="text-sm font-semibold text-gray-900">
-                  El nombre trae el código (SKU) pegado al final
+                  {t('El nombre trae el código (SKU) pegado al final')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Actívalo si tu columna de Nombre incluye el código al final, separado por doble
-                  espacio (por ejemplo "Abrazadera 1/2 S/Fin  10915"). Es el caso típico al
-                  re-importar un archivo que exportaste con la columna "Nombre + código (SKU)".
+                  {t('Actívalo si tu columna de Nombre incluye el código al final, separado por doble espacio (por ejemplo "Abrazadera 1/2 S/Fin  10915"). Es el caso típico al re-importar un archivo que exportaste con la columna "Nombre + código (SKU)".')}
                 </p>
                 <p className="mt-1 text-xs font-medium text-blue-700">
-                  Con esta opción activada basta con mapear la columna de Nombre: el código del
-                  final se usa como SKU, así que NO necesitas una columna de SKU aparte.
+                  {t('Con esta opción activada basta con mapear la columna de Nombre: el código del final se usa como SKU, así que NO necesitas una columna de SKU aparte.')}
                 </p>
                 {extractFromName && skuFromName && (
                   <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                    <CheckCircle2 size={12} /> Listo: el SKU se tomará del nombre. Ya no falta nada por mapear.
+                    <CheckCircle2 size={12} /> {t('Listo: el SKU se tomará del nombre. Ya no falta nada por mapear.')}
                   </p>
                 )}
                 {extractFromName && !mappedFields.includes('name') && (
                   <p className="mt-1.5 text-xs font-semibold text-amber-700">
-                    Falta mapear una columna a "Nombre del producto" para poder extraer el SKU.
+                    {t('Falta mapear una columna a "Nombre del producto" para poder extraer el SKU.')}
                   </p>
                 )}
               </div>
@@ -357,14 +358,14 @@ function MappingStep({ upload, onSaved, onBack }) {
       <div className="flex justify-between">
         <button onClick={onBack}
           className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          Atrás
+          {t('Atrás')}
         </button>
         <button
           onClick={handleSave}
           disabled={!canContinue || saving}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
           {saving && <Loader2 size={14} className="animate-spin" />}
-          {saving ? 'Guardando...' : 'Continuar'}
+          {saving ? t('Guardando...') : t('Continuar')}
         </button>
       </div>
     </div>
@@ -385,6 +386,7 @@ const TEXT_BY_CLASS = {
 }
 
 function PreviewStep({ jobId, onExecute, onBack }) {
+  const t = useT()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
@@ -417,7 +419,7 @@ function PreviewStep({ jobId, onExecute, onBack }) {
 
   const handleExecute = async () => {
     if (hasErrors && !window.confirm(
-      `Hay ${totals.redCount} fila(s) con errores que NO se importarán. ¿Continuar igual?`)) return
+      t('Hay {n} fila(s) con errores que NO se importarán. ¿Continuar igual?', { n: totals.redCount }))) return
     try {
       setExecuting(true)
       await importsApi.execute(jobId)
@@ -432,23 +434,22 @@ function PreviewStep({ jobId, onExecute, onBack }) {
     <div className="space-y-4">
       {/* Counters — Advertencias y Errores filtran la tabla; Totales la limpia */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Counter label="Totales"      value={totals.totalRows} color="gray"
+        <Counter label={t('Totales')}      value={totals.totalRows} color="gray"
           onClick={() => changeFilter(null)} active={filter === null}
-          hint="Ver todas las filas" />
-        <Counter label="Listas"       value={totals.greenCount + totals.yellowCount} color="emerald" />
-        <Counter label="Advertencias" value={totals.yellowCount} color="amber"
+          hint={t('Ver todas las filas')} />
+        <Counter label={t('Listas')}       value={totals.greenCount + totals.yellowCount} color="emerald" />
+        <Counter label={t('Advertencias')} value={totals.yellowCount} color="amber"
           onClick={() => changeFilter('YELLOW')} active={filter === 'YELLOW'}
-          hint="Ver solo las filas con advertencias" />
-        <Counter label="Errores"      value={totals.redCount} color="red"
+          hint={t('Ver solo las filas con advertencias')} />
+        <Counter label={t('Errores')}      value={totals.redCount} color="red"
           onClick={() => changeFilter('RED')} active={filter === 'RED'}
-          hint="Ver solo las filas con errores" />
+          hint={t('Ver solo las filas con errores')} />
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1">
           <p className="text-xs text-gray-500">
-            Las filas con error (rojo) NO se importarán. Las filas con advertencia (amarillo)
-            se importan pero quedan marcadas con una nota para que las revises.
+            {t('Las filas con error (rojo) NO se importarán. Las filas con advertencia (amarillo) se importan pero quedan marcadas con una nota para que las revises.')}
           </p>
           {filter && (
             <button
@@ -456,7 +457,7 @@ function PreviewStep({ jobId, onExecute, onBack }) {
               onClick={() => changeFilter(null)}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
             >
-              Mostrando solo {filter === 'YELLOW' ? 'advertencias' : 'errores'} · Ver todas ✕
+              {filter === 'YELLOW' ? t('Mostrando solo advertencias') : t('Mostrando solo errores')} · {t('Ver todas')} ✕
             </button>
           )}
         </div>
@@ -466,13 +467,13 @@ function PreviewStep({ jobId, onExecute, onBack }) {
             <thead>
               <tr className="border-b border-gray-100 text-xs uppercase tracking-widest text-gray-400">
                 <th className="px-3 py-2 text-left">#</th>
-                <th className="px-3 py-2 text-left">Nombre</th>
+                <th className="px-3 py-2 text-left">{t('Nombre')}</th>
                 <th className="px-3 py-2 text-left">SKU</th>
-                <th className="px-3 py-2 text-right">P. Venta</th>
-                <th className="px-3 py-2 text-right">Costo</th>
-                <th className="px-3 py-2 text-right">Stock</th>
-                <th className="px-3 py-2 text-left">Proveedor</th>
-                <th className="px-3 py-2 text-left">Observaciones</th>
+                <th className="px-3 py-2 text-right">{t('P. Venta')}</th>
+                <th className="px-3 py-2 text-right">{t('Costo')}</th>
+                <th className="px-3 py-2 text-right">{t('Stock')}</th>
+                <th className="px-3 py-2 text-left">{t('Proveedor')}</th>
+                <th className="px-3 py-2 text-left">{t('Observaciones')}</th>
               </tr>
             </thead>
             <tbody>
@@ -489,9 +490,9 @@ function PreviewStep({ jobId, onExecute, onBack }) {
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-3 py-8 text-center text-sm text-gray-400">
-                    {filter === 'YELLOW' ? 'No hay filas con advertencias 🎉'
-                      : filter === 'RED' ? 'No hay filas con errores 🎉'
-                      : 'Sin filas'}
+                    {filter === 'YELLOW' ? t('No hay filas con advertencias 🎉')
+                      : filter === 'RED' ? t('No hay filas con errores 🎉')
+                      : t('Sin filas')}
                   </td>
                 </tr>
               ) : (
@@ -503,7 +504,7 @@ function PreviewStep({ jobId, onExecute, onBack }) {
                     <td className="px-3 py-2 text-right text-gray-700">
                       {r.priceIsVariable ? (
                         <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-orange-700">
-                          Variable
+                          {t('Variable')}
                         </span>
                       ) : (
                         r.salePrice ?? '—'
@@ -512,7 +513,7 @@ function PreviewStep({ jobId, onExecute, onBack }) {
                     <td className="px-3 py-2 text-right text-gray-700">{r.purchasePrice ?? '—'}</td>
                     <td className="px-3 py-2 text-right text-gray-700">{r.currentStock ?? '—'}</td>
                     <td className="max-w-[160px] truncate px-3 py-2 text-gray-600">
-                      {r.supplierName ?? <span className="text-amber-700">Sin asignar</span>}
+                      {r.supplierName ?? <span className="text-amber-700">{t('Sin asignar')}</span>}
                     </td>
                     <td className={`px-3 py-2 text-xs ${TEXT_BY_CLASS[r.classification] ?? ''}`}>
                       {r.issues.length > 0 ? r.issues.join(' · ') : '—'}
@@ -527,17 +528,17 @@ function PreviewStep({ jobId, onExecute, onBack }) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2">
             <p className="text-xs text-gray-500">
-              Página {page + 1} / {totalPages}
+              {t('Página')} {page + 1} / {totalPages}
             </p>
             <div className="flex items-center gap-1">
               <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
                 className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                Anterior
+                {t('Anterior')}
               </button>
               <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
                 className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-                Siguiente
+                {t('Siguiente')}
               </button>
             </div>
           </div>
@@ -547,14 +548,14 @@ function PreviewStep({ jobId, onExecute, onBack }) {
       <div className="flex justify-between">
         <button onClick={onBack}
           className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          Atrás
+          {t('Atrás')}
         </button>
         <button
           onClick={handleExecute}
           disabled={executing || totals.totalRows === 0}
           className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
           {executing && <Loader2 size={14} className="animate-spin" />}
-          Importar {totals.greenCount + totals.yellowCount} producto(s)
+          {t('Importar {n} producto(s)', { n: totals.greenCount + totals.yellowCount })}
         </button>
       </div>
     </div>
@@ -594,6 +595,7 @@ function Counter({ label, value, color, onClick, active, hint }) {
 // ── Step 4 — Importing / Result ─────────────────────────────────────────────
 
 function ImportingStep({ jobId, onDone, onRestart }) {
+  const t = useT()
   const [status, setStatus] = useState(null)
   const [downloading, setDownloading] = useState(false)
   const navigate = useNavigate()
@@ -655,9 +657,9 @@ function ImportingStep({ jobId, onDone, onRestart }) {
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-gray-900">
-            {isDone   ? '¡Importación completada!' :
-             isFailed ? 'La importación falló' :
-             'Importando productos...'}
+            {isDone   ? t('¡Importación completada!') :
+             isFailed ? t('La importación falló') :
+             t('Importando productos...')}
           </h3>
           {!isDone && !isFailed && <Loader2 size={16} className="animate-spin text-blue-600" />}
         </div>
@@ -669,48 +671,48 @@ function ImportingStep({ jobId, onDone, onRestart }) {
           />
         </div>
         <p className="mt-2 text-xs text-gray-500">
-          {status?.processedRows ?? 0} / {status?.totalRows ?? 0} filas ·{' '}
-          <span className="text-emerald-600">{status?.successCount ?? 0} correctas</span> ·{' '}
-          <span className="text-amber-600">{status?.warningCount ?? 0} advertencias</span> ·{' '}
-          <span className="text-red-600">{status?.errorCount ?? 0} errores</span>
+          {status?.processedRows ?? 0} / {status?.totalRows ?? 0} {t('filas')} ·{' '}
+          <span className="text-emerald-600">{t('{n} correctas', { n: status?.successCount ?? 0 })}</span> ·{' '}
+          <span className="text-amber-600">{t('{n} advertencias', { n: status?.warningCount ?? 0 })}</span> ·{' '}
+          <span className="text-red-600">{t('{n} errores', { n: status?.errorCount ?? 0 })}</span>
         </p>
       </div>
 
       {isDone && summary && (
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-gray-900">Resumen</h3>
+          <h3 className="text-sm font-bold text-gray-900">{t('Resumen')}</h3>
 
           <ul className="mt-3 space-y-1.5 text-sm">
-            <SummaryRow label="Productos creados"            value={summary.productsCreated} />
-            <SummaryRow label="Productos actualizados"       value={summary.productsUpdated} />
-            <SummaryRow label="Productos saltados"           value={summary.productsSkipped} />
-            <SummaryRow label="Proveedores nuevos creados"   value={summary.suppliersCreated} />
-            <SummaryRow label="Proveedores deduplicados"     value={summary.suppliersDeduplicated}
-              hint="Mismo nombre con distinta capitalización" />
-            <SummaryRow label="Caracteres corregidos"        value={summary.encodingCleaned} />
-            <SummaryRow label="Stock negativo normalizado"   value={summary.negativeStockNormalized} />
-            <SummaryRow label="Productos con precio variable" value={summary.variablePrice} />
-            <SummaryRow label="Productos con costo en 0"     value={summary.zeroPurchasePrice} />
-            <SummaryRow label="Costo > precio venta"         value={summary.costAboveSale} />
-            <SummaryRow label="Asignados a 'Sin proveedor'"  value={summary.assignedToPlaceholder} />
-            <SummaryRow label="Filas con error"              value={summary.rowsFailed}
+            <SummaryRow label={t('Productos creados')}            value={summary.productsCreated} />
+            <SummaryRow label={t('Productos actualizados')}       value={summary.productsUpdated} />
+            <SummaryRow label={t('Productos saltados')}           value={summary.productsSkipped} />
+            <SummaryRow label={t('Proveedores nuevos creados')}   value={summary.suppliersCreated} />
+            <SummaryRow label={t('Proveedores deduplicados')}     value={summary.suppliersDeduplicated}
+              hint={t('Mismo nombre con distinta capitalización')} />
+            <SummaryRow label={t('Caracteres corregidos')}        value={summary.encodingCleaned} />
+            <SummaryRow label={t('Stock negativo normalizado')}   value={summary.negativeStockNormalized} />
+            <SummaryRow label={t('Productos con precio variable')} value={summary.variablePrice} />
+            <SummaryRow label={t('Productos con costo en 0')}     value={summary.zeroPurchasePrice} />
+            <SummaryRow label={t('Costo > precio venta')}         value={summary.costAboveSale} />
+            <SummaryRow label={t("Asignados a 'Sin proveedor'")}  value={summary.assignedToPlaceholder} />
+            <SummaryRow label={t('Filas con error')}              value={summary.rowsFailed}
               danger={summary.rowsFailed > 0} />
           </ul>
 
           {summary.negativeStockSkus?.length > 0 && (
-            <SkuList title="Stock negativo — revisar" skus={summary.negativeStockSkus} />
+            <SkuList title={t('Stock negativo — revisar')} skus={summary.negativeStockSkus} />
           )}
           {summary.costAboveSaleSkus?.length > 0 && (
-            <SkuList title="Costo > precio venta — revisar" skus={summary.costAboveSaleSkus} />
+            <SkuList title={t('Costo > precio venta — revisar')} skus={summary.costAboveSaleSkus} />
           )}
         </div>
       )}
 
       {isFailed && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          <p className="font-semibold">La importación no pudo completarse.</p>
+          <p className="font-semibold">{t('La importación no pudo completarse.')}</p>
           <p className="mt-1 text-xs">
-            {summary?.error ?? 'Error desconocido. Revisá los logs del servidor.'}
+            {summary?.error ?? t('Error desconocido. Revisá los logs del servidor.')}
           </p>
         </div>
       )}
@@ -721,16 +723,16 @@ function ImportingStep({ jobId, onDone, onRestart }) {
             <button onClick={onRestart}
               className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
               <RotateCcw size={14} />
-              Importar otro archivo
+              {t('Importar otro archivo')}
             </button>
             <button onClick={handleDownload} disabled={downloading}
               className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50">
               {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              Descargar reporte
+              {t('Descargar reporte')}
             </button>
             <button onClick={() => navigate('/products')}
               className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-              Ver productos
+              {t('Ver productos')}
             </button>
           </>
         )}
@@ -778,70 +780,69 @@ const STEP_HELP_TITLES = [
 ]
 
 function HelpSection({ title, children }) {
+  const t = useT()
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50/70 p-3">
-      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</p>
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-gray-500">{t(title)}</p>
       <div className="space-y-2">{children}</div>
     </div>
   )
 }
 
+function B({ k, cls = '' }) {
+  const t = useT()
+  return <span className={`font-semibold ${cls}`}>{t(k)}</span>
+}
+
 function StepHelp({ step }) {
+  const t = useT()
   if (step === 0) return (
     <>
-      <p>
-        Este es el primer paso para cargar muchos productos de una sola vez, en lugar de
-        crearlos uno por uno.
-      </p>
+      <p>{t('Este es el primer paso para cargar muchos productos de una sola vez, en lugar de crearlos uno por uno.')}</p>
       <HelpSection title="Qué hacer">
         <p>
-          Arrastra (o selecciona) tu archivo <span className="font-semibold">Excel (.xlsx)</span> o{' '}
-          <span className="font-semibold">CSV</span> con la lista de productos. Pesa hasta 10 MB.
-          El sistema lo lee al instante y en el siguiente paso eliges qué columna corresponde a
-          qué campo.
+          {t('Arrastra (o selecciona) tu archivo «Excel (.xlsx)» o «CSV» con la lista de productos. Pesa hasta 10 MB.')}{' '}
+          {t('El sistema lo lee al instante y en el siguiente paso eliges qué columna corresponde a qué campo.')}
         </p>
       </HelpSection>
       <HelpSection title="Antes de empezar">
         <p>
-          Si el archivo viene de tu sistema anterior de inventario, tenlo a la mano. No necesitas
-          darle ningún formato especial: el sistema reconoce los encabezados más comunes y tú
-          ajustas el resto en el paso siguiente.
+          {t('Si el archivo viene de tu sistema anterior de inventario, tenlo a la mano.')}{' '}
+          {t('No necesitas darle ningún formato especial: el sistema reconoce los encabezados más comunes y tú ajustas el resto en el paso siguiente.')}
         </p>
       </HelpSection>
       <p className="text-xs text-gray-400">
-        Tranquilo: nada se guarda todavía. Recién al final, después de revisar, decides importar.
+        {t('Tranquilo: nada se guarda todavía. Recién al final, después de revisar, decides importar.')}
       </p>
     </>
   )
   if (step === 1) return (
     <>
       <p>
-        Cada columna de tu archivo se conecta con un campo del producto. El sistema ya intentó
-        adivinar las más comunes (por ejemplo NOMBRE → Nombre, PRECIO → Precio de venta), pero
-        puedes corregir cualquiera a mano.
+        {t('Cada columna de tu archivo se conecta con un campo del producto.')}{' '}
+        {t('El sistema ya intentó adivinar las más comunes (por ejemplo NOMBRE → Nombre, PRECIO → Precio de venta), pero puedes corregir cualquiera a mano.')}
       </p>
       <HelpSection title="Campos obligatorios">
         <p>
-          Solo uno: <span className="font-semibold">Nombre</span>. Todo lo demás es opcional
-          y las celdas vacías no son problema:
+          {t('Solo uno:')} <B k="Nombre" />. {t('Todo lo demás es opcional y las celdas vacías no son problema:')}
         </p>
         <ul className="space-y-1">
-          <li>• <span className="font-semibold">Sin código (SKU)</span>: el sistema le genera uno automático.</li>
-          <li>• <span className="font-semibold">Sin proveedor</span>: queda como "Sin proveedor asignado" y lo completas después.</li>
-          <li>• <span className="font-semibold">Sin stock</span>: se guarda con stock 0.</li>
-          <li>• <span className="font-semibold">Sin precio</span> (ej. productos por kilo/gramo): queda como "Precio variable" y el precio se pone al vender.</li>
+          <li>• <B k="Sin código (SKU)" />: {t('el sistema le genera uno automático.')}</li>
+          <li>• <B k="Sin proveedor" />: {t('queda como "Sin proveedor asignado" y lo completas después.')}</li>
+          <li>• <B k="Sin stock" />: {t('se guarda con stock 0.')}</li>
+          <li>• <B k="Sin precio" /> {t('(ej. productos por kilo/gramo): queda como "Precio variable" y el precio se pone al vender.')}</li>
         </ul>
       </HelpSection>
       <HelpSection title="Columnas que no quieres importar">
         <p>
-          Elige <span className="font-semibold">"No importar esta columna"</span> y esa columna se
-          ignora por completo. Útil para columnas internas que no aplican al sistema.
+          {t('Elige «No importar esta columna» y esa columna se ignora por completo.')}{' '}
+          {t('Útil para columnas internas que no aplican al sistema.')}
         </p>
       </HelpSection>
       <HelpSection title="Opciones avanzadas">
         <p>
-          Solo si tu columna de Nombre trae el código pegado al final (caso poco común). Lo normal
-          es dejarlas como están.
+          {t('Solo si tu columna de Nombre trae el código pegado al final (caso poco común).')}{' '}
+          {t('Lo normal es dejarlas como están.')}
         </p>
       </HelpSection>
     </>
@@ -849,50 +850,47 @@ function StepHelp({ step }) {
   if (step === 2) return (
     <>
       <p>
-        Aquí ves exactamente cómo quedará cada producto <span className="font-semibold">antes</span>{' '}
-        de guardarlo. Cada fila tiene un color según su estado:
+        {t('Aquí ves exactamente cómo quedará cada producto «antes» de guardarlo.')}{' '}
+        {t('Cada fila tiene un color según su estado:')}
       </p>
       <HelpSection title="Qué significa cada color">
         <ul className="space-y-1.5">
-          <li>🟢 <span className="font-semibold text-emerald-700">Verde</span>: se importa sin problemas.</li>
-          <li>🟡 <span className="font-semibold text-amber-700">Amarillo</span>: se importa igual, pero con una observación que conviene revisar después.</li>
-          <li>🔴 <span className="font-semibold text-red-700">Rojo</span>: NO se importa porque le falta el nombre del producto.</li>
+          <li>🟢 <B k="Verde" cls="text-emerald-700" />: {t('se importa sin problemas.')}</li>
+          <li>🟡 <B k="Amarillo" cls="text-amber-700" />: {t('se importa igual, pero con una observación que conviene revisar después.')}</li>
+          <li>🔴 <B k="Rojo" cls="text-red-700" />: {t('NO se importa porque le falta el nombre del producto.')}</li>
         </ul>
       </HelpSection>
       <p>
-        Lo importante: <span className="font-semibold">los amarillos están bien</span>. El sistema
-        guarda el producto y le deja una nota para que lo revises con calma desde la página de
-        Productos. Los rojos sí debes corregirlos en tu archivo (o no importarlos).
+        {t('Lo importante:')} <B k="los amarillos están bien" />. {t('El sistema guarda el producto y le deja una nota para que lo revises con calma desde la página de Productos.')}{' '}
+        {t('Los rojos sí debes corregirlos en tu archivo (o no importarlos).')}
       </p>
       <HelpSection title="Observaciones más comunes (amarillas)">
         <ul className="space-y-2">
-          <li><span className="font-semibold">Sin código (SKU)</span>: se importa igual y el sistema le genera un código automático.</li>
-          <li><span className="font-semibold">Sin proveedor</span>: el producto se importa con el proveedor "Sin proveedor asignado". Luego le asignas el real desde la edición del producto.</li>
-          <li><span className="font-semibold">Costo en 0</span>: te avisamos para que actualices el costo cuando recibas la próxima compra.</li>
-          <li><span className="font-semibold">Stock negativo</span>: como no se permite stock negativo, se guarda en 0 y te queda la nota.</li>
-          <li><span className="font-semibold">Costo mayor al precio de venta</span>: suele ser un error de carga; te lo marcamos para que lo revises y no vendas a pérdida.</li>
-          <li><span className="font-semibold">Precio variable</span>: el producto queda marcado como "Precio variable"; cada vez que lo vendas te pediremos el precio en el momento.</li>
-          <li><span className="font-semibold">Caracteres corregidos</span>: tu archivo traía caracteres mal codificados (como "Ã±" en vez de "ñ") y los arreglamos automáticamente.</li>
+          <li><B k="Sin código (SKU)" />: {t('se importa igual y el sistema le genera un código automático.')}</li>
+          <li><B k="Sin proveedor" />: {t('el producto se importa con el proveedor "Sin proveedor asignado". Luego le asignas el real desde la edición del producto.')}</li>
+          <li><B k="Costo en 0" />: {t('te avisamos para que actualices el costo cuando recibas la próxima compra.')}</li>
+          <li><B k="Stock negativo" />: {t('como no se permite stock negativo, se guarda en 0 y te queda la nota.')}</li>
+          <li><B k="Costo mayor al precio de venta" />: {t('suele ser un error de carga; te lo marcamos para que lo revises y no vendas a pérdida.')}</li>
+          <li><B k="Precio variable" />: {t('el producto queda marcado como "Precio variable"; cada vez que lo vendas te pediremos el precio en el momento.')}</li>
+          <li><B k="Caracteres corregidos" />: {t('tu archivo traía caracteres mal codificados (como "Ã±" en vez de "ñ") y los arreglamos automáticamente.')}</li>
         </ul>
       </HelpSection>
     </>
   )
   return (
     <>
-      <p>¡Listo! El import terminó. En el resumen ves:</p>
+      <p>{t('¡Listo! El import terminó. En el resumen ves:')}</p>
       <HelpSection title="Qué muestra el resumen">
         <ul className="space-y-1">
-          <li>Cuántos productos se crearon, actualizaron o saltaron.</li>
-          <li>Cuántos proveedores nuevos se crearon automáticamente.</li>
-          <li>Cuántas filas quedaron con observaciones para revisar.</li>
+          <li>{t('Cuántos productos se crearon, actualizaron o saltaron.')}</li>
+          <li>{t('Cuántos proveedores nuevos se crearon automáticamente.')}</li>
+          <li>{t('Cuántas filas quedaron con observaciones para revisar.')}</li>
         </ul>
       </HelpSection>
       <HelpSection title="Tus próximos pasos">
         <p>
-          Las filas con observación quedaron en Productos con su nota; revísalas cuando puedas.
-          Si quieres el detalle fila por fila, descarga el{' '}
-          <span className="font-semibold">reporte completo en Excel</span>: cada producto aparece con
-          su color y el motivo de la observación, ideal como lista de pendientes.
+          {t('Las filas con observación quedaron en Productos con su nota; revísalas cuando puedas.')}{' '}
+          {t('Si quieres el detalle fila por fila, descarga el «reporte completo en Excel»: cada producto aparece con su color y el motivo de la observación, ideal como lista de pendientes.')}
         </p>
       </HelpSection>
     </>
@@ -902,6 +900,7 @@ function StepHelp({ step }) {
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function ProductImportPage() {
+  const t = useT()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [step, setStep] = useState(0)
@@ -922,9 +921,9 @@ export default function ProductImportPage() {
           <button onClick={() => navigate('/products')}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
-            <span className="hidden sm:inline">Volver</span>
+            <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">Importar productos desde Excel</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('Importar productos desde Excel')}</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -933,9 +932,9 @@ export default function ProductImportPage() {
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <History size={14} />
-            <span className="hidden sm:inline">Historial</span>
+            <span className="hidden sm:inline">{t('Historial')}</span>
           </button>
-          <HelpDrawer title={STEP_HELP_TITLES[step]} autoOpenKey={`eazystock_import_help_v1_step${step}`}>
+          <HelpDrawer title={t(STEP_HELP_TITLES[step])} autoOpenKey={`eazystock_import_help_v1_step${step}`}>
             <StepHelp step={step} />
           </HelpDrawer>
         </div>

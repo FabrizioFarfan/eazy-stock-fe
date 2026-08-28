@@ -9,6 +9,7 @@ import {
 } from '../../hooks/useProducts'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { formatPrice } from '../../utils/formatMoney'
+import { useT } from '../../i18n'
 
 /**
  * Qué hacer con un producto que ya no querés ver: ocultarlo (desactivar),
@@ -22,6 +23,7 @@ import { formatPrice } from '../../utils/formatMoney'
  * vuelve a quedar libre.
  */
 export default function DeleteProductModal({ product, onClose, onDone }) {
+  const t = useT()
   // Un producto ya oculto solo tiene un camino útil: borrarlo de verdad.
   const alreadyHidden = product.active === false
   const [choice, setChoice] = useState(alreadyHidden ? 'delete' : null)   // 'deactivate' | 'delete' | 'force'
@@ -41,9 +43,10 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
     let cancelled = false
     productsApi.checkDeletable(product.id)
       .then((r) => { if (!cancelled) setCheck(r.data.data) })
-      .catch(() => { if (!cancelled) setCheck({ deletable: false, reason: 'No se pudo verificar el historial' }) })
+      .catch(() => { if (!cancelled) setCheck({ deletable: false, reason: t('No se pudo verificar el historial') }) })
       .finally(() => { if (!cancelled) setLoadingCheck(false) })
     return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id])
 
   const canDelete = check?.deletable === true
@@ -60,7 +63,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
     setLoadingForce(true)
     productsApi.forceDeletePreview(product.id)
       .then((r) => setForce(r.data.data))
-      .catch(() => toast.error('No se pudo calcular el impacto del borrado'))
+      .catch(() => toast.error(t('No se pudo calcular el impacto del borrado')))
       .finally(() => setLoadingForce(false))
   }
 
@@ -70,20 +73,20 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
         await deactivate.mutateAsync(product.id)
         // El producto desaparece de la lista: sin decir dónde quedó, el usuario
         // cree que lo borró y después no lo encuentra para borrarlo de verdad.
-        toast.success(`"${product.name}" quedó oculto. Su código ${product.sku} sigue reservado.`, {
-          description: 'Lo encontrás con el filtro "Ocultos" de Productos.',
+        toast.success(t('"{name}" quedó oculto. Su código {sku} sigue reservado.', { name: product.name, sku: product.sku }), {
+          description: t('Lo encontrás con el filtro "Ocultos" de Productos.'),
           duration: 8000,
           action: {
-            label: 'Ver ocultos',
+            label: t('Ver ocultos'),
             onClick: () => window.dispatchEvent(new CustomEvent('eazystock:show-hidden-products')),
           },
         })
       } else if (choice === 'force') {
         await forceDelete.mutateAsync(product.id)
-        toast.success(`"${product.name}" y todo su historial fueron borrados. El código ${product.sku} volvió a quedar libre.`)
+        toast.success(t('"{name}" y todo su historial fueron borrados. El código {sku} volvió a quedar libre.', { name: product.name, sku: product.sku }))
       } else {
         await deleteForever.mutateAsync(product.id)
-        toast.success(`"${product.name}" borrado. El código ${product.sku} volvió a quedar libre.`)
+        toast.success(t('"{name}" borrado. El código {sku} volvió a quedar libre.', { name: product.name, sku: product.sku }))
       }
       onDone?.()
       onClose()
@@ -107,7 +110,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div className="flex items-center gap-3">
             <Trash2 size={18} className="text-red-600" />
-            <h3 className="text-base font-bold text-gray-900">Quitar producto</h3>
+            <h3 className="text-base font-bold text-gray-900">{t('Quitar producto')}</h3>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X size={18} />
@@ -122,8 +125,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
 
           {alreadyHidden && (
             <p className="rounded-xl bg-gray-50 px-3.5 py-2.5 text-xs text-gray-600 ring-1 ring-gray-100">
-              Este producto ya está oculto: su código sigue reservado. Bórralo para liberarlo, o
-              cierra y usa <b>"Reactivar"</b> para devolverlo al catálogo.
+              {t('Este producto ya está oculto: su código sigue reservado. Bórralo para liberarlo, o cierra y usa "Reactivar" para devolverlo al catálogo.')}
             </p>
           )}
 
@@ -132,12 +134,12 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
           <button type="button" onClick={() => setChoice('deactivate')} className={optionCls(choice === 'deactivate')}>
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <EyeOff size={15} className="text-amber-600" />
-              Ocultar del catálogo
+              {t('Ocultar del catálogo')}
             </div>
             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-              Deja de aparecer en la lista, pero se conserva su historial y <b>su código {product.sku} queda
-              reservado</b>: el próximo producto seguirá con el número siguiente. Después lo encontrás
-              con el filtro <b>"Ocultos"</b>, para reactivarlo o borrarlo.
+              {t('Deja de aparecer en la lista, pero se conserva su historial y')}{' '}
+              <b>{t('su código {sku} queda reservado', { sku: product.sku })}</b>: {t('el próximo producto seguirá con el número siguiente. Después lo encontrás con el filtro')}{' '}
+              <b>{t('"Ocultos"')}</b>, {t('para reactivarlo o borrarlo.')}
             </p>
           </button>
           )}
@@ -151,17 +153,16 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
           >
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <Trash2 size={15} className="text-red-600" />
-              Borrar definitivamente
+              {t('Borrar definitivamente')}
               {loadingCheck && <Loader2 size={13} className="animate-spin text-gray-400" />}
             </div>
             <p className="mt-1 text-xs leading-relaxed text-gray-600">
-              Desaparece del sistema y <b>su código {product.sku} vuelve a quedar libre</b> para el próximo
-              producto. Para productos de prueba o creados por error.
+              {t('Desaparece del sistema y')} <b>{t('su código {sku} vuelve a quedar libre', { sku: product.sku })}</b> {t('para el próximo producto. Para productos de prueba o creados por error.')}
             </p>
             {!loadingCheck && !canDelete && !blockedByHistory && check?.reason && (
               <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
                 <AlertTriangle size={13} className="mt-px flex-shrink-0" />
-                {check.reason}: solo puede ocultarse.
+                {check.reason}: {t('solo puede ocultarse.')}
               </p>
             )}
           </button>
@@ -171,13 +172,13 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
             <button type="button" onClick={pickForce} className={optionCls(choice === 'force', 'red')}>
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                 <Flame size={15} className="text-red-600" />
-                Borrar el producto y TODO su historial
+                {t('Borrar el producto y TODO su historial')}
                 {loadingForce && <Loader2 size={13} className="animate-spin text-gray-400" />}
               </div>
               <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                Este producto tiene movimientos ({check.reason.toLowerCase()}), así que el borrado normal
-                no lo deja. Esta opción arrasa con <b>todo lo ligado</b> —ventas, fiado, devoluciones y
-                recepciones— y <b>libera su código {product.sku}</b>. Pensada para productos de prueba.
+                {t('Este producto tiene movimientos ({reason}), así que el borrado normal no lo deja. Esta opción arrasa con', { reason: check.reason.toLowerCase() })}{' '}
+                <b>{t('todo lo ligado')}</b> {t('—ventas, fiado, devoluciones y recepciones— y')}{' '}
+                <b>{t('libera su código {sku}', { sku: product.sku })}</b>. {t('Pensada para productos de prueba.')}
               </p>
             </button>
           )}
@@ -187,50 +188,49 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
             <div className="rounded-xl border border-red-100 bg-red-50/50 p-3.5">
               {loadingForce && (
                 <p className="flex items-center gap-2 text-xs text-gray-600">
-                  <Loader2 size={13} className="animate-spin" /> Calculando qué se va a borrar…
+                  <Loader2 size={13} className="animate-spin" /> {t('Calculando qué se va a borrar…')}
                 </p>
               )}
 
               {!loadingForce && force && !force.owner && (
                 <p className="flex items-start gap-1.5 text-xs text-amber-800">
                   <AlertTriangle size={14} className="mt-px flex-shrink-0" />
-                  Solo el dueño del negocio puede hacer un borrado forzado.
+                  {t('Solo el dueño del negocio puede hacer un borrado forzado.')}
                 </p>
               )}
 
               {!loadingForce && force && force.owner && (
                 <>
-                  <p className="mb-2 text-xs font-semibold text-red-800">Se borrará definitivamente:</p>
+                  <p className="mb-2 text-xs font-semibold text-red-800">{t('Se borrará definitivamente:')}</p>
                   <ul className="space-y-1 text-xs text-gray-700">
                     {force.salesCount > 0 && (
-                      <li>• <b>{force.salesCount}</b> {force.salesCount === 1 ? 'venta completa' : 'ventas completas'}</li>
+                      <li>• <b>{force.salesCount}</b> {force.salesCount === 1 ? t('venta completa') : t('ventas completas')}</li>
                     )}
                     {force.returnsCount > 0 && (
-                      <li>• <b>{force.returnsCount}</b> {force.returnsCount === 1 ? 'devolución' : 'devoluciones'}</li>
+                      <li>• <b>{force.returnsCount}</b> {force.returnsCount === 1 ? t('devolución') : t('devoluciones')}</li>
                     )}
                     {force.customerCreditsCount > 0 && (
-                      <li>• <b>{force.customerCreditsCount}</b> {force.customerCreditsCount === 1 ? 'fiado de cliente' : 'fiados de cliente'}
-                        {force.customerDebtRemoved > 0 && <> (se descuenta <b>{formatPrice(force.customerDebtRemoved)}</b> de deuda)</>}</li>
+                      <li>• <b>{force.customerCreditsCount}</b> {force.customerCreditsCount === 1 ? t('fiado de cliente') : t('fiados de cliente')}
+                        {force.customerDebtRemoved > 0 && <> ({t('se descuenta')} <b>{formatPrice(force.customerDebtRemoved)}</b> {t('de deuda')})</>}</li>
                     )}
                     {force.receiptsCount > 0 && (
-                      <li>• <b>{force.receiptsCount}</b> {force.receiptsCount === 1 ? 'recepción de proveedor' : 'recepciones de proveedor'}</li>
+                      <li>• <b>{force.receiptsCount}</b> {force.receiptsCount === 1 ? t('recepción de proveedor') : t('recepciones de proveedor')}</li>
                     )}
                     {force.supplierCreditsCount > 0 && (
-                      <li>• <b>{force.supplierCreditsCount}</b> {force.supplierCreditsCount === 1 ? 'deuda con proveedor' : 'deudas con proveedor'}
-                        {force.supplierDebtRemoved > 0 && <> (se descuenta <b>{formatPrice(force.supplierDebtRemoved)}</b>)</>}</li>
+                      <li>• <b>{force.supplierCreditsCount}</b> {force.supplierCreditsCount === 1 ? t('deuda con proveedor') : t('deudas con proveedor')}
+                        {force.supplierDebtRemoved > 0 && <> ({t('se descuenta')} <b>{formatPrice(force.supplierDebtRemoved)}</b>)</>}</li>
                     )}
                     {force.stockMovementsCount > 0 && (
-                      <li>• <b>{force.stockMovementsCount}</b> {force.stockMovementsCount === 1 ? 'movimiento de stock' : 'movimientos de stock'}</li>
+                      <li>• <b>{force.stockMovementsCount}</b> {force.stockMovementsCount === 1 ? t('movimiento de stock') : t('movimientos de stock')}</li>
                     )}
-                    <li>• el producto <b>{product.name}</b> (código {product.sku} liberado)</li>
+                    <li>• {t('el producto')} <b>{product.name}</b> ({t('código {sku} liberado', { sku: product.sku })})</li>
                   </ul>
 
                   {force.otherProducts?.length > 0 && (
                     <div className="mt-2.5 rounded-lg bg-amber-100/70 px-2.5 py-2 text-[11px] text-amber-900">
                       <p className="flex items-start gap-1.5 font-semibold">
                         <AlertTriangle size={13} className="mt-px flex-shrink-0" />
-                        ¡Atención! Esas ventas/recepciones también tienen otros productos, y su historial
-                        se borrará junto:
+                        {t('¡Atención! Esas ventas/recepciones también tienen otros productos, y su historial se borrará junto:')}
                       </p>
                       <p className="mt-1 pl-4">{force.otherProducts.join(', ')}</p>
                     </div>
@@ -238,7 +238,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
 
                   <div className="mt-3">
                     <label className="mb-1.5 block text-xs font-medium text-red-800">
-                      Esta acción no se puede deshacer. Escribí <b>BORRAR</b> para confirmar:
+                      {t('Esta acción no se puede deshacer. Escribí')} <b>BORRAR</b> {t('para confirmar:')}
                     </label>
                     <input
                       type="text"
@@ -257,7 +257,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
           {choice === 'delete' && (
             <div className="rounded-xl border border-red-100 bg-red-50/60 p-3">
               <label className="mb-1.5 block text-xs font-medium text-red-800">
-                Esta acción no se puede deshacer. Escribí <b>BORRAR</b> para confirmar:
+                {t('Esta acción no se puede deshacer. Escribí')} <b>BORRAR</b> {t('para confirmar:')}
               </label>
               <input
                 type="text"
@@ -273,7 +273,7 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
         <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
           <button type="button" onClick={onClose}
             className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-            Cancelar
+            {t('Cancelar')}
           </button>
           <button
             type="button"
@@ -291,12 +291,12 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
           >
             {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             {busy
-              ? 'Aplicando...'
+              ? t('Aplicando...')
               : choice === 'force'
-                ? 'Borrar todo'
+                ? t('Borrar todo')
                 : choice === 'delete'
-                  ? 'Borrar definitivamente'
-                  : 'Ocultar producto'}
+                  ? t('Borrar definitivamente')
+                  : t('Ocultar producto')}
           </button>
         </div>
       </div>

@@ -4,10 +4,11 @@ import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
 import ExpiryBadge from '../common/ExpiryBadge'
 import { formatShortDate } from '../../utils/formatDate'
+import { useT, dateLocale } from '../../i18n'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(dateStr))
@@ -41,13 +42,14 @@ function MovementTypeIcon({ type }) {
 }
 
 function MovementTypeBadge({ type }) {
+  const t = useT()
   if (type === 'SALE')
-    return <span className="text-xs font-semibold text-red-500">Venta</span>
+    return <span className="text-xs font-semibold text-red-500">{t('Venta')}</span>
   if (type === 'PURCHASE_ENTRY')
-    return <span className="text-xs font-semibold text-emerald-600">Entrada</span>
+    return <span className="text-xs font-semibold text-emerald-600">{t('Entrada')}</span>
   if (type === 'RETURN')
-    return <span className="text-xs font-semibold text-purple-600">Devolución</span>
-  return <span className="text-xs font-semibold text-blue-500">Ajuste</span>
+    return <span className="text-xs font-semibold text-purple-600">{t('Devolución')}</span>
+  return <span className="text-xs font-semibold text-blue-500">{t('Ajuste')}</span>
 }
 
 /**
@@ -58,6 +60,7 @@ function MovementTypeBadge({ type }) {
  * abrir el MovementModal ya prefijado con este producto.
  */
 export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust }) {
+  const t = useT()
   const { data: movementsData, isLoading: loadingMov } = useQuery({
     queryKey: ['stock-movements', 'product', product.id],
     queryFn: () => stockApi.getMovementsByProduct(product.id, { size: 5 })
@@ -99,7 +102,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           {isLow && (
             <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
               <AlertTriangle size={15} />
-              Stock bajo — {product.currentStock} unidades (mínimo {product.minStock})
+              {t('Stock bajo — {n} unidades (mínimo {min})', { n: product.currentStock, min: product.minStock })}
             </div>
           )}
 
@@ -107,25 +110,25 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           {product.expired && (
             <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
               <CalendarClock size={15} />
-              Producto vencido — venció el {formatShortDate(product.expirationDate)}
+              {t('Producto vencido — venció el {date}', { date: formatShortDate(product.expirationDate) })}
             </div>
           )}
           {!product.expired && product.expiringSoon && (
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-100">
               <CalendarClock size={15} />
-              Por vencer — {product.daysToExpire === 0 ? 'vence hoy' : `en ${product.daysToExpire} días`} ({formatShortDate(product.expirationDate)})
+              {t('Por vencer')} — {product.daysToExpire === 0 ? t('vence hoy') : t('en {n} días', { n: product.daysToExpire })} ({formatShortDate(product.expirationDate)})
             </div>
           )}
 
           {/* Identificación */}
-          <Section title="Identificación">
-            <Row label="Código (SKU)"     value={product.sku}          mono />
-            <Row label="Código de barras" value={product.barcode}      mono />
-            <Row label="Código proveedor" value={product.providerCode} mono />
-            <Row label="QR sistema"       value={product.qrCodeSystem} mono />
-            <Row label="Unidad"           value={product.unit} />
+          <Section title={t('Identificación')}>
+            <Row label={t('Código (SKU)')}     value={product.sku}          mono />
+            <Row label={t('Código de barras')} value={product.barcode}      mono />
+            <Row label={t('Código proveedor')} value={product.providerCode} mono />
+            <Row label={t('QR sistema')}       value={product.qrCodeSystem} mono />
+            <Row label={t('Unidad')}           value={product.unit} />
             {product.presentation && (
-              <Row label="Presentación"   value={product.presentation} />
+              <Row label={t('Presentación')}   value={product.presentation} />
             )}
           </Section>
 
@@ -133,7 +136,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           {product.importNotes && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
               <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
-                Notas de importación
+                {t('Notas de importación')}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-amber-800">
                 {product.importNotes}
@@ -142,7 +145,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           )}
 
           {/* Comercial */}
-          <Section title="Comercial">
+          <Section title={t('Comercial')}>
             {product.description && (
               <div className="mb-2 pb-2 border-b border-gray-100">
                 <p className="text-xs text-gray-600">{product.description}</p>
@@ -168,15 +171,15 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 </div>
               )}
             </div>
-            <Row label="P. compra" value={formatPrice(product.purchasePrice)} />
-            <Row label="P. venta"  value={
+            <Row label={t('P. compra')} value={formatPrice(product.purchasePrice)} />
+            <Row label={t('P. venta')}  value={
               product.priceIsVariable ? (
                 <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-                  Variable
+                  {t('Variable')}
                 </span>
               ) : formatPrice(product.salePrice)
             } />
-            <Row label="Margen"    value={
+            <Row label={t('Margen')}    value={
               !product.priceIsVariable && product.purchasePrice && product.salePrice
                 ? `${(((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)}%`
                 : null
@@ -184,24 +187,24 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           </Section>
 
           {/* Stock */}
-          <Section title="Stock">
+          <Section title={t('Stock')}>
             <div className="flex items-center justify-between py-1">
-              <span className="text-xs text-gray-500">Stock actual</span>
+              <span className="text-xs text-gray-500">{t('Stock actual')}</span>
               <span className={`text-lg font-bold ${isLow ? 'text-red-500' : 'text-emerald-600'}`}>
                 {product.currentStock}
               </span>
             </div>
-            <Row label="Stock mínimo" value={product.minStock} />
-            <Row label="Vencimiento"
-              value={product.expirationDate ? <ExpiryBadge product={product} /> : 'Sin fecha'} />
-            <Row label="Estado"
+            <Row label={t('Stock mínimo')} value={product.minStock} />
+            <Row label={t('Vencimiento')}
+              value={product.expirationDate ? <ExpiryBadge product={product} /> : t('Sin fecha')} />
+            <Row label={t('Estado')}
               value={
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
                   product.active
                     ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
                     : 'bg-gray-100 text-gray-500 ring-gray-200'
                 }`}>
-                  {product.active ? 'Activo' : 'Inactivo'}
+                  {product.active ? t('Activo') : t('Inactivo')}
                 </span>
               }
             />
@@ -209,7 +212,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
 
           {/* Atributos */}
           {hasAttrs && (
-            <Section title="Atributos">
+            <Section title={t('Atributos')}>
               {Object.entries(attrs).map(([key, val]) => (
                 <Row key={key} label={key} value={val} />
               ))}
@@ -219,7 +222,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
           {/* Historial reciente */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Historial reciente
+              {t('Historial reciente')}
             </p>
             {loadingMov ? (
               <div className="space-y-2">
@@ -229,7 +232,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
               </div>
             ) : movements.length === 0 ? (
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-5 text-center text-xs text-gray-400">
-                Sin movimientos registrados
+                {t('Sin movimientos registrados')}
               </div>
             ) : (
               <div className="divide-y divide-gray-50 rounded-xl border border-gray-100 bg-white">
@@ -256,9 +259,9 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
 
           {/* Timestamps */}
           <div className="flex gap-4 text-xs text-gray-400 pt-1">
-            <span>Creado: {formatDate(product.createdAt)}</span>
+            <span>{t('Creado')}: {formatDate(product.createdAt)}</span>
             <span>·</span>
-            <span>Actualizado: {formatDate(product.updatedAt)}</span>
+            <span>{t('Actualizado')}: {formatDate(product.updatedAt)}</span>
           </div>
         </div>
 
@@ -271,7 +274,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors"
               >
                 <SlidersHorizontal size={14} />
-                Ajustar stock
+                {t('Ajustar stock')}
               </button>
             )}
             {onRegisterEntry && (
@@ -280,7 +283,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
               >
                 <ArrowDownToLine size={14} />
-                Registrar entrada
+                {t('Registrar entrada')}
               </button>
             )}
             {/* Camino de vuelta para lo que se ocultó por error: un producto con
@@ -291,7 +294,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors"
               >
                 <Eye size={14} />
-                Reactivar
+                {t('Reactivar')}
               </button>
             )}
             {/* También para productos ya ocultos: desde acá se los borra de
@@ -302,7 +305,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={14} />
-                {product.active ? 'Ocultar o borrar' : 'Borrar definitivamente'}
+                {product.active ? t('Ocultar o borrar') : t('Borrar definitivamente')}
               </button>
             )}
             {onShowQr && (
@@ -311,7 +314,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <QrCode size={14} />
-                Código QR
+                {t('Código QR')}
               </button>
             )}
             {onEdit && (
@@ -320,7 +323,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
               >
                 <Edit size={14} />
-                Editar
+                {t('Editar')}
               </button>
             )}
           </div>

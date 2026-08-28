@@ -3,6 +3,7 @@ import { X, Loader2, History, Download, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { importsApi } from '../../services/endpoints/imports'
 import { getErrorMessage } from '../../utils/handleApiError'
+import { useT, dateLocale } from '../../i18n'
 
 const STATUS_BADGE = {
   COMPLETED: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
@@ -29,8 +30,8 @@ const STRATEGY_LABEL = {
 function formatDateTime(iso) {
   if (!iso) return '—'
   const d = new Date(iso)
-  return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })
-    + ' ' + d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString(dateLocale(), { day: '2-digit', month: 'short', year: 'numeric' })
+    + ' ' + d.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 /** Desglose creados/actualizados/saltados desde el resultSummary (JSON) del job. */
@@ -40,6 +41,7 @@ function parseSummary(job) {
 }
 
 function HistoryRow({ job }) {
+  const t = useT()
   const [downloading, setDownloading] = useState(false)
   const summary = parseSummary(job)
 
@@ -72,30 +74,30 @@ function HistoryRow({ job }) {
             <p className="text-xs text-gray-500">
               {formatDateTime(job.createdAt)}
               {job.userName ? <> · {job.userName}</> : null}
-              {job.duplicateStrategy ? <> · {STRATEGY_LABEL[job.duplicateStrategy] ?? job.duplicateStrategy}</> : null}
+              {job.duplicateStrategy ? <> · {STRATEGY_LABEL[job.duplicateStrategy] ? t(STRATEGY_LABEL[job.duplicateStrategy]) : job.duplicateStrategy}</> : null}
             </p>
           </div>
         </div>
         <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
           STATUS_BADGE[job.status] ?? STATUS_BADGE.UPLOADED}`}>
-          {STATUS_LABEL[job.status] ?? job.status}
+          {STATUS_LABEL[job.status] ? t(STATUS_LABEL[job.status]) : job.status}
         </span>
       </div>
 
       {(job.status === 'COMPLETED' || job.status === 'FAILED') && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
-          <span>{job.totalRows} fila{job.totalRows !== 1 ? 's' : ''}</span>
+          <span>{job.totalRows !== 1 ? t('{n} filas', { n: job.totalRows }) : t('{n} fila', { n: job.totalRows })}</span>
           {summary ? (
             <>
-              <span className="text-emerald-700 font-medium">{summary.productsCreated} creados</span>
-              <span className="text-blue-700 font-medium">{summary.productsUpdated} actualizados</span>
-              {summary.productsSkipped > 0 && <span>{summary.productsSkipped} saltados</span>}
+              <span className="text-emerald-700 font-medium">{t('{n} creados', { n: summary.productsCreated })}</span>
+              <span className="text-blue-700 font-medium">{t('{n} actualizados', { n: summary.productsUpdated })}</span>
+              {summary.productsSkipped > 0 && <span>{t('{n} saltados', { n: summary.productsSkipped })}</span>}
             </>
           ) : (
-            <span className="text-emerald-700 font-medium">{job.successCount} con éxito</span>
+            <span className="text-emerald-700 font-medium">{t('{n} con éxito', { n: job.successCount })}</span>
           )}
-          {job.errorCount > 0 && <span className="text-red-600 font-medium">{job.errorCount} con error</span>}
-          {job.warningCount > 0 && <span className="text-amber-700">{job.warningCount} con observación</span>}
+          {job.errorCount > 0 && <span className="text-red-600 font-medium">{t('{n} con error', { n: job.errorCount })}</span>}
+          {job.warningCount > 0 && <span className="text-amber-700">{t('{n} con observación', { n: job.warningCount })}</span>}
           <button
             type="button"
             onClick={downloadReport}
@@ -103,7 +105,7 @@ function HistoryRow({ job }) {
             className="ml-auto flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-            Reporte
+            {t('Reporte')}
           </button>
         </div>
       )}
@@ -117,6 +119,7 @@ function HistoryRow({ job }) {
  * saber qué archivos se subieron, cuándo y con qué resultado.
  */
 export default function ImportHistoryModal({ onClose }) {
+  const t = useT()
   const [jobs, setJobs] = useState(null)
 
   useEffect(() => {
@@ -137,7 +140,7 @@ export default function ImportHistoryModal({ onClose }) {
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div className="flex items-center gap-3">
             <History size={18} className="text-blue-600" />
-            <h3 className="text-base font-bold text-gray-900">Historial de imports</h3>
+            <h3 className="text-base font-bold text-gray-900">{t('Historial de imports')}</h3>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X size={18} />
@@ -151,7 +154,7 @@ export default function ImportHistoryModal({ onClose }) {
             </div>
           ) : jobs.length === 0 ? (
             <p className="py-10 text-center text-sm text-gray-500">
-              Todavía no hay imports en este negocio.
+              {t('Todavía no hay imports en este negocio.')}
             </p>
           ) : (
             jobs.map((job) => <HistoryRow key={job.jobId} job={job} />)

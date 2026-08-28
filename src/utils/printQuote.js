@@ -3,6 +3,8 @@
 // enviarlo por WhatsApp o correo). No usamos librería de PDF: armamos un HTML
 // limpio con su propio CSS, así no tocamos los estilos de la app.
 
+import { t, dateLocale, getLang } from '../i18n'
+
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -29,12 +31,12 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
 
   const now = new Date()
   const quoteNumber = `COT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
-  const dateStr = now.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })
+  const dateStr = now.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
 
   let validUntilStr = ''
   if (validityDays > 0) {
     const until = new Date(now.getTime() + validityDays * 86400000)
-    validUntilStr = until.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })
+    validUntilStr = until.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
   const total = items.reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0)
@@ -53,14 +55,14 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
 
   const customerBlock = (customer.name || customer.phone)
     ? `<div class="party">
-         <p class="label">Cliente</p>
+         <p class="label">${escapeHtml(t('Cliente'))}</p>
          ${customer.name ? `<p class="value">${escapeHtml(customer.name)}</p>` : ''}
-         ${customer.phone ? `<p class="sub">Tel: ${escapeHtml(customer.phone)}</p>` : ''}
+         ${customer.phone ? `<p class="sub">${escapeHtml(t('Tel'))}: ${escapeHtml(customer.phone)}</p>` : ''}
        </div>`
     : ''
 
-  win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
-    <title>Cotización ${escapeHtml(quoteNumber)}</title>
+  win.document.write(`<!doctype html><html lang="${getLang()}"><head><meta charset="utf-8">
+    <title>${escapeHtml(t('Cotización'))} ${escapeHtml(quoteNumber)}</title>
     <style>
       * { box-sizing: border-box; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }
       body { margin: 0; color: #1f2937; }
@@ -98,14 +100,14 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
     <div class="page">
       <div class="top">
         <div class="brand">
-          <h1>${escapeHtml(businessName || 'Mi negocio')}</h1>
-          <p>Atendido por ${escapeHtml(authorName || '—')}</p>
+          <h1>${escapeHtml(businessName || t('Mi negocio'))}</h1>
+          <p>${escapeHtml(t('Atendido por {name}', { name: authorName || '—' }))}</p>
         </div>
         <div class="doc">
-          <p class="title">COTIZACIÓN</p>
-          <p class="meta">N.° <strong>${escapeHtml(quoteNumber)}</strong></p>
-          <p class="meta">Fecha: <strong>${escapeHtml(dateStr)}</strong></p>
-          ${validUntilStr ? `<p class="meta">Válida hasta: <strong>${escapeHtml(validUntilStr)}</strong></p>` : ''}
+          <p class="title">${escapeHtml(t('COTIZACIÓN'))}</p>
+          <p class="meta">${escapeHtml(t('N.°'))} <strong>${escapeHtml(quoteNumber)}</strong></p>
+          <p class="meta">${escapeHtml(t('Fecha'))}: <strong>${escapeHtml(dateStr)}</strong></p>
+          ${validUntilStr ? `<p class="meta">${escapeHtml(t('Válida hasta'))}: <strong>${escapeHtml(validUntilStr)}</strong></p>` : ''}
         </div>
       </div>
 
@@ -115,21 +117,21 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
 
       <table>
         <thead><tr>
-          <th class="c">#</th><th>Producto</th><th class="c">Cantidad</th>
-          <th class="r">Precio unit.</th><th class="r">Subtotal</th>
+          <th class="c">#</th><th>${escapeHtml(t('Producto'))}</th><th class="c">${escapeHtml(t('Cantidad'))}</th>
+          <th class="r">${escapeHtml(t('Precio unit.'))}</th><th class="r">${escapeHtml(t('Subtotal'))}</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
 
       <div class="totals"><div class="box">
-        <div class="row grand"><span>Total</span><span>${money(total)}</span></div>
+        <div class="row grand"><span>${escapeHtml(t('Total'))}</span><span>${money(total)}</span></div>
       </div></div>
 
-      ${notes ? `<div class="notes"><p class="label">Notas</p><p>${escapeHtml(notes).replace(/\n/g, '<br>')}</p></div>` : ''}
+      ${notes ? `<div class="notes"><p class="label">${escapeHtml(t('Notas'))}</p><p>${escapeHtml(notes).replace(/\n/g, '<br>')}</p></div>` : ''}
 
       <div class="foot">
-        Este documento es una cotización referencial y no constituye comprobante de pago.
-        ${validityDays > 0 ? `Precios válidos por ${validityDays} día(s).` : ''}
+        ${escapeHtml(t('Este documento es una cotización referencial y no constituye comprobante de pago.'))}
+        ${validityDays > 0 ? escapeHtml(t('Precios válidos por {n} día(s).', { n: validityDays })) : ''}
       </div>
     </div>
   </body></html>`)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,43 +13,44 @@ import PriceInput from '../inputs/PriceInput'
 import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField, getErrorCode } from '../../utils/handleApiError'
+import { useT, dateLocale } from '../../i18n'
 
 const UNIT_OPTIONS = ['unidad', 'metro', 'kilo', 'litro', 'otro']
 
-const schema = z.object({
-  name:          z.string().min(2, 'Mínimo 2 caracteres'),
-  sku:           z.string().max(60, 'Máximo 60 caracteres').optional(),
+const makeSchema = (t) => z.object({
+  name:          z.string().min(2, t('Mínimo 2 caracteres')),
+  sku:           z.string().max(60, t('Máximo 60 caracteres')).optional(),
   unit:          z.string().optional(),
   unitCustom:    z.string().optional(),
   presentation:  z.string().optional(),
   priceIsVariable: z.boolean().optional(),
   description:   z.string().optional(),
   providerCode:  z.string().optional(),
-  barcode:       z.string().max(64, 'Máximo 64 caracteres').optional(),
-  purchasePrice: z.coerce.number({ invalid_type_error: 'Ingresa un número' }).positive('Debe ser mayor a 0'),
+  barcode:       z.string().max(64, t('Máximo 64 caracteres')).optional(),
+  purchasePrice: z.coerce.number({ invalid_type_error: t('Ingresa un número') }).positive(t('Debe ser mayor a 0')),
   // salePrice se valida condicionalmente: si priceIsVariable=true, no se exige > 0
-  salePrice:     z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'No puede ser negativo').optional(),
+  salePrice:     z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('No puede ser negativo')).optional(),
   // minStock e initialStock admiten decimales para productos por peso/medida;
   // "unidad" exige entero (refine abajo).
-  minStock:      z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0'),
-  initialStock:  z.coerce.number({ invalid_type_error: 'Ingresa un número' }).min(0, 'Mínimo 0').optional(),
+  minStock:      z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('Mínimo 0')),
+  initialStock:  z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('Mínimo 0')).optional(),
   expirationDate: z.string().optional(),
 }).superRefine((data, ctx) => {
   // minStock / initialStock enteros si el producto no es divisible (unidad)
   const effectiveUnit = data.unit === 'otro' ? (data.unitCustom?.trim() || 'unidad') : (data.unit || 'unidad')
   const indivisible = effectiveUnit.toLowerCase() === 'unidad'
   if (indivisible && data.minStock != null && !Number.isInteger(data.minStock)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['minStock'], message: 'Debe ser entero para productos por unidad' })
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['minStock'], message: t('Debe ser entero para productos por unidad') })
   }
   if (indivisible && data.initialStock != null && !Number.isInteger(data.initialStock)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['initialStock'], message: 'Debe ser entero para productos por unidad' })
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['initialStock'], message: t('Debe ser entero para productos por unidad') })
   }
   // salePrice obligatorio sólo si NO es variable
   if (!data.priceIsVariable && (data.salePrice == null || data.salePrice <= 0)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['salePrice'],
-      message: 'Debe ser mayor a 0',
+      message: t('Debe ser mayor a 0'),
     })
   }
 })
@@ -79,6 +80,7 @@ const inputCls =
  * el alta sigue con su numeración normal y el hueco queda ahí, esperando.
  */
 function FreeCodesHint({ codes, onPick }) {
+  const t = useT()
   const [dismissed, setDismissed] = useState(false)
   if (dismissed || !codes?.length) return null
 
@@ -87,7 +89,7 @@ function FreeCodesHint({ codes, onPick }) {
     const d = new Date(iso)
     return Number.isNaN(d.getTime())
       ? null
-      : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+      : d.toLocaleDateString(dateLocale(), { day: '2-digit', month: '2-digit' })
   }
 
   return (
@@ -95,14 +97,14 @@ function FreeCodesHint({ codes, onPick }) {
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-amber-900">
           {codes.length === 1
-            ? 'Hay 1 código libre de un producto borrado'
-            : `Hay ${codes.length} códigos libres de productos borrados`}
+            ? t('Hay 1 código libre de un producto borrado')
+            : t('Hay {n} códigos libres de productos borrados', { n: codes.length })}
         </p>
         <button
           type="button"
           onClick={() => setDismissed(true)}
           className="shrink-0 text-amber-500 transition hover:text-amber-700"
-          title="Ocultar sugerencia"
+          title={t('Ocultar sugerencia')}
         >
           <X size={14} />
         </button>
@@ -116,16 +118,16 @@ function FreeCodesHint({ codes, onPick }) {
               <span className="min-w-0 text-xs text-amber-800">
                 <span className="font-mono font-semibold">{c.code}</span>
                 {c.formerProductName && (
-                  <span className="text-amber-700"> · era "{c.formerProductName}"</span>
+                  <span className="text-amber-700"> · {t('era "{name}"', { name: c.formerProductName })}</span>
                 )}
-                {when && <span className="text-amber-600"> · liberado el {when}</span>}
+                {when && <span className="text-amber-600"> · {t('liberado el {date}', { date: when })}</span>}
               </span>
               <button
                 type="button"
                 onClick={() => onPick(c.code)}
                 className="shrink-0 rounded-md border border-amber-300 bg-white px-2 py-0.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
               >
-                Usar
+                {t('Usar')}
               </button>
             </li>
           )
@@ -134,12 +136,11 @@ function FreeCodesHint({ codes, onPick }) {
 
       {codes.length > 5 && (
         <p className="mt-1 text-[11px] text-amber-600">
-          y {codes.length - 5} más…
+          {t('y {n} más…', { n: codes.length - 5 })}
         </p>
       )}
       <p className="mt-1.5 text-[11px] leading-snug text-amber-600">
-        Nunca se vendieron ni se recibieron, así que su código no llegó a circular.
-        Si no eliges ninguno, se usa tu numeración normal.
+        {t('Nunca se vendieron ni se recibieron, así que su código no llegó a circular. Si no eliges ninguno, se usa tu numeración normal.')}
       </p>
     </div>
   )
@@ -149,21 +150,21 @@ function FreeCodesHint({ codes, onPick }) {
 // como "nueva categoría" coincide con un proveedor o marca ya cargado — caso
 // real que vimos con un cliente que escribió el nombre de un proveedor en el
 // campo "nueva categoría".
-function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
+function warnIfLooksLikeSupplierOrBrand(suppliers, brands, t) {
   return (raw) => {
     const name = (raw || '').trim()
     if (name.length === 0) return null
     if (name.length > 30) {
-      return '¿Seguro? El nombre es muy largo para una categoría (>30 caracteres).'
+      return t('¿Seguro? El nombre es muy largo para una categoría (>30 caracteres).')
     }
     const lower = name.toLowerCase()
     const supplierHit = suppliers.find((s) => s.name.toLowerCase() === lower)
     if (supplierHit) {
-      return `"${supplierHit.name}" ya existe como proveedor. ¿Querías seleccionarlo como proveedor en vez de crear una categoría?`
+      return t('"{name}" ya existe como proveedor. ¿Querías seleccionarlo como proveedor en vez de crear una categoría?', { name: supplierHit.name })
     }
     const brandHit = brands.find((b) => b.name.toLowerCase() === lower)
     if (brandHit) {
-      return `"${brandHit.name}" ya existe como marca. ¿Querías seleccionarla como marca en vez de crear una categoría?`
+      return t('"{name}" ya existe como marca. ¿Querías seleccionarla como marca en vez de crear una categoría?', { name: brandHit.name })
     }
     return null
   }
@@ -179,6 +180,8 @@ function warnIfLooksLikeSupplierOrBrand(suppliers, brands) {
  */
 export default function ProductFormModal({ product, onClose, autoTutorial = false, receiptContext = null }) {
   const isEdit = !!product
+  const t = useT()
+  const schema = useMemo(() => makeSchema(t), [t])
   const { user } = useAuth()
   const create   = useCreateProduct()
   const update   = useUpdateProduct()
@@ -413,7 +416,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   const onSubmit = async (values) => {
     setSupplierError(null)
     if (!supplierId) {
-      setSupplierError('Elegí un proveedor para este producto')
+      setSupplierError(t('Elegí un proveedor para este producto'))
       return
     }
     try {
@@ -476,13 +479,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       if (code === 'DUPLICATE_SKU') {
         setError('sku', {
           type: 'server',
-          message: `${getErrorMessage(err)}. Usa otro código.`,
+          message: `${getErrorMessage(err)}. ${t('Usa otro código.')}`,
         })
       } else if (code === 'DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER') {
         // El BE ya nombra el producto existente; sumamos la acción a seguir.
         setError('providerCode', {
           type: 'server',
-          message: `${getErrorMessage(err)}. Cámbialo o edita el producto existente.`,
+          message: `${getErrorMessage(err)}. ${t('Cámbialo o edita el producto existente.')}`,
         })
       } else if (field && known.includes(field)) {
         setError(field, { type: 'server', message: getErrorMessage(err) })
@@ -500,13 +503,13 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
           <h3 className="text-base font-semibold text-gray-900">
-            {isEdit ? 'Editar producto' : 'Nuevo producto'}
+            {isEdit ? t('Editar producto') : t('Nuevo producto')}
           </h3>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setShowTutorial(true)}
-              title="Ver tutorial: cómo agregar un producto"
+              title={t('Ver tutorial: cómo agregar un producto')}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
             >
               <HelpCircle size={18} />
@@ -526,21 +529,21 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
             {/* Nombre + Unidad + Presentación */}
             <div data-tutorial-target="name-unit" className="grid grid-cols-2 gap-3">
-              <Field label="Nombre" required error={errors.name?.message}>
-                <input {...register('name')} placeholder="Ej. Aceite 5W30" className={inputCls} />
+              <Field label={t('Nombre')} required error={errors.name?.message}>
+                <input {...register('name')} placeholder={t('Ej. Aceite 5W30')} className={inputCls} />
               </Field>
-              <Field label="Unidad" error={errors.unit?.message}>
+              <Field label={t('Unidad')} error={errors.unit?.message}>
                 <select {...register('unit')} className={inputCls}>
-                  <option value="unidad">unidad</option>
-                  <option value="metro">metro</option>
-                  <option value="kilo">kilo</option>
-                  <option value="litro">litro</option>
-                  <option value="otro">otro...</option>
+                  <option value="unidad">{t('unidad')}</option>
+                  <option value="metro">{t('metro')}</option>
+                  <option value="kilo">{t('kilo')}</option>
+                  <option value="litro">{t('litro')}</option>
+                  <option value="otro">{t('otro...')}</option>
                 </select>
                 {unitValue === 'otro' && (
                   <input
                     {...register('unitCustom')}
-                    placeholder="Especificá la unidad (ej. galón, par)"
+                    placeholder={t('Especificá la unidad (ej. galón, par)')}
                     className={`${inputCls} mt-1.5`}
                   />
                 )}
@@ -548,10 +551,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </div>
 
             {/* Código del producto (SKU) */}
-            <Field label="Código del producto" error={errors.sku?.message}>
+            <Field label={t('Código del producto')} error={errors.sku?.message}>
               <input
                 {...register('sku')}
-                placeholder={isEdit ? 'Código del producto' : 'Se genera automáticamente si lo dejas vacío'}
+                placeholder={isEdit ? t('Código del producto') : t('Se genera automáticamente si lo dejas vacío')}
                 className={`${inputCls} font-mono ${
                   errors.sku ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
                 }`}
@@ -560,33 +563,33 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               />
               <p className="text-xs text-gray-400 mt-0.5">
                 {isEdit
-                  ? 'Código interno único. Cámbialo solo si necesitas corregirlo.'
-                  : 'Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.'}
+                  ? t('Código interno único. Cámbialo solo si necesitas corregirlo.')
+                  : t('Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.')}
               </p>
               <FreeCodesHint codes={freeCodes} onPick={(code) => setValue('sku', code)} />
             </Field>
 
-            <Field label="Presentación" error={errors.presentation?.message}>
+            <Field label={t('Presentación')} error={errors.presentation?.message}>
               <input
                 {...register('presentation')}
-                placeholder="Ej: Saco de 25kg, Caja de 100, Rollo de 50m"
+                placeholder={t('Ej: Saco de 25kg, Caja de 100, Rollo de 50m')}
                 className={inputCls}
               />
               <p className="text-xs text-gray-400 mt-0.5">
-                Opcional · Cómo viene presentado el producto. No afecta cómo se vende.
+                {t('Opcional · Cómo viene presentado el producto. No afecta cómo se vende.')}
               </p>
             </Field>
 
             {/* Brand picker */}
             <div data-tutorial-target="brand-picker">
               <EntityPicker
-                label="Marca"
+                label={t('Marca')}
                 items={brands}
                 value={brandId}
                 onChange={setBrandId}
                 onCreate={handleCreateBrand}
-                placeholder="Buscar marca..."
-                createLabel="Nueva marca"
+                placeholder={t('Buscar marca...')}
+                createLabel={t('Nueva marca')}
                 isCreating={createBrand.isPending}
               />
             </div>
@@ -596,25 +599,25 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               {receiptContext ? (
                 // Desde la recepción el proveedor YA está elegido: fijo, sin picker.
                 <div>
-                  <p className="mb-1.5 text-sm font-medium text-gray-700">Proveedor</p>
+                  <p className="mb-1.5 text-sm font-medium text-gray-700">{t('Proveedor')}</p>
                   <div className="flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
                     <span className="text-sm font-semibold text-blue-900">{receiptContext.supplier.name}</span>
-                    <span className="text-xs text-blue-700">· el de la recepción en curso</span>
+                    <span className="text-xs text-blue-700">· {t('el de la recepción en curso')}</span>
                   </div>
                 </div>
               ) : (
               <EntityPicker
-                label={<>Proveedor <span className="text-red-500">*</span></>}
+                label={<>{t('Proveedor')} <span className="text-red-500">*</span></>}
                 items={suppliers}
                 value={supplierId}
                 onChange={(v) => { setSupplierId(v); setSupplierError(null) }}
                 onCreate={handleCreateSupplier}
                 extraFields={[
-                  { name: 'contact', placeholder: 'Contacto (opcional)' },
-                  { name: 'phone',   placeholder: 'Teléfono (opcional)'  },
+                  { name: 'contact', placeholder: t('Contacto (opcional)') },
+                  { name: 'phone',   placeholder: t('Teléfono (opcional)')  },
                 ]}
-                placeholder="Buscar proveedor..."
-                createLabel="Nuevo proveedor"
+                placeholder={t('Buscar proveedor...')}
+                createLabel={t('Nuevo proveedor')}
                 isCreating={createSupplier.isPending}
               />
               )}
@@ -624,7 +627,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               {/* Pista cuando el producto está vinculado al placeholder */}
               {isEdit && suppliers.find((s) => s.id === supplierId)?.placeholderForUnassigned && (
                 <p className="mt-1 text-xs text-amber-700">
-                  Este producto está sin proveedor real asignado. Cambialo al proveedor correspondiente.
+                  {t('Este producto está sin proveedor real asignado. Cambialo al proveedor correspondiente.')}
                 </p>
               )}
             </div>
@@ -632,17 +635,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             {/* Category picker */}
             <div data-tutorial-target="category-picker">
               <EntityPicker
-                label="Categoría del producto"
-                helperText="Ej: Clavos, Tornillos, Cemento, Pinturas"
+                label={t('Categoría del producto')}
+                helperText={t('Ej: Clavos, Tornillos, Cemento, Pinturas')}
                 items={categories}
                 value={categoryId}
                 onChange={setCategoryId}
                 onCreate={handleCreateCategory}
-                placeholder="Buscar categoría..."
-                createLabel="Nueva categoría"
-                createButtonLabel="Crear categoría"
-                newNamePlaceholder="Nombre de la nueva categoría (ej: Líquidos, Pinturas)"
-                warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands)}
+                placeholder={t('Buscar categoría...')}
+                createLabel={t('Nueva categoría')}
+                createButtonLabel={t('Crear categoría')}
+                newNamePlaceholder={t('Nombre de la nueva categoría (ej: Líquidos, Pinturas)')}
+                warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands, t)}
                 isCreating={createCategory.isPending}
               />
             </div>
@@ -650,11 +653,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             {/* Código de barras de fábrica: el EAN impreso en el empaque por el
                 fabricante (Sony pone el código; el distribuidor no lo cambia).
                 Acá vive el escáner — es lo que la pistola/cámara lee. */}
-            <Field label="Código de barras" error={errors.barcode?.message}>
+            <Field label={t('Código de barras')} error={errors.barcode?.message}>
               <div className="flex gap-1.5">
                 <input
                   {...register('barcode')}
-                  placeholder="EAN del empaque, ej. 7501031311309 (opcional)"
+                  placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
                   inputMode="numeric"
                   className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
                     errors.barcode
@@ -666,7 +669,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   <button
                     type="button"
                     onClick={cameraOpen ? stopCamera : openCamera}
-                    title={cameraOpen ? 'Cerrar cámara' : 'Escanear código de barras'}
+                    title={cameraOpen ? t('Cerrar cámara') : t('Escanear código de barras')}
                     className={`flex items-center rounded-lg px-2.5 transition ${
                       cameraOpen
                         ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
@@ -690,10 +693,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </Field>
 
             {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
-            <Field label="Código proveedor" error={errors.providerCode?.message}>
+            <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
               <input
                 {...register('providerCode')}
-                placeholder="Código interno del proveedor (opcional)"
+                placeholder={t('Código interno del proveedor (opcional)')}
                 className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
                   errors.providerCode
                     ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
@@ -703,18 +706,18 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </Field>
 
             {/* Descripción */}
-            <Field label="Descripción" error={errors.description?.message}>
+            <Field label={t('Descripción')} error={errors.description?.message}>
               <textarea
                 {...register('description')}
                 rows={2}
-                placeholder="Descripción opcional"
+                placeholder={t('Descripción opcional')}
                 className={`${inputCls} resize-none`}
               />
             </Field>
 
             {/* Atributos */}
             <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-700">Atributos</label>
+              <label className="text-sm font-medium text-gray-700">{t('Atributos')}</label>
 
               {/* Suggested attribute chips */}
               {suggestedAttrs.length > 0 && (
@@ -748,7 +751,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                         type="text"
                         value={val}
                         onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
-                        placeholder="Valor..."
+                        placeholder={t('Valor...')}
                         className={`${inputCls} flex-1 py-1.5 text-xs`}
                       />
                       <button type="button" onClick={() => removeAttribute(key)}
@@ -766,7 +769,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   type="text"
                   value={attrKey}
                   onChange={(e) => setAttrKey(e.target.value)}
-                  placeholder="Atributo..."
+                  placeholder={t('Atributo...')}
                   className={`${inputCls} w-28 py-1.5 text-xs`}
                 />
                 <input
@@ -774,7 +777,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   value={attrVal}
                   onChange={(e) => setAttrVal(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
-                  placeholder="Valor..."
+                  placeholder={t('Valor...')}
                   className={`${inputCls} flex-1 py-1.5 text-xs`}
                 />
                 <button type="button" onClick={() => addAttribute()}
@@ -793,10 +796,9 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 className="mt-0.5 accent-blue-600"
               />
               <div>
-                <p className="text-sm font-semibold text-gray-900">Precio variable</p>
+                <p className="text-sm font-semibold text-gray-900">{t('Precio variable')}</p>
                 <p className="text-xs text-gray-500">
-                  El precio se define al momento de vender (se negocia con el cliente).
-                  En el POS pedirá un precio obligatorio antes de cobrar.
+                  {t('El precio se define al momento de vender (se negocia con el cliente). En el POS pedirá un precio obligatorio antes de cobrar.')}
                 </p>
               </div>
             </label>
@@ -804,9 +806,9 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             {/* Precios + Stock mínimo */}
             <div data-tutorial-target="prices">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-700">Precios y stock</span>
+                <span className="text-sm font-medium text-gray-700">{t('Precios y stock')}</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-gray-400">Formato del precio</span>
+                  <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
                   <PriceInputModeToggle />
                 </div>
               </div>
@@ -820,7 +822,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 name="purchasePrice"
                 render={({ field }) => (
                   <PriceInput
-                    label={<>P. compra <span className="text-red-500">*</span></>}
+                    label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
                     value={field.value === '' ? null : field.value}
                     onChange={(v) => field.onChange(v ?? '')}
                     error={errors.purchasePrice?.message}
@@ -833,8 +835,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 render={({ field }) => (
                   <PriceInput
                     label={priceIsVariable
-                      ? <span className="text-gray-400">P. venta (variable)</span>
-                      : <>P. venta <span className="text-red-500">*</span></>}
+                      ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
+                      : <>{t('P. venta')} <span className="text-red-500">*</span></>}
                     value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
                     onChange={(v) => field.onChange(v ?? '')}
                     error={errors.salePrice?.message}
@@ -842,11 +844,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   />
                 )}
               />
-              <Field label="Stock mín." required error={errors.minStock?.message}>
+              <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
                 <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
               </Field>
               {!isEdit && !receiptContext && (
-                <Field label="Stock inicial" error={errors.initialStock?.message}>
+                <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
                   <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                 </Field>
               )}
@@ -854,11 +856,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
               {/* Fecha de vencimiento (opcional) */}
               <div className="mt-3">
-                <Field label="Fecha de vencimiento" error={errors.expirationDate?.message}>
+                <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
                   <input {...register('expirationDate')} type="date" className={inputCls} />
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Opcional · Para productos que caducan (farmacia, alimentos). La app te
-                    avisa cuando falte poco para que venza.
+                    {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
                   </p>
                 </Field>
               </div>
@@ -878,7 +879,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               onClick={onClose}
               className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
             >
-              Cancelar
+              {t('Cancelar')}
             </button>
             <button
               type="submit"
@@ -887,7 +888,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {isBusy && <Loader2 size={14} className="animate-spin" />}
-              {isBusy ? 'Guardando...' : 'Guardar'}
+              {isBusy ? t('Guardando...') : t('Guardar')}
             </button>
           </div>
         </form>

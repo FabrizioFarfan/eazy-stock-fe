@@ -1,15 +1,17 @@
 import { X, Truck, Loader2, FileText } from 'lucide-react'
 import { useReceiptDetail } from '../../hooks/useReceipts'
 import { formatPrice } from '../../utils/formatMoney'
+import { useT, dateLocale } from '../../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
-  return new Intl.DateTimeFormat('es-PE', {
+  return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
 }
 
 export default function ReceiptDetailModal({ receiptId, onClose }) {
+  const t = useT()
   const { data: receipt, isLoading, isError } = useReceiptDetail(receiptId)
 
   return (
@@ -21,7 +23,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
 
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
-            <h3 className="font-semibold text-gray-900">Detalle de recepción</h3>
+            <h3 className="font-semibold text-gray-900">{t('Detalle de recepción')}</h3>
             {receipt && (
               <p className="mt-0.5 text-xs text-gray-400">{formatDate(receipt.createdAt)}</p>
             )}
@@ -35,7 +37,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           {isLoading ? (
             <div className="flex justify-center py-10"><Loader2 size={24} className="animate-spin text-gray-400" /></div>
           ) : isError || !receipt ? (
-            <p className="py-6 text-center text-sm text-red-500">No pudimos cargar la recepción.</p>
+            <p className="py-6 text-center text-sm text-red-500">{t('No pudimos cargar la recepción.')}</p>
           ) : (
             <>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -48,7 +50,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                     ? 'bg-amber-100 text-amber-700'
                     : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                  {receipt.paymentMode === 'CREDIT' ? 'A crédito' : 'Al contado'}
+                  {receipt.paymentMode === 'CREDIT' ? t('A crédito') : t('Al contado')}
                 </span>
               </div>
 
@@ -67,10 +69,10 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    <th className="pb-2">Producto</th>
-                    <th className="pb-2 text-center">Cant.</th>
-                    <th className="pb-2 text-right">P. unit.</th>
-                    <th className="pb-2 text-right">Subtotal</th>
+                    <th className="pb-2">{t('Producto')}</th>
+                    <th className="pb-2 text-center">{t('Cant.')}</th>
+                    <th className="pb-2 text-right">{t('P. unit.')}</th>
+                    <th className="pb-2 text-right">{t('Subtotal')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -90,10 +92,10 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
 
               {receipt.transaction && (
                 <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm ring-1 ring-amber-100">
-                  <p className="font-semibold text-amber-900">Generó cuenta por pagar</p>
+                  <p className="font-semibold text-amber-900">{t('Generó cuenta por pagar')}</p>
                   <p className="mt-0.5 text-xs text-amber-700">
-                    Esta recepción sumó <span className="font-mono font-semibold">{formatPrice(receipt.transaction.amount)}</span>{' '}
-                    a la deuda con el proveedor. Saldo después: {formatPrice(receipt.transaction.balanceAfter)}.
+                    {t('Esta recepción sumó')} <span className="font-mono font-semibold">{formatPrice(receipt.transaction.amount)}</span>{' '}
+                    {t('a la deuda con el proveedor. Saldo después: {balance}.', { balance: formatPrice(receipt.transaction.balanceAfter) })}
                   </p>
                 </div>
               )}
@@ -103,7 +105,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
 
         {receipt && (
           <div className="flex items-center justify-between rounded-b-2xl border-t border-gray-200 bg-gray-50 px-6 py-4">
-            <span className="text-sm font-semibold text-gray-500">Total recepción</span>
+            <span className="text-sm font-semibold text-gray-500">{t('Total recepción')}</span>
             <span className="text-lg font-bold text-gray-900">{formatPrice(receipt.totalAmount)}</span>
           </div>
         )}

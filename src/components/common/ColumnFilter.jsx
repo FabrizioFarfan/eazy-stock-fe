@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Filter, ArrowUp, ArrowDown, Check } from 'lucide-react'
+import { useT } from '../../i18n'
 
 /**
  * Filtro por columna estilo Excel: un botón en el encabezado (con embudo) que
@@ -31,12 +32,15 @@ export default function ColumnFilter({
   // sort
   sortState = null,               // 'asc' | 'desc' | null
   onSort,
-  ascLabel = 'Ascendente',
-  descLabel = 'Descendente',
+  ascLabel,
+  descLabel,
   // meta
   active = false,                 // ¿hay filtro aplicado en esta columna?
   onClear,
 }) {
+  const t = useT()
+  const ascText  = ascLabel  ?? t('Ascendente')
+  const descText = descLabel ?? t('Descendente')
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -67,7 +71,7 @@ export default function ColumnFilter({
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          title={`Filtrar u ordenar por ${label}`}
+          title={t('Filtrar u ordenar por {col}', { col: label })}
           className={`group inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-widest transition-colors ${
             highlighted ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
           }`}
@@ -95,7 +99,7 @@ export default function ColumnFilter({
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder={placeholder || 'Buscar...'}
+                placeholder={placeholder || t('Buscar...')}
                 className={inputCls}
               />
             )}
@@ -107,7 +111,7 @@ export default function ColumnFilter({
                   onClick={() => { onChange(''); setOpen(false) }}
                   className={`${optRow} ${value === '' ? 'bg-blue-50 font-semibold text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                 >
-                  <span className="truncate">Todos</span>
+                  <span className="truncate">{t('Todos')}</span>
                   {value === '' && <Check size={13} className="flex-shrink-0" />}
                 </button>
                 {options.map((o) => (
@@ -132,7 +136,7 @@ export default function ColumnFilter({
                   inputMode="decimal"
                   value={rangeMin}
                   onChange={(e) => onRangeChange({ min: e.target.value, max: rangeMax })}
-                  placeholder="Mín"
+                  placeholder={t('Mín')}
                   className={inputCls}
                 />
                 <span className="text-gray-300">–</span>
@@ -141,7 +145,7 @@ export default function ColumnFilter({
                   inputMode="decimal"
                   value={rangeMax}
                   onChange={(e) => onRangeChange({ min: rangeMin, max: e.target.value })}
-                  placeholder="Máx"
+                  placeholder={t('Máx')}
                   className={inputCls}
                 />
               </div>
@@ -156,7 +160,7 @@ export default function ColumnFilter({
                     sortState === 'asc' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <ArrowUp size={12} />{ascLabel}
+                  <ArrowUp size={12} />{ascText}
                 </button>
                 <button
                   type="button"
@@ -165,7 +169,7 @@ export default function ColumnFilter({
                     sortState === 'desc' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  <ArrowDown size={12} />{descLabel}
+                  <ArrowDown size={12} />{descText}
                 </button>
               </div>
             )}
@@ -176,7 +180,7 @@ export default function ColumnFilter({
                 onClick={() => { onClear(); setOpen(false) }}
                 className="mt-2 w-full rounded-lg border border-gray-100 px-2 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-red-600 transition-colors"
               >
-                Limpiar filtro
+                {t('Limpiar filtro')}
               </button>
             )}
           </div>

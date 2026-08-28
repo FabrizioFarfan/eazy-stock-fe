@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { isDivisibleUnit, isKiloUnit, gramsEquivalent } from '../../utils/quantity'
+import { useT } from '../../i18n'
 
 /**
  * Input de cantidad escribible (sin steppers +/-).
@@ -31,6 +32,7 @@ const QuantityInput = forwardRef(function QuantityInput(
   },
   ref,
 ) {
+  const t = useT()
   const inputRef = useRef(null)
   const divisible = isDivisibleUnit(unit)
 
@@ -114,7 +116,7 @@ const QuantityInput = forwardRef(function QuantityInput(
           onChange={handleChange}
           onFocus={(e) => e.target.select()}
           className="min-w-0 flex-1 bg-transparent text-right text-sm font-semibold text-gray-900 outline-none placeholder-gray-300 disabled:cursor-not-allowed"
-          aria-label={label || 'Cantidad'}
+          aria-label={label || t('Cantidad')}
         />
         {unit && (
           <span className="select-none text-sm font-medium text-gray-400">{unit}</span>
@@ -123,7 +125,7 @@ const QuantityInput = forwardRef(function QuantityInput(
 
       {error && <p className="text-xs text-red-500">{error}</p>}
       {!error && exceeds && (
-        <p className="text-xs text-red-500">Supera el stock disponible ({max})</p>
+        <p className="text-xs text-red-500">{t('Supera el stock disponible ({max})', { max })}</p>
       )}
       {!error && !exceeds && grams && (
         <p className="text-xs text-gray-400">= {grams}</p>

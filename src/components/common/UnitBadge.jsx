@@ -1,3 +1,5 @@
+import { useT } from '../../i18n'
+
 // Cómo se vende el producto (por unidad, metro, kilo…). William tiene productos
 // con el MISMO nombre que solo se distinguen por esto, así que va visible en las
 // tablas y no solo en el detalle.
@@ -18,10 +20,11 @@ function toneFor(unit) {
 }
 
 export default function UnitBadge({ unit, className = '' }) {
+  const t = useT()
   const u = (unit || 'unidad').trim()
   return (
     <span
-      title={`Se vende por ${u}`}
+      title={t('Se vende por {unit}', { unit: u })}
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold lowercase ring-1 ${toneFor(u)} ${className}`}
     >
       {u}
