@@ -206,7 +206,7 @@ function CreateEmployeeModal({ businessName, onClose }) {
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
-            {createEmployee.isError && (
+            {createEmployee.isError && !errors.email && !errors.password && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
                 {getErrorMessage(createEmployee.error)}
               </p>
