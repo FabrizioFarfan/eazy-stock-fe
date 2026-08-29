@@ -4,7 +4,7 @@ import { useT } from '../../i18n'
 
 /**
  * Pestañas de Cotización: «Nueva» / «Historial». MISMO diseño que las pestañas
- * de la página Stock (riel gris, la activa en blanco con texto azul) y siempre
+ * de la página Stock (riel gris, la activa en blanco con texto oscuro) y siempre
  * a todo el ancho — en las dos páginas se ve idéntico, solo cambia cuál está
  * activa. `onNavigate` deja que la página intercepte la salida (borrador a medias).
  */
@@ -27,7 +27,7 @@ export default function QuoteTabs({ active, onNavigate }) {
             onClick={() => !on && go(to)}
             aria-current={on ? 'page' : undefined}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              on ? 'bg-white text-blue-600 shadow-sm font-semibold' : 'text-gray-500 hover:text-gray-700'
+              on ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             <Icon size={16} />
