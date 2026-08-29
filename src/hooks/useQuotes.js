@@ -26,6 +26,14 @@ export function useCreateQuote() {
   })
 }
 
+export function useUpdateQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }) => quotesApi.update(id, data).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [QUOTES_KEY] }),
+  })
+}
+
 export function useDeleteQuote() {
   const qc = useQueryClient()
   return useMutation({

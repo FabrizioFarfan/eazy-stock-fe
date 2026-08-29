@@ -72,6 +72,9 @@ export default function AppRouter() {
       <Route path="/cotizaciones" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotePage /></ProtectedRoute>
       } />
+      <Route path="/cotizaciones/:id/editar" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotePage /></ProtectedRoute>
+      } />
       <Route path="/cotizaciones/historial" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotesHistoryPage /></ProtectedRoute>
       } />

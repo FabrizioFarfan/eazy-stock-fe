@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, UserPlus, AlertTriangle } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useCreateSale } from '../hooks/useSales'
-import { useCustomerSearch } from '../hooks/useCustomers'
 import { useQueryClient } from '@tanstack/react-query'
 import { quotesApi } from '../services/endpoints/quotes'
 import { QUOTES_KEY } from '../hooks/useQuotes'
@@ -17,6 +16,7 @@ import PriceInput from '../components/inputs/PriceInput'
 import QuantityInput from '../components/inputs/QuantityInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
+import CustomerPicker from '../components/customers/CustomerPicker'
 import { formatPrice } from '../utils/formatMoney'
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -304,85 +304,6 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
 }
 
 // ── CreditSection — vender al fiado ───────────────────────────────────────────
-
-function CustomerPicker({ value, onSelect, onRequestCreate }) {
-  const t = useT()
-  const [query, setQuery] = useState('')
-  const [open, setOpen]   = useState(false)
-  const debounced = useDebounce(query, 350)
-
-  const customerSearch = useCustomerSearch(debounced)
-  const { items: results, isLoading } = customerSearch
-
-  if (value) {
-    return (
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-blue-900">{value.name}</p>
-          <p className="truncate text-xs text-blue-700">
-            {[value.documentId, value.phone].filter(Boolean).join(' · ') || t('Cliente seleccionado')}
-          </p>
-        </div>
-        <button type="button"
-          onClick={() => onSelect(null)}
-          className="flex-shrink-0 rounded-lg p-1 text-blue-600 hover:bg-blue-100">
-          <X size={14} />
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
-        placeholder={t('Buscar cliente por nombre, documento o teléfono...')}
-        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
-      />
-      <button
-        type="button"
-        onClick={() => onRequestCreate(query.trim())}
-        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-      >
-        <UserPlus size={13} />
-        {t('Registrar nuevo cliente')}
-      </button>
-      {open && debounced && (
-        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
-          {isLoading ? (
-            <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
-          ) : results.length === 0 ? (
-            <button type="button"
-              onClick={() => onRequestCreate(query.trim())}
-              className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm text-blue-700 hover:bg-blue-50">
-              <UserPlus size={14} />
-              <span>{t('Sin resultados — registrar')} <strong>{debounced}</strong> {t('como nuevo cliente')}</span>
-            </button>
-          ) : (
-            <>
-              {results.map((c) => (
-                <button key={c.id} type="button"
-                  onClick={() => { onSelect(c); setQuery(''); setOpen(false) }}
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-gray-900">{c.name}</p>
-                    <p className="truncate text-xs text-gray-400">{[c.documentId, c.phone].filter(Boolean).join(' · ')}</p>
-                  </div>
-                  <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
-                    {formatPrice(c.currentDebt)}
-                  </span>
-                </button>
-              ))}
-              <LoadMoreRow search={customerSearch} />
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onRequestNewCustomer, total }) {
   const t = useT()

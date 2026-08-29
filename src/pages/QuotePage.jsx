@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Printer, Package } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
-import { useCreateQuote } from '../hooks/useQuotes'
+import { useCreateQuote, useUpdateQuote, useQuote } from '../hooks/useQuotes'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import ConfirmLeaveModal from '../components/common/ConfirmLeaveModal'
 import QuoteTabs from '../components/common/QuoteTabs'
@@ -14,9 +14,12 @@ import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import { formatPrice } from '../utils/formatMoney'
-import { printQuote } from '../utils/printQuote'
+import { quoteNumberLabel } from '../utils/quotePdf'
+import QuoteActions from '../components/quotes/QuoteActions'
+import QuoteCustomerSection from '../components/quotes/QuoteCustomerSection'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
+import { formatQty } from '../utils/quantity'
 
 // ── Borrador de cotización ────────────────────────────────────────────────────
 // Igual que la venta: lo que se va armando se guarda en localStorage (por
@@ -24,7 +27,9 @@ import { useT } from '../i18n'
 // cotización vacía. Sobrevive al refresh; se limpia al generar el PDF o al
 // descartarla a propósito.
 
-const quoteDraftKey = (userId) => `eazystock_quote_draft_${userId || 'anon'}`
+import { quoteDraftKey } from '../utils/quoteDraft'
+
+const EMPTY_CUSTOMER = { customer: null, name: '', phone: '', email: '' }
 
 function loadQuoteDraft(userId) {
   try {
@@ -39,6 +44,9 @@ export default function QuotePage() {
   const navigate = useNavigate()
   const t = useT()
   const { user, can } = useAuth()
+  // /cotizaciones/:id/editar → misma pantalla, pero guarda con PUT y conserva el número.
+  const { id: editId } = useParams()
+  const editing = useQuote(editId)
 
   // Permiso: igual que registrar ventas (el owner puede dárselo al trabajador).
   useEffect(() => {
@@ -93,39 +101,68 @@ export default function QuotePage() {
   }
 
   // ── Customer + meta ────────────────────────────────────────────────────────
-  const [customerName, setCustomerName]   = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
+  const [cust, setCust]                   = useState(EMPTY_CUSTOMER)
   const [notes, setNotes]                 = useState('')
   const [validityDays, setValidityDays]   = useState(7)
   const [pendingLeave, setPendingLeave]   = useState(false)
+  const [confirming, setConfirming]       = useState(false)
+  const [done, setDone]                   = useState(null) // cotización guardada → modal con Descargar/WhatsApp/Correo
+  const [custResetKey, setCustResetKey]   = useState(0)    // remonta la sección de cliente (limpia su buscador) al empezar otra
   const createQuote = useCreateQuote()
+  const updateQuote = useUpdateQuote()
+  const saving = createQuote.isPending || updateQuote.isPending
+
+  // Modo edición: se carga la cotización y se pinta tal cual (sin tocar el borrador).
+  const editLoadedRef = useRef(null)
+  useEffect(() => {
+    if (!editId || !editing.data || editLoadedRef.current === editId) return
+    editLoadedRef.current = editId
+    const q = editing.data
+    if (q.status !== 'OPEN') {
+      toast.error(t('Una cotización vendida no se puede editar. Usa «Duplicar» para re-cotizarla.'))
+      navigate('/cotizaciones/historial', { replace: true })
+      return
+    }
+    setItems(q.items.map((it) => ({ productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })))
+    setCust({
+      customer: q.customerId ? { id: q.customerId, name: q.customerName, phone: q.customerPhone, email: q.customerEmail } : null,
+      name: q.customerName ?? '', phone: q.customerPhone ?? '', email: q.customerEmail ?? '',
+    })
+    setNotes(q.notes ?? '')
+    setValidityDays(q.validityDays ?? 7)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, editing.data])
 
   // Restaurar el borrador al entrar (una sola vez, cuando ya sabemos quién es).
   const draftRestoredRef = useRef(false)
   useEffect(() => {
-    if (!user?.id || draftRestoredRef.current) return
+    if (!user?.id || draftRestoredRef.current || editId) return
     draftRestoredRef.current = true
     const d = loadQuoteDraft(user.id)
     if (!d) return
     setItems(d.items)
-    setCustomerName(d.customerName ?? '')
-    setCustomerPhone(d.customerPhone ?? '')
+    setCust({ customer: d.customer ?? null, name: d.customerName ?? '', phone: d.customerPhone ?? '', email: d.customerEmail ?? '' })
     setNotes(d.notes ?? '')
     setValidityDays(d.validityDays ?? 7)
-    toast.info(t('Se restauró tu cotización en curso ({n} producto(s))', { n: d.items.length }))
+    if (d.duplicatedFrom) {
+      toast.info(t('Copia de la cotización {n} lista para ajustar: los precios son los de hoy', { n: quoteNumberLabel(d.duplicatedFrom) }))
+    } else {
+      toast.info(t('Se restauró tu cotización en curso ({n} producto(s))', { n: d.items.length }))
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+  }, [user?.id, editId])
 
   // Autosave en cada cambio; lista vacía = no hay cotización que guardar.
   useEffect(() => {
-    if (!user?.id || !draftRestoredRef.current) return
+    if (!user?.id || !draftRestoredRef.current || editId) return
     try {
       if (items.length === 0) { localStorage.removeItem(quoteDraftKey(user.id)); return }
       localStorage.setItem(quoteDraftKey(user.id), JSON.stringify({
-        items, customerName, customerPhone, notes, validityDays, savedAt: Date.now(),
+        items, customer: cust.customer, customerName: cust.name, customerPhone: cust.phone, customerEmail: cust.email,
+        notes, validityDays, savedAt: Date.now(),
       }))
     } catch { /* localStorage lleno o bloqueado: el borrador es best-effort */ }
-  }, [items, customerName, customerPhone, notes, validityDays, user?.id])
+  }, [items, cust, notes, validityDays, user?.id, editId])
 
   const discardDraft = () => {
     try { if (user?.id) localStorage.removeItem(quoteDraftKey(user.id)) } catch { /* noop */ }
@@ -133,6 +170,7 @@ export default function QuotePage() {
 
   // Salir: si hay productos cargados, preguntar qué hacer con la cotización.
   const requestLeave = () => {
+    if (editId) { navigate('/cotizaciones/historial'); return }
     if (items.length > 0) setPendingLeave(true)
     else navigate('/sales')
   }
@@ -142,7 +180,10 @@ export default function QuotePage() {
     [items],
   )
 
-  const handleGenerate = async () => {
+  const customerData = () => ({ name: cust.name.trim(), phone: cust.phone.trim(), email: cust.email.trim() })
+
+  // Paso 1: validar y mostrar el resumen (Frank generó una de 2 productos creyendo que eran 3).
+  const handleGenerate = () => {
     if (items.length === 0) {
       toast.error(t('Agrega al menos un producto a la cotización'))
       return
@@ -151,41 +192,63 @@ export default function QuotePage() {
       toast.error(t('Hay líneas con cantidad 0 — corrígelas o quítalas'))
       return
     }
-    // Primero se GUARDA (queda en el historial con su número) y luego se imprime.
+    setConfirming(true)
+  }
+
+  // Paso 2: guardar (POST o PUT) y abrir el modal de salida con Descargar/WhatsApp/Correo/Imprimir.
+  const confirmGenerate = async () => {
+    const c = customerData()
+    const body = {
+      items: items.map((it) => ({ productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0 })),
+      customerId: cust.customer?.id || undefined,
+      customerName: c.name || undefined,
+      customerPhone: c.phone || undefined,
+      customerEmail: c.email || undefined,
+      validityDays: Number(validityDays) || 0,
+      notes: notes.trim() || undefined,
+    }
     let saved
     try {
-      saved = await createQuote.mutateAsync({
-        items: items.map((it) => ({ productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0 })),
-        customerName: customerName.trim() || undefined,
-        customerPhone: customerPhone.trim() || undefined,
-        validityDays: Number(validityDays) || 0,
-        notes: notes.trim() || undefined,
-      })
+      saved = editId
+        ? await updateQuote.mutateAsync({ id: editId, data: body })
+        : await createQuote.mutateAsync(body)
     } catch {
       toast.error(t('No se pudo guardar la cotización. Revisa tu conexión e inténtalo de nuevo.'))
       return
     }
-    toast.success(t('Cotización N.º {n} guardada en el historial', { n: saved.number }))
-    const ok = printQuote({
+    setConfirming(false)
+    toast.success(editId
+      ? t('Cotización {n} actualizada', { n: quoteNumberLabel(saved.number) })
+      : t('Cotización N.º {n} guardada en el historial', { n: saved.number }))
+    setDone({
       businessName: user?.businessName,
-      authorName: user?.name,
-      customer: { name: customerName.trim(), phone: customerPhone.trim() },
-      items,
+      authorName: saved.authorName || user?.name,
+      customer: { name: saved.customerName ?? '', phone: saved.customerPhone ?? '', email: saved.customerEmail ?? '' },
+      items: items.map((it) => ({ ...it })),
       notes: notes.trim(),
       validityDays: Number(validityDays) || 0,
       number: saved.number,
       createdAt: saved.createdAt,
     })
-    if (!ok) {
-      toast.error(t('Tu navegador bloqueó la ventana de impresión. La cotización quedó guardada: puedes imprimirla desde el historial.'))
-    }
     // Generada: la cotización ya cumplió; se limpia para empezar la siguiente.
-    discardDraft()
-    setItems([])
-    setCustomerName('')
-    setCustomerPhone('')
-    setNotes('')
-    setValidityDays(7)
+    if (!editId) {
+      discardDraft()
+      setItems([])
+      setCust(EMPTY_CUSTOMER)
+      setCustResetKey((k) => k + 1)
+      setNotes('')
+      setValidityDays(7)
+    }
+  }
+
+  const closeDone = (to) => {
+    setDone(null)
+    if (to) navigate(to)
+    else if (editId) navigate('/cotizaciones/historial')
+  }
+
+  if (editId && (editing.isLoading || !editing.data)) {
+    return <div className="flex items-center justify-center gap-2 py-24 text-sm text-gray-400"><Loader2 size={16} className="animate-spin" /> {t('Cargando...')}</div>
   }
 
   return (
@@ -198,8 +261,10 @@ export default function QuotePage() {
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Cotizaciones')}</h2>
-          <HelpDrawer title={t('Qué es una cotización')} autoOpenKey="eazystock_quote_help_v2">
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+            {editId ? <>{t('Editar')} {quoteNumberLabel(editing.data?.number)}</> : t('Cotizaciones')}
+          </h2>
+          <HelpDrawer title={t('Qué es una cotización')} autoOpenKey="eazystock_quote_help_v3">
             <p><strong>{t('Un presupuesto para tu cliente')}</strong>: {t('mismos productos y precios que una venta, pero')} <strong>{t('sin descontar stock ni registrar dinero')}</strong>.</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('🔍 Busca o escanea')}</p>
@@ -211,11 +276,11 @@ export default function QuotePage() {
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('👤 Cliente y validez')}</p>
-              <p className="mt-1">{t('El nombre y teléfono del cliente son opcionales y salen impresos. Indica los días de validez y notas (condiciones, entrega, etc.).')}</p>
+              <p className="mt-1">{t('Elige uno de tus clientes (o regístralo ahí mismo) o escribe datos sueltos. Con teléfono y correo, el envío por WhatsApp o mail ya sabe a quién ir. Indica los días de validez y notas (condiciones, entrega, etc.).')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">{t('🖨️ Imprimir o compartir')}</p>
-              <p className="mt-1">{t('Al terminar puedes imprimirla o guardarla en PDF para enviársela al cliente por WhatsApp.')}</p>
+              <p className="font-semibold text-gray-800">{t('📤 Descargar, WhatsApp o correo')}</p>
+              <p className="mt-1">{t('Al generar, verás un resumen para confirmar y luego los botones para descargar el PDF, mandarlo por WhatsApp o correo, o imprimirlo. En el celular el PDF va adjunto directo; en la computadora se descarga y se abre el chat con el mensaje listo.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('✅ Si el cliente acepta')}</p>
@@ -227,12 +292,14 @@ export default function QuotePage() {
             </div>
           </HelpDrawer>
         </div>
-        <QuoteTabs active="new" onNavigate={(to) => (items.length > 0 ? setPendingLeave('history') : navigate(to))} />
+        {!editId && <QuoteTabs active="new" onNavigate={(to) => (items.length > 0 ? setPendingLeave('history') : navigate(to))} />}
       </div>
 
       <div className="-mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <p className="text-sm text-gray-500">
-          {t('Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp / correo. No registra una venta ni descuenta stock.')}
+          {editId
+            ? t('Ajusta productos, cliente o notas. La cotización conserva su número y su fecha.')
+            : t('Arma un presupuesto para el cliente y genera un PDF para descargar, enviar por WhatsApp / correo o imprimir. No registra una venta ni descuenta stock.')}
         </p>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
@@ -343,15 +410,7 @@ export default function QuotePage() {
 
         {/* Right: customer + meta + total */}
         <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900">{t('Datos del cliente (opcional)')}</h3>
-            <div className="mt-3 space-y-3">
-              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-                placeholder={t('Nombre del cliente')} className={inputCls} />
-              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder={t('Teléfono (opcional)')} className={inputCls} />
-            </div>
-          </div>
+          <QuoteCustomerSection key={custResetKey} value={cust} onChange={setCust} />
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-bold text-gray-900">{t('Detalles')}</h3>
@@ -374,21 +433,86 @@ export default function QuotePage() {
             </div>
             <button
               onClick={handleGenerate}
-              disabled={items.length === 0 || createQuote.isPending}
+              disabled={items.length === 0 || saving}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              <Printer size={16} />
-              {t('Generar cotización (PDF)')}
+              {editId ? <PencilLine size={16} /> : <FileText size={16} />}
+              {editId ? t('Guardar cambios') : t('Generar cotización')}
             </button>
-            <p className="mt-2 flex items-center justify-center gap-1 text-center text-[11px] text-gray-400">
-              <FileText size={11} /> {t('Se abre el diálogo de impresión — elige "Guardar como PDF" para enviarlo.')}
+            <p className="mt-2 text-center text-[11px] text-gray-400">
+              {t('Primero ves un resumen para confirmar; después descargas el PDF, lo mandas por WhatsApp o correo, o lo imprimes.')}
             </p>
-            <p className="mt-1 text-center text-[11px] text-gray-400">
-              {t('Queda guardada en el historial: si el cliente vuelve, la encuentras y vendes esos productos de una.')}
-            </p>
+            {!editId && (
+              <p className="mt-1 text-center text-[11px] text-gray-400">
+                {t('Queda guardada en el historial: si el cliente vuelve, la encuentras y vendes esos productos de una.')}
+              </p>
+            )}
           </div>
         </div>
       </div>
+
+      {confirming && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={() => !saving && setConfirming(false)}>
+          <div className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">{editId ? t('¿Guardar los cambios?') : t('¿Generar esta cotización?')}</h3>
+                <p className="mt-0.5 text-xs text-gray-500">{t('Revisa que esté todo antes de guardarla.')}</p>
+              </div>
+              <button onClick={() => setConfirming(false)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label={t('Cerrar')}><X size={18} /></button>
+            </div>
+            <ul className="mt-4 max-h-56 divide-y divide-gray-50 overflow-y-auto rounded-xl border border-gray-100">
+              {items.map((it) => (
+                <li key={it.productId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate text-gray-800">{it.name}</span>
+                  <span className="flex-shrink-0 text-xs text-gray-500">{formatQty(it.qty)}{it.unit ? ` ${it.unit}` : ''} × {formatPrice(it.unitPrice)}</span>
+                </li>
+              ))}
+            </ul>
+            <dl className="mt-4 space-y-1.5 text-sm">
+              <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Productos')}</dt><dd className="font-semibold text-gray-900">{items.length}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Cliente')}</dt><dd className="truncate font-semibold text-gray-900">{cust.name.trim() || <span className="font-normal text-gray-400">{t('Sin nombre')}</span>}</dd></div>
+              {(cust.phone.trim() || cust.email.trim()) && (
+                <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Contacto')}</dt><dd className="truncate text-gray-700">{[cust.phone.trim(), cust.email.trim()].filter(Boolean).join(' · ')}</dd></div>
+              )}
+              <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Validez')}</dt><dd className="text-gray-700">{Number(validityDays) > 0 ? t('{n} día(s)', { n: Number(validityDays) }) : t('Sin vencimiento')}</dd></div>
+              <div className="flex justify-between gap-3 border-t border-gray-100 pt-2"><dt className="font-semibold text-gray-700">{t('Total')}</dt><dd className="text-xl font-extrabold text-gray-900">{formatPrice(total)}</dd></div>
+            </dl>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button onClick={() => setConfirming(false)} disabled={saving} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">{t('Volver a revisar')}</button>
+              <button onClick={confirmGenerate} disabled={saving} className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                {editId ? t('Guardar cambios') : t('Sí, generar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {done && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={() => closeDone()}>
+          <div className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100"><CheckCircle2 size={20} className="text-green-600" /></div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-gray-900">{t('Cotización {n} lista', { n: quoteNumberLabel(done.number) })}</h3>
+                <p className="mt-0.5 text-sm text-gray-500">
+                  {done.customer.name || t('Sin nombre')} · {formatPrice(done.items.reduce((a, it) => a + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0))}
+                </p>
+              </div>
+              <button onClick={() => closeDone()} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label={t('Cerrar')}><X size={18} /></button>
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('¿Cómo se la mandas al cliente?')}</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <QuoteActions quote={done} primary="whatsapp" />
+            </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button onClick={() => closeDone('/cotizaciones/historial')} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">{t('Ir al historial')}</button>
+              {!editId && <button onClick={() => closeDone()} className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800">{t('Nueva cotización')}</button>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {pendingLeave && (
         <ConfirmLeaveModal

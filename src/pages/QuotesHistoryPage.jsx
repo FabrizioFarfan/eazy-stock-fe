@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, Printer, ShoppingCart, Trash2, Search, X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react'
+import { ArrowLeft, FileText, ShoppingCart, Trash2, Search, X, CheckCircle2, AlertTriangle, Loader2, PencilLine, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useDebounce } from '../hooks/useDebounce'
@@ -10,7 +10,8 @@ import QuoteTabs from '../components/common/QuoteTabs'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { formatPrice } from '../utils/formatMoney'
 import { formatQty } from '../utils/quantity'
-import { printQuote } from '../utils/printQuote'
+import QuoteActions from '../components/quotes/QuoteActions'
+import { quoteDraftKey } from '../utils/quoteDraft'
 import { useT, dateLocale } from '../i18n'
 
 // Misma llave que NewSalePage: la venta arranca con el carrito de la cotización.
@@ -61,8 +62,12 @@ export default function QuotesHistoryPage() {
               <p className="mt-1">{t('El cliente volvió y quiere lo cotizado: abre la cotización y pulsa «Vender estos productos». Se arma una venta nueva con todas las líneas y los precios cotizados; ahí ajustas cantidades si hace falta y cobras. Al cobrar, la cotización queda marcada como «Vendida».')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">{t('🖨️ Reimprimir')}</p>
-              <p className="mt-1">{t('Sale idéntica a la original, con su número y su fecha.')}</p>
+              <p className="font-semibold text-gray-800">{t('📤 Descargar, WhatsApp, correo o imprimir')}</p>
+              <p className="mt-1">{t('Sale idéntica a la original, con su número y su fecha. Descarga el PDF o mándalo por WhatsApp / correo al cliente.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('✏️ Editar y duplicar')}</p>
+              <p className="mt-1">{t('Una cotización abierta se puede editar (conserva su número). «Duplicar» arma una cotización nueva con los mismos productos a precio de hoy — sirve para re-cotizar a un cliente que vuelve, incluso desde una ya vendida.')}</p>
             </div>
           </HelpDrawer>
         </div>
@@ -185,18 +190,44 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmReplace, setConfirmReplace] = useState(false)
 
-  const reprint = () => {
-    const ok = printQuote({
-      businessName: user?.businessName,
-      authorName: q.authorName,
-      customer: { name: q.customerName ?? '', phone: q.customerPhone ?? '' },
-      items: q.items.map((it) => ({ name: it.productName, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })),
-      notes: q.notes ?? '',
-      validityDays: q.validityDays ?? 0,
-      number: q.number,
-      createdAt: q.createdAt,
-    })
-    if (!ok) toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
+  const printable = () => ({
+    businessName: user?.businessName,
+    authorName: q.authorName,
+    customer: { name: q.customerName ?? '', phone: q.customerPhone ?? '', email: q.customerEmail ?? '' },
+    items: q.items.map((it) => ({ name: it.productName, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })),
+    notes: q.notes ?? '',
+    validityDays: q.validityDays ?? 0,
+    number: q.number,
+    createdAt: q.createdAt,
+  })
+
+  // Duplicar: cotización NUEVA (número nuevo) con los mismos productos a precio
+  // de HOY (los cotizados pueden estar viejos) y el mismo cliente; se abre en
+  // «Nueva cotización» para ajustar. Vale también para una ya vendida.
+  const duplicate = (force = false) => {
+    if (!force) {
+      try {
+        const d = JSON.parse(localStorage.getItem(quoteDraftKey(user?.id)))
+        if (Array.isArray(d?.items) && d.items.length > 0) { setConfirmReplace('duplicate'); return }
+      } catch { /* sin borrador */ }
+    }
+    const active = q.items.filter((it) => it.productActive)
+    if (active.length === 0) { toast.error(t('Ningún producto de esta cotización sigue activo en el catálogo')); return }
+    const items = active.map((it) => ({
+      productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
+      qty: Number(it.quantity),
+      unitPrice: it.priceIsVariable ? Number(it.unitPrice) : (Number(it.currentSalePrice) || Number(it.unitPrice)),
+    }))
+    try {
+      localStorage.setItem(quoteDraftKey(user?.id), JSON.stringify({
+        items,
+        customer: q.customerId ? { id: q.customerId, name: q.customerName, phone: q.customerPhone, email: q.customerEmail } : null,
+        customerName: q.customerName ?? '', customerPhone: q.customerPhone ?? '', customerEmail: q.customerEmail ?? '',
+        notes: q.notes ?? '', validityDays: q.validityDays ?? 7, duplicatedFrom: q.number, savedAt: Date.now(),
+      }))
+    } catch { toast.error(t('No se pudo preparar la copia (almacenamiento del navegador bloqueado)')); return }
+    if (active.length < q.items.length) toast.warning(t('{n} producto(s) ya no están en el catálogo y no se copiaron', { n: q.items.length - active.length }))
+    navigate('/cotizaciones')
   }
 
   // Arma el borrador de venta con TODAS las líneas y manda al POS. Si ya había
@@ -205,7 +236,7 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
     if (!force) {
       try {
         const d = JSON.parse(localStorage.getItem(saleDraftKey(user?.id)))
-        if (Array.isArray(d?.cart) && d.cart.length > 0) { setConfirmReplace(true); return }
+        if (Array.isArray(d?.cart) && d.cart.length > 0) { setConfirmReplace('sell'); return }
       } catch { /* sin borrador */ }
     }
     const sellable = q.items.filter((it) => it.productActive)
@@ -263,6 +294,7 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
                 <p className="mt-1 text-sm text-gray-800">
                   <span className="font-semibold">{q.customerName || t('Cliente sin nombre')}</span>
                   {q.customerPhone && <span className="text-gray-500"> · {q.customerPhone}</span>}
+                  {q.customerEmail && <span className="text-gray-500"> · {q.customerEmail}</span>}
                 </p>
               </div>
               <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600" aria-label={t('Cerrar')}><X size={18} /></button>
@@ -333,31 +365,44 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
                 <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Total')}</span>
                 <p className="text-2xl font-extrabold text-gray-900">{formatPrice(q.total)}</p>
               </div>
-              <div className="grid grid-cols-[auto_1fr] gap-2 sm:flex sm:flex-wrap sm:items-center">
-                {confirmDelete ? (
-                  <>
-                    <span className="text-xs text-gray-500">{t('¿Borrar esta cotización?')}</span>
-                    <button onClick={remove} disabled={deleteQuote.isPending} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">{t('Sí, borrar')}</button>
-                    <button onClick={() => setConfirmDelete(false)} className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">{t('No')}</button>
-                  </>
-                ) : (
-                  <>
-                    {canSell ? (
-                      <button onClick={() => setConfirmDelete(true)} title={t('Borrar')}
-                        className="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-2.5 text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={15} /></button>
-                    ) : <span className="hidden sm:block" />}
-                    <button onClick={reprint}
-                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                      <Printer size={15} /> {t('Imprimir')}
-                    </button>
-                    {canSell && q.status !== 'CONVERTED' && (
-                      <button onClick={() => sellAll(false)}
-                        className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 sm:col-span-1 sm:py-2.5">
-                        <ShoppingCart size={15} /> {t('Vender estos productos')}
-                      </button>
-                    )}
-                  </>
-                )}
+              <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                  <QuoteActions quote={printable()} primary={null} compact />
+                </div>
+                <div className="grid grid-cols-[auto_1fr_1fr] gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+                  {confirmDelete ? (
+                    <>
+                      <span className="col-span-3 text-xs text-gray-500 sm:col-span-1">{t('¿Borrar esta cotización?')}</span>
+                      <button onClick={remove} disabled={deleteQuote.isPending} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">{t('Sí, borrar')}</button>
+                      <button onClick={() => setConfirmDelete(false)} className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">{t('No')}</button>
+                    </>
+                  ) : (
+                    <>
+                      {canSell ? (
+                        <button onClick={() => setConfirmDelete(true)} title={t('Borrar')}
+                          className="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-2.5 text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={15} /></button>
+                      ) : <span className="hidden sm:block" />}
+                      {canSell && (
+                        <button onClick={() => duplicate(false)}
+                          className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                          <Copy size={15} /> {t('Duplicar')}
+                        </button>
+                      )}
+                      {canSell && q.status !== 'CONVERTED' && (
+                        <button onClick={() => navigate(`/cotizaciones/${q.id}/editar`)}
+                          className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                          <PencilLine size={15} /> {t('Editar')}
+                        </button>
+                      )}
+                      {canSell && q.status !== 'CONVERTED' && (
+                        <button onClick={() => sellAll(false)}
+                          className="col-span-3 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 sm:col-span-1 sm:py-2.5">
+                          <ShoppingCart size={15} /> {t('Vender estos productos')}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </>
@@ -369,12 +414,12 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-100"><AlertTriangle size={18} className="text-orange-600" /></div>
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">{t('Ya tienes una venta a medias')}</h3>
-                  <p className="mt-1 text-sm text-gray-500">{t('Si sigues, esa venta se reemplaza por los productos de esta cotización.')}</p>
+                  <h3 className="text-base font-bold text-gray-900">{confirmReplace === 'duplicate' ? t('Ya tienes una cotización a medias') : t('Ya tienes una venta a medias')}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{confirmReplace === 'duplicate' ? t('Si sigues, esa cotización se reemplaza por la copia de esta.') : t('Si sigues, esa venta se reemplaza por los productos de esta cotización.')}</p>
                 </div>
               </div>
               <div className="mt-5 flex flex-col gap-2">
-                <button onClick={() => { setConfirmReplace(false); sellAll(true) }} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{t('Reemplazar y vender esta cotización')}</button>
+                <button onClick={() => { const m = confirmReplace; setConfirmReplace(false); m === 'duplicate' ? duplicate(true) : sellAll(true) }} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">{confirmReplace === 'duplicate' ? t('Reemplazar y duplicar esta cotización') : t('Reemplazar y vender esta cotización')}</button>
                 <button onClick={() => setConfirmReplace(false)} className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">{t('Cancelar')}</button>
               </div>
             </div>
