@@ -227,18 +227,18 @@ export default function QuotePage() {
             </div>
           </HelpDrawer>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <QuoteTabs active="new" onNavigate={(to) => (items.length > 0 ? setPendingLeave('history') : navigate(to))} />
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
-            <PriceInputModeToggle />
-          </div>
-        </div>
+        <QuoteTabs active="new" onNavigate={(to) => (items.length > 0 ? setPendingLeave('history') : navigate(to))} />
       </div>
 
-      <p className="-mt-1 text-sm text-gray-500">
-        {t('Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp / correo. No registra una venta ni descuenta stock.')}
-      </p>
+      <div className="-mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <p className="text-sm text-gray-500">
+          {t('Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp / correo. No registra una venta ni descuenta stock.')}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
+          <PriceInputModeToggle />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Left: products */}
