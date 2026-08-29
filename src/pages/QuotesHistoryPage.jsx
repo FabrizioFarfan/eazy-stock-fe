@@ -83,10 +83,10 @@ export default function QuotesHistoryPage() {
             <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
           )}
         </div>
-        <div className="flex w-full items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 text-xs font-semibold sm:w-auto">
+        <div className="flex w-full items-center gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1 text-xs sm:w-auto">
           {[['', t('Todas')], ['OPEN', t('Abiertas')], ['CONVERTED', t('Vendidas')]].map(([v, label]) => (
             <button key={v} onClick={() => setStatus(v)}
-              className={`flex-1 rounded-lg px-3 py-1.5 transition-colors sm:flex-none ${status === v ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+              className={`flex-1 rounded-lg px-3 py-1.5 font-medium transition-colors sm:flex-none ${status === v ? 'bg-white font-semibold text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               {label}
             </button>
           ))}
