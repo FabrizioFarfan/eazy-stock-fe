@@ -1,36 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, BellOff, ShoppingCart, Package, CheckCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, BellOff, ArrowRight } from 'lucide-react'
 import { useNotifications } from '../hooks/useNotifications'
-import { useT, dateLocale } from '../i18n'
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-function formatRelativeTime(dateStr, t) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const mins  = Math.floor(diff / 60_000)
-  if (mins < 1)   return t('Ahora mismo')
-  if (mins < 60)  return t('Hace {n} min', { n: mins })
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return t('Hace {n}h', { n: hours })
-  const days  = Math.floor(hours / 24)
-  if (days  < 7)  return t('Hace {n}d', { n: days })
-  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short' }).format(new Date(dateStr))
-}
-
-const TYPE_CONFIG = {
-  NEW_SALE: {
-    icon:   <ShoppingCart size={14} className="text-blue-600" />,
-    iconBg: 'bg-blue-100',
-  },
-  SALE_CONFIRMED: {
-    icon:   <CheckCircle size={14} className="text-green-600" />,
-    iconBg: 'bg-green-100',
-  },
-  STOCK_UPDATE: {
-    icon:   <Package size={14} className="text-amber-600" />,
-    iconBg: 'bg-amber-100',
-  },
-}
+import NotificationItem from './notifications/NotificationItem'
+import { useT } from '../i18n'
 
 // ── component ─────────────────────────────────────────────────────────────────
 
@@ -38,7 +11,8 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const panelRef        = useRef(null)
   const t               = useT()
-  const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications()
+  const navigate        = useNavigate()
+  const { notifications, total, unreadCount, isLoading, markRead, markAllRead } = useNotifications()
 
   // Close panel on outside click
   useEffect(() => {
@@ -111,60 +85,24 @@ export default function NotificationBell() {
               </div>
             ) : (
               <ul className="divide-y divide-gray-50">
-                {notifications.map((n) => {
-                  const cfg = TYPE_CONFIG[n.type] ?? {
-                    icon:   <Bell size={14} className="text-gray-500" />,
-                    iconBg: 'bg-gray-100',
-                  }
-                  return (
-                    <li
-                      key={n.id}
-                      onClick={() => !n.read && markRead(n.id)}
-                      className={`flex cursor-pointer gap-3 px-4 py-3 transition-colors hover:bg-gray-50 ${
-                        !n.read ? 'bg-blue-50/60' : ''
-                      }`}
-                    >
-                      {/* Icon */}
-                      <div
-                        className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${cfg.iconBg}`}
-                      >
-                        {cfg.icon}
-                      </div>
-
-                      {/* Content */}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-sm leading-snug ${
-                            !n.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
-                          }`}
-                        >
-                          {n.title}
-                        </p>
-                        {n.body && (
-                          <p className="mt-0.5 truncate text-xs text-gray-500">{n.body}</p>
-                        )}
-                        <p className="mt-1 text-[11px] text-gray-400">
-                          {formatRelativeTime(n.createdAt, t)}
-                        </p>
-                      </div>
-
-                      {/* Unread dot */}
-                      {!n.read && (
-                        <div className="mt-2.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
-                      )}
-                    </li>
-                  )
-                })}
+                {notifications.map((n) => (
+                  <NotificationItem key={n.id} notification={n} onClick={() => !n.read && markRead(n.id)} />
+                ))}
               </ul>
             )}
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-2.5 text-center">
-              <p className="text-xs text-gray-400">{t('Mostrando las últimas {n} notificaciones', { n: notifications.length })}</p>
-            </div>
-          )}
+          <div className="border-t border-gray-100 px-4 py-2.5">
+            <button
+              onClick={() => { setOpen(false); navigate('/notificaciones') }}
+              className="flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"
+            >
+              {t('Ver todas las notificaciones')}
+              {total > notifications.length && <span className="text-gray-400">({total})</span>}
+              <ArrowRight size={13} />
+            </button>
+          </div>
         </div>
       )}
     </div>

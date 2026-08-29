@@ -18,6 +18,7 @@ const PAGE_TITLES = {
   '/brands':             'Marcas',
   '/admin/businesses':   'Negocios',
   '/admin/owners':       'Owners',
+  '/notificaciones':     'Notificaciones',
   '/settings':           'Ajustes',
 }
 

@@ -1,7 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { notificationsApi } from '../services/endpoints/notifications'
+import { useInfiniteSearch } from './useInfiniteSearch'
 
 export const NOTIFICATIONS_KEY = 'notifications'
+
+/**
+ * Listado completo con scroll infinito para la página de Notificaciones
+ * (la campana solo muestra las últimas). `onlyUnread` lo filtra en el BE.
+ */
+export function useNotificationSearch(onlyUnread = false) {
+  return useInfiniteSearch(
+    [NOTIFICATIONS_KEY],
+    notificationsApi.getAll,
+    { sort: 'createdAt,desc', ...(onlyUnread ? { read: false } : {}) },
+    { pageSize: 30 },
+  )
+}
 
 export function useNotifications() {
   const qc = useQueryClient()
@@ -32,9 +46,11 @@ export function useNotifications() {
 
   return {
     notifications: page?.content ?? [],
+    total:         page?.totalElements ?? 0,
     unreadCount:   countData ?? 0,
     isLoading,
     markRead:    (id) => markReadMut.mutate(id),
     markAllRead: ()   => markAllReadMut.mutate(),
+    isMarkingAll: markAllReadMut.isPending,
   }
 }

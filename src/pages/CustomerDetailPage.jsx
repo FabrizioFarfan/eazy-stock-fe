@@ -4,12 +4,13 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
   TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Mail, MapPin,
-  FileDown, MessageCircle,
+  FileDown, MessageCircle, FilePlus2, CheckCircle2,
 } from 'lucide-react'
 import {
   useCustomer, useCustomerTransactions,
   useRegisterCustomerPayment, useAdjustCustomerDebt,
 } from '../hooks/useCustomers'
+import { useQuoteSearch } from '../hooks/useQuotes'
 import { customersApi } from '../services/endpoints/customers'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
@@ -19,6 +20,8 @@ import CustomerFormModal from '../components/customers/CustomerFormModal'
 import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
+import QuoteDetailModal from '../components/quotes/QuoteDetailModal'
+import LoadMoreRow from '../components/common/LoadMoreRow'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
 
@@ -95,9 +98,12 @@ export default function CustomerDetailPage() {
   const t = useT()
   const { can, user } = useAuth()
   const canManage = can('canManageCustomers')
+  const canSell   = can('canRegisterSale')
 
   const { data: customer, isLoading, isError } = useCustomer(id)
   const { data: txnsPage, isLoading: loadingTxns } = useCustomerTransactions(id, { size: 50 })
+  // Cotizaciones hechas a este cliente: parte de su historial, aunque no muevan dinero.
+  const quoteSearch = useQuoteSearch('', { customerId: id })
   const payment    = useRegisterCustomerPayment()
   const adjustment = useAdjustCustomerDebt()
 
@@ -105,6 +111,7 @@ export default function CustomerDetailPage() {
   const [showPayment, setShowPayment]     = useState(false)
   const [showAdjustment, setShowAdjustment] = useState(false)
   const [openSaleId, setOpenSaleId]       = useState(null)
+  const [openQuoteId, setOpenQuoteId]     = useState(null)
   const [generatingPdf, setGeneratingPdf] = useState(false)
 
   const handleDownloadPdf = async () => {
@@ -233,6 +240,56 @@ export default function CustomerDetailPage() {
           value={lastTxn ? formatDate(lastTxn.createdAt) : '—'} />
       </div>
 
+      {/* Cotizaciones del cliente */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-gray-900">{t('Cotizaciones')}</h3>
+          {canSell && (
+            <button onClick={() => navigate('/cotizaciones')}
+              className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              <FilePlus2 size={13} /> {t('Nueva cotización')}
+            </button>
+          )}
+        </div>
+        {quoteSearch.isLoading ? (
+          <div className="space-y-2">
+            {[1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
+          </div>
+        ) : quoteSearch.items.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-400">{t('Todavía no le hiciste ninguna cotización')}</p>
+        ) : (
+          <>
+            <ul className="divide-y divide-gray-100">
+              {quoteSearch.items.map((q) => (
+                <li key={q.id}>
+                  <button type="button" onClick={() => setOpenQuoteId(q.id)}
+                    className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-gray-50">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                        <FileText size={14} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs font-semibold text-gray-700">COT-{String(q.number).padStart(4, '0')}</p>
+                        <p className="text-xs text-gray-400">
+                          {formatDate(q.createdAt)} · {t('{n} producto(s)', { n: q.itemCount })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-3">
+                      {q.status === 'CONVERTED'
+                        ? <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700"><CheckCircle2 size={11} /> {t('Vendida')}</span>
+                        : <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">{t('Abierta')}</span>}
+                      <span className="font-bold text-gray-900 whitespace-nowrap">{formatPrice(q.total)}</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <LoadMoreRow search={quoteSearch} />
+          </>
+        )}
+      </div>
+
       {/* Timeline */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h3 className="mb-4 text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
@@ -302,6 +359,9 @@ export default function CustomerDetailPage() {
       )}
       {openSaleId && (
         <SaleDetailModal saleId={openSaleId} onClose={() => setOpenSaleId(null)} />
+      )}
+      {openQuoteId && (
+        <QuoteDetailModal id={openQuoteId} user={user} canSell={canSell} onClose={() => setOpenQuoteId(null)} />
       )}
     </div>
   )

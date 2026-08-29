@@ -2,6 +2,19 @@
 // bienvenida, HelpDrawer, EntityPicker, errores de API y fechas.
 export default {
   en: {
+    // ── Página de Notificaciones + cotizaciones en ficha de cliente (29-ago) ──
+    "Ver todas las notificaciones": "See all notifications",
+    "Qué se avisa aquí": "What gets announced here",
+    "Todo lo que pasó en tu negocio mientras no mirabas: ventas registradas, devoluciones y cambios de stock.": "Everything that happened in your business while you were away: sales recorded, returns and stock changes.",
+    "🔵 Sin leer": "🔵 Unread",
+    "Las que todavía no abriste salen con fondo azul y un punto. Al tocarlas se marcan como leídas; con «Marcar todas como leídas» limpias el contador de la campana de una.": "The ones you have not opened show with a blue background and a dot. Tapping them marks them as read; “Mark all as read” clears the bell counter in one go.",
+    "🔔 La campana vs. esta página": "🔔 The bell vs. this page",
+    "La campana de arriba muestra solo las últimas para un vistazo rápido. Acá está el historial completo, agrupado por día y con el filtro «Sin leer».": "The bell above shows only the latest ones for a quick look. Here is the full history, grouped by day and with the “Unread” filter.",
+    "Sin leer": "Unread",
+    "No tienes notificaciones sin leer": "You have no unread notifications",
+    "Hoy": "Today",
+    "Ayer": "Yesterday",
+    "Todavía no le hiciste ninguna cotización": "You have not made any quote for them yet",
     // ── Sidebar / Topbar ─────────────────────────────────────────────
     'Panel Boss': 'Boss panel',
     'Negocios': 'Businesses',
@@ -209,6 +222,19 @@ export default {
   },
 
   it: {
+    // ── Página de Notificaciones + cotizaciones en ficha de cliente (29-ago) ──
+    "Ver todas las notificaciones": "Vedi tutte le notifiche",
+    "Qué se avisa aquí": "Cosa viene segnalato qui",
+    "Todo lo que pasó en tu negocio mientras no mirabas: ventas registradas, devoluciones y cambios de stock.": "Tutto quello che è successo nella tua attività mentre non guardavi: vendite registrate, resi e movimenti di stock.",
+    "🔵 Sin leer": "🔵 Non lette",
+    "Las que todavía no abriste salen con fondo azul y un punto. Al tocarlas se marcan como leídas; con «Marcar todas como leídas» limpias el contador de la campana de una.": "Quelle che non hai ancora aperto hanno sfondo blu e un pallino. Toccandole vengono segnate come lette; con «Segna tutte come lette» azzeri il contatore della campanella in un colpo solo.",
+    "🔔 La campana vs. esta página": "🔔 La campanella e questa pagina",
+    "La campana de arriba muestra solo las últimas para un vistazo rápido. Acá está el historial completo, agrupado por día y con el filtro «Sin leer».": "La campanella in alto mostra solo le ultime per un'occhiata rapida. Qui c'è lo storico completo, raggruppato per giorno e con il filtro «Non lette».",
+    "Sin leer": "Non lette",
+    "No tienes notificaciones sin leer": "Non hai notifiche non lette",
+    "Hoy": "Oggi",
+    "Ayer": "Ieri",
+    "Todavía no le hiciste ninguna cotización": "Non gli hai ancora fatto nessun preventivo",
     // ── Sidebar / Topbar ─────────────────────────────────────────────
     'Panel Boss': 'Pannello Boss',
     'Negocios': 'Attività',

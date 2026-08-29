@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
-  LogOut, Truck, Tag, FolderOpen, X, Settings,
+  LogOut, Truck, Tag, FolderOpen, X, Settings, Bell,
   Wallet, HandCoins, FileText, Trophy, Scale, Crown,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -34,6 +34,7 @@ const OWNER_NAV = [
   { icon: Tag,             label: 'Marcas',            path: '/brands',              permission: null },
   { icon: FolderOpen,      label: 'Categorías',        path: '/categories',          permission: null },
   { icon: Users,           label: 'Empleados',         path: '/empleados',           permission: null },
+  { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
 ]
 
@@ -50,6 +51,7 @@ const EMPLOYEE_NAV = [
   { icon: Scale,           label: 'Cierre de caja',    path: '/reports/balance',     permission: 'canViewCashClosing', hideIfPermission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+  { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
 ]
 

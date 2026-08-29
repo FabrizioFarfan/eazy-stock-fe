@@ -25,6 +25,7 @@ import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
 import QuotePage      from '../pages/QuotePage'
 import QuotesHistoryPage from '../pages/QuotesHistoryPage'
+import NotificationsPage from '../pages/NotificationsPage'
 import StockPage      from '../pages/stock/StockPage'
 import ReportsPage    from '../pages/ReportsPage'
 import BalancePage    from '../pages/BalancePage'
@@ -68,6 +69,9 @@ export default function AppRouter() {
       } />
       <Route path="/sales/new" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><NewSalePage /></ProtectedRoute>
+      } />
+      <Route path="/notificaciones" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><NotificationsPage /></ProtectedRoute>
       } />
       <Route path="/cotizaciones" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotePage /></ProtectedRoute>
