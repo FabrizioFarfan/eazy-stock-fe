@@ -3,6 +3,8 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    'Nueva': 'New',
+    'Cotizaciones': 'Quotes',
     // ── Historial de cotizaciones (29-ago) ──
     'Hay líneas con cantidad 0 — corrígelas o quítalas': 'Some lines have quantity 0 — fix or remove them',
     'No se pudo guardar la cotización. Revisa tu conexión e inténtalo de nuevo.': 'The quote could not be saved. Check your connection and try again.',
@@ -378,6 +380,8 @@ export default {
   },
 
   it: {
+    'Nueva': 'Nuovo',
+    'Cotizaciones': 'Preventivi',
     // ── Historial de cotizaciones (29-ago) ──
     'Hay líneas con cantidad 0 — corrígelas o quítalas': 'Ci sono righe con quantità 0 — correggile o toglile',
     'No se pudo guardar la cotización. Revisa tu conexión e inténtalo de nuevo.': 'Impossibile salvare il preventivo. Controlla la connessione e riprova.',

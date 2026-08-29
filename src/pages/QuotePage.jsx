@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Printer, Package, History } from 'lucide-react'
+import { ArrowLeft, FileText, Trash2, Printer, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
 import { useCreateQuote } from '../hooks/useQuotes'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import ConfirmLeaveModal from '../components/common/ConfirmLeaveModal'
+import QuoteTabs from '../components/common/QuoteTabs'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -190,14 +191,14 @@ export default function QuotePage() {
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <button onClick={requestLeave}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">{t('Nueva cotización')}</h2>
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Cotizaciones')}</h2>
           <HelpDrawer title={t('Qué es una cotización')} autoOpenKey="eazystock_quote_help_v2">
             <p><strong>{t('Un presupuesto para tu cliente')}</strong>: {t('mismos productos y precios que una venta, pero')} <strong>{t('sin descontar stock ni registrar dinero')}</strong>.</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -226,23 +227,16 @@ export default function QuotePage() {
             </div>
           </HelpDrawer>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => (items.length > 0 ? setPendingLeave('history') : navigate('/cotizaciones/historial'))}
-            title={t('Ver las cotizaciones que ya generaste')}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <History size={15} />
-            <span className="hidden sm:inline">{t('Historial')}</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <QuoteTabs active="new" onNavigate={(to) => (items.length > 0 ? setPendingLeave('history') : navigate(to))} />
           <div className="flex items-center gap-1.5">
-            <span className="hidden text-[11px] text-gray-400 sm:inline">{t('Formato del precio')}</span>
+            <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
             <PriceInputModeToggle />
           </div>
         </div>
       </div>
 
-      <p className="-mt-2 text-sm text-gray-500">
+      <p className="-mt-1 text-sm text-gray-500">
         {t('Arma un presupuesto para el cliente y genera un PDF para imprimir o enviar por WhatsApp / correo. No registra una venta ni descuenta stock.')}
       </p>
 

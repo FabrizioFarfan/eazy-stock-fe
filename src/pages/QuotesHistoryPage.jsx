@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDebounce } from '../hooks/useDebounce'
 import { useQuoteSearch, useQuote, useDeleteQuote } from '../hooks/useQuotes'
 import LoadMoreRow from '../components/common/LoadMoreRow'
+import QuoteTabs from '../components/common/QuoteTabs'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { formatPrice } from '../utils/formatMoney'
 import { formatQty } from '../utils/quantity'
@@ -41,14 +42,14 @@ export default function QuotesHistoryPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/cotizaciones')}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+          <button onClick={() => navigate('/sales')}
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-2xl font-bold text-gray-900">{t('Historial de cotizaciones')}</h2>
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Cotizaciones')}</h2>
           <HelpDrawer title={t('Tus cotizaciones guardadas')} autoOpenKey="eazystock_quote_history_help_v1">
             <p>{t('Cada cotización que generas queda aquí con su número, fecha, cliente y total.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -65,12 +66,7 @@ export default function QuotesHistoryPage() {
             </div>
           </HelpDrawer>
         </div>
-        {canSell && (
-          <button onClick={() => navigate('/cotizaciones')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
-            <FileText size={15} /> {t('Nueva cotización')}
-          </button>
-        )}
+        <QuoteTabs active="history" />
       </div>
 
       {/* Filtros */}
@@ -87,10 +83,10 @@ export default function QuotesHistoryPage() {
             <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
           )}
         </div>
-        <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 text-xs font-semibold">
+        <div className="flex w-full items-center gap-1 rounded-xl border border-gray-200 bg-white p-1 text-xs font-semibold sm:w-auto">
           {[['', t('Todas')], ['OPEN', t('Abiertas')], ['CONVERTED', t('Vendidas')]].map(([v, label]) => (
             <button key={v} onClick={() => setStatus(v)}
-              className={`rounded-lg px-3 py-1.5 transition-colors ${status === v ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+              className={`flex-1 rounded-lg px-3 py-1.5 transition-colors sm:flex-none ${status === v ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
               {label}
             </button>
           ))}
@@ -107,7 +103,32 @@ export default function QuotesHistoryPage() {
             <p className="text-sm text-gray-400">{debounced || status ? t('Sin resultados') : t('Todavía no has generado cotizaciones')}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Móvil: una tarjeta por cotización (la tabla no cabe en 390px) */}
+          <ul className="divide-y divide-gray-50 md:hidden">
+            {search.items.map((q) => (
+              <li key={q.id}>
+                <button type="button" onClick={() => setOpenId(q.id)} className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-blue-50/60">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-gray-700">COT-{String(q.number).padStart(4, '0')}</span>
+                      {statusChip(q.status)}
+                    </div>
+                    <p className="mt-1 truncate font-semibold text-gray-900">{q.customerName || <span className="font-normal text-gray-400">{t('Sin nombre')}</span>}</p>
+                    <p className="text-xs text-gray-500">
+                      {fmtDate(q.createdAt)} · {t('{n} producto(s)', { n: q.itemCount })}{q.customerPhone ? ` · ${q.customerPhone}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                    <span className="font-bold text-gray-900 whitespace-nowrap">{formatPrice(q.total)}</span>
+                    <span className="text-[11px] text-gray-400">{q.authorName}</span>
+                  </div>
+                </button>
+              </li>
+            ))}
+            <li><LoadMoreRow search={search} /></li>
+          </ul>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60 text-xs uppercase tracking-widest text-gray-400">
@@ -147,6 +168,7 @@ export default function QuotesHistoryPage() {
             </table>
             <LoadMoreRow search={search} />
           </div>
+          </>
         )}
       </div>
 
@@ -220,7 +242,7 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+      <div className="relative flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         {isLoading || !q ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-gray-400"><Loader2 size={16} className="animate-spin" /> {t('Cargando...')}</div>
@@ -247,7 +269,31 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <table className="w-full text-sm">
+              {/* Móvil: líneas apiladas */}
+              <ul className="divide-y divide-gray-50 sm:hidden">
+                {q.items.map((it) => {
+                  const short = Number(it.currentStock ?? 0) < Number(it.quantity)
+                  return (
+                    <li key={it.id} className="px-5 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900">{it.productName}</p>
+                          <p className="font-mono text-xs text-gray-400">{it.productSku}</p>
+                          {!it.productActive && <p className="text-xs font-semibold text-red-500">{t('ya no está en el catálogo')}</p>}
+                        </div>
+                        <span className="flex-shrink-0 font-semibold text-gray-900 whitespace-nowrap">{formatPrice(it.subtotal)}</span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                        <span>{formatQty(it.quantity)} {it.unit} × {formatPrice(it.unitPrice)}</span>
+                        <span className={short ? 'font-semibold text-amber-600' : 'text-gray-400'}>
+                          {short && <AlertTriangle size={11} className="mr-0.5 inline" />}{t('Stock hoy')}: {formatQty(it.currentStock ?? 0)}
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+              <table className="hidden w-full text-sm sm:table">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/60 text-xs uppercase tracking-widest text-gray-400">
                     <th className="px-5 py-2.5 text-left sm:px-6">{t('Producto')}</th>
@@ -283,11 +329,11 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
             </div>
 
             <div className="flex flex-shrink-0 flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div>
+              <div className="flex items-baseline justify-between gap-3 sm:block">
                 <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Total')}</span>
                 <p className="text-2xl font-extrabold text-gray-900">{formatPrice(q.total)}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-[auto_1fr] gap-2 sm:flex sm:flex-wrap sm:items-center">
                 {confirmDelete ? (
                   <>
                     <span className="text-xs text-gray-500">{t('¿Borrar esta cotización?')}</span>
@@ -296,17 +342,17 @@ function QuoteDetailModal({ id, user, canSell, onClose }) {
                   </>
                 ) : (
                   <>
-                    {canSell && (
+                    {canSell ? (
                       <button onClick={() => setConfirmDelete(true)} title={t('Borrar')}
-                        className="rounded-xl border border-gray-200 p-2 text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={15} /></button>
-                    )}
+                        className="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-2.5 text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={15} /></button>
+                    ) : <span className="hidden sm:block" />}
                     <button onClick={reprint}
-                      className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                       <Printer size={15} /> {t('Imprimir')}
                     </button>
                     {canSell && q.status !== 'CONVERTED' && (
                       <button onClick={() => sellAll(false)}
-                        className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                        className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 sm:col-span-1 sm:py-2.5">
                         <ShoppingCart size={15} /> {t('Vender estos productos')}
                       </button>
                     )}
