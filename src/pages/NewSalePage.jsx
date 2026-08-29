@@ -7,6 +7,9 @@ import { useProductSearch } from '../hooks/useProducts'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useCreateSale } from '../hooks/useSales'
 import { useCustomerSearch } from '../hooks/useCustomers'
+import { useQueryClient } from '@tanstack/react-query'
+import { quotesApi } from '../services/endpoints/quotes'
+import { QUOTES_KEY } from '../hooks/useQuotes'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -467,6 +470,7 @@ export default function NewSalePage() {
   const canSellOnCredit  = can('canSellOnCredit')
 
   const createSale    = useCreateSale()
+  const qc            = useQueryClient()
   const cartRef       = useRef(null)
   const scanLockRef   = useRef(false)
   const cartStateRef  = useRef([])
@@ -510,6 +514,9 @@ export default function NewSalePage() {
   // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
   const [newCustomerName, setNewCustomerName] = useState(null)
   const [pendingLeave, setPendingLeave]       = useState(false)
+  // Venta que nace de una cotización del historial: al cobrar se enlaza y la
+  // cotización pasa a «Vendida». { id, number } o null.
+  const [fromQuote, setFromQuote]             = useState(null)
 
   useEffect(() => { cartStateRef.current = cart }, [cart])
 
@@ -528,7 +535,12 @@ export default function NewSalePage() {
     setCustomer(d.customer ?? null)
     setPayMethod(d.payMethod ?? 'Efectivo')
     setPayOther(d.payOther ?? '')
-    toast.info(t('Se restauró tu venta en curso ({n} producto(s))', { n: d.cart.length }))
+    setFromQuote(d.fromQuote ?? null)
+    if (d.fromQuote?.number) {
+      toast.info(t('Venta armada desde la cotización N.º {n} ({c} producto(s)) — revisa cantidades y cobra', { n: d.fromQuote.number, c: d.cart.length }))
+    } else {
+      toast.info(t('Se restauró tu venta en curso ({n} producto(s))', { n: d.cart.length }))
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
@@ -537,9 +549,9 @@ export default function NewSalePage() {
     if (!user?.id || !draftRestoredRef.current) return
     if (cart.length === 0) { localStorage.removeItem(saleDraftKey(user.id)); return }
     localStorage.setItem(saleDraftKey(user.id), JSON.stringify({
-      cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, savedAt: Date.now(),
+      cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, fromQuote, savedAt: Date.now(),
     }))
-  }, [cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, user?.id])
+  }, [cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, fromQuote, user?.id])
 
   const discardDraft = () => {
     if (user?.id) localStorage.removeItem(saleDraftKey(user.id))
@@ -697,6 +709,12 @@ export default function NewSalePage() {
             : undefined,
         )
       }
+      if (fromQuote?.id && sale?.id) {
+        // Best-effort: la venta ya está registrada; si esto falla la cotización
+        // simplemente queda abierta en el historial.
+        try { await quotesApi.markConverted(fromQuote.id, sale.id) } catch { /* noop */ }
+        qc.invalidateQueries({ queryKey: [QUOTES_KEY] })
+      }
       discardDraft()
       navigate('/sales')
     } catch { /* error shown via createSale.isError */ }
@@ -712,6 +730,11 @@ export default function NewSalePage() {
           <span className="hidden sm:inline">{t('Volver')}</span>
         </button>
         <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Nueva venta')}</h2>
+        {fromQuote?.number && (
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+            {t('Desde la cotización N.º {n}', { n: fromQuote.number })}
+          </span>
+        )}
         <HelpDrawer title={t('Cómo registrar una venta')} autoOpenKey="eazystock_newsale_help_v2">
           <p>{t('Vender toma')} <strong>{t('segundos')}</strong>: {t('busca, agrega y cobra.')}</p>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -1006,7 +1029,7 @@ export default function NewSalePage() {
         <ConfirmLeaveModal
           onStay={() => setPendingLeave(false)}
           onLeaveKeep={() => { setPendingLeave(false); navigate('/sales') }}
-          onDiscard={() => { setPendingLeave(false); discardDraft(); setCart([]); navigate('/sales') }}
+          onDiscard={() => { setPendingLeave(false); discardDraft(); setCart([]); setFromQuote(null); navigate('/sales') }}
         />
       )}
     </div>

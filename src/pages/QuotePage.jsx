@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Printer, Package } from 'lucide-react'
+import { ArrowLeft, FileText, Trash2, Printer, Package, History } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
+import { useCreateQuote } from '../hooks/useQuotes'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import ConfirmLeaveModal from '../components/common/ConfirmLeaveModal'
 import { useDebounce } from '../hooks/useDebounce'
@@ -96,6 +97,7 @@ export default function QuotePage() {
   const [notes, setNotes]                 = useState('')
   const [validityDays, setValidityDays]   = useState(7)
   const [pendingLeave, setPendingLeave]   = useState(false)
+  const createQuote = useCreateQuote()
 
   // Restaurar el borrador al entrar (una sola vez, cuando ya sabemos quién es).
   const draftRestoredRef = useRef(false)
@@ -139,11 +141,30 @@ export default function QuotePage() {
     [items],
   )
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (items.length === 0) {
       toast.error(t('Agrega al menos un producto a la cotización'))
       return
     }
+    if (items.some((it) => !(Number(it.qty) > 0))) {
+      toast.error(t('Hay líneas con cantidad 0 — corrígelas o quítalas'))
+      return
+    }
+    // Primero se GUARDA (queda en el historial con su número) y luego se imprime.
+    let saved
+    try {
+      saved = await createQuote.mutateAsync({
+        items: items.map((it) => ({ productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0 })),
+        customerName: customerName.trim() || undefined,
+        customerPhone: customerPhone.trim() || undefined,
+        validityDays: Number(validityDays) || 0,
+        notes: notes.trim() || undefined,
+      })
+    } catch {
+      toast.error(t('No se pudo guardar la cotización. Revisa tu conexión e inténtalo de nuevo.'))
+      return
+    }
+    toast.success(t('Cotización N.º {n} guardada en el historial', { n: saved.number }))
     const ok = printQuote({
       businessName: user?.businessName,
       authorName: user?.name,
@@ -151,10 +172,11 @@ export default function QuotePage() {
       items,
       notes: notes.trim(),
       validityDays: Number(validityDays) || 0,
+      number: saved.number,
+      createdAt: saved.createdAt,
     })
     if (!ok) {
-      toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
-      return
+      toast.error(t('Tu navegador bloqueó la ventana de impresión. La cotización quedó guardada: puedes imprimirla desde el historial.'))
     }
     // Generada: la cotización ya cumplió; se limpia para empezar la siguiente.
     discardDraft()
@@ -198,11 +220,25 @@ export default function QuotePage() {
               <p className="font-semibold text-gray-800">{t('✅ Si el cliente acepta')}</p>
               <p className="mt-1">{t('Registra la venta normalmente en')} <strong>{t('"Nueva venta"')}</strong> — {t('ahí sí se descuenta el stock.')}</p>
             </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('🗂️ Historial')}</p>
+              <p className="mt-1">{t('Cada cotización generada queda guardada con su número. En «Historial» la buscas por cliente, teléfono, número o producto, la reimprimes, o con «Vender estos productos» pasas todas sus líneas a una venta nueva sin cargarlas una por una.')}</p>
+            </div>
           </HelpDrawer>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="hidden text-[11px] text-gray-400 sm:inline">{t('Formato del precio')}</span>
-          <PriceInputModeToggle />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => (items.length > 0 ? setPendingLeave('history') : navigate('/cotizaciones/historial'))}
+            title={t('Ver las cotizaciones que ya generaste')}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <History size={15} />
+            <span className="hidden sm:inline">{t('Historial')}</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <span className="hidden text-[11px] text-gray-400 sm:inline">{t('Formato del precio')}</span>
+            <PriceInputModeToggle />
+          </div>
         </div>
       </div>
 
@@ -344,7 +380,7 @@ export default function QuotePage() {
             </div>
             <button
               onClick={handleGenerate}
-              disabled={items.length === 0}
+              disabled={items.length === 0 || createQuote.isPending}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
             >
               <Printer size={16} />
@@ -352,6 +388,9 @@ export default function QuotePage() {
             </button>
             <p className="mt-2 flex items-center justify-center gap-1 text-center text-[11px] text-gray-400">
               <FileText size={11} /> {t('Se abre el diálogo de impresión — elige "Guardar como PDF" para enviarlo.')}
+            </p>
+            <p className="mt-1 text-center text-[11px] text-gray-400">
+              {t('Queda guardada en el historial: si el cliente vuelve, la encuentras y vendes esos productos de una.')}
             </p>
           </div>
         </div>
@@ -365,8 +404,8 @@ export default function QuotePage() {
           stayLabel={t('Seguir con la cotización')}
           discardLabel={t('Descartar la cotización')}
           onStay={() => setPendingLeave(false)}
-          onLeaveKeep={() => { setPendingLeave(false); navigate('/sales') }}
-          onDiscard={() => { setPendingLeave(false); discardDraft(); setItems([]); navigate('/sales') }}
+          onLeaveKeep={() => { const to = pendingLeave === 'history' ? '/cotizaciones/historial' : '/sales'; setPendingLeave(false); navigate(to) }}
+          onDiscard={() => { const to = pendingLeave === 'history' ? '/cotizaciones/historial' : '/sales'; setPendingLeave(false); discardDraft(); setItems([]); navigate(to) }}
         />
       )}
     </div>

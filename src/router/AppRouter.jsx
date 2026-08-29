@@ -24,6 +24,7 @@ import ProductExportPage from '../pages/ProductExportPage'
 import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
 import QuotePage      from '../pages/QuotePage'
+import QuotesHistoryPage from '../pages/QuotesHistoryPage'
 import StockPage      from '../pages/stock/StockPage'
 import ReportsPage    from '../pages/ReportsPage'
 import BalancePage    from '../pages/BalancePage'
@@ -70,6 +71,9 @@ export default function AppRouter() {
       } />
       <Route path="/cotizaciones" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotePage /></ProtectedRoute>
+      } />
+      <Route path="/cotizaciones/historial" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><QuotesHistoryPage /></ProtectedRoute>
       } />
       <Route path="/stock" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><StockPage /></ProtectedRoute>

@@ -25,12 +25,16 @@ function money(v) {
  * @param {string} [p.notes]
  * @param {number} [p.validityDays]
  */
-export function printQuote({ businessName, authorName, customer = {}, items = [], notes = '', validityDays = 7 }) {
+export function printQuote({ businessName, authorName, customer = {}, items = [], notes = '', validityDays = 7, number = null, createdAt = null }) {
   const win = window.open('', '_blank')
   if (!win) return false
 
-  const now = new Date()
-  const quoteNumber = `COT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+  // Cotización guardada: sale con su correlativo del negocio (COT-0012) y la
+  // fecha en que se hizo, así la reimpresión desde el historial es idéntica.
+  const now = createdAt ? new Date(createdAt) : new Date()
+  const quoteNumber = number != null
+    ? `COT-${String(number).padStart(4, '0')}`
+    : `COT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
   const dateStr = now.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
 
   let validUntilStr = ''
