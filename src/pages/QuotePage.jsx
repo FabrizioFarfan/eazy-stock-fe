@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, FileText, Trash2, Printer, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
-import { useProducts } from '../hooks/useProducts'
+import { useProductSearch } from '../hooks/useProducts'
+import LoadMoreRow from '../components/common/LoadMoreRow'
+import ConfirmLeaveModal from '../components/common/ConfirmLeaveModal'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -13,6 +15,21 @@ import { formatPrice } from '../utils/formatMoney'
 import { printQuote } from '../utils/printQuote'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
+
+// ── Borrador de cotización ────────────────────────────────────────────────────
+// Igual que la venta: lo que se va armando se guarda en localStorage (por
+// usuario). William salía a crear un producto que faltaba y volvía a una
+// cotización vacía. Sobrevive al refresh; se limpia al generar el PDF o al
+// descartarla a propósito.
+
+const quoteDraftKey = (userId) => `eazystock_quote_draft_${userId || 'anon'}`
+
+function loadQuoteDraft(userId) {
+  try {
+    const d = JSON.parse(localStorage.getItem(quoteDraftKey(userId)))
+    return Array.isArray(d?.items) && d.items.length > 0 ? d : null
+  } catch { return null }
+}
 
 const inputCls = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
@@ -32,13 +49,9 @@ export default function QuotePage() {
   const debounced = useDebounce(query, 350)
   const scanLock  = useRef(false)
 
-  // size alto: con 8 no salían TODOS los matches y parecía que el producto no existía
-  const { data: prodData, isLoading: loadingProds } = useProducts(
-    debounced ? { search: debounced, size: 100, active: true } : null,
-    { enabled: !!debounced },
-  )
-  const results = prodData?.content ?? []
-  const totalMatches = prodData?.totalElements ?? 0
+  // Scroll infinito: TODOS los matches, bajando en el dropdown.
+  const productSearch = useProductSearch(debounced)
+  const { items: results, isLoading: loadingProds } = productSearch
 
   // ── Cart ─────────────────────────────────────────────────────────────────────
   const [items, setItems] = useState([]) // [{ productId, name, sku, unit, qty, unitPrice }]
@@ -82,6 +95,44 @@ export default function QuotePage() {
   const [customerPhone, setCustomerPhone] = useState('')
   const [notes, setNotes]                 = useState('')
   const [validityDays, setValidityDays]   = useState(7)
+  const [pendingLeave, setPendingLeave]   = useState(false)
+
+  // Restaurar el borrador al entrar (una sola vez, cuando ya sabemos quién es).
+  const draftRestoredRef = useRef(false)
+  useEffect(() => {
+    if (!user?.id || draftRestoredRef.current) return
+    draftRestoredRef.current = true
+    const d = loadQuoteDraft(user.id)
+    if (!d) return
+    setItems(d.items)
+    setCustomerName(d.customerName ?? '')
+    setCustomerPhone(d.customerPhone ?? '')
+    setNotes(d.notes ?? '')
+    setValidityDays(d.validityDays ?? 7)
+    toast.info(t('Se restauró tu cotización en curso ({n} producto(s))', { n: d.items.length }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+
+  // Autosave en cada cambio; lista vacía = no hay cotización que guardar.
+  useEffect(() => {
+    if (!user?.id || !draftRestoredRef.current) return
+    try {
+      if (items.length === 0) { localStorage.removeItem(quoteDraftKey(user.id)); return }
+      localStorage.setItem(quoteDraftKey(user.id), JSON.stringify({
+        items, customerName, customerPhone, notes, validityDays, savedAt: Date.now(),
+      }))
+    } catch { /* localStorage lleno o bloqueado: el borrador es best-effort */ }
+  }, [items, customerName, customerPhone, notes, validityDays, user?.id])
+
+  const discardDraft = () => {
+    try { if (user?.id) localStorage.removeItem(quoteDraftKey(user.id)) } catch { /* noop */ }
+  }
+
+  // Salir: si hay productos cargados, preguntar qué hacer con la cotización.
+  const requestLeave = () => {
+    if (items.length > 0) setPendingLeave(true)
+    else navigate('/sales')
+  }
 
   const total = useMemo(
     () => items.reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0),
@@ -101,7 +152,17 @@ export default function QuotePage() {
       notes: notes.trim(),
       validityDays: Number(validityDays) || 0,
     })
-    if (!ok) toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
+    if (!ok) {
+      toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
+      return
+    }
+    // Generada: la cotización ya cumplió; se limpia para empezar la siguiente.
+    discardDraft()
+    setItems([])
+    setCustomerName('')
+    setCustomerPhone('')
+    setNotes('')
+    setValidityDays(7)
   }
 
   return (
@@ -109,7 +170,7 @@ export default function QuotePage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/sales')}
+          <button onClick={requestLeave}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">{t('Volver')}</span>
@@ -181,11 +242,7 @@ export default function QuotePage() {
                           </span>
                         </button>
                       ))}
-                      {totalMatches > results.length && (
-                        <p className="px-4 py-2 text-center text-xs text-gray-400">
-                          {t('Mostrando {shown} de {total} — escribe más letras para afinar', { shown: results.length, total: totalMatches })}
-                        </p>
-                      )}
+                      <LoadMoreRow search={productSearch} />
                     </>
                   )}
                 </div>
@@ -299,6 +356,19 @@ export default function QuotePage() {
           </div>
         </div>
       </div>
+
+      {pendingLeave && (
+        <ConfirmLeaveModal
+          title={t('¿Salir de la cotización?')}
+          body={t('Tienes productos cotizados. Puedes salir tranquilo: la cotización queda guardada y sigue donde la dejaste cuando vuelvas.')}
+          leaveLabel={t('Salir — la cotización queda guardada')}
+          stayLabel={t('Seguir con la cotización')}
+          discardLabel={t('Descartar la cotización')}
+          onStay={() => setPendingLeave(false)}
+          onLeaveKeep={() => { setPendingLeave(false); navigate('/sales') }}
+          onDiscard={() => { setPendingLeave(false); discardDraft(); setItems([]); navigate('/sales') }}
+        />
+      )}
     </div>
   )
 }

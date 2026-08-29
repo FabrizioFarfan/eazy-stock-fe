@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, UserPlus, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
-import { useProducts } from '../hooks/useProducts'
+import { useProductSearch } from '../hooks/useProducts'
+import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useCreateSale } from '../hooks/useSales'
-import { useCustomers } from '../hooks/useCustomers'
+import { useCustomerSearch } from '../hooks/useCustomers'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
@@ -307,11 +308,8 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
   const [open, setOpen]   = useState(false)
   const debounced = useDebounce(query, 350)
 
-  const { data, isLoading } = useCustomers(
-    debounced ? { search: debounced, size: 50 } : null,
-    { enabled: !!debounced },
-  )
-  const results = data?.content ?? []
+  const customerSearch = useCustomerSearch(debounced)
+  const { items: results, isLoading } = customerSearch
 
   if (value) {
     return (
@@ -360,19 +358,22 @@ function CustomerPicker({ value, onSelect, onRequestCreate }) {
               <span>{t('Sin resultados — registrar')} <strong>{debounced}</strong> {t('como nuevo cliente')}</span>
             </button>
           ) : (
-            results.map((c) => (
-              <button key={c.id} type="button"
-                onClick={() => { onSelect(c); setQuery(''); setOpen(false) }}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                <div className="min-w-0">
-                  <p className="truncate font-semibold text-gray-900">{c.name}</p>
-                  <p className="truncate text-xs text-gray-400">{[c.documentId, c.phone].filter(Boolean).join(' · ')}</p>
-                </div>
-                <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
-                  {formatPrice(c.currentDebt)}
-                </span>
-              </button>
-            ))
+            <>
+              {results.map((c) => (
+                <button key={c.id} type="button"
+                  onClick={() => { onSelect(c); setQuery(''); setOpen(false) }}
+                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-gray-900">{c.name}</p>
+                    <p className="truncate text-xs text-gray-400">{[c.documentId, c.phone].filter(Boolean).join(' · ')}</p>
+                  </div>
+                  <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
+                    {formatPrice(c.currentDebt)}
+                  </span>
+                </button>
+              ))}
+              <LoadMoreRow search={customerSearch} />
+            </>
           )}
         </div>
       )}
@@ -550,14 +551,10 @@ export default function NewSalePage() {
     else navigate('/sales')
   }
 
-  // size alto: con 10 el cajero no veía TODOS los matches ("silicona" = 35 en
-  // Ferrefano) y creía que el producto no existía
-  const { data: productsData, isLoading: loadingProducts } = useProducts(
-    debouncedSearch ? { search: debouncedSearch, size: 100, active: true } : null,
-    { enabled: !!debouncedSearch },
-  )
-  const searchResults = productsData?.content ?? []
-  const totalMatches  = productsData?.totalElements ?? 0
+  // Scroll infinito: el cajero ve TODOS los matches ("silicona" = 35 en
+  // Ferrefano) bajando en la lista, sin tope ni paginación.
+  const productSearch = useProductSearch(debouncedSearch)
+  const { items: searchResults, isLoading: loadingProducts } = productSearch
   const cartIds       = new Set(cart.map((i) => i.product.id))
 
   // La tarjeta puede mandar cantidad y precio ya decididos; el escáner usa
@@ -789,11 +786,7 @@ export default function NewSalePage() {
                 <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart}
                   canApplyDiscount={canApplyDiscount} />
               ))}
-              {totalMatches > searchResults.length && (
-                <p className="py-2 text-center text-xs text-gray-400">
-                  {t('Mostrando {shown} de {total} — escribe más letras para afinar la búsqueda', { shown: searchResults.length, total: totalMatches })}
-                </p>
-              )}
+              <LoadMoreRow search={productSearch} className="border-t-0" />
             </div>
           )}
          </div>

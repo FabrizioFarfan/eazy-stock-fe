@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productsApi } from '../services/endpoints/products'
+import { useInfiniteSearch } from './useInfiniteSearch'
 
 export const PRODUCTS_KEY = 'products'
 
@@ -113,4 +114,15 @@ export function useBulkDeleteProducts() {
       qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
     },
   })
+}
+
+/** Buscador de productos con scroll infinito (todos los dropdowns de la app). */
+export function useProductSearch(search, extra = {}, options = {}) {
+  const enabled = options.enabled ?? !!search
+  return useInfiniteSearch(
+    [PRODUCTS_KEY],
+    productsApi.getAll,
+    { search: search || undefined, active: true, ...extra },
+    { enabled },
+  )
 }

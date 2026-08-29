@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2 } from 'lucide-react'
-import { useProducts } from '../../hooks/useProducts'
+import { useProductSearch } from '../../hooks/useProducts'
+import LoadMoreRow from '../common/LoadMoreRow'
 import { useDebounce } from '../../hooks/useDebounce'
 import { printSupplierOrder } from '../../utils/printSupplierOrder'
 import { useT } from '../../i18n'
@@ -19,25 +20,56 @@ import { useT } from '../../i18n'
  * @param {string}   [p.businessId]
  * @param {Function} p.onClose
  */
+// Borrador del pedido por proveedor: cerrar la previsual (o irse a otra
+// pantalla) no pierde las cantidades ajustadas, lo quitado ni las notas. Se
+// limpia al generar el PDF o al descartarlo.
+const orderDraftKey = (businessId, supplierId) => `eazystock_order_draft_${businessId || 'default'}_${supplierId || 'none'}`
+
+function loadOrderDraft(key) {
+  try {
+    const d = JSON.parse(localStorage.getItem(key))
+    return Array.isArray(d?.rows) ? d : null
+  } catch { return null }
+}
+
 export default function SupplierOrderModal({ supplier, items: initialItems, user, businessId, onClose }) {
   const t = useT()
-  const [rows, setRows]       = useState(() => initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
-  const [removed, setRemoved] = useState([])
-  const [notes, setNotes]     = useState('')
+  const draftKey = orderDraftKey(businessId ?? user?.businessId, supplier?.id)
+  const [draft] = useState(() => loadOrderDraft(draftKey))
+  const [rows, setRows]       = useState(() => draft?.rows ?? initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
+  const [removed, setRemoved] = useState(() => draft?.removed ?? [])
+  const [notes, setNotes]     = useState(() => draft?.notes ?? '')
+  const [restoredBanner, setRestoredBanner] = useState(!!draft)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ rows, removed, notes, savedAt: Date.now() }))
+    } catch { /* best-effort */ }
+  }, [draftKey, rows, removed, notes])
+
+  const clearDraft = () => { try { localStorage.removeItem(draftKey) } catch { /* noop */ } }
+  const discardDraft = () => {
+    clearDraft()
+    setRows(initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
+    setRemoved([])
+    setNotes('')
+    setRestoredBanner(false)
+  }
   const [search, setSearch]   = useState('')
   const [onlySupplier, setOnlySupplier] = useState(true)
   const debounced = useDebounce(search, 300)
 
-  const { data: found, isFetching } = useProducts(
+  const productSearch = useProductSearch(
+    debounced,
     {
-      search: debounced, size: 8, active: true,
       ...(onlySupplier && supplier?.id && { supplierId: supplier.id }),
       ...(businessId && { businessId }),
     },
     { enabled: debounced.trim().length >= 2 },
   )
+  const isFetching = productSearch.isFetching
   const inOrder = useMemo(() => new Set(rows.map((r) => r.productId)), [rows])
-  const candidates = (found?.content ?? []).filter((p) => !inOrder.has(p.id))
+  const candidates = productSearch.items.filter((p) => !inOrder.has(p.id))
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -85,7 +117,7 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
       })),
       notes,
     })
-    if (ok) onClose()
+    if (ok) { clearDraft(); onClose() }
   }
 
   const th = 'px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400'
@@ -114,6 +146,15 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
             <X size={18} />
           </button>
         </div>
+
+        {restoredBanner && (
+          <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs text-amber-800 sm:px-6">
+            <span>{t('Se restauró el pedido que estabas armando para este proveedor.')}</span>
+            <button type="button" onClick={discardDraft} className="flex-shrink-0 font-semibold underline hover:text-amber-900">
+              {t('Empezar de nuevo')}
+            </button>
+          </div>
+        )}
 
         {/* Body = hoja de papel */}
         <div className="flex-1 overflow-y-auto bg-gray-50/70 px-3 py-4 sm:px-6">
@@ -225,7 +266,7 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
                 )}
               </div>
               {debounced.trim().length >= 2 && (
-                <ul className="mt-2 divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-100 bg-white">
+                <ul className="mt-2 max-h-64 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-100 bg-white">
                   {candidates.length === 0 && !isFetching && (
                     <li className="px-3 py-2 text-xs text-gray-400">{t('Sin resultados')}</li>
                   )}
@@ -245,6 +286,9 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
                       </button>
                     </li>
                   ))}
+                  {productSearch.hasMore && (
+                    <li><LoadMoreRow search={productSearch} /></li>
+                  )}
                 </ul>
               )}
             </div>

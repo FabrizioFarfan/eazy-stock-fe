@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, Loader2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
-import { useProducts } from '../../hooks/useProducts'
+import { useProductSearch } from '../../hooks/useProducts'
+import LoadMoreRow from '../../components/common/LoadMoreRow'
 import { useCreateMovement } from '../../hooks/useStock'
 import { useDebounce } from '../../hooks/useDebounce'
 import ScannerInput from '../../components/ScannerInput'
@@ -61,11 +62,10 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
   const gramsHint   = selectedProduct && isKiloUnit(selectedProduct.unit)
     ? gramsEquivalent(qtyWatch) : null
 
-  const { data: productsData, isLoading: loadingProducts } = useProducts(
-    debouncedSearch ? { search: debouncedSearch, size: 8, active: true } : null,
-    { enabled: !!debouncedSearch },
-  )
-  const results = productsData?.content ?? []
+  // Scroll infinito: con `size: 8` William buscaba «PERNO HEX», veía 8 y en
+  // Productos había 32.
+  const productSearch = useProductSearch(debouncedSearch)
+  const { items: results, isLoading: loadingProducts } = productSearch
 
   const selectProduct = (p) => {
     setSelectedProduct(p)
@@ -138,19 +138,22 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
                   placeholder={t('Buscar producto...')}
                 />
                 {showDropdown && debouncedSearch && (
-                  <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+                  <div className="absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
                     {loadingProducts ? (
                       <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
                     ) : results.length === 0 ? (
                       <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                     ) : (
-                      results.map((p) => (
-                        <button key={p.id} type="button" onClick={() => selectProduct(p)}
-                          className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                          <span className="font-semibold text-gray-900">{p.name}</span>
-                          <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
-                        </button>
-                      ))
+                      <>
+                        {results.map((p) => (
+                          <button key={p.id} type="button" onClick={() => selectProduct(p)}
+                            className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                            <span className="font-semibold text-gray-900">{p.name}</span>
+                            <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
+                          </button>
+                        ))}
+                        <LoadMoreRow search={productSearch} />
+                      </>
                     )}
                   </div>
                 )}

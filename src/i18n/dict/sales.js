@@ -3,6 +3,14 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    // ── Borradores y scroll infinito (29-ago) ──
+    'Se restauró tu cotización en curso ({n} producto(s))': 'Your quote in progress was restored ({n} product(s))',
+    '¿Salir de la cotización?': 'Leave the quote?',
+    'Tienes productos cotizados. Puedes salir tranquilo: la cotización queda guardada y sigue donde la dejaste cuando vuelvas.': 'You have quoted products. Feel free to leave: the quote is saved and picks up where you left it when you come back.',
+    'Salir — la cotización queda guardada': 'Leave — the quote stays saved',
+    'Seguir con la cotización': 'Keep working on the quote',
+    'Descartar la cotización': 'Discard the quote',
+    'Descartar': 'Discard',
     // ── Comunes ────────────────────────────────────────────────────────────
     'Volver': 'Back',
     'Ventas': 'Sales',
@@ -320,6 +328,14 @@ export default {
   },
 
   it: {
+    // ── Borradores y scroll infinito (29-ago) ──
+    'Se restauró tu cotización en curso ({n} producto(s))': 'Il preventivo in corso è stato ripristinato ({n} prodotto/i)',
+    '¿Salir de la cotización?': 'Uscire dal preventivo?',
+    'Tienes productos cotizados. Puedes salir tranquilo: la cotización queda guardada y sigue donde la dejaste cuando vuelvas.': 'Hai prodotti nel preventivo. Puoi uscire tranquillo: il preventivo resta salvato e riprende da dove l’hai lasciato quando torni.',
+    'Salir — la cotización queda guardada': 'Esci — il preventivo resta salvato',
+    'Seguir con la cotización': 'Continua con il preventivo',
+    'Descartar la cotización': 'Scarta il preventivo',
+    'Descartar': 'Scarta',
     // ── Comunes ────────────────────────────────────────────────────────────
     'Volver': 'Indietro',
     'Ventas': 'Vendite',

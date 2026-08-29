@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { suppliersApi } from '../services/endpoints/suppliers'
+import { useInfiniteSearch } from './useInfiniteSearch'
 import { PRODUCTS_KEY } from './useProducts'
 
 export const SUPPLIERS_KEY = 'suppliers'
@@ -43,4 +44,14 @@ export function useDeleteSupplier() {
       qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
     },
   })
+}
+
+/** Buscador de proveedores con scroll infinito (vacío = lista todos). */
+export function useSupplierSearch(search, extra = {}, options = {}) {
+  return useInfiniteSearch(
+    [SUPPLIERS_KEY],
+    suppliersApi.getAll,
+    { search: search || undefined, ...extra },
+    { enabled: options.enabled ?? true },
+  )
 }

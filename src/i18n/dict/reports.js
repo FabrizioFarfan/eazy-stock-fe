@@ -3,6 +3,9 @@
 // deuda, recordatorio de WhatsApp y DateRangeQuick. El español es la llave.
 export default {
   en: {
+    // ── Borradores y scroll infinito (29-ago) ──
+    'Se restauró el pedido que estabas armando para este proveedor.': 'The order you were building for this supplier was restored.',
+    'Empezar de nuevo': 'Start over',
     // ── comunes ──
     'Producto': 'Product',
     'Código': 'Code',
@@ -350,6 +353,9 @@ export default {
   },
 
   it: {
+    // ── Borradores y scroll infinito (29-ago) ──
+    'Se restauró el pedido que estabas armando para este proveedor.': 'L’ordine che stavi preparando per questo fornitore è stato ripristinato.',
+    'Empezar de nuevo': 'Ricomincia da capo',
     // ── comunes ──
     'Producto': 'Prodotto',
     'Código': 'Codice',

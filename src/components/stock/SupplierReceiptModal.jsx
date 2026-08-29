@@ -4,8 +4,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
-import { useSuppliers } from '../../hooks/useSuppliers'
-import { useProducts } from '../../hooks/useProducts'
+import { useSupplierSearch } from '../../hooks/useSuppliers'
+import { useProductSearch } from '../../hooks/useProducts'
+import LoadMoreRow from '../common/LoadMoreRow'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { productsApi } from '../../services/endpoints/products'
@@ -74,11 +75,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const [supplierQuery, setSupplierQuery]       = useState('')
   const [showSupplierDrop, setShowSupplierDrop] = useState(false)
   const debouncedSupplier = useDebounce(supplierQuery, 350)
-  const { data: suppliersData } = useSuppliers(
-    { search: debouncedSupplier || undefined, size: 8 },
-    { enabled: !supplier },
-  )
-  const supplierResults = suppliersData?.content ?? []
+  const supplierSearch = useSupplierSearch(debouncedSupplier, {}, { enabled: !supplier })
+  const supplierResults = supplierSearch.items
 
   // ── Paso 2: productos (filtrados por proveedor) ──────────────────────────
   const [productQuery, setProductQuery]           = useState('')
@@ -89,48 +87,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   // le compra a un proveedor nuevo un producto que ya vende, lo encuentra igual
   // y el BE crea la versión de este proveedor al registrar.
   //
-  // Scroll infinito: páginas de 30 acumuladas por número de página DEL SERVER
-  // (productsData.number) — el placeholderData del hook re-entrega la página
-  // anterior mientras carga la nueva, y keyear por productPage la duplicaría.
-  const PRODUCT_PAGE_SIZE = 30
-  const [productPage, setProductPage] = useState(0)
-  const [productPagesMap, setProductPagesMap] = useState({})
-  useEffect(() => { setProductPage(0); setProductPagesMap({}) }, [debouncedProduct])
-  const { data: productsData, isLoading: loadingProducts, isFetching: fetchingProducts } = useProducts(
-    supplier && debouncedProduct
-      ? { search: debouncedProduct, size: PRODUCT_PAGE_SIZE, page: productPage, active: true }
-      : null,
-    { enabled: !!supplier && !!debouncedProduct },
-  )
-  useEffect(() => {
-    if (productsData?.content) {
-      setProductPagesMap((prev) => ({ ...prev, [productsData.number ?? 0]: productsData.content }))
-    }
-  }, [productsData])
-  const productResults = Object.keys(productPagesMap)
-    .sort((a, b) => a - b)
-    .flatMap((k) => productPagesMap[k])
-  const totalProductResults = productsData?.totalElements ?? 0
-  const hasMoreProducts = productResults.length > 0 && productResults.length < totalProductResults
-
-  // Centinela al pie del dropdown: al verse, carga la página siguiente.
-  // Los refs evitan closures viejos dentro del IntersectionObserver.
-  const productSentinelRef = useRef(null)
-  const fetchingProductsRef = useRef(false)
-  useEffect(() => { fetchingProductsRef.current = fetchingProducts }, [fetchingProducts])
-  const lastPageRef = useRef(true)
-  useEffect(() => { lastPageRef.current = productsData?.last ?? true }, [productsData])
-  useEffect(() => {
-    const el = productSentinelRef.current
-    if (!el) return
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !fetchingProductsRef.current && !lastPageRef.current) {
-        setProductPage((p) => p + 1)
-      }
-    })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [showProductDrop, debouncedProduct, productResults.length])
+  // Scroll infinito (useProductSearch): páginas de 30 que se acumulan al bajar
+  // en el dropdown. El mismo buscador que usan venta, cotización y ajustes.
+  const productSearch = useProductSearch(debouncedProduct, {}, { enabled: !!supplier && !!debouncedProduct })
+  const { items: productResults, isLoading: loadingProducts, isFetching: fetchingProducts } = productSearch
   const isForeign = (p) => p?.supplierId && supplier && p.supplierId !== supplier.id
 
   // ── Carrito ──────────────────────────────────────────────────────────────
@@ -420,7 +380,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       {supplierResults.length === 0 ? (
                         <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                       ) : (
-                        supplierResults.map((s) => (
+                        <>{supplierResults.map((s) => (
                           <button key={s.id} type="button"
                             onClick={() => { setSupplier(s); setShowSupplierDrop(false); setSupplierQuery('') }}
                             className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
@@ -434,7 +394,9 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               </span>
                             )}
                           </button>
-                        ))
+                        ))}
+                        <LoadMoreRow search={supplierSearch} />
+                        </>
                       )}
                     </div>
                   )}
@@ -497,16 +459,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                                 </span>
                               </button>
                             ))}
-                            {hasMoreProducts && (
-                              <div
-                                ref={productSentinelRef}
-                                className="border-t border-gray-50 px-4 py-2.5 text-center text-xs text-gray-500"
-                              >
-                                {fetchingProducts
-                                  ? t('Cargando más...')
-                                  : t('{n} resultados más — baja para cargarlos o sigue escribiendo para afinar', { n: totalProductResults - productResults.length })}
-                              </div>
-                            )}
+                            <LoadMoreRow search={productSearch} />
                           </>
                         )}
                       </div>

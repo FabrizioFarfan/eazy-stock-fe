@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { customersApi } from '../services/endpoints/customers'
+import { useInfiniteSearch } from './useInfiniteSearch'
 import { SALES_KEY } from './useSales'
 
 export const CUSTOMERS_KEY = 'customers'
@@ -89,4 +90,14 @@ export function useAdjustCustomerDebt() {
       customersApi.adjustment(customerId, data).then((r) => r.data.data),
     onSuccess: (_, vars) => invalidateCustomerWrites(qc, vars.customerId),
   })
+}
+
+/** Buscador de clientes con scroll infinito. */
+export function useCustomerSearch(search, extra = {}, options = {}) {
+  return useInfiniteSearch(
+    [CUSTOMERS_KEY],
+    customersApi.getAll,
+    { search: search || undefined, ...extra },
+    { enabled: options.enabled ?? !!search },
+  )
 }

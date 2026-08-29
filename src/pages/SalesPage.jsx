@@ -7,7 +7,8 @@ import ColumnFilter from '../components/common/ColumnFilter'
 import { useAuth } from '../context/AuthContext'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
-import { useProducts } from '../hooks/useProducts'
+import { useProductSearch } from '../hooks/useProducts'
+import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useEmployees } from '../hooks/useEmployees'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
@@ -61,11 +62,8 @@ export default function SalesPage() {
   const debouncedProd = useDebounce(productSearch, 350)
   const scanLockRef   = useRef(false)
 
-  const { data: prodData, isLoading: loadingProds } = useProducts(
-    debouncedProd ? { search: debouncedProd, size: 8, active: true } : null,
-    { enabled: !!debouncedProd },
-  )
-  const prodResults = prodData?.content ?? []
+  const prodSearch = useProductSearch(debouncedProd)
+  const { items: prodResults, isLoading: loadingProds } = prodSearch
 
   const addProduct = (p) => {
     if (!selectedProducts.find((x) => x.id === p.id)) {
@@ -252,20 +250,23 @@ export default function SalesPage() {
               placeholder={t('Buscar producto o escanear código...')}
             />
             {showProdDrop && debouncedProd && (
-              <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl">
+              <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
                 {loadingProds ? (
                   <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
                 ) : prodResults.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
                 ) : (
-                  prodResults.map((p) => (
-                    <button key={p.id} type="button"
-                      onClick={() => addProduct(p)}
-                      className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                      <span className="font-semibold text-gray-900">{p.name}</span>
-                      <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
-                    </button>
-                  ))
+                  <>
+                    {prodResults.map((p) => (
+                      <button key={p.id} type="button"
+                        onClick={() => addProduct(p)}
+                        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
+                        <span className="font-semibold text-gray-900">{p.name}</span>
+                        <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
+                      </button>
+                    ))}
+                    <LoadMoreRow search={prodSearch} />
+                  </>
                 )}
               </div>
             )}
