@@ -51,7 +51,7 @@ const PERMISSION_META = [
   { key: 'canViewCashClosing',     label: 'Ver cierre de caja (sin ganancias ni costos)' },
   { key: 'canManageEmployees',     label: 'Gestionar empleados' },
   { key: 'canManageSuppliers',     label: 'Gestionar proveedores y marcas' },
-  { key: 'canViewAuditLog',        label: 'Ver log de auditoría' },
+  // { key: 'canViewAuditLog',     label: 'Ver log de auditoría' }, — oculto hasta que exista la página de auditoría (tarea 251)
   { key: 'canSellOnCredit',        label: 'Vender al fiado' },
   { key: 'canManageCustomers',     label: 'Gestionar clientes y cuentas por cobrar' },
 ]
@@ -427,7 +427,7 @@ export default function EmployeesPage() {
             <p>{t('Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
-              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
+              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>

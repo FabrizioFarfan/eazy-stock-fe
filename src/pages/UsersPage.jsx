@@ -70,7 +70,7 @@ const PERMISSION_META = [
   { key: 'canViewCashClosing',     label: 'Ver cierre de caja (sin ganancias ni costos)' },
   { key: 'canManageEmployees',     label: 'Gestionar empleados' },
   { key: 'canManageSuppliers',     label: 'Gestionar proveedores y marcas' },
-  { key: 'canViewAuditLog',        label: 'Ver log de auditoría' },
+  // { key: 'canViewAuditLog',     label: 'Ver log de auditoría' }, — oculto hasta que exista la página de auditoría (tarea 251)
   { key: 'canSellOnCredit',        label: 'Vender al fiado' },
   { key: 'canManageCustomers',     label: 'Gestionar clientes y cuentas por cobrar' },
 ]
