@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/formatMoney'
 import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Package, TrendingUp, ArrowUpDown,
@@ -26,10 +27,7 @@ function todayLabel() {
 }
 
 function formatCurrency(amount) {
-  if (amount == null) return '—'
-  return new Intl.NumberFormat('es-PE', {
-    style: 'currency', currency: 'PEN', minimumFractionDigits: 2,
-  }).format(amount)
+  return formatPrice(amount) // moneda del negocio
 }
 
 function formatDate(str) {

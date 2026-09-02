@@ -1,3 +1,4 @@
+import { formatPrice, currencySymbol } from '../utils/formatMoney'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -35,7 +36,7 @@ function firstOfMonth() {
 
 function formatCurrency(v) {
   if (v == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+  return formatPrice(v) // moneda del negocio
 }
 
 function escapeHtml(s) {
@@ -320,7 +321,7 @@ function TabByProduct({ businessId }) {
               <h4 className="mb-4 text-sm font-semibold text-gray-700">{t('Ingresos por producto')}</h4>
               <ResponsiveContainer width="100%" height={Math.max(200, data.length * 36)}>
                 <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `S/ ${v}`} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${currencySymbol()} ${v}`} />
                   <YAxis type="category" dataKey="productName" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => [formatCurrency(v), t('Ingresos')]} />
                   <Bar dataKey="totalRevenue" fill="#2563EB" radius={[0, 4, 4, 0]} />
@@ -382,7 +383,7 @@ function TabByProvider({ businessId }) {
               <h4 className="mb-4 text-sm font-semibold text-gray-700">{t('Ingresos por proveedor')}</h4>
               <ResponsiveContainer width="100%" height={Math.max(200, data.length * 36)}>
                 <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `S/ ${v}`} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${currencySymbol()} ${v}`} />
                   <YAxis type="category" dataKey="providerName" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(v) => [formatCurrency(v), t('Ingresos')]} />
                   <Bar dataKey="totalRevenue" fill="#2563EB" radius={[0, 4, 4, 0]} />

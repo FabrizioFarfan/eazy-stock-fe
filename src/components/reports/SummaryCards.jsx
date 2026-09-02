@@ -1,9 +1,10 @@
+import { formatPrice } from '../../utils/formatMoney'
 import { ShoppingCart, TrendingUp, Package, Receipt } from 'lucide-react'
 import { useT } from '../../i18n'
 
 function formatCurrency(v) {
   if (v == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+  return formatPrice(v) // moneda del negocio
 }
 
 function Card({ icon: Icon, label, value, colorCls }) {

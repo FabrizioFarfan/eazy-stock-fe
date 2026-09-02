@@ -1,3 +1,4 @@
+import { formatPrice, currencySymbol } from '../../utils/formatMoney'
 import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -5,7 +6,7 @@ import {
 import { useT } from '../../i18n'
 
 function formatCurrency(v) {
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+  return formatPrice(v) // moneda del negocio
 }
 
 function formatDay(dateStr) {
@@ -56,7 +57,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
           <BarChart data={data} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `S/ ${v}`} tick={{ fontSize: 11 }} />
+            <YAxis tickFormatter={(v) => `${currencySymbol()} ${v}`} tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} name={t('Ingresos')} />
           </BarChart>
@@ -64,7 +65,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
           <LineChart data={data} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `S/ ${v}`} tick={{ fontSize: 11 }} />
+            <YAxis tickFormatter={(v) => `${currencySymbol()} ${v}`} tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"

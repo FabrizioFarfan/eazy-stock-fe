@@ -1,9 +1,10 @@
+import { formatPrice } from '../../utils/formatMoney'
 import { useState } from 'react'
 import SaleDetailModal from './SaleDetailModal'
 import { useT, dateLocale } from '../../i18n'
 
 function formatCurrency(v) {
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+  return formatPrice(v) // moneda del negocio
 }
 
 function formatRelative(dateStr, t) {

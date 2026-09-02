@@ -1,3 +1,4 @@
+import { formatPhoneDisplay } from '../utils/phone'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -205,7 +206,7 @@ export default function CustomerDetailPage() {
                 <span className="flex items-center gap-1.5"><FileText size={13} />{customer.documentId}</span>
               )}
               {customer.phone && (
-                <span className="flex items-center gap-1.5"><Phone size={13} />{customer.phone}</span>
+                <span className="flex items-center gap-1.5"><Phone size={13} />{formatPhoneDisplay(customer.phone)}</span>
               )}
               {customer.email && (
                 <span className="flex items-center gap-1.5"><Mail size={13} />{customer.email}</span>

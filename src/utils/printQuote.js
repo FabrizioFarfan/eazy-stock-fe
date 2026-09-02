@@ -3,6 +3,8 @@
 // enviarlo por WhatsApp o correo). No usamos librería de PDF: armamos un HTML
 // limpio con su propio CSS, así no tocamos los estilos de la app.
 
+import { formatPhoneDisplay } from './phone'
+import { formatPrice } from './formatMoney'
 import { t, dateLocale, getLang } from '../i18n'
 
 function escapeHtml(s) {
@@ -13,7 +15,7 @@ function escapeHtml(s) {
 
 function money(v) {
   const n = Number(v) || 0
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(n)
+  return formatPrice(n) // moneda del negocio
 }
 
 /**
@@ -61,7 +63,7 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
     ? `<div class="party">
          <p class="label">${escapeHtml(t('Cliente'))}</p>
          ${customer.name ? `<p class="value">${escapeHtml(customer.name)}</p>` : ''}
-         ${customer.phone ? `<p class="sub">${escapeHtml(t('Tel'))}: ${escapeHtml(customer.phone)}</p>` : ''}
+         ${customer.phone ? `<p class="sub">${escapeHtml(t('Tel'))}: ${escapeHtml(formatPhoneDisplay(customer.phone))}</p>` : ''}
        </div>`
     : ''
 

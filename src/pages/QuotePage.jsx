@@ -1,3 +1,4 @@
+import { formatPhoneDisplay } from '../utils/phone'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2 } from 'lucide-react'
@@ -473,7 +474,7 @@ export default function QuotePage() {
               <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Productos')}</dt><dd className="font-semibold text-gray-900">{items.length}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Cliente')}</dt><dd className="truncate font-semibold text-gray-900">{cust.name.trim() || <span className="font-normal text-gray-400">{t('Sin nombre')}</span>}</dd></div>
               {(cust.phone.trim() || cust.email.trim()) && (
-                <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Contacto')}</dt><dd className="truncate text-gray-700">{[cust.phone.trim(), cust.email.trim()].filter(Boolean).join(' · ')}</dd></div>
+                <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Contacto')}</dt><dd className="truncate text-gray-700">{[formatPhoneDisplay(cust.phone.trim()), cust.email.trim()].filter(Boolean).join(' · ')}</dd></div>
               )}
               <div className="flex justify-between gap-3"><dt className="text-gray-500">{t('Validez')}</dt><dd className="text-gray-700">{Number(validityDays) > 0 ? t('{n} día(s)', { n: Number(validityDays) }) : t('Sin vencimiento')}</dd></div>
               <div className="flex justify-between gap-3 border-t border-gray-100 pt-2"><dt className="font-semibold text-gray-700">{t('Total')}</dt><dd className="text-xl font-extrabold text-gray-900">{formatPrice(total)}</dd></div>

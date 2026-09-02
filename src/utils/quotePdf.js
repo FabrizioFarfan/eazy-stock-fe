@@ -3,6 +3,7 @@
 // WhatsApp. Mismo contenido y mismo orden que printQuote.js: el impreso y el
 // descargado se ven iguales.
 
+import { formatPhoneDisplay } from './phone'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatPrice } from './formatMoney'
@@ -73,7 +74,7 @@ export function buildQuotePdf(quote) {
       y += 5.5
     }
     doc.setFont(undefined, 'normal'); doc.setFontSize(9.5); doc.setTextColor(...GRAY)
-    if (customer.phone) { doc.text(`${t('Tel')}: ${customer.phone}`, mx, y); y += 5 }
+    if (customer.phone) { doc.text(`${t('Tel')}: ${formatPhoneDisplay(customer.phone)}`, mx, y); y += 5 }
     if (customer.email) { doc.text(`${t('Correo')}: ${customer.email}`, mx, y); y += 5 }
     y += 3
   }

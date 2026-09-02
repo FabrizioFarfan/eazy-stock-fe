@@ -1,3 +1,5 @@
+import { formatPhoneDisplay } from '../../utils/phone'
+import PhoneInput from '../inputs/PhoneInput'
 import { useEffect, useState } from 'react'
 import { Users, UserPlus, PencilLine } from 'lucide-react'
 import CustomerPicker from '../customers/CustomerPicker'
@@ -53,7 +55,7 @@ export default function QuoteCustomerSection({ value, onChange }) {
               onSelect={pick}
               onRequestCreate={(name) => setNewName(name ?? '')}
               showDebt={false}
-              subtitle={(c) => [c.phone, c.email].filter(Boolean).join(' · ')}
+              subtitle={(c) => [formatPhoneDisplay(c.phone), c.email].filter(Boolean).join(' · ')}
             />
             {value.customer && (
               <p className="text-[11px] text-gray-400">
@@ -65,8 +67,8 @@ export default function QuoteCustomerSection({ value, onChange }) {
           <>
             <input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })}
               placeholder={t('Nombre del cliente')} className={inputCls} />
-            <input value={value.phone} onChange={(e) => onChange({ ...value, phone: e.target.value })}
-              placeholder={t('Teléfono (para WhatsApp)')} className={inputCls} inputMode="tel" />
+            <PhoneInput value={value.phone} onChange={(phone) => onChange({ ...value, phone })}
+              placeholder={t('Teléfono (para WhatsApp)')} />
             <input value={value.email} onChange={(e) => onChange({ ...value, email: e.target.value })}
               placeholder={t('Correo (para enviar por mail)')} className={inputCls} inputMode="email" type="email" />
             <button type="button" onClick={() => setNewName(value.name.trim())}

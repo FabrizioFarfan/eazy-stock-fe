@@ -1,4 +1,4 @@
-import { User, Building2, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical } from 'lucide-react'
+import { User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -12,6 +12,7 @@ import { businessesApi } from '../services/endpoints/businesses'
 import { useInstallApp, promptInstall } from '../utils/installApp'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
+import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -257,6 +258,7 @@ const COUNTRY_NAME = Object.fromEntries(COUNTRIES)
 const makeBusinessSchema = (t) => z.object({
   name:        z.string().min(1, t('Requerido')),
   countryCode: z.string().min(2, t('Requerido')).max(3),
+  currency:    z.string().length(3, t('Requerido')),
   taxIdType:   z.string().min(1, t('Requerido')),
   taxId:       z.string().min(1, t('Requerido')),
 })
@@ -271,15 +273,23 @@ function BusinessSection() {
 
   const isOwner = user?.role === 'OWNER'
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(businessSchema),
     values: {
       name:        business?.name ?? '',
       countryCode: business?.countryCode ?? 'PE',
+      currency:    business?.currency ?? 'PEN',
       taxIdType:   business?.taxIdType ?? 'RUC',
       taxId:       business?.taxId ?? '',
     },
   })
+
+  const watchedCountry = watch('countryCode')
+  useEffect(() => {
+    // al cambiar el país mientras se edita, proponer su moneda (el dueño puede corregirla)
+    const suggested = CURRENCY_BY_COUNTRY[watchedCountry]
+    if (editing && suggested && suggested !== business?.currency) setValue('currency', suggested)
+  }, [watchedCountry]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!user?.businessId) return
@@ -335,6 +345,16 @@ function BusinessSection() {
             </select>
             {errors.countryCode && <p className="mt-1 text-xs text-red-500">{errors.countryCode.message}</p>}
           </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Moneda')}</label>
+            <select {...register('currency')} className={inputCls}>
+              {CURRENCY_OPTIONS.map((code) => (
+                <option key={code} value={code}>{code} · {CURRENCIES[code].symbol} — {t(CURRENCIES[code].name)}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-400">{t('Solo cambia el símbolo con el que se muestran los importes; no convierte montos.')}</p>
+            {errors.currency && <p className="mt-1 text-xs text-red-500">{errors.currency.message}</p>}
+          </div>
           <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Tipo de doc.')}</label>
@@ -362,6 +382,7 @@ function BusinessSection() {
         <>
           <InfoRow icon={Building2} label={t('Nombre')} value={business.name} />
           <InfoRow icon={Globe}     label={t('País')}   value={countryLabel} />
+          <InfoRow icon={Coins}     label={t('Moneda')} value={`${business.currency ?? 'PEN'} · ${CURRENCIES[business.currency ?? 'PEN']?.symbol ?? ''}`} />
           <InfoRow icon={FileDigit} label={business.taxIdType || t('Documento')} value={business.taxId} />
         </>
       ) : (

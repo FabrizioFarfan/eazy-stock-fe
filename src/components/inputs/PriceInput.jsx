@@ -1,13 +1,8 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 import { usePriceInputMode } from '../../hooks/usePriceInputMode'
 import { useT } from '../../i18n'
+import { currencySymbol, getCurrentCurrency } from '../../utils/formatMoney'
 
-const CURRENCY_SYMBOL = {
-  PEN: 'S/',
-  USD: '$',
-  EUR: '€',
-  PLN: 'zł',
-}
 
 const ONLY_DIGITS = /\D/g
 
@@ -31,7 +26,7 @@ const PriceInput = forwardRef(function PriceInput(
   {
     value,
     onChange,
-    currency = 'PEN',
+    currency,
     disabled = false,
     maxDecimals = 6,
     label,
@@ -46,7 +41,7 @@ const PriceInput = forwardRef(function PriceInput(
 ) {
   const [mode] = usePriceInputMode()
 
-  const symbol = CURRENCY_SYMBOL[currency] ?? currency
+  const symbol = currencySymbol(currency ?? getCurrentCurrency())
 
   const borderCls = error
     ? 'border-red-300 focus-within:border-red-500 focus-within:ring-red-500/20'

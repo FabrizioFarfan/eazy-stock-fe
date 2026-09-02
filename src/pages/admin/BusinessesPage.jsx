@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../../utils/formatMoney'
+import { useMemo, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -26,6 +27,7 @@ const PAGE_SIZE = 20
 const makeSchema = (t) => z.object({
   name:        z.string().min(2, t('Mínimo 2 caracteres')),
   countryCode: z.string().min(2).max(3, t('Código de 2-3 letras')),
+  currency:    z.string().length(3, t('Requerido')),
   taxIdType:   z.string().min(1, t('Requerido')),
   taxId:       z.string().min(1, t('Requerido')),
 })
@@ -72,6 +74,8 @@ function BusinessFormModal({ business, onClose }) {
     register,
     handleSubmit,
     setError,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -79,11 +83,19 @@ function BusinessFormModal({ business, onClose }) {
       ? {
           name:        business.name,
           countryCode: business.countryCode,
+          currency:    business.currency ?? 'PEN',
           taxIdType:   business.taxIdType,
           taxId:       business.taxId,
         }
-      : { countryCode: 'PE', taxIdType: 'RUC' },
+      : { countryCode: 'PE', currency: 'PEN', taxIdType: 'RUC' },
   })
+
+  const watchedCountry = watch('countryCode')
+  useEffect(() => {
+    // al elegir país, proponer su moneda (se puede corregir a mano)
+    const suggested = CURRENCY_BY_COUNTRY[watchedCountry]
+    if (suggested && (!isEdit || watchedCountry !== business?.countryCode)) setValue('currency', suggested)
+  }, [watchedCountry]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (values) => {
     try {
@@ -95,7 +107,7 @@ function BusinessFormModal({ business, onClose }) {
       onClose()
     } catch (err) {
       const field = getErrorField(err)
-      if (field && ['name', 'taxId', 'taxIdType', 'countryCode'].includes(field)) {
+      if (field && ['name', 'taxId', 'taxIdType', 'countryCode', 'currency'].includes(field)) {
         setError(field, { type: 'server', message: getErrorMessage(err) })
       }
     }
@@ -164,6 +176,21 @@ function BusinessFormModal({ business, onClose }) {
                   <p className="mt-1 text-xs text-red-500">{errors.taxIdType.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* Currency — solo el símbolo/formato, sin conversión */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                {t('Moneda')} <span className="text-red-500">*</span>
+              </label>
+              <select {...register('currency')} className={inputCls}>
+                {CURRENCY_OPTIONS.map((code) => (
+                  <option key={code} value={code}>{code} · {CURRENCIES[code].symbol} — {t(CURRENCIES[code].name)}</option>
+                ))}
+              </select>
+              {errors.currency && (
+                <p className="mt-1 text-xs text-red-500">{errors.currency.message}</p>
+              )}
             </div>
 
             {/* Tax ID */}

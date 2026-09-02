@@ -6,19 +6,106 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Eazy Stock — Gestión de inventario simple e intuitiva para tu negocio" />
+
+    <!-- SEO (2-sep-2026): la landing se prerenderiza en el build (scripts/prerender.mjs),
+         así Google lee el contenido real y no un <div id="root"> vacío. -->
+    <title>Eazy Stock — Sistema de inventario, ventas y fiado para ferreterías, bodegas y minimarkets</title>
+    <meta name="description" content="Eazy Stock (Eazy Stock, EazyStock) es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo, controlas el stock y al cierre sabes cuánto hay en caja. Gratis para empezar, desde el celular o la PC." />
+    <meta name="keywords" content="Eazy Stock, EazyStock, Eazy Stock Perú, sistema de inventario, control de stock, punto de venta, POS, ventas, fiado, cuentas por cobrar, ferretería, bodega, minimarket, farmacia, software de inventario gratis, inventario para negocios, Yape, Plin, cierre de caja" />
+    <link rel="canonical" href="https://eazy-stock.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Eazy Life Company" />
+    <meta name="application-name" content="Eazy Stock" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Eazy Stock" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="it_IT" />
+    <meta property="og:url" content="https://eazy-stock.com/" />
+    <meta property="og:title" content="Eazy Stock — Tu negocio, ordenado. Vende, cobra y controla el stock sin cuaderno." />
+    <meta property="og:description" content="Inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Se aprende en una tarde. Gratis para empezar." />
+    <meta property="og:image" content="https://eazy-stock.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Eazy Stock — inventario, ventas y fiado para tu negocio" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Eazy Stock — Tu negocio, ordenado." />
+    <meta name="twitter:description" content="Inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Se aprende en una tarde." />
+    <meta name="twitter:image" content="https://eazy-stock.com/og.png" />
+
     <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#18181B" media="(prefers-color-scheme: dark)" />
-    <title>Eazy Stock</title>
-    <!-- Anti-FOUC: apply dark class before first paint -->
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://eazy-stock.com/#app",
+          "name": "Eazy Stock",
+          "alternateName": ["EazyStock", "Eazy Stock Perú"],
+          "url": "https://eazy-stock.com/",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "Inventory management, point of sale",
+          "operatingSystem": "Web, Android, iOS (PWA)",
+          "inLanguage": ["es", "en", "it"],
+          "description": "Sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets: escaneo de productos, punto de venta con billetera digital o efectivo, cuentas por cobrar, cierre de caja, reportes e importación desde Excel.",
+          "image": "https://eazy-stock.com/og.png",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "PEN", "description": "Gratis para empezar" },
+          "featureList": [
+            "Control de inventario y stock",
+            "Punto de venta con escaneo por código de barras o QR",
+            "Cobro con billetera digital o efectivo",
+            "Fiado y cuentas por cobrar",
+            "Cierre de caja por medio de pago",
+            "Pedidos al proveedor en PDF",
+            "Cotizaciones en PDF por WhatsApp",
+            "Importación de productos desde Excel",
+            "Reportes de ventas y vencimientos"
+          ],
+          "author": { "@id": "https://eazylifecompany.com/#org" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://eazylifecompany.com/#org",
+          "name": "Eazy Life Company",
+          "url": "https://eazylifecompany.com/",
+          "logo": "https://eazy-stock.com/pwa-512.png",
+          "email": "kontakt.eazylife@gmail.com"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://eazy-stock.com/#website",
+          "url": "https://eazy-stock.com/",
+          "name": "Eazy Stock",
+          "alternateName": "EazyStock",
+          "inLanguage": "es",
+          "publisher": { "@id": "https://eazylifecompany.com/#org" }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Anti-FOUC: apply dark class before first paint. Y la landing prerenderizada
+         se esconde de entrada si hay sesión o si la URL no es la portada: React la
+         reemplaza al montar y el usuario logueado va directo a su panel. -->
     <script>
       (function () {
         var t = localStorage.getItem('eazystock_theme')
         if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark')
         }
+        try {
+          if (localStorage.getItem('eazystock_token') || location.pathname !== '/') {
+            document.documentElement.setAttribute('data-session', '1')
+          }
+        } catch (e) { /* storage bloqueado */ }
       })()
     </script>
+    <style>html[data-session] [data-prerender] { display: none !important; }</style>
   </head>
   <body>
     <div id="root"></div>

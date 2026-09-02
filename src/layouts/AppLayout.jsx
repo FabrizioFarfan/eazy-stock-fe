@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/formatMoney'
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -10,7 +11,7 @@ import { useBusinessSocket } from '../hooks/useBusinessSocket'
 import { useT } from '../i18n'
 
 function formatCurrency(v) {
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v ?? 0)
+  return formatPrice(v ?? 0) // moneda del negocio
 }
 
 export default function AppLayout({ children }) {

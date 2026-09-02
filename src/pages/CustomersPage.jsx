@@ -1,3 +1,4 @@
+import { formatPhoneDisplay } from '../utils/phone'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
@@ -170,7 +171,7 @@ export default function CustomersPage() {
                   >
                     <td className="px-5 py-3.5 font-semibold text-gray-900">{c.name}</td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{c.documentId || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{c.phone || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-600">{formatPhoneDisplay(c.phone) || '—'}</td>
                     <td className="px-5 py-3.5 text-right font-bold text-gray-900">{formatPrice(c.currentDebt)}</td>
                     <td className="px-5 py-3.5 text-center"><DebtBadge debt={c.currentDebt} limit={c.creditLimit} /></td>
                   </tr>

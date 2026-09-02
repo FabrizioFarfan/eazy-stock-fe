@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+# Rutas de la app (requieren sesión): no aportan nada al índice
+Disallow: /dashboard
+Disallow: /products
+Disallow: /sales
+Disallow: /stock
+Disallow: /reports
+Disallow: /customers
+Disallow: /suppliers
+Disallow: /cotizaciones
+Disallow: /notificaciones
+Disallow: /empleados
+Disallow: /settings
+Disallow: /boss
+Disallow: /admin
+Disallow: /brands
+Disallow: /categories
+
+Sitemap: https://eazy-stock.com/sitemap.xml

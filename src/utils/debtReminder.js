@@ -1,14 +1,13 @@
+import { whatsappDigits } from './phone'
 import { formatPrice } from './formatMoney'
 import { t } from '../i18n'
 
 /**
- * Normaliza un teléfono peruano para wa.me: solo dígitos y con código de país.
- * "987 654 321" → "51987654321". Si ya trae 51 u otro código, se respeta.
+ * Teléfono → dígitos con prefijo para wa.me ("51987654321"). Lo guardado sin
+ * "+" (los 9 dígitos de siempre) toma el prefijo del país del negocio.
  */
 export function waPhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '')
-  if (!digits) return null
-  return digits.length === 9 ? `51${digits}` : digits
+  return whatsappDigits(phone) || null
 }
 
 /** Recordatorio cordial de deuda — mismo tono que la carta del PDF. */

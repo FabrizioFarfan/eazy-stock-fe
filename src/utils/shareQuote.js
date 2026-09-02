@@ -11,16 +11,12 @@
 // que la pantalla avise lo que corresponde.
 
 import { formatPrice } from './formatMoney'
+import { whatsappDigits } from './phone'
 import { quotePdfBlob, quotePdfFileName, downloadQuotePdf, quoteNumberLabel } from './quotePdf'
 import { t } from '../i18n'
 
-/** Teléfono → dígitos para wa.me. Los 9 dígitos de Perú salen sin código de país: se antepone 51. */
-export function whatsappDigits(phone) {
-  const digits = String(phone ?? '').replace(/\D/g, '')
-  if (!digits) return ''
-  if (digits.length === 9) return `51${digits}`
-  return digits
-}
+/** Teléfono → dígitos para wa.me, con el prefijo del país (lo legado sin "+" usa el del negocio). */
+export { whatsappDigits }
 
 export function quoteMessage(quote) {
   const total = (quote.items ?? []).reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0)

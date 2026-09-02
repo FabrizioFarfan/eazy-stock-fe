@@ -8,15 +8,17 @@ import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers'
 import { useAuth } from '../../context/AuthContext'
 import { adminBizParam } from '../../utils/adminBiz'
 import PriceInput from '../inputs/PriceInput'
+import PhoneInput from '../inputs/PhoneInput'
+import { isValidPhone } from '../../utils/phone'
 import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 import { useT } from '../../i18n'
 
-// Teléfono opcional: 9 dígitos (formato Lima) si se ingresa.
+// Teléfono opcional, en E.164 con prefijo de país (PhoneInput lo arma).
 const makeSchema = (t) => z.object({
   name:        z.string().min(2, t('Mínimo 2 caracteres')),
   documentId:  z.string().max(20, t('Máximo 20 caracteres')).optional().or(z.literal('')),
-  phone:       z.string().optional().refine((v) => !v || /^\d{9}$/.test(v.trim()), t('Debe ser 9 dígitos')),
+  phone:       z.string().optional().refine((v) => isValidPhone(v), t('Teléfono inválido')),
   email:       z.string().email(t('Email inválido')).optional().or(z.literal('')),
   address:     z.string().max(500).optional().or(z.literal('')),
   // Obligatorio: 0 es válido (significa "no se le fía"), pero no puede quedar vacío.
@@ -132,7 +134,11 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
                 <input {...register('documentId')} placeholder="12345678" className={inputCls} />
               </Field>
               <Field label={t('Teléfono')} error={errors.phone?.message}>
-                <input {...register('phone')} placeholder="987654321" className={inputCls} />
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => <PhoneInput value={field.value ?? ''} onChange={field.onChange} />}
+                />
               </Field>
             </div>
 

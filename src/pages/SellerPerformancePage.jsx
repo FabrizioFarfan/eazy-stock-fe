@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/formatMoney'
 import { useMemo, useState } from 'react'
 import {
   Trophy, TrendingUp, ShoppingCart, Package,
@@ -19,7 +20,7 @@ function firstOfMonth() {
 
 function formatCurrency(v) {
   if (v == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v)
+  return formatPrice(v) // moneda del negocio
 }
 
 function formatNumber(v) {

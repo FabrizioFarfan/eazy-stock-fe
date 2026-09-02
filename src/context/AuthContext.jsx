@@ -1,3 +1,5 @@
+import { setCurrentCurrency } from "../utils/formatMoney";
+import { setDefaultCountry } from "../utils/phone";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -17,8 +19,15 @@ const ALWAYS_ALLOWED = ["OWNER", "SUPER_ADMIN"];
 
 // BOSS es superset de SUPER_ADMIN: normalizamos el role para que toda la app
 // existente lo trate como admin, y marcamos isBoss para las vistas exclusivas.
-const normalizeUser = (u) =>
-  u && u.role === "BOSS" ? { ...u, role: "SUPER_ADMIN", isBoss: true } : u;
+const normalizeUser = (u) => {
+  // La moneda y el país del negocio viven en /auth/me: se fijan como valores
+  // globales para que formatPrice() y los teléfonos no tengan que pasarlos.
+  if (u) {
+    setCurrentCurrency(u.currency);
+    setDefaultCountry(u.countryCode);
+  }
+  return u && u.role === "BOSS" ? { ...u, role: "SUPER_ADMIN", isBoss: true } : u;
+};
 
 // Flags de tutoriales que antes vivían solo en localStorage. Se migran al BE
 // una vez para que los usuarios existentes no vuelvan a ver todo tras el cambio.

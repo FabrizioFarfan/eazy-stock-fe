@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Plus, Search, Truck, Edit, Trash2, Loader2, X, Phone, User, FileText } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/useSuppliers'
@@ -11,12 +11,14 @@ import PageTitle from '../components/common/PageTitle'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
+import PhoneInput from '../components/inputs/PhoneInput'
+import { isValidPhone, formatPhoneDisplay } from '../utils/phone'
 
 const makeSchema = (t) => z.object({
   name:    z.string().min(2, t('Mínimo 2 caracteres')),
   ruc:     z.string().optional(),
   contact: z.string().optional(),
-  phone:   z.string().optional(),
+  phone:   z.string().optional().refine((v) => isValidPhone(v), t('Teléfono inválido')),
   notes:   z.string().optional(),
 })
 
@@ -44,7 +46,7 @@ function SupplierModal({ supplier, onClose }) {
   const update   = useUpdateSupplier()
   const mutation = isEdit ? update : create
 
-  const { register, handleSubmit, setError, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, setError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit
       ? { name: supplier.name, ruc: supplier.ruc ?? '', contact: supplier.contact ?? '', phone: supplier.phone ?? '', notes: supplier.notes ?? '' }
@@ -86,7 +88,11 @@ function SupplierModal({ supplier, onClose }) {
                 <input {...register('ruc')} placeholder="20123456789" className={inputCls} />
               </Field>
               <Field label={t('Teléfono')} error={errors.phone?.message}>
-                <input {...register('phone')} placeholder="999 000 000" className={inputCls} />
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => <PhoneInput value={field.value ?? ''} onChange={field.onChange} placeholder="999 000 000" />}
+                />
               </Field>
             </div>
             <Field label={t('Contacto')} error={errors.contact?.message}>
@@ -167,7 +173,7 @@ function SupplierCard({ supplier, onEdit, onDelete }) {
         {supplier.phone && (
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <Phone size={12} className="flex-shrink-0 text-gray-400" />
-            {supplier.phone}
+            {formatPhoneDisplay(supplier.phone)}
           </div>
         )}
         {supplier.notes && (

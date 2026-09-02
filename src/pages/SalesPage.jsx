@@ -1,3 +1,4 @@
+import { formatPrice } from '../utils/formatMoney'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText } from 'lucide-react'
@@ -27,7 +28,7 @@ function formatDate(dateStr) {
 
 function formatCurrency(value) {
   if (value == null) return '—'
-  return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value)
+  return formatPrice(value) // moneda del negocio
 }
 
 function SkeletonRow() {

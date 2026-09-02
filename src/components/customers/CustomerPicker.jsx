@@ -1,3 +1,4 @@
+import { formatPhoneDisplay } from '../../utils/phone'
 import { useState } from 'react'
 import { X, UserPlus } from 'lucide-react'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -26,7 +27,7 @@ export default function CustomerPicker({ value, onSelect, onRequestCreate, showD
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-blue-900">{value.name}</p>
           <p className="truncate text-xs text-blue-700">
-            {(subtitle ? subtitle(value) : [value.documentId, value.phone].filter(Boolean).join(' · ')) || t('Cliente seleccionado')}
+            {(subtitle ? subtitle(value) : [value.documentId, formatPhoneDisplay(value.phone)].filter(Boolean).join(' · ')) || t('Cliente seleccionado')}
           </p>
         </div>
         <button type="button"
@@ -74,7 +75,7 @@ export default function CustomerPicker({ value, onSelect, onRequestCreate, showD
                   className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-gray-900">{c.name}</p>
-                    <p className="truncate text-xs text-gray-400">{[c.documentId, c.phone, c.email].filter(Boolean).join(' · ')}</p>
+                    <p className="truncate text-xs text-gray-400">{[c.documentId, formatPhoneDisplay(c.phone), c.email].filter(Boolean).join(' · ')}</p>
                   </div>
                   {showDebt && (
                     <span className="ml-2 flex-shrink-0 text-xs font-mono text-gray-500">
