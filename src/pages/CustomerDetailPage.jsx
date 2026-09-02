@@ -1,6 +1,6 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
@@ -276,6 +276,11 @@ function StatCard({ label, value, tone = 'default' }) {
 export default function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  // «Volver» regresa a donde se abrió la ficha (Análisis de clientes, Inicio…);
+  // sin state, al listado de clientes como siempre.
+  const location = useLocation()
+  const backTo    = location.state?.from ?? '/customers'
+  const backLabel = location.state?.fromLabel
   const t = useT()
   const { can, user } = useAuth()
   const canManage = can('canManageCustomers')
@@ -313,7 +318,7 @@ export default function CustomerDetailPage() {
   if (isError || !customer) {
     return (
       <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-600">
-        {t('No pudimos cargar el cliente.')} <button onClick={() => navigate('/customers')} className="ml-1 underline">{t('Volver al listado')}</button>
+        {t('No pudimos cargar el cliente.')} <button onClick={() => navigate(backTo)} className="ml-1 underline">{backLabel ? t('Volver a {page}', { page: t(backLabel) }) : t('Volver al listado')}</button>
       </div>
     )
   }
@@ -331,9 +336,9 @@ export default function CustomerDetailPage() {
 
       {/* Back + actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button onClick={() => navigate('/customers')}
+        <button onClick={() => navigate(backTo)}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-          <ArrowLeft size={14} />{t('Volver')}
+          <ArrowLeft size={14} />{backLabel ? t('Volver a {page}', { page: t(backLabel) }) : t('Volver')}
         </button>
         <div className="flex flex-wrap items-center gap-2">
           {debt > 0 && (

@@ -27,7 +27,7 @@ const OWNER_NAV = [
   { icon: BarChart2,       label: 'Reportes',          path: '/reports',             permission: 'canViewReports' },
   { icon: Scale,           label: 'Balance',           path: '/reports/balance',     permission: 'canViewReports' },
   { icon: Trophy,          label: 'Vendedores',        path: '/reports/sellers',     permission: 'canViewReports' },
-  { icon: Award,           label: 'Mejores clientes',  path: '/reports/customers',   permission: 'canViewReports' },
+  { icon: Award,           label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: null },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
   { icon: HandCoins,       label: 'Cuentas x pagar',   path: '/reports/payables',    permission: null },
@@ -50,7 +50,7 @@ const EMPLOYEE_NAV = [
   { icon: Scale,           label: 'Balance',           path: '/reports/balance',     permission: 'canViewReports' },
   // Vendedor sin reportes completos: solo el cierre de caja del día (sin ganancias).
   { icon: Scale,           label: 'Cierre de caja',    path: '/reports/balance',     permission: 'canViewCashClosing', hideIfPermission: 'canViewReports' },
-  { icon: Award,           label: 'Mejores clientes',  path: '/reports/customers',   permission: 'canViewReports' },
+  { icon: Award,           label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
   { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
   { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
   { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },

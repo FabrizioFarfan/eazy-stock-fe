@@ -93,6 +93,17 @@ export default {
     'Ranking de vendedores y de clientes': 'Seller and customer rankings',
     'Quién vendió cuánto; y quién te compra más, qué lleva y quién no vuelve, con WhatsApp.': 'Who sold how much; and who buys the most, what they take and who is not coming back, with WhatsApp.',
     'Fichas completas con historial, compras y saldo.': 'Complete profiles with history, purchases and balance.',
+    // ── Nombre de la página + dashboard ──
+    'Análisis de clientes': 'Customer analysis',
+    'Cómo usar Análisis de clientes': 'How to use Customer analysis',
+    'Clientes este mes': 'Customers this month',
+    'Ver análisis de clientes': 'See customer analysis',
+    '{n} de {total}': '{n} of {total}',
+    'Sin volver hace +30 días': 'Not back in 30+ days',
+    'Todavía no hay ventas con cliente este mes.': 'No sales with a customer this month yet.',
+    'Asocia el cliente al cobrar en Nueva venta y aquí verás quién te compra más.': 'Link the customer at checkout in New sale and here you will see who buys the most.',
+    '{n} cliente(s) ya te compraron y no vuelven hace más de 30 días. Un WhatsApp los trae de regreso.': '{n} customer(s) already bought from you and have not come back in more than 30 days. A WhatsApp brings them back.',
+    'Volver a {page}': 'Back to {page}',
   },
   it: {
     // ── Nueva venta / detalle de venta / filtro ──
@@ -184,5 +195,16 @@ export default {
     'Ranking de vendedores y de clientes': 'Classifica venditori e clienti',
     'Quién vendió cuánto; y quién te compra más, qué lleva y quién no vuelve, con WhatsApp.': 'Chi ha venduto quanto; e chi compra di più, cosa prende e chi non torna, con WhatsApp.',
     'Fichas completas con historial, compras y saldo.': 'Schede complete con storico, acquisti e saldo.',
+    // ── Nombre de la página + dashboard ──
+    'Análisis de clientes': 'Analisi clienti',
+    'Cómo usar Análisis de clientes': 'Come usare Analisi clienti',
+    'Clientes este mes': 'Clienti questo mese',
+    'Ver análisis de clientes': 'Vedi analisi clienti',
+    '{n} de {total}': '{n} di {total}',
+    'Sin volver hace +30 días': 'Assenti da +30 giorni',
+    'Todavía no hay ventas con cliente este mes.': 'Ancora nessuna vendita con cliente questo mese.',
+    'Asocia el cliente al cobrar en Nueva venta y aquí verás quién te compra más.': 'Collega il cliente alla cassa in Nuova vendita e qui vedrai chi compra di più.',
+    '{n} cliente(s) ya te compraron y no vuelven hace más de 30 días. Un WhatsApp los trae de regreso.': '{n} cliente/i hanno già comprato e non tornano da più di 30 giorni. Un WhatsApp li fa tornare.',
+    'Volver a {page}': 'Torna a {page}',
   },
 }

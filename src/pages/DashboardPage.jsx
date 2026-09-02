@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Package, TrendingUp, ArrowUpDown,
   AlertTriangle, Building2, Users, CheckCircle2,
-  FileText, Trophy, ArrowRight, Sparkles, CalendarClock, Award,
+  FileText, Trophy, ArrowRight, Sparkles, CalendarClock, Award, UserX, UserRound,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useDailySummary, useReportsLowStock, useReportsExpiring } from '../hooks/useReports'
+import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers } from '../hooks/useReports'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useBusinesses } from '../hooks/useBusinesses'
 import { useUsers } from '../hooks/useUsers'
@@ -221,6 +221,97 @@ const TYPE_CLS   = {
   RETURN:         'bg-purple-50 text-purple-700 ring-1 ring-purple-100',
 }
 
+// ── Clientes este mes (tarea 250) ─────────────────────────────────────────────
+// Lo que el dueño quiere ver sin entrar a reportes: cuántos clientes compraron,
+// qué parte de las ventas lleva nombre, el podio y cuántos no vuelven.
+
+function firstOfMonthStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+function MiniStat({ label, value, hint, tone = 'text-gray-900' }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className={`mt-0.5 text-xl font-bold ${tone}`}>{value}</p>
+      {hint && <p className="text-xs text-gray-400">{hint}</p>}
+    </div>
+  )
+}
+
+function CustomersBlock({ scopeParams }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const { data: ranking, isLoading } = useCustomerRanking({ from: firstOfMonthStr(), to: todayStr(), sort: 'amount', ...scopeParams })
+  const { data: inactive } = useInactiveCustomers({ days: 30, ...scopeParams })
+
+  const rows = ranking?.customers ?? []
+  const top = rows.slice(0, 3)
+  const inactiveCount = inactive?.customers?.length ?? 0
+  const pct = ranking && ranking.totalSales > 0 ? Math.round((ranking.salesWithCustomer / ranking.totalSales) * 100) : 0
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50">
+          <UserRound size={15} className="text-indigo-500" />
+        </div>
+        <h3 className="text-sm font-semibold text-gray-900">{t('Clientes este mes')}</h3>
+        <button onClick={() => navigate('/reports/customers')}
+          className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+          {t('Ver análisis de clientes')} <ArrowRight size={13} />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-3">
+          {[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />)}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 p-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <MiniStat label={t('Clientes que compraron')} value={rows.length} />
+            <MiniStat label={t('Ventas con cliente')} value={`${pct}%`}
+              hint={t('{n} de {total}', { n: ranking?.salesWithCustomer ?? 0, total: ranking?.totalSales ?? 0 })} />
+            <MiniStat label={t('Sin volver hace +30 días')} value={inactiveCount}
+              tone={inactiveCount > 0 ? 'text-red-600' : 'text-emerald-600'} />
+          </div>
+
+          {top.length === 0 ? (
+            <p className="text-xs text-gray-400">
+              {t('Todavía no hay ventas con cliente este mes.')} {t('Asocia el cliente al cobrar en Nueva venta y aquí verás quién te compra más.')}
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {top.map((r, i) => (
+                <li key={r.customerId}>
+                  <button onClick={() => navigate(`/customers/${r.customerId}`, { state: { from: '/', fromLabel: 'Inicio' } })}
+                    className="flex w-full items-center gap-3 py-2 text-left hover:bg-gray-50">
+                    <span className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                      i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{r.customerName}</span>
+                    <span className="text-xs text-gray-400">{t('{n} compras', { n: r.sales })}</span>
+                    <span className="text-sm font-bold text-gray-900">{formatCurrency(r.revenue)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {inactiveCount > 0 && (
+            <button onClick={() => navigate('/reports/customers')}
+              className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-100">
+              <UserX size={13} className="flex-shrink-0" />
+              {t('{n} cliente(s) ya te compraron y no vuelven hace más de 30 días. Un WhatsApp los trae de regreso.', { n: inactiveCount })}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function OwnerDashboard({ name, businessId }) {
   const t = useT()
   const navigate    = useNavigate()
@@ -311,10 +402,13 @@ function OwnerDashboard({ name, businessId }) {
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
             <Award size={15} />
-            {t('Mejores clientes')}
+            {t('Análisis de clientes')}
           </button>
         </div>
       </div>
+
+      {/* Clientes este mes (tarea 250) */}
+      <CustomersBlock scopeParams={scopeParams} />
 
       {/* Low-stock alerts */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">

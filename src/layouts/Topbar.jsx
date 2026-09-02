@@ -13,7 +13,7 @@ const PAGE_TITLES = {
   '/stock':              'Stock',
   '/reports':            'Reportes',
   '/reports/sellers':    'Vendedores',
-  '/reports/customers':  'Mejores clientes',
+  '/reports/customers':  'Análisis de clientes',
   '/customers':          'Clientes',
   '/settings/users':     'Usuarios',
   '/empleados':          'Empleados',

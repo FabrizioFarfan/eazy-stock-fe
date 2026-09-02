@@ -104,7 +104,7 @@ function CustomerRow({ row, rank, maxRevenue, sort, businessName, productName })
         {rank < 3 ? <Medal size={16} /> : rank + 1}
       </div>
 
-      <button type="button" onClick={() => navigate(`/customers/${row.customerId}`)} className="min-w-0 flex-1 text-left">
+      <button type="button" onClick={() => navigate(`/customers/${row.customerId}`, { state: { from: '/reports/customers', fromLabel: 'Análisis de clientes' } })} className="min-w-0 flex-1 text-left">
         <div className="flex items-center justify-between gap-3">
           <p className="truncate font-semibold text-gray-900 hover:text-blue-700">{row.customerName}</p>
           <p className="flex-shrink-0 text-base font-extrabold text-gray-900">
@@ -137,7 +137,7 @@ function CustomerRow({ row, rank, maxRevenue, sort, businessName, productName })
             <MessageCircle size={15} />
           </a>
         )}
-        <button type="button" onClick={() => navigate(`/customers/${row.customerId}`)} title={t('Ver ficha')}
+        <button type="button" onClick={() => navigate(`/customers/${row.customerId}`, { state: { from: '/reports/customers', fromLabel: 'Análisis de clientes' } })} title={t('Ver ficha')}
           className="flex h-8 w-8 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700">
           <ChevronRight size={16} />
         </button>
@@ -190,7 +190,7 @@ function InactiveSection({ businessId, businessName }) {
             const wa = whatsappUrl(r.phone, msg)
             return (
               <li key={r.customerId} className="flex items-center gap-3 py-2.5">
-                <button type="button" onClick={() => navigate(`/customers/${r.customerId}`)} className="min-w-0 flex-1 text-left">
+                <button type="button" onClick={() => navigate(`/customers/${r.customerId}`, { state: { from: '/reports/customers', fromLabel: 'Análisis de clientes' } })} className="min-w-0 flex-1 text-left">
                   <p className="truncate text-sm font-medium text-gray-900 hover:text-blue-700">{r.customerName}</p>
                   <p className="text-xs text-gray-400">
                     {t('Última compra')}: {formatDay(r.lastPurchaseAt)} · <b className="text-red-600">{t('hace {n} días', { n: r.daysSinceLastPurchase })}</b>
@@ -261,9 +261,9 @@ export default function CustomerRankingPage() {
           <div className="flex items-center gap-2">
             <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
               <Users size={22} className="text-blue-600" />
-              {t('Mejores clientes')}
+              {t('Análisis de clientes')}
             </h2>
-            <HelpDrawer title={t('Cómo usar Mejores clientes')} autoOpenKey="eazystock_customer_ranking_help_v1">
+            <HelpDrawer title={t('Cómo usar Análisis de clientes')} autoOpenKey="eazystock_customer_ranking_help_v1">
               <p>{t('Responde')} <strong>{t('quién te compra más, qué le vendes y cada cuánto vuelve')}</strong>. {t('Se alimenta de las ventas que llevan cliente.')}</p>
               <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
                 <p className="font-semibold text-gray-800">🧾 {t('De dónde salen los datos')}</p>
@@ -381,6 +381,14 @@ export default function CustomerRankingPage() {
       </div>
 
       {/* Ranking */}
+      <div className="-mb-3 flex items-center gap-2">
+        <Medal size={15} className="text-amber-500" />
+        <h3 className="text-sm font-bold text-gray-900">{t('Mejores clientes')}</h3>
+        {!isLoading && rows.length > 0 && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{rows.length}</span>
+        )}
+        <span className="text-xs text-gray-400">· {sort === 'count' ? t('Por frecuencia') : t('Por monto')}</span>
+      </div>
       {isError ? (
         <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center text-sm text-red-600">
           {t('No se pudo cargar el ranking. Intenta de nuevo.')}

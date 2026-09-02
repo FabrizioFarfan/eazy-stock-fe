@@ -32,7 +32,7 @@ export const reportsApi = {
   getCashBalance: (params) => api.get('/reports/cash-balance', { params }),
   getCashClosing: (params) => api.get('/reports/cash-closing', { params }),
 
-  // Mejores clientes: params = { from?, to?, sort?: 'amount'|'count', productId?, businessId? }
+  // Análisis de clientes (ranking): params = { from?, to?, sort?: 'amount'|'count', productId?, businessId? }
   getCustomerRanking:   (params) => api.get('/reports/customers', { params }),
   // Clientes que no compran hace N días: params = { days, businessId? }
   getInactiveCustomers: (params) => api.get('/reports/customers/inactive', { params }),

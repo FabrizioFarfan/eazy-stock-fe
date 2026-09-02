@@ -99,7 +99,7 @@ export default function AppRouter() {
       <Route path="/reports/sellers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SellerPerformancePage /></ProtectedRoute>
       } />
-      {/* Mejores clientes (tarea 250): OWNER y EMPLOYEE con canViewReports */}
+      {/* Análisis de clientes (tarea 250): OWNER y EMPLOYEE con canViewReports */}
       <Route path="/reports/customers" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><CustomerRankingPage /></ProtectedRoute>
       } />
