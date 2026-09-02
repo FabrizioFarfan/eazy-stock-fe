@@ -91,7 +91,7 @@ function SupplierModal({ supplier, onClose }) {
                 <Controller
                   control={control}
                   name="phone"
-                  render={({ field }) => <PhoneInput value={field.value ?? ''} onChange={field.onChange} placeholder="999 000 000" />}
+                  render={({ field }) => <PhoneInput value={field.value ?? ''} onChange={field.onChange} />}
                 />
               </Field>
             </div>

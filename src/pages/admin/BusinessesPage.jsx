@@ -42,6 +42,14 @@ const COUNTRIES = [
   { code: 'EC', label: 'Ecuador (EC)' },
   { code: 'BO', label: 'Bolivia (BO)' },
   { code: 'UY', label: 'Uruguay (UY)' },
+  { code: 'US', label: 'Estados Unidos (US)' },
+  // Europa (Frank, sep-2026)
+  { code: 'ES', label: 'España (ES)' },
+  { code: 'IT', label: 'Italia (IT)' },
+  { code: 'PL', label: 'Polonia (PL)' },
+  { code: 'DE', label: 'Alemania (DE)' },
+  { code: 'FR', label: 'Francia (FR)' },
+  { code: 'PT', label: 'Portugal (PT)' },
 ]
 
 // Common tax ID types

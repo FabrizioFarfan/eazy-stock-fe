@@ -95,14 +95,14 @@
     <script>
       (function () {
         var t = localStorage.getItem('eazystock_theme')
-        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        var hasSession = false
+        try { hasSession = !!localStorage.getItem('eazystock_token') } catch (e) { /* storage bloqueado */ }
+        var isLanding = location.pathname === '/' && !hasSession
+        // la landing tiene su propio diseño oscuro: el modo oscuro de la app no se le aplica
+        if (!isLanding && (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches))) {
           document.documentElement.classList.add('dark')
         }
-        try {
-          if (localStorage.getItem('eazystock_token') || location.pathname !== '/') {
-            document.documentElement.setAttribute('data-session', '1')
-          }
-        } catch (e) { /* storage bloqueado */ }
+        if (!isLanding) document.documentElement.setAttribute('data-session', '1')
       })()
     </script>
     <style>html[data-session] [data-prerender] { display: none !important; }</style>

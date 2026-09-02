@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COUNTRIES, getDefaultCountry, splitPhone, toE164 } from '../../utils/phone'
+import { COUNTRIES, countryByIso, getDefaultCountry, splitPhone, toE164 } from '../../utils/phone'
 
 const selectCls = 'shrink-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
 const inputCls  = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
@@ -19,7 +19,7 @@ const derive = (value) => {
  * otro (abrir "editar", elegir un cliente) se vuelve a derivar; lo que el
  * usuario tipea nunca se le reescribe debajo de los dedos.
  */
-export default function PhoneInput({ value, onChange, placeholder = '987 654 321', className = '', disabled = false, autoFocus = false, inputProps = {} }) {
+export default function PhoneInput({ value, onChange, placeholder, className = '', disabled = false, autoFocus = false, inputProps = {} }) {
   const [state, setState] = useState(() => derive(value))
   if ((value ?? '') !== state.from) {
     // valor nuevo desde fuera → derivar de nuevo (patrón de estado derivado de React)
@@ -50,7 +50,7 @@ export default function PhoneInput({ value, onChange, placeholder = '987 654 321
         disabled={disabled}
         autoFocus={autoFocus}
         inputMode="tel"
-        placeholder={placeholder}
+        placeholder={placeholder ?? countryByIso(state.iso).example}
         onChange={(e) => emit(state.iso, e.target.value.replace(/[^\d\s]/g, ''))}
         className={inputCls}
         {...inputProps}

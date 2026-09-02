@@ -67,8 +67,7 @@ export default function QuoteCustomerSection({ value, onChange }) {
           <>
             <input value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })}
               placeholder={t('Nombre del cliente')} className={inputCls} />
-            <PhoneInput value={value.phone} onChange={(phone) => onChange({ ...value, phone })}
-              placeholder={t('Teléfono (para WhatsApp)')} />
+            <PhoneInput value={value.phone} onChange={(phone) => onChange({ ...value, phone })} />
             <input value={value.email} onChange={(e) => onChange({ ...value, email: e.target.value })}
               placeholder={t('Correo (para enviar por mail)')} className={inputCls} inputMode="email" type="email" />
             <button type="button" onClick={() => setNewName(value.name.trim())}

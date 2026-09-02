@@ -15,9 +15,9 @@ import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
 import QuantityInput from '../components/inputs/QuantityInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
-import CustomerFormModal from '../components/customers/CustomerFormModal'
-import CustomerPicker from '../components/customers/CustomerPicker'
-import { formatPrice } from '../utils/formatMoney'
+import CustomerSelectModal from '../components/customers/CustomerSelectModal'
+import { formatPhoneDisplay } from '../utils/phone'
+import { formatPrice, currencySymbol } from '../utils/formatMoney'
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
@@ -175,8 +175,8 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
     }`}>
       <div className="flex items-start justify-between gap-2">
         <p className="flex-1 text-sm font-semibold leading-snug text-gray-900">{product.name}</p>
-        <button onClick={() => onRemove(product.id)}
-          className="flex-shrink-0 rounded-lg p-0.5 text-gray-300 transition-colors hover:bg-white hover:text-gray-500">
+        <button onClick={() => onRemove(product.id)} aria-label={t('Quitar')}
+          className="flex-shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700">
           <X size={13} />
         </button>
       </div>
@@ -305,8 +305,9 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
 
 // ── CreditSection — vender al fiado ───────────────────────────────────────────
 
-function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onRequestNewCustomer, total }) {
+function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total }) {
   const t = useT()
+  const [picking, setPicking] = useState(false)
   const debt   = customer ? Number(customer.currentDebt ?? 0) : 0
   const limit  = customer && customer.creditLimit != null ? Number(customer.creditLimit) : null
   const noCredit  = customer && (limit == null || limit <= 0)
@@ -328,7 +329,31 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, onReques
 
       {enabled && (
         <div className="mt-3 space-y-3">
-          <CustomerPicker value={customer} onSelect={onSelectCustomer} onRequestCreate={onRequestNewCustomer} />
+          {customer ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-blue-900">{customer.name}</p>
+                <p className="truncate text-xs text-blue-700">
+                  {[customer.documentId, formatPhoneDisplay(customer.phone)].filter(Boolean).join(' · ') || t('Cliente seleccionado')}
+                </p>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-1">
+                <button type="button" onClick={() => setPicking(true)}
+                  className="rounded-lg px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100">{t('Cambiar')}</button>
+                <button type="button" onClick={() => onSelectCustomer(null)} aria-label={t('Quitar')}
+                  className="rounded-lg p-1 text-blue-700 hover:bg-blue-100"><X size={14} /></button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 px-3 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+            >
+              <User size={15} /> {t('Elegir cliente')}
+            </button>
+          )}
+          <CustomerSelectModal open={picking} onClose={() => setPicking(false)} onSelect={onSelectCustomer} />
 
           {customer && (
             <>
@@ -433,7 +458,6 @@ export default function NewSalePage() {
     if (payMethod === m) setPayMethod('Efectivo')
   }
   // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
-  const [newCustomerName, setNewCustomerName] = useState(null)
   const [pendingLeave, setPendingLeave]       = useState(false)
   // Venta que nace de una cotización del historial: al cobrar se enlaza y la
   // cotización pasa a «Vendida». { id, number } o null.
@@ -797,7 +821,6 @@ export default function NewSalePage() {
               onToggle={(v) => { setOnCredit(v); if (!v) setCustomer(null) }}
               customer={customer}
               onSelectCustomer={setCustomer}
-              onRequestNewCustomer={(name) => setNewCustomerName(name ?? '')}
               total={total}
             />
           )}
@@ -938,13 +961,6 @@ export default function NewSalePage() {
         </div>
       )}
 
-      {newCustomerName !== null && (
-        <CustomerFormModal
-          initialName={newCustomerName}
-          onClose={() => setNewCustomerName(null)}
-          onCreated={(c) => setCustomer(c)}
-        />
-      )}
 
       {pendingLeave && (
         <ConfirmLeaveModal

@@ -13,6 +13,8 @@ import { useInstallApp, promptInstall } from '../utils/installApp'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
+import TutorialModal from '../components/tutorial/TutorialModal'
+import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -249,8 +251,9 @@ function ProfileSection() {
 const COUNTRIES = [
   ['PE', 'Perú'], ['AR', 'Argentina'], ['BO', 'Bolivia'], ['BR', 'Brasil'],
   ['CL', 'Chile'], ['CO', 'Colombia'], ['EC', 'Ecuador'], ['MX', 'México'],
-  ['PY', 'Paraguay'], ['UY', 'Uruguay'], ['VE', 'Venezuela'], ['ES', 'España'],
-  ['US', 'Estados Unidos'],
+  ['PY', 'Paraguay'], ['UY', 'Uruguay'], ['VE', 'Venezuela'], ['US', 'Estados Unidos'],
+  // Europa (Frank, sep-2026): los mercados donde ya hay clientes o contactos
+  ['ES', 'España'], ['IT', 'Italia'], ['PL', 'Polonia'], ['DE', 'Alemania'], ['FR', 'Francia'], ['PT', 'Portugal'],
 ]
 
 const COUNTRY_NAME = Object.fromEntries(COUNTRIES)
@@ -492,6 +495,7 @@ export default function SettingsPage() {
   // Lanzar el tutorial del modal de producto: seteamos bandera en
   // sessionStorage y navegamos a /productos. ProductsPage la lee al
   // montarse y abre el modal en modo tutorial.
+  const [guide, setGuide] = useState(null)
   const openProductTutorial = () => {
     try { sessionStorage.setItem('eazystock_product_tutorial_pending', '1') } catch { /* storage bloqueado */ }
     navigate('/products')
@@ -609,7 +613,7 @@ export default function SettingsPage() {
         </button>
         <button
           onClick={openProductTutorial}
-          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
+          className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors border-b border-gray-50"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50">
             <Package size={15} className="text-violet-600" />
@@ -620,7 +624,29 @@ export default function SettingsPage() {
           </div>
           <ChevronRight size={16} className="text-gray-400" />
         </button>
+        {/* Guías por tema (2-sep-2026): las mismas tarjetas del tutorial, una por flujo */}
+        {GUIDE_ORDER.map((key, i) => {
+          const g = GUIDES[key]
+          const Icon = g.icon
+          return (
+            <button
+              key={key}
+              onClick={() => setGuide(key)}
+              className={`flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors ${i < GUIDE_ORDER.length - 1 ? 'border-b border-gray-50' : ''}`}
+            >
+              <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${g.color}`}>
+                <Icon size={15} className={g.iconColor} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">{t(g.title)}</p>
+                <p className="text-xs text-gray-400">{t(g.subtitle)}</p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400" />
+            </button>
+          )
+        })}
       </Section>
+      {guide && <TutorialModal steps={GUIDES[guide].steps} heading={GUIDES[guide].title} onClose={() => setGuide(null)} />}
 
       {/* Session */}
       <Section title={t('Sesión')}>

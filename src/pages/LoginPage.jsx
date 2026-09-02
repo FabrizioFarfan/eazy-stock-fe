@@ -73,7 +73,7 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-slate-600">
+        <p className="relative text-xs text-slate-500">
           © {new Date().getFullYear()} Eazy Stock · {t('una app de Eazy Life Company')}
         </p>
       </div>

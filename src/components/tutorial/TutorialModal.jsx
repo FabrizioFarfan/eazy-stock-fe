@@ -1,81 +1,12 @@
 import { useState } from 'react'
-import {
-  Package, ShoppingCart, ArrowUpDown, BarChart2, Sparkles, ChevronRight, ChevronLeft, X,
-  CalendarClock, Scale, HandCoins, FileText, ClipboardList, Smartphone,
-} from 'lucide-react'
+import { ChevronRight, ChevronLeft, X } from 'lucide-react'
 import { useT } from '../../i18n'
+import { WELCOME_STEPS } from './guides'
 
-const STEPS = [
-  {
-    icon: Sparkles,
-    color: 'bg-blue-600',
-    title: '¡Bienvenido a Eazy Stock!',
-    desc: 'Todo lo que necesitas para gestionar el inventario y ventas de tu negocio en un solo lugar, fácil y rápido.',
-  },
-  {
-    icon: Package,
-    color: 'bg-blue-500',
-    title: 'Gestiona tus productos',
-    desc: 'Agrega productos con precio de compra, venta y stock mínimo. Asígnales proveedor y marca para organizar mejor tu catálogo.',
-  },
-  {
-    icon: ShoppingCart,
-    color: 'bg-green-500',
-    title: 'Registra ventas rápido',
-    desc: 'Desde "Nueva Venta" busca productos por nombre, SKU o código QR, aplica descuentos y completa la venta en segundos.',
-  },
-  {
-    icon: ArrowUpDown,
-    color: 'bg-purple-500',
-    title: 'Controla tu stock',
-    desc: 'Recibe mercadería, ajusta el stock manualmente y recibe alertas automáticas cuando un producto baja del mínimo.',
-  },
-  {
-    icon: BarChart2,
-    color: 'bg-rose-500',
-    title: 'Analiza tu negocio',
-    desc: 'En Reportes ve las ventas por día, los productos más vendidos y filtra por proveedor, marca o empleado.',
-  },
-  {
-    icon: CalendarClock,
-    color: 'bg-amber-500',
-    title: 'Productos por vencer',
-    desc: 'Ponle fecha de vencimiento a tus productos: verás un badge en la tabla y el reporte «Por vencer» te avisa de lo que caduca en los próximos 30 días.',
-  },
-  {
-    icon: Scale,
-    color: 'bg-teal-500',
-    title: 'Cierre de caja por medio de pago',
-    desc: 'En Balance cuadra el día por efectivo, Yape, Plin o tarjeta. Tus vendedores pueden ver solo el cierre de caja, sin ganancias ni costos.',
-  },
-  {
-    icon: HandCoins,
-    color: 'bg-orange-500',
-    title: 'Fiado y cuentas por cobrar',
-    desc: 'Vende al fiado, registra abonos y sigue cada deuda en Cuentas x cobrar. Envía un recordatorio de pago por WhatsApp con un toque.',
-  },
-  {
-    icon: FileText,
-    color: 'bg-indigo-500',
-    title: 'Pedido al proveedor en PDF',
-    desc: 'Desde Reportes › Stock bajo genera el pedido de reposición por proveedor, edita cantidades en la previsualización y descárgalo en PDF.',
-  },
-  {
-    icon: ClipboardList,
-    color: 'bg-cyan-500',
-    title: 'Cotizaciones',
-    desc: 'Arma una cotización con los mismos productos de tu catálogo, compártela con el cliente y conviértela en venta cuando la apruebe.',
-  },
-  {
-    icon: Smartphone,
-    color: 'bg-slate-700',
-    title: 'Instálala como app',
-    desc: 'Desde Ajustes instala Eazy Stock en tu celular o PC, activa el modo oscuro y elige el idioma: español, inglés o italiano.',
-  },
-]
-
-export default function TutorialModal({ onClose }) {
+/** `steps`: una guía de ./guides (por defecto, la bienvenida). `heading`: rótulo pequeño arriba. */
+export default function TutorialModal({ onClose, steps = WELCOME_STEPS, heading }) {
   const t = useT()
+  const STEPS = steps
   const [step, setStep] = useState(0)
   const current = STEPS[step]
   const Icon = current.icon
@@ -86,7 +17,8 @@ export default function TutorialModal({ onClose }) {
       <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
 
         {/* Close */}
-        <div className="flex justify-end px-4 pt-4">
+        <div className="flex items-center justify-between px-4 pt-4">
+          <span className="pl-1 text-[11px] font-semibold uppercase tracking-widest text-gray-500">{heading ? t(heading) : ''}</span>
           <button
             onClick={onClose}
             aria-label={t('Cerrar')}

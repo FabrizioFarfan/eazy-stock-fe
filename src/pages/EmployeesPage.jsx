@@ -510,8 +510,72 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      {/* Phone: cards, so «Permisos» is never hidden off to the right of a scrolling table
+          (William couldn't find where to allow a seller to sell on credit — it was there,
+          five columns to the right). */}
+      <div className="space-y-3 md:hidden">
+        {!isLoading && filtered.map((emp) => {
+          const isSelf     = emp.id === currentUser?.id
+          const isToggling = togglingId === emp.id
+          return (
+            <div key={emp.id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${avatarGradient(emp.name)} text-xs font-bold text-white shadow-sm`}>
+                  {initials(emp.name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-gray-900">{emp.name}</p>
+                  <p className="truncate text-xs text-gray-500">{emp.email}</p>
+                </div>
+                <span className={`inline-flex flex-shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                  emp.active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {emp.active ? t('Activo') : t('Dado de baja')}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {emp.active && (
+                  <button
+                    onClick={() => setPermTarget(emp)}
+                    className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600">
+                    <Shield size={14} />{t('Permisos')}
+                  </button>
+                )}
+                <button
+                  onClick={() => setEditTarget(emp)}
+                  className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                  <Pencil size={13} />{t('Editar')}
+                </button>
+                <button
+                  onClick={() => setToggleTarget(emp)}
+                  disabled={isSelf || isToggling}
+                  className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
+                    emp.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  }`}>
+                  {isToggling ? <Loader2 size={12} className="animate-spin" /> : emp.active ? <Power size={12} /> : <RotateCcw size={12} />}
+                  {emp.active ? t('Dar de baja') : t('Reactivar')}
+                </button>
+                {!emp.active && (
+                  <button
+                    onClick={() => setDeleteTarget(emp)}
+                    disabled={emp.hasActivity}
+                    className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40">
+                    <Trash2 size={12} />{t('Borrar')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+        {!isLoading && filtered.length === 0 && (
+          <p className="rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-500 shadow-sm">
+            {search ? t('Sin resultados para "{q}"', { q: search }) : t('Aún no hay empleados')}
+          </p>
+        )}
+      </div>
+
+      {/* Table (tablet and up) */}
+      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
