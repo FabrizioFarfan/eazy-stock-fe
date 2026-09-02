@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useDebounce } from '../../hooks/useDebounce'
-import { useCustomerSearch } from '../../hooks/useCustomers'
-import { formatPhoneDisplay } from '../../utils/phone'
+import { useEffect, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, UserCheck } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers'
 import { useAuth } from '../../context/AuthContext'
@@ -49,13 +46,7 @@ function Field({ label, required, error, children }) {
   )
 }
 
-/**
- * `onPickExisting(c)`: cuando se está CREANDO desde una venta o cotización,
- * el formulario busca mientras se escribe el nombre, documento o teléfono y,
- * si ya hay alguien parecido, lo muestra con «Usar este» — así el vendedor
- * nuevo no registra dos veces al mismo cliente (el caso de William, 2-sep).
- */
-export default function CustomerFormModal({ customer, onClose, onCreated, initialName, onPickExisting }) {
+export default function CustomerFormModal({ customer, onClose, onCreated, initialName }) {
   const t = useT()
   const { user } = useAuth()
   const isEdit = !!customer
@@ -65,7 +56,7 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
   const schema = useMemo(() => makeSchema(t), [t])
 
   const {
-    register, control, handleSubmit, reset, setError, watch,
+    register, control, handleSubmit, reset, setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -93,20 +84,6 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
       })
     }
   }, [customer?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // posibles duplicados: se busca por lo que se va escribiendo (solo al crear)
-  const wName  = watch('name')
-  const wDoc   = watch('documentId')
-  const wPhone = watch('phone')
-  const lookalikeTerm = useDebounce((!isEdit && onPickExisting) ? (String(wDoc ?? '').trim() || String(wName ?? '').trim()) : '', 400)
-  const lookalikes = useCustomerSearch(lookalikeTerm.length >= 3 ? lookalikeTerm : '', {}, { enabled: lookalikeTerm.length >= 3 })
-  const phoneDigits = String(wPhone ?? '').replace(/\D/g, '').slice(-7)
-  const phoneMatch = useCustomerSearch(phoneDigits.length >= 7 && !isEdit && onPickExisting ? phoneDigits : '', {}, { enabled: phoneDigits.length >= 7 && !isEdit && !!onPickExisting })
-  const similar = useMemo(() => {
-    const seen = new Set()
-    return [...(phoneMatch.items ?? []), ...(lookalikes.items ?? [])].filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true))).slice(0, 4)
-  }, [phoneMatch.items, lookalikes.items])
-  const [dismissedSimilar, setDismissedSimilar] = useState(false)
 
   const onSubmit = async (values) => {
     try {
@@ -152,28 +129,6 @@ export default function CustomerFormModal({ customer, onClose, onCreated, initia
               <input {...register('name')} placeholder="Pedro González" className={inputCls} />
             </Field>
 
-            {similar.length > 0 && !dismissedSimilar && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-                <p className="text-xs font-semibold text-amber-900">{t('¿Es alguno de estos? Ya están registrados:')}</p>
-                <ul className="mt-1.5 space-y-1">
-                  {similar.map((c) => (
-                    <li key={c.id} className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
-                        <p className="truncate text-[11px] text-gray-600">{[c.documentId, formatPhoneDisplay(c.phone)].filter(Boolean).join(' · ')}</p>
-                      </div>
-                      <button type="button" onClick={() => onPickExisting(c)}
-                        className="flex flex-shrink-0 items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-700">
-                        <UserCheck size={12} /> {t('Usar este')}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <button type="button" onClick={() => setDismissedSimilar(true)} className="mt-1.5 text-[11px] font-medium text-amber-800 underline">
-                  {t('No, es otra persona')}
-                </button>
-              </div>
-            )}
 
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('Documento (DNI/RUC)')} error={errors.documentId?.message}>

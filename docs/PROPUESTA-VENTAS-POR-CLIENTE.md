@@ -25,8 +25,7 @@ comercial del negocio. Y con los teléfonos con prefijo (ya hecho) el WhatsApp s
 ## Cómo funcionaría (UX)
 
 1. **Nueva venta**: debajo del carrito, una línea «Cliente (opcional) · Asociar cliente». Abre el
-   mismo modal que ya usa el fiado (lista completa, búsqueda, filtros, registrar nuevo con aviso de
-   duplicados). Si el cajero no toca nada, la venta se registra como hoy.
+   mismo modal que ya usa el fiado (lista completa, búsqueda, filtros, registrar nuevo ahí mismo). Si el cajero no toca nada, la venta se registra como hoy.
 2. Si se activa «Vender al fiado», el cliente es el mismo (no se pregunta dos veces).
 3. En el resumen y el ticket aparece «Cliente: Juan Pérez». En la tabla de Ventas, una columna
    «Cliente» y un filtro por cliente.
@@ -74,8 +73,8 @@ que ya existen. Asociar cliente a una venta no necesita permiso nuevo.
 
 - **Que frene la caja**: por eso es opcional y es un solo botón con la lista completa y los recientes
   arriba. Si William quiere obligarlo, es un interruptor por negocio (fase 1, apagado).
-- **Clientes duplicados** (lo que pasó con su vendedor nuevo): el modal ya lista a todos y el
-  formulario avisa «¿es alguno de estos?» antes de crear otro.
+- **Clientes duplicados** (lo que pasó con su vendedor nuevo): el modal ya lista a todos desde el
+  primer momento, con búsqueda y filtros; registrar uno nuevo queda como último paso.
 - **Datos viejos**: las ventas anteriores no tienen cliente; los reportes cuentan desde que se
   empiece a usar. Se puede asociar cliente a una venta pasada desde su detalle (fase 2).
 

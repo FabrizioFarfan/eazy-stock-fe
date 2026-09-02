@@ -46,7 +46,7 @@ export const GUIDES = {
     steps: [
       { icon: Shield,    color: 'bg-slate-600',   title: 'Primero, el permiso', desc: 'Solo fía quien tiene activado «Vender al fiado». El dueño lo da en Empleados › Permisos, empleado por empleado. En el celular los botones están en la tarjeta de cada empleado.' },
       { icon: HandCoins, color: 'bg-orange-500',  title: 'Activa «Vender al fiado»', desc: 'En la venta, con productos en el carrito, enciende el interruptor y toca «Elegir cliente»: verás la lista completa de tus clientes, con su deuda y su límite.' },
-      { icon: Search,    color: 'bg-blue-500',    title: 'Encuéntralo antes de crearlo', desc: 'Busca por nombre, documento o teléfono y usa los filtros «Con deuda» o «Con crédito». Si registras uno nuevo y ya existe alguien parecido, la app te lo muestra: elige «Usar este» y evitas un cliente duplicado.' },
+      { icon: Search,    color: 'bg-blue-500',    title: 'Encuéntralo antes de crearlo', desc: 'Busca por nombre, documento o teléfono y usa los filtros «Con deuda» o «Con crédito». Recién si de verdad no está, regístralo con el botón de abajo: así no se crean clientes repetidos.' },
       { icon: Wallet,    color: 'bg-purple-500',  title: 'El límite de crédito', desc: 'Cada cliente tiene un límite. Con 0 no puede operar al fiado. Antes de confirmar ves su deuda actual, el límite y cómo queda después de esta venta.' },
       { icon: Receipt,   color: 'bg-emerald-600', title: 'Cobra y recuerda', desc: 'En Cuentas x cobrar registras abonos, descargas el estado de cuenta en PDF y mandas un recordatorio por WhatsApp con un toque.' },
     ],

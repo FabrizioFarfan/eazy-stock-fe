@@ -16,8 +16,7 @@ import { useT } from '../../i18n'
  * nuevo → clientes duplicados con deudas partidas. Ahora es un modal que
  * LISTA a todos los clientes desde el primer momento (sin escribir nada),
  * con búsqueda por nombre, documento o teléfono, filtros rápidos y el botón
- * de registrar uno nuevo ahí mismo — que además avisa si ya hay alguien
- * parecido antes de crear el duplicado.
+ * de registrar uno nuevo ahí mismo.
  */
 const FILTERS = [
   { key: 'all',    label: 'Todos' },
@@ -165,7 +164,6 @@ export default function CustomerSelectModal({ open, onClose, onSelect, title, sh
             <UserPlus size={15} />
             {debounced ? t('Registrar a «{q}» como cliente nuevo', { q: debounced }) : t('Registrar cliente nuevo')}
           </button>
-          <p className="mt-1.5 text-center text-[11px] text-gray-500">{t('Antes de crearlo te avisamos si ya existe alguien parecido.')}</p>
         </div>
       </div>
 
@@ -174,7 +172,6 @@ export default function CustomerSelectModal({ open, onClose, onSelect, title, sh
           initialName={creating}
           onClose={() => setCreating(null)}
           onCreated={(c) => { setCreating(null); pick(c) }}
-          onPickExisting={(c) => { setCreating(null); pick(c) }}
         />
       )}
     </div>
