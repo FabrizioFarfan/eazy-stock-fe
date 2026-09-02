@@ -11,7 +11,10 @@ export const salesApi = {
   getById: (id) => api.get(`/sales/${id}`),
 
   create: (data) => api.post('/sales', data),
-  // data: { items: [{ productId, quantity }], notes? }
+  // data: { items: [{ productId, quantity }], notes?, customerId? (opcional al contado) }
+
+  // Asociar (customerId) o quitar (null) el cliente de una venta ya hecha — no aplica al fiado
+  assignCustomer: (saleId, customerId) => api.patch(`/sales/${saleId}/customer`, { customerId }),
 
   // Devoluciones (total o parcial): data = { items: [{ saleItemId, quantity }], notes? }
   createReturn: (saleId, data) => api.post(`/sales/${saleId}/returns`, data),

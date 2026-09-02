@@ -1,7 +1,7 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
 import ColumnFilter from '../components/common/ColumnFilter'
@@ -15,6 +15,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
+import CustomerSelectModal from '../components/customers/CustomerSelectModal'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
 
@@ -34,7 +35,7 @@ function formatCurrency(value) {
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -92,6 +93,10 @@ export default function SalesPage() {
 
   // ── Supplier filter ───────────────────────────────────────────────────────
   const [supplierId, setSupplierId] = useState('')
+
+  // ── Customer filter (tarea 250: ventas por cliente) ───────────────────────
+  const [customerFilter, setCustomerFilter] = useState(null)   // {id, name} | null
+  const [pickingCustomer, setPickingCustomer] = useState(false)
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
@@ -134,7 +139,7 @@ export default function SalesPage() {
   const [selectedSaleId, setSelectedSaleId] = useState(null)
 
   const hasFilters = from || to || selectedProducts.length > 0 || supplierId ||
-    employeeId || debTotalMin !== '' || debTotalMax !== '' || effectivePayFilter !== ''
+    employeeId || debTotalMin !== '' || debTotalMax !== '' || effectivePayFilter !== '' || customerFilter
 
   const params = {
     page,
@@ -148,6 +153,7 @@ export default function SalesPage() {
     ...(debTotalMin !== '' && { totalMin: debTotalMin }),
     ...(debTotalMax !== '' && { totalMax: debTotalMax }),
     ...(effectivePayFilter !== '' && { paymentMethod: effectivePayFilter }),
+    ...(customerFilter && { customerId: customerFilter.id }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -164,7 +170,7 @@ export default function SalesPage() {
   const clearAll = () => {
     setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId('')
     setEmployeeId(''); setTotalMin(''); setTotalMax('')
-    setPayFilter(''); setPayFilterText(''); setPage(0)
+    setPayFilter(''); setPayFilterText(''); setCustomerFilter(null); setPage(0)
   }
 
   return (
@@ -323,6 +329,33 @@ export default function SalesPage() {
             />
           )}
 
+          {/* Cliente (tarea 250): quién compró */}
+          <button
+            type="button"
+            onClick={() => setPickingCustomer(true)}
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+              customerFilter
+                ? 'border-blue-300 bg-blue-50 text-blue-700'
+                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <UserRound size={13} />
+            {customerFilter ? customerFilter.name : t('Cliente')}
+          </button>
+          {customerFilter && (
+            <button onClick={() => { setCustomerFilter(null); setPage(0) }} aria-label={t('Quitar')}
+              className="-ml-2 flex items-center justify-center rounded-full p-1 text-blue-700 hover:bg-blue-100 transition-colors">
+              <X size={12} />
+            </button>
+          )}
+          <CustomerSelectModal
+            open={pickingCustomer}
+            onClose={() => setPickingCustomer(false)}
+            onSelect={(c) => { setCustomerFilter({ id: c.id, name: c.name }); setPage(0) }}
+            title={t('Ver las ventas de un cliente')}
+            showDebt={false}
+          />
+
           {/* Chips de filtros de columna (empleado / total) */}
           {employeeId && (
             <span className="flex items-center gap-1 rounded-full bg-blue-50 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -369,6 +402,7 @@ export default function SalesPage() {
                 ) : (
                   <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Empleado')}</th>
                 )}
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Cliente')}</th>
                 <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Productos')}</th>
                 <ColumnFilter label={t('Total')} type="range" align="right"
                   rangeMin={totalMin} rangeMax={totalMax}
@@ -384,7 +418,7 @@ export default function SalesPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <ShoppingCart size={28} className="text-gray-400" />
@@ -419,6 +453,16 @@ export default function SalesPage() {
                     </td>
                     <td className="px-5 py-3.5 font-medium text-gray-800">
                       {sale.employeeName ?? sale.createdByName ?? '—'}
+                    </td>
+                    <td className="px-5 py-3.5 text-gray-700">
+                      {sale.customerName ? (
+                        <span className="inline-flex max-w-[12rem] items-center gap-1 truncate">
+                          <UserRound size={12} className="flex-shrink-0 text-blue-500" />
+                          <span className="truncate">{sale.customerName}</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">—</span>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">

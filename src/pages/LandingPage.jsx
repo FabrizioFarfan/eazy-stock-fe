@@ -7,6 +7,7 @@ import {
   Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
   Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
   Menu, X, Landmark, Bot, Coffee, Apple,
+  Award,
 } from 'lucide-react'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
@@ -204,6 +205,7 @@ const MARQUEE = [
   [Hash, 'Códigos automáticos y liberados'],
   [FileSpreadsheet, 'Importa tu Excel en minutos'],
   [Trophy, 'Ranking de vendedores'],
+  [Award, 'Mejores clientes y ventas por cliente'],
   [Shield, 'Permisos por empleado'],
   [Bell, 'Alertas de stock mínimo'],
   [Smartphone, 'Instálala como app'],
@@ -527,7 +529,7 @@ const FEATURE_GROUPS = [
       [Wallet,     'Medios de pago a tu medida',     'Efectivo, billetera digital, tarjeta, transferencia… y los que agregues.'],
       [FileText,   'Cotizaciones en PDF',            'Arma el presupuesto, mándalo por WhatsApp; no toca el stock.'],
       [Receipt,    'Devoluciones',                   'Totales o parciales, con su burbuja en la lista de ventas.'],
-      [Trophy,     'Ranking de vendedores',          'Quién vendió cuánto, por día, con desglose.'],
+      [Award,      'Ranking de vendedores y de clientes', 'Quién vendió cuánto; y quién te compra más, qué lleva y quién no vuelve, con WhatsApp.'],
     ],
   },
   {
@@ -547,7 +549,7 @@ const FEATURE_GROUPS = [
     color: 'from-amber-500 to-orange-600',
     items: [
       [Shield,          'Permisos finos por empleado',   '14 permisos: vender, descontar, cancelar, fiar, ver reportes, solo cierre de caja…'],
-      [Users,           'Clientes y proveedores',        'Fichas completas con historial y saldo.'],
+      [Users,           'Clientes y proveedores',        'Fichas completas con historial, compras y saldo.'],
       [Filter,          'Filtros tipo Excel',            'Embudo por columna y cabeceras fijas en todas las tablas.'],
       [FileSpreadsheet, 'Importar y exportar',           'Excel/CSV con historial; exporta cuando quieras.'],
       [Bell,            'Notificaciones en vivo',        'Stock bajo y novedades al instante, en todos los dispositivos.'],

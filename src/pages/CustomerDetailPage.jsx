@@ -6,11 +6,14 @@ import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
   TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Mail, MapPin,
   FileDown, MessageCircle, FilePlus2, CheckCircle2,
+  ShoppingBag, Star, Clock, Repeat, Wallet, ShoppingCart,
 } from 'lucide-react'
 import {
   useCustomer, useCustomerTransactions,
   useRegisterCustomerPayment, useAdjustCustomerDebt,
+  useCustomerSales, useCustomerSummary,
 } from '../hooks/useCustomers'
+import { formatQty } from '../utils/quantity'
 import { useQuoteSearch } from '../hooks/useQuotes'
 import { customersApi } from '../services/endpoints/customers'
 import { useAuth } from '../context/AuthContext'
@@ -42,6 +45,11 @@ function CustomerHelp() {
       <p>
         {t('Esta es la ficha del cliente: su deuda actual, su historial completo y las herramientas para cobrarle con delicadeza.')}
       </p>
+      <HelpBlock title={t('Compras y lo que más lleva')}>
+        <p>
+          {t('Si asocias al cliente en cada venta (es opcional, un botón en Nueva venta), aquí ves cuánto te compró, cada cuánto vuelve, su ticket promedio, la última vez que vino y los productos que más lleva. Las ventas viejas se le pueden asociar desde su detalle.')}
+        </p>
+      </HelpBlock>
       <HelpBlock title={t('PDF de deuda (para entregar al cliente)')}>
         <p>
           {t('El botón "PDF de deuda" genera una carta cordial a nombre del cliente con el detalle de sus compras al fiado — producto por producto —, los pagos que ya hizo y el saldo pendiente. Descárgalo y mándaselo por WhatsApp o correo, o imprímelo y entrégaselo en mano.')}
@@ -71,6 +79,178 @@ function formatDate(str) {
   return new Intl.DateTimeFormat(dateLocale(), {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(str))
+}
+
+function formatDay(str) {
+  if (!str) return '—'
+  return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
+}
+
+function daysAgoLabel(days, t) {
+  if (days == null) return ''
+  if (days === 0) return t('hoy')
+  if (days === 1) return t('ayer')
+  return t('hace {n} días', { n: days })
+}
+
+// ── Compras del cliente (tarea 250) ──────────────────────────────────────────
+// La memoria comercial: cuánto nos compró, cada cuánto vuelve, qué es lo que
+// más lleva y la lista de todas sus ventas (contado y fiado). Todo se calcula
+// desde las ventas que llevan su nombre; las que no lo llevan se pueden
+// asociar desde el detalle de la venta.
+
+function PurchaseStat({ icon: Icon, label, value, hint, tone = 'bg-blue-50 text-blue-600' }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${tone}`}>
+        <Icon size={18} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+        <p className="truncate text-lg font-bold text-gray-900">{value}</p>
+        {hint && <p className="truncate text-xs text-gray-400">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+function PurchasesSection({ customerId, onOpenSale }) {
+  const t = useT()
+  const { data: summary, isLoading: loadingSummary } = useCustomerSummary(customerId)
+  const sales = useCustomerSales(customerId)
+
+  const count = summary?.salesCount ?? 0
+  const hasPurchases = count > 0
+  const freq = summary?.purchasesPerMonth != null ? Number(summary.purchasesPerMonth) : null
+  const gap  = summary?.avgDaysBetweenPurchases != null ? Number(summary.avgDaysBetweenPurchases) : null
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+          <ShoppingBag size={15} className="text-blue-600" />
+          {t('Compras')}
+          {!loadingSummary && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">{count}</span>
+          )}
+        </h3>
+        {hasPurchases && (freq != null || gap != null) && (
+          <p className="flex items-center gap-1.5 text-xs text-gray-500">
+            <Repeat size={12} className="text-gray-400" />
+            {freq != null && t('Compra ~{n} veces al mes', { n: freq })}
+            {freq != null && gap != null && ' · '}
+            {gap != null && t('cada ~{n} días', { n: gap })}
+          </p>
+        )}
+      </div>
+
+      {loadingSummary ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-gray-100" />)}
+        </div>
+      ) : !hasPurchases ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-4 py-8 text-center">
+          <p className="text-sm font-medium text-gray-600">{t('Todavía no hay ventas a nombre de este cliente')}</p>
+          <p className="mt-1 text-xs text-gray-400">
+            {t('Asócialo al cobrar en Nueva venta, o desde el detalle de una venta pasada con «Asociar cliente».')}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <PurchaseStat icon={Wallet} label={t('Total comprado')} value={formatPrice(summary.netSpent)}
+              hint={Number(summary.returnedAmount) > 0 ? t('{amount} devueltos', { amount: formatPrice(summary.returnedAmount) }) : undefined}
+              tone="bg-emerald-50 text-emerald-600" />
+            <PurchaseStat icon={ShoppingCart} label={t('Compras')} value={count}
+              hint={summary.creditSalesCount > 0 ? t('{n} al fiado', { n: summary.creditSalesCount }) : t('todas al contado')} />
+            <PurchaseStat icon={Star} label={t('Ticket promedio')} value={formatPrice(summary.avgTicket)}
+              tone="bg-amber-50 text-amber-600" />
+            <PurchaseStat icon={Clock} label={t('Última compra')} value={daysAgoLabel(summary.daysSinceLastPurchase, t)}
+              hint={formatDay(summary.lastPurchaseAt)}
+              tone={summary.daysSinceLastPurchase > 60 ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-600'} />
+          </div>
+
+          {summary.topProducts?.length > 0 && (
+            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-900">
+                <Star size={14} className="text-amber-500" /> {t('Lo que más compra')}
+              </h4>
+              <ul className="divide-y divide-gray-100">
+                {summary.topProducts.map((p, i) => (
+                  <li key={p.productId} className="flex items-center gap-3 py-2.5">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500">{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-900">{p.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {formatQty(p.quantity)} {p.unit || ''} · {t('{n} veces', { n: p.timesBought })} · {t('última')} {formatDay(p.lastBoughtAt)}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 text-sm font-semibold text-gray-900">{formatPrice(p.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Lista de compras */}
+      {hasPurchases && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h4 className="mb-3 text-sm font-bold text-gray-900">{t('Historial de compras')}</h4>
+          {sales.isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
+            </div>
+          ) : (
+            <>
+              <ul className="divide-y divide-gray-100">
+                {sales.items.map((sale) => {
+                  const returnedAll = Number(sale.returnedAmount) > 0 && Number(sale.returnedAmount) >= Number(sale.total)
+                  return (
+                    <li key={sale.id}>
+                      <button type="button" onClick={() => onOpenSale(sale.id)}
+                        className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-gray-50">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                            <ShoppingCart size={14} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-gray-900">
+                              {(sale.items ?? []).slice(0, 2).map((i) => i.productName).join(', ')}
+                              {(sale.items?.length ?? 0) > 2 && <span className="text-gray-400"> +{sale.items.length - 2}</span>}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {formatDate(sale.createdAt)} · {t('{n} producto(s)', { n: sale.items?.length ?? 0 })} · {sale.employeeName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          {sale.onCredit && (
+                            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">{t('Fiado')}</span>
+                          )}
+                          {!sale.onCredit && sale.paymentMethod && (
+                            <span className="hidden rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 sm:inline">{sale.paymentMethod}</span>
+                          )}
+                          {Number(sale.returnedAmount) > 0 && (
+                            <span className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                              {returnedAll ? t('Devuelto') : t('Dev. parcial')}
+                            </span>
+                          )}
+                          <span className={`whitespace-nowrap font-bold text-gray-900 ${returnedAll ? 'line-through text-gray-400' : ''}`}>{formatPrice(sale.total)}</span>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <LoadMoreRow search={sales} />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const TYPE_CONFIG = {
@@ -240,6 +420,9 @@ export default function CustomerDetailPage() {
         <StatCard label={t('Última transacción')}
           value={lastTxn ? formatDate(lastTxn.createdAt) : '—'} />
       </div>
+
+      {/* Compras del cliente (tarea 250) */}
+      <PurchasesSection customerId={id} onOpenSale={setOpenSaleId} />
 
       {/* Cotizaciones del cliente */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">

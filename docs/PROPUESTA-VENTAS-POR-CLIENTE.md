@@ -1,6 +1,6 @@
 # Propuesta: ventas asociadas a un cliente (opcional)
 
-_Estudio para proponérselo a William — 2 de septiembre de 2026. Nada de esto está implementado; es el plan._
+_Estudio para proponérselo a William — 2 de septiembre de 2026. **William dijo que sí y se implementó el mismo día (tarea 250): fases 1, 2 y 3 completas** (cliente opcional en la venta, asociar a ventas pasadas, columna y filtro en Ventas, bloque «Compras» en la ficha, Reportes › Mejores clientes con ranking, filtro por producto e inactivos con WhatsApp). La fase 4 (fidelización) y el interruptor «pedir cliente en toda venta» quedan para después. Lo de abajo es el plan original._
 
 ## La idea en una frase
 

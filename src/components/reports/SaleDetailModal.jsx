@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2 } from 'lucide-react'
+import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSaleDetail } from '../../hooks/useReports'
-import { useSaleReturns, useCreateSaleReturn } from '../../hooks/useSales'
+import { useSaleReturns, useCreateSaleReturn, useAssignSaleCustomer } from '../../hooks/useSales'
+import CustomerSelectModal from '../customers/CustomerSelectModal'
 import { useAuth } from '../../context/AuthContext'
 import { formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
@@ -26,6 +27,18 @@ export default function SaleDetailModal({ saleId, onClose }) {
   const { data: sale, isLoading } = useSaleDetail(saleId)
   const { data: returns = [] } = useSaleReturns(saleId)
   const createReturn = useCreateSaleReturn(saleId)
+  // Asociar cliente a una venta pasada (tarea 250). No en fiado: ahí el cliente es el deudor.
+  const assignCustomer = useAssignSaleCustomer()
+  const [pickingCustomer, setPickingCustomer] = useState(false)
+  const canAssignCustomer = !!sale && !sale.onCredit && can('canRegisterSale')
+  const changeCustomer = (customerId) => {
+    assignCustomer.mutate({ saleId, customerId }, {
+      onSuccess: (data) => toast.success(customerId
+        ? t('Venta asociada a {name}', { name: data.customerName })
+        : t('Cliente quitado de la venta')),
+      onError: (err) => toast.error(err?.response?.data?.message ?? t('No pudimos actualizar el cliente')),
+    })
+  }
 
   const [returnMode, setReturnMode] = useState(false)
   const [returnQty, setReturnQty] = useState({})   // { saleItemId: "1.5" }
@@ -142,8 +155,35 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
                     <UserRound size={11} />
                     {sale.customerName}
+                    {canAssignCustomer && (
+                      <>
+                        <button type="button" onClick={() => setPickingCustomer(true)} disabled={assignCustomer.isPending}
+                          className="ml-1 rounded px-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-100" title={t('Cambiar cliente')}>
+                          {t('Cambiar')}
+                        </button>
+                        <button type="button" onClick={() => changeCustomer(null)} disabled={assignCustomer.isPending}
+                          className="rounded p-0.5 text-blue-500 hover:bg-blue-100" aria-label={t('Quitar cliente')} title={t('Quitar cliente')}>
+                          <X size={11} />
+                        </button>
+                      </>
+                    )}
                   </span>
                 )}
+                {canAssignCustomer && !sale?.customerName && (
+                  <button type="button" onClick={() => setPickingCustomer(true)} disabled={assignCustomer.isPending}
+                    title={t('Asocia esta venta a un cliente para verla en su ficha y en el ranking de clientes')}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-blue-300 bg-white px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
+                    {assignCustomer.isPending ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                    {t('Asociar cliente')}
+                  </button>
+                )}
+                <CustomerSelectModal
+                  open={pickingCustomer}
+                  onClose={() => setPickingCustomer(false)}
+                  onSelect={(c) => changeCustomer(c.id)}
+                  title={t('¿Quién compró?')}
+                  showDebt={false}
+                />
                 {sale?.onCredit && (
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
                     debtPending ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'

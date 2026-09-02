@@ -30,6 +30,7 @@ import StockPage      from '../pages/stock/StockPage'
 import ReportsPage    from '../pages/ReportsPage'
 import BalancePage    from '../pages/BalancePage'
 import SellerPerformancePage from '../pages/SellerPerformancePage'
+import CustomerRankingPage from '../pages/CustomerRankingPage'
 import EmployeesPage       from '../pages/EmployeesPage'
 import SuppliersPage       from '../pages/SuppliersPage'
 import SupplierDetailPage  from '../pages/SupplierDetailPage'
@@ -97,6 +98,10 @@ export default function AppRouter() {
       {/* OWNER only */}
       <Route path="/reports/sellers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SellerPerformancePage /></ProtectedRoute>
+      } />
+      {/* Mejores clientes (tarea 250): OWNER y EMPLOYEE con canViewReports */}
+      <Route path="/reports/customers" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><CustomerRankingPage /></ProtectedRoute>
       } />
       <Route path="/empleados" element={
         <ProtectedRoute allowedRoles={['OWNER']}><EmployeesPage /></ProtectedRoute>

@@ -12,4 +12,8 @@ export const customersApi = {
   getStatement:    (id)         => api.get(`/customers/${id}/statement`),
   payment:         (id, data)   => api.post(`/customers/${id}/transactions/payment`,    data),
   adjustment:      (id, data)   => api.post(`/customers/${id}/transactions/adjustment`, data),
+
+  // Ventas por cliente (tarea 250): compras (contado + fiado, paginado) y resumen comercial
+  getSales:        (id, params) => api.get(`/customers/${id}/sales`,   { params }),
+  getSummary:      (id, params) => api.get(`/customers/${id}/summary`, { params }),
 }

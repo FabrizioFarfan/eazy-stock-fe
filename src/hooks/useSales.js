@@ -25,6 +25,21 @@ export function useCreateSale() {
   })
 }
 
+/** Asociar/quitar el cliente de una venta pasada (William etiqueta su historial). */
+export function useAssignSaleCustomer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ saleId, customerId }) => salesApi.assignCustomer(saleId, customerId).then((r) => r.data.data),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: [SALES_KEY] })
+      qc.invalidateQueries({ queryKey: ['sales', 'detail', vars.saleId] })
+      qc.invalidateQueries({ queryKey: ['customers'] })       // compras y resumen de la ficha
+      qc.invalidateQueries({ queryKey: ['customer-sales'] })
+      qc.invalidateQueries({ queryKey: ['reports'] })         // ranking de clientes
+    },
+  })
+}
+
 export function useSaleReturns(saleId, options = {}) {
   return useQuery({
     queryKey: [SALES_KEY, saleId, 'returns'],

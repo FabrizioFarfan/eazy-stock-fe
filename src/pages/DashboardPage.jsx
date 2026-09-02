@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Package, TrendingUp, ArrowUpDown,
   AlertTriangle, Building2, Users, CheckCircle2,
-  FileText, Trophy, ArrowRight, Sparkles, CalendarClock,
+  FileText, Trophy, ArrowRight, Sparkles, CalendarClock, Award,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDailySummary, useReportsLowStock, useReportsExpiring } from '../hooks/useReports'
@@ -305,6 +305,13 @@ function OwnerDashboard({ name, businessId }) {
           >
             <Trophy size={15} />
             {t('Rendimiento de vendedores')}
+          </button>
+          <button
+            onClick={() => navigate('/reports/customers')}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <Award size={15} />
+            {t('Mejores clientes')}
           </button>
         </div>
       </div>

@@ -127,3 +127,21 @@ export function useBusinessOverview(params, options = {}) {
     ...options,
   })
 }
+
+export function useCustomerRanking(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'customers', params],
+    queryFn: () => reportsApi.getCustomerRanking(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
+export function useInactiveCustomers(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'customers-inactive', params],
+    queryFn: () => reportsApi.getInactiveCustomers(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}

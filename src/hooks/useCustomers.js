@@ -101,3 +101,28 @@ export function useCustomerSearch(search, extra = {}, options = {}) {
     { enabled: options.enabled ?? !!search },
   )
 }
+
+// ── Ventas por cliente (tarea 250) ────────────────────────────────────────────
+
+export const CUSTOMER_SALES_KEY = 'customer-sales'
+
+/** Compras del cliente (contado + fiado) con scroll infinito. */
+export function useCustomerSales(customerId, params = {}, options = {}) {
+  return useInfiniteSearch(
+    [CUSTOMER_SALES_KEY, customerId],
+    (p) => customersApi.getSales(customerId, p),
+    params,
+    { enabled: options.enabled ?? !!customerId, pageSize: 20 },
+  )
+}
+
+/** Total comprado, nº de compras, ticket promedio, frecuencia, última compra y lo que más compra. */
+export function useCustomerSummary(customerId, params = {}, options = {}) {
+  return useQuery({
+    queryKey: [CUSTOMERS_KEY, 'summary', customerId, params],
+    queryFn: () => customersApi.getSummary(customerId, params).then((r) => r.data.data),
+    enabled: !!customerId,
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}

@@ -303,9 +303,13 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
   )
 }
 
-// ── CreditSection — vender al fiado ───────────────────────────────────────────
+// ── CustomerSection — cliente de la venta (opcional) + vender al fiado ────────
+// Tarea 250 (William): cualquier venta puede llevar cliente, sin obligar a
+// nadie. Si el cajero no toca nada, se vende como siempre; si lo elige, el
+// negocio sabe quién compró qué y cuándo (ficha, ranking, inactivos). El fiado
+// vive dentro de la misma tarjeta: el cliente es el mismo, no se pregunta dos veces.
 
-function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total }) {
+function CustomerSection({ customer, onSelectCustomer, creditEnabled, onToggleCredit, canSellOnCredit, total }) {
   const t = useT()
   const [picking, setPicking] = useState(false)
   const debt   = customer ? Number(customer.currentDebt ?? 0) : 0
@@ -316,75 +320,105 @@ function CreditSection({ enabled, onToggle, customer, onSelectCustomer, total })
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <label className="flex items-center justify-between gap-3 cursor-pointer">
+      <div className="flex items-center justify-between gap-3">
         <span className="flex items-center gap-2 text-sm font-bold text-gray-900">
           <User size={14} className="text-blue-600" />
-          {t('Vender al fiado')}
+          {t('Cliente')}
+          <span className="text-xs font-normal text-gray-400">{t('(opcional)')}</span>
         </span>
-        <span className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
-          <input type="checkbox" checked={enabled} onChange={(e) => onToggle(e.target.checked)} className="sr-only" />
-          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 mt-0.5 ${enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
-        </span>
-      </label>
+        {!customer && (
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+          >
+            <Plus size={13} /> {t('Asociar cliente')}
+          </button>
+        )}
+      </div>
 
-      {enabled && (
-        <div className="mt-3 space-y-3">
-          {customer ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-blue-900">{customer.name}</p>
-                <p className="truncate text-xs text-blue-700">
-                  {[customer.documentId, formatPhoneDisplay(customer.phone)].filter(Boolean).join(' · ') || t('Cliente seleccionado')}
-                </p>
-              </div>
-              <div className="flex flex-shrink-0 items-center gap-1">
-                <button type="button" onClick={() => setPicking(true)}
-                  className="rounded-lg px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100">{t('Cambiar')}</button>
-                <button type="button" onClick={() => onSelectCustomer(null)} aria-label={t('Quitar')}
-                  className="rounded-lg p-1 text-blue-700 hover:bg-blue-100"><X size={14} /></button>
-              </div>
+      {customer ? (
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-blue-900">{customer.name}</p>
+            <p className="truncate text-xs text-blue-700">
+              {[customer.documentId, formatPhoneDisplay(customer.phone)].filter(Boolean).join(' · ') || t('Cliente seleccionado')}
+            </p>
+          </div>
+          <div className="flex flex-shrink-0 items-center gap-1">
+            <button type="button" onClick={() => setPicking(true)}
+              className="rounded-lg px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100">{t('Cambiar')}</button>
+            <button type="button" onClick={() => { onSelectCustomer(null); onToggleCredit(false) }} aria-label={t('Quitar')}
+              className="rounded-lg p-1 text-blue-700 hover:bg-blue-100"><X size={14} /></button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-gray-400">
+          {t('Si lo asocias, sabrás qué compra, cada cuánto vuelve y quiénes son tus mejores clientes.')}
+        </p>
+      )}
+      <CustomerSelectModal
+        open={picking}
+        onClose={() => setPicking(false)}
+        onSelect={onSelectCustomer}
+        title={creditEnabled ? undefined : t('¿Quién compra?')}
+        showDebt={creditEnabled}
+      />
+
+      {canSellOnCredit && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <label className="flex items-center justify-between gap-3 cursor-pointer">
+            <span className="text-sm font-semibold text-gray-800">{t('Vender al fiado')}</span>
+            <span className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${creditEnabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
+              <input type="checkbox" checked={creditEnabled} onChange={(e) => onToggleCredit(e.target.checked)} className="sr-only" />
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 mt-0.5 ${creditEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </span>
+          </label>
+
+          {creditEnabled && (
+            <div className="mt-3 space-y-3">
+              {!customer && (
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 px-3 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+                >
+                  <User size={15} /> {t('Elegir cliente')}
+                </button>
+              )}
+
+              {customer && (
+                <>
+                  {noCredit ? (
+                    <p className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-100">
+                      {t('Este cliente no tiene crédito habilitado. Editá su ficha para habilitarlo o vendé al contado.')}
+                    </p>
+                  ) : (
+                    <div className="space-y-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-xs">
+                      <div className="flex items-center justify-between text-gray-500">
+                        <span>{t('Deuda actual')}</span>
+                        <span className="font-mono">{formatPrice(debt)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-gray-500">
+                        <span>{t('Límite')}</span>
+                        <span className="font-mono">{formatPrice(limit)}</span>
+                      </div>
+                      <div className="flex items-center justify-between font-semibold text-gray-900">
+                        <span>{t('Después de esta venta')}</span>
+                        <span className="font-mono">{formatPrice(projected)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {exceeds && (
+                    <p className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100">
+                      <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
+                      {t('Esta venta dejaría al cliente con {debt} de deuda, excediendo su límite de {limit}. Podés continuar igual.', { debt: formatPrice(projected), limit: formatPrice(limit) })}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 px-3 py-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-            >
-              <User size={15} /> {t('Elegir cliente')}
-            </button>
-          )}
-          <CustomerSelectModal open={picking} onClose={() => setPicking(false)} onSelect={onSelectCustomer} />
-
-          {customer && (
-            <>
-              {noCredit ? (
-                <p className="rounded-xl bg-orange-50 px-3 py-2 text-xs text-orange-700 ring-1 ring-orange-100">
-                  {t('Este cliente no tiene crédito habilitado. Editá su ficha para habilitarlo o vendé al contado.')}
-                </p>
-              ) : (
-                <div className="space-y-1 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-xs">
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>{t('Deuda actual')}</span>
-                    <span className="font-mono">{formatPrice(debt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-gray-500">
-                    <span>{t('Límite')}</span>
-                    <span className="font-mono">{formatPrice(limit)}</span>
-                  </div>
-                  <div className="flex items-center justify-between font-semibold text-gray-900">
-                    <span>{t('Después de esta venta')}</span>
-                    <span className="font-mono">{formatPrice(projected)}</span>
-                  </div>
-                </div>
-              )}
-
-              {exceeds && (
-                <p className="flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100">
-                  <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
-                  {t('Esta venta dejaría al cliente con {debt} de deuda, excediendo su límite de {limit}. Podés continuar igual.', { debt: formatPrice(projected), limit: formatPrice(limit) })}
-                </p>
-              )}
-            </>
           )}
         </div>
       )}
@@ -640,12 +674,14 @@ export default function NewSalePage() {
           discountType,
           discountValue: numericDiscount,
         }),
-        ...(isFiado && {
-          isOnCredit: true,
-          customerId: customer.id,
-        }),
+        // Cliente en toda venta (tarea 250): al contado es opcional; al fiado obligatorio.
+        ...(customer && { customerId: customer.id }),
+        ...(isFiado && { isOnCredit: true }),
       })
 
+      if (!sale?.onCredit && sale?.customerName) {
+        toast.success(t('Venta registrada a nombre de {name}', { name: sale.customerName }))
+      }
       if (sale?.onCredit && sale?.customerName) {
         toast.success(
           t('Venta al fiado registrada. {name} ahora debe {debt}', { name: sale.customerName, debt: formatPrice(sale.customerDebtAfter) }),
@@ -815,12 +851,13 @@ export default function NewSalePage() {
             />
           )}
 
-          {canSellOnCredit && cart.length > 0 && (
-            <CreditSection
-              enabled={onCredit}
-              onToggle={(v) => { setOnCredit(v); if (!v) setCustomer(null) }}
+          {cart.length > 0 && (
+            <CustomerSection
               customer={customer}
               onSelectCustomer={setCustomer}
+              creditEnabled={isFiado}
+              onToggleCredit={setOnCredit}
+              canSellOnCredit={canSellOnCredit}
               total={total}
             />
           )}
