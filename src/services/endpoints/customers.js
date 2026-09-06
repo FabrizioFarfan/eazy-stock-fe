@@ -9,7 +9,8 @@ export const customersApi = {
 
   getTransactions: (id, params) => api.get(`/customers/${id}/transactions`, { params }),
   // Estado de cuenta: cargos con productos, abonos y saldo — fuente del PDF para el deudor
-  getStatement:    (id)         => api.get(`/customers/${id}/statement`),
+  // params opcionales { from, to } (YYYY-MM-DD): acotan el período y traen el saldo anterior
+  getStatement:    (id, params) => api.get(`/customers/${id}/statement`, { params }),
   payment:         (id, data)   => api.post(`/customers/${id}/transactions/payment`,    data),
   adjustment:      (id, data)   => api.post(`/customers/${id}/transactions/adjustment`, data),
 

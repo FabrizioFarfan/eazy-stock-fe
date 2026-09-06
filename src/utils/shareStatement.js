@@ -5,16 +5,21 @@
 
 import { formatPrice } from './formatMoney'
 import { whatsappDigits } from './phone'
-import { statementPdfBlob, statementPdfFileName, downloadDebtStatementPdf } from './debtStatementPdf'
+import { statementPdfBlob, statementPdfFileName, downloadDebtStatementPdf, periodLabel } from './debtStatementPdf'
 import { t } from '../i18n'
 
 export function statementMessage(statement) {
-  const debt = Number(statement.currentDebt ?? 0)
+  const debt = Number(statement.closingBalance ?? statement.currentDebt ?? 0)
   const greet = statement.customerName ? t('Hola {name},', { name: statement.customerName }) : t('Hola,')
   const business = statement.businessName || t('nuestro negocio')
-  const body = debt > 0
-    ? t('te envío tu estado de cuenta de {business}: a la fecha tu saldo pendiente es {amount}.', { business, amount: formatPrice(debt) })
-    : t('te envío tu estado de cuenta de {business}: a la fecha no tienes saldo pendiente.', { business })
+  const period = periodLabel(statement)
+  const body = period
+    ? (debt > 0
+      ? t('te envío tu estado de cuenta de {business} del período {period}: al cierre tu saldo pendiente es {amount}.', { business, period, amount: formatPrice(debt) })
+      : t('te envío tu estado de cuenta de {business} del período {period}: al cierre no tienes saldo pendiente.', { business, period }))
+    : (debt > 0
+      ? t('te envío tu estado de cuenta de {business}: a la fecha tu saldo pendiente es {amount}.', { business, amount: formatPrice(debt) })
+      : t('te envío tu estado de cuenta de {business}: a la fecha no tienes saldo pendiente.', { business }))
   return `${greet} ${body} ${t('Adjunto el PDF con el detalle de tus compras y pagos, con el saldo después de cada movimiento, para que lo revises. Cualquier diferencia me avisas y la vemos juntos.')}`
 }
 

@@ -13,6 +13,16 @@ function fmtLongDate(str) {
   return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
     .format(new Date(str))
 }
+/** «1 – 30 de setiembre de 2026» / «todo el historial» */
+export function periodLabel(statement) {
+  const { periodFrom, periodTo } = statement
+  if (!periodFrom && !periodTo) return null
+  const f = (d) => new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d + 'T12:00:00'))
+  if (periodFrom && periodTo) return `${f(periodFrom)} – ${f(periodTo)}`
+  if (periodFrom) return `${t('desde el')} ${f(periodFrom)}`
+  return `${t('hasta el')} ${f(periodTo)}`
+}
+
 function fmtQty(q) {
   const n = Number(q)
   return Number.isInteger(n) ? String(n) : String(n)
@@ -23,7 +33,10 @@ export function statementPdfFileName(statement) {
   const safeName = (statement.customerName || t('cliente'))
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()
-  return `${t('estado-de-cuenta')}-${safeName}-${new Date().toISOString().slice(0, 10)}.pdf`
+  const when = statement.periodFrom && statement.periodTo
+    ? `${statement.periodFrom}_${statement.periodTo}`
+    : new Date().toISOString().slice(0, 10)
+  return `${t('estado-de-cuenta')}-${safeName}-${when}.pdf`
 }
 
 /**
@@ -43,7 +56,9 @@ export function buildStatementPdf(statement) {
   const pageH = doc.internal.pageSize.getHeight()
   const marginX = 14
   let y = 18
-  const debt = Number(statement.currentDebt ?? 0)
+  const debt = Number(statement.closingBalance ?? statement.currentDebt ?? 0)
+  const period = periodLabel(statement)
+  const opening = Number(statement.openingBalance ?? 0)
 
   // ── Encabezado ──
   doc.setFontSize(15)
@@ -54,6 +69,10 @@ export function buildStatementPdf(statement) {
   doc.setFont(undefined, 'normal')
   doc.setTextColor(110)
   doc.text(`${t('Estado de cuenta')} · ${fmtLongDate(statement.generatedAt)}`, pageW - marginX, y, { align: 'right' })
+  if (period) {
+    y += 4.5
+    doc.text(`${t('Período')}: ${period}`, pageW - marginX, y, { align: 'right' })
+  }
   y += 8
 
   // ── Cliente ──
@@ -71,16 +90,19 @@ export function buildStatementPdf(statement) {
   // ── Carta cordial ──
   doc.setTextColor(30)
   doc.setFontSize(10.5)
-  const saludo = debt > 0
-    ? t('Estimado(a) {customer}, le saludamos de {business}. A la fecha usted mantiene un saldo pendiente de {amount}. A continuación le presentamos el detalle completo de sus compras y pagos, con el saldo después de cada movimiento, para que pueda revisarlo con tranquilidad. Agradecemos de antemano su puntualidad.', {
-        customer: statement.customerName,
-        business: statement.businessName || t('nuestro negocio'),
-        amount:   formatPrice(debt),
-      })
-    : t('Estimado(a) {customer}, le saludamos de {business}. A la fecha usted no mantiene saldo pendiente. A continuación le presentamos el detalle completo de sus compras y pagos, con el saldo después de cada movimiento. Gracias por su preferencia.', {
-        customer: statement.customerName,
-        business: statement.businessName || t('nuestro negocio'),
-      })
+  const vars = {
+    customer: statement.customerName,
+    business: statement.businessName || t('nuestro negocio'),
+    amount:   formatPrice(debt),
+    period,
+  }
+  const saludo = period
+    ? (debt > 0
+      ? t('Estimado(a) {customer}, le saludamos de {business}. Le presentamos el detalle de sus compras y pagos del período {period}, partiendo del saldo que traía y con el saldo después de cada movimiento. Al cierre del período su saldo pendiente es {amount}. Agradecemos de antemano su puntualidad.', vars)
+      : t('Estimado(a) {customer}, le saludamos de {business}. Le presentamos el detalle de sus compras y pagos del período {period}, partiendo del saldo que traía y con el saldo después de cada movimiento. Al cierre del período no mantiene saldo pendiente. Gracias por su preferencia.', vars))
+    : (debt > 0
+      ? t('Estimado(a) {customer}, le saludamos de {business}. A la fecha usted mantiene un saldo pendiente de {amount}. A continuación le presentamos el detalle completo de sus compras y pagos, con el saldo después de cada movimiento, para que pueda revisarlo con tranquilidad. Agradecemos de antemano su puntualidad.', vars)
+      : t('Estimado(a) {customer}, le saludamos de {business}. A la fecha usted no mantiene saldo pendiente. A continuación le presentamos el detalle completo de sus compras y pagos, con el saldo después de cada movimiento. Gracias por su preferencia.', vars))
   const saludoLines = doc.splitTextToSize(saludo, pageW - marginX * 2)
   doc.text(saludoLines, marginX, y)
   y += saludoLines.length * 5.2 + 6
@@ -88,6 +110,18 @@ export function buildStatementPdf(statement) {
   // ── Historial cronológico ──
   const movements = statement.movements ?? []
   const body = []
+  // Saldo anterior: la línea que hace que un solo mes cuadre sin arrastrar los
+  // meses anteriores (saldo anterior + cargos − abonos = saldo final).
+  if (period) {
+    body.push([
+      // El saldo anterior es el del día ANTES de que arranque el período.
+      { content: statement.periodFrom ? fmtDate(new Date(new Date(statement.periodFrom + 'T12:00:00').getTime() - 86400000)) : '', styles: { textColor: [75, 85, 99] } },
+      { content: t('Saldo anterior'), styles: { fontStyle: 'bold', textColor: [55, 65, 81] } },
+      { content: '', styles: { fillColor: [249, 250, 251] } },
+      { content: '', styles: { fillColor: [249, 250, 251] } },
+      { content: formatPrice(opening), styles: { halign: 'right', fontStyle: 'bold' } },
+    ])
+  }
   for (const m of movements) {
     const ref = m.saleRef ? ` #${m.saleRef}` : ''
     body.push([
@@ -106,7 +140,7 @@ export function buildStatementPdf(statement) {
     }
   }
 
-  if (body.length === 0) {
+  if (movements.length === 0 && !period) {
     doc.setFontSize(10)
     doc.setTextColor(110)
     doc.text(t('Sin movimientos registrados.'), marginX, y)
@@ -147,7 +181,7 @@ export function buildStatementPdf(statement) {
   doc.setFontSize(12)
   doc.setFont(undefined, 'bold')
   doc.setTextColor(...(pending ? [153, 27, 27] : [6, 95, 70]))
-  doc.text(pending ? t('SALDO PENDIENTE') : t('SIN SALDO PENDIENTE'), marginX + 4, y + 4)
+  doc.text(pending ? (period ? t('SALDO PENDIENTE AL CIERRE') : t('SALDO PENDIENTE')) : t('SIN SALDO PENDIENTE'), marginX + 4, y + 4)
   doc.text(formatPrice(debt), pageW - marginX - 4, y + 4, { align: 'right' })
   y += 16
 
