@@ -1,11 +1,10 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { toast } from 'sonner'
 import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
   TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Mail, MapPin,
-  FileDown, MessageCircle, FilePlus2, CheckCircle2,
+  MessageCircle, FilePlus2, CheckCircle2, History,
   ShoppingBag, Star, Clock, Repeat, Wallet, ShoppingCart,
 } from 'lucide-react'
 import {
@@ -15,12 +14,11 @@ import {
 } from '../hooks/useCustomers'
 import { formatQty } from '../utils/quantity'
 import { useQuoteSearch } from '../hooks/useQuotes'
-import { customersApi } from '../services/endpoints/customers'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
-import { downloadDebtStatementPdf } from '../utils/debtStatementPdf'
 import { reminderWhatsAppUrl } from '../utils/debtReminder'
 import CustomerFormModal from '../components/customers/CustomerFormModal'
+import StatementMenu from '../components/customers/StatementMenu'
 import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import SaleDetailModal from '../components/reports/SaleDetailModal'
@@ -50,9 +48,14 @@ function CustomerHelp() {
           {t('Si asocias al cliente en cada venta (es opcional, un botón en Nueva venta), aquí ves cuánto te compró, cada cuánto vuelve, su ticket promedio, la última vez que vino y los productos que más lleva. Las ventas viejas se le pueden asociar desde su detalle.')}
         </p>
       </HelpBlock>
-      <HelpBlock title={t('PDF de deuda (para entregar al cliente)')}>
+      <HelpBlock title={t('Estado de cuenta (para entregar al cliente)')}>
         <p>
-          {t('El botón "PDF de deuda" genera una carta cordial a nombre del cliente con el detalle de sus compras al fiado — producto por producto —, los pagos que ya hizo y el saldo pendiente. Descárgalo y mándaselo por WhatsApp o correo, o imprímelo y entrégaselo en mano.')}
+          {t('El botón "Estado de cuenta" arma una carta cordial a nombre del cliente con TODO su historial en orden: cada compra al fiado — producto por producto —, cada pago y cada ajuste, con el saldo que quedó después de cada movimiento, y el saldo final. Desde el mismo botón lo descargas, lo mandas por WhatsApp o correo (en el celular el PDF va adjunto de una) o lo imprimes. Ideal cuando un cliente dice que debe menos: le muestras el detalle y lo cuadra renglón por renglón.')}
+        </p>
+      </HelpBlock>
+      <HelpBlock title={t('Historial de movimientos')}>
+        <p>
+          {t('Al final de la ficha está el historial completo (cargos, pagos, ajustes) con el saldo después de cada uno. El botón "Ver movimientos" de arriba te lleva directo.')}
         </p>
       </HelpBlock>
       <HelpBlock title={t('Recordatorio por WhatsApp')}>
@@ -298,18 +301,8 @@ export default function CustomerDetailPage() {
   const [showAdjustment, setShowAdjustment] = useState(false)
   const [openSaleId, setOpenSaleId]       = useState(null)
   const [openQuoteId, setOpenQuoteId]     = useState(null)
-  const [generatingPdf, setGeneratingPdf] = useState(false)
-
-  const handleDownloadPdf = async () => {
-    try {
-      setGeneratingPdf(true)
-      const statement = (await customersApi.getStatement(id)).data.data
-      downloadDebtStatementPdf(statement)
-    } catch {
-      toast.error(t('No pudimos generar el PDF. Intenta de nuevo.'))
-    } finally {
-      setGeneratingPdf(false)
-    }
+  const scrollToHistory = () => {
+    document.getElementById('historial-movimientos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   if (isLoading) {
@@ -341,14 +334,16 @@ export default function CustomerDetailPage() {
           <ArrowLeft size={14} />{backLabel ? t('Volver a {page}', { page: t(backLabel) }) : t('Volver')}
         </button>
         <div className="flex flex-wrap items-center gap-2">
+          <button onClick={scrollToHistory}
+            title={t('Ir al historial completo de movimientos (al final de la ficha)')}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <History size={14} />{t('Ver movimientos')}
+          </button>
+          {/* Estado de cuenta: siempre disponible (también con deuda 0, para que el
+              cliente vea que está al día o revise su historial). */}
+          <StatementMenu customerId={id} />
           {debt > 0 && (
             <>
-              <button onClick={handleDownloadPdf} disabled={generatingPdf}
-                title={t('Descargar la carta de deuda en PDF con el detalle de productos, para enviársela al cliente')}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
-                {generatingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
-                {t('PDF de deuda')}
-              </button>
               {reminderWhatsAppUrl(user?.businessName, customer) && (
                 <a href={reminderWhatsAppUrl(user?.businessName, customer)}
                   target="_blank" rel="noopener noreferrer"
@@ -480,8 +475,14 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* Timeline */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
+      <div id="historial-movimientos" className="scroll-mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
+            <p className="mt-0.5 text-xs text-gray-400">{t('Cargos, pagos y ajustes con el saldo después de cada movimiento. Del más reciente al más antiguo.')}</p>
+          </div>
+          <StatementMenu customerId={id} variant="ghost" />
+        </div>
         {loadingTxns ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
