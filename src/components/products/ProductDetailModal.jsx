@@ -1,4 +1,5 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2 } from 'lucide-react'
+import { imageSrc } from '../../utils/productImage'
 import { useQuery } from '@tanstack/react-query'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
@@ -73,6 +74,8 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
   const hasAttrs = Object.keys(attrs).length > 0
 
   const isLow = product.currentStock < product.minStock
+  const photo = imageSrc(product.imageUrl)
+  const thumb = imageSrc(product.thumbUrl)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -81,12 +84,21 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
         {/* Header */}
         <div className="flex flex-shrink-0 items-start justify-between border-b border-gray-100 px-6 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
-              <Package size={22} className="text-blue-600" />
-            </div>
+            {thumb ? (
+              <img src={thumb} alt="" className="h-11 w-11 flex-shrink-0 rounded-xl border border-gray-100 object-cover" />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
+                <Package size={22} className="text-blue-600" />
+              </div>
+            )}
             <div>
               <h3 className="font-bold text-gray-900 leading-tight">{product.name}</h3>
               <p className="text-xs font-mono text-gray-400 mt-0.5">{product.sku}</p>
+              {product.locationName && (
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100">
+                  <MapPin size={11} /> {product.locationName}
+                </p>
+              )}
             </div>
           </div>
           <button onClick={onClose}
@@ -97,6 +109,17 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto space-y-4 px-6 py-5">
+
+          {/* Foto grande — solo acá se pide la versión grande (las listas usan la miniatura) */}
+          {photo && (
+            <a href={photo} target="_blank" rel="noreferrer" title={t('Ver foto en grande')}
+              className="group relative block overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+              <img src={photo} alt={product.name} className="mx-auto max-h-64 w-full object-contain" />
+              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition group-hover:opacity-100">
+                <Maximize2 size={11} /> {t('Ver foto en grande')}
+              </span>
+            </a>
+          )}
 
           {/* Low stock warning */}
           {isLow && (
@@ -130,6 +153,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
             {product.presentation && (
               <Row label={t('Presentación')}   value={product.presentation} />
             )}
+            <Row label={t('Ubicación')}        value={product.locationName || t('Sin ubicación')} />
           </Section>
 
           {/* Notas de importación — si hubo issues durante el bulk import */}

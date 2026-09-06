@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { X, Loader2, ArrowDownToLine, SlidersHorizontal } from 'lucide-react'
 import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../../components/common/LoadMoreRow'
+import ProductThumb from '../../components/products/ProductThumb'
+import { MapPin } from 'lucide-react'
 import { useCreateMovement } from '../../hooks/useStock'
 import { useDebounce } from '../../hooks/useDebounce'
 import ScannerInput from '../../components/ScannerInput'
@@ -148,7 +150,15 @@ export default function MovementModal({ type, onClose, initialProduct = null }) 
                         {results.map((p) => (
                           <button key={p.id} type="button" onClick={() => selectProduct(p)}
                             className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                            <span className="font-semibold text-gray-900">{p.name}</span>
+                            <span className="flex min-w-0 items-center gap-2.5">
+                              <ProductThumb product={p} size={28} />
+                              <span className="min-w-0">
+                                <span className="block truncate font-semibold text-gray-900">{p.name}</span>
+                                {p.locationName && (
+                                  <span className="flex items-center gap-1 text-[11px] text-amber-700"><MapPin size={10} /> {p.locationName}</span>
+                                )}
+                              </span>
+                            </span>
                             <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
                           </button>
                         ))}

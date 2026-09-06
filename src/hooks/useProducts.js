@@ -57,6 +57,23 @@ export function useUpdateProduct() {
   })
 }
 
+/** Sube o reemplaza la foto de un producto (multipart). Devuelve el producto actualizado. */
+export function useUploadProductImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file, params }) => productsApi.uploadImage(id, file, params).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+  })
+}
+
+export function useDeleteProductImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, params }) => productsApi.deleteImage(id, params).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] }),
+  })
+}
+
 export function useDeactivateProduct() {
   const qc = useQueryClient()
   return useMutation({

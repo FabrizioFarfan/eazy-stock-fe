@@ -34,6 +34,15 @@ export const productsApi = {
     api.get('/products/bulk-delete/preview', { params: { from, to } }),
   bulkDelete: (from, to) => api.post('/products/bulk-delete', { from, to }),
 
+  // Foto del producto: el BE guarda una versión grande (detalle) y una miniatura
+  // (listas). `file` ya viene reducido por utils/productImage.shrinkImage.
+  uploadImage: (id, file, params) => {
+    const form = new FormData()
+    form.append('file', file, file.name || 'foto.jpg')
+    return api.post(`/products/${id}/image`, form, { params, headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  deleteImage: (id, params) => api.delete(`/products/${id}/image`, { params }),
+
   getQr:      (id) => api.get(`/products/${id}/qr`,      { responseType: 'blob' }),
   getBarcode: (id) => api.get(`/products/${id}/barcode`, { responseType: 'blob' }),
 

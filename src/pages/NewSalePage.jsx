@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin } from 'lucide-react'
+import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
@@ -66,6 +67,9 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
         : 'border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md'
     }`}>
       <div className="flex items-start justify-between gap-2">
+        {/* Miniatura + ubicación: el vendedor reconoce el producto y sabe
+            dónde ir a buscarlo sin preguntar (pedido de William). */}
+        <ProductThumb product={product} size={52} rounded="rounded-xl" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-gray-900">{product.name}</p>
           {product.presentation && (
@@ -81,6 +85,11 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
               </span>
             )}
           </div>
+          {product.locationName && (
+            <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100">
+              <MapPin size={11} /> {product.locationName}
+            </p>
+          )}
         </div>
       </div>
 

@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle } from 'lucide-react'
-import { useCreateProduct, useUpdateProduct, useFreeCodes } from '../../hooks/useProducts'
+import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package } from 'lucide-react'
+import { toast } from 'sonner'
+import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage } from '../../hooks/useProducts'
 import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useBrands, useCreateBrand } from '../../hooks/useBrands'
 import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
+import { useLocations, useCreateLocation } from '../../hooks/useLocations'
+import { imageSrc, shrinkImage } from '../../utils/productImage'
 import { useAuth } from '../../context/AuthContext'
 import EntityPicker from '../ui/EntityPicker'
 import PriceInput from '../inputs/PriceInput'
@@ -197,13 +200,69 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const { data: brandsData }    = useBrands({ size: 200 })
   const { data: categoriesData } = useCategories({ size: 200 })
+  const { data: locationsData }  = useLocations({ size: 200 })
   const suppliers  = suppliersData?.content  ?? []
   const brands     = brandsData?.content     ?? []
   const categories = categoriesData?.content ?? []
+  const locations  = locationsData?.content  ?? []
 
   const createBrand    = useCreateBrand()
   const createSupplier = useCreateSupplier()
   const createCategory = useCreateCategory()
+  const createLocation = useCreateLocation()
+  const uploadImage    = useUploadProductImage()
+  const deleteImage    = useDeleteProductImage()
+  // La foto se sube DESPUÉS de guardar el producto: el botón sigue ocupado mientras tanto.
+  const photoSyncing   = uploadImage.isPending || deleteImage.isPending
+
+  // ── Foto ──────────────────────────────────────────────────────────────────
+  // La foto NO viaja en el JSON del producto: se sube aparte (multipart) recién
+  // cuando el producto ya existe. Acá solo la elegimos, la reducimos en el
+  // navegador (shrinkImage) y mostramos la vista previa; al guardar se sube.
+  const [photoFile,    setPhotoFile]    = useState(null)   // File pendiente de subir
+  const [photoPreview, setPhotoPreview] = useState(imageSrc(product?.imageUrl))
+  const [photoRemoved, setPhotoRemoved] = useState(false)  // el usuario quitó la foto guardada
+  const [photoBusy,    setPhotoBusy]    = useState(false)
+  const [photoError,   setPhotoError]   = useState(null)
+  const cameraInputRef  = useRef(null)
+  const galleryInputRef = useRef(null)
+
+  const handlePhotoPick = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''            // permite volver a elegir el mismo archivo
+    if (!file) return
+    setPhotoError(null)
+    setPhotoBusy(true)
+    try {
+      const small = await shrinkImage(file)
+      if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview)
+      setPhotoFile(small)
+      setPhotoPreview(URL.createObjectURL(small))
+      setPhotoRemoved(false)
+    } catch {
+      setPhotoError(t('No se pudo leer la imagen'))
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  const handlePhotoRemove = () => {
+    if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview)
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setPhotoRemoved(!!product?.imageUrl)
+    setPhotoError(null)
+  }
+
+  /** Tras guardar el producto: sube la foto nueva o borra la que se quitó. */
+  const syncPhoto = async (productId) => {
+    const params = user.role === 'SUPER_ADMIN' && user.businessId ? { businessId: user.businessId } : undefined
+    if (photoFile) {
+      await uploadImage.mutateAsync({ id: productId, file: photoFile, params })
+    } else if (photoRemoved) {
+      await deleteImage.mutateAsync({ id: productId, params })
+    }
+  }
 
   // Huecos en la numeración (códigos de productos borrados que nunca se usaron).
   // Solo en el alta: en la edición el producto ya tiene su código.
@@ -214,6 +273,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   const [brandId,     setBrandId]     = useState(product?.brandId     ?? null)
   const [supplierId,  setSupplierId]  = useState(product?.supplierId  ?? receiptContext?.supplier?.id ?? null)
   const [categoryId,  setCategoryId]  = useState(product?.categoryId  ?? null)
+  const [locationId,  setLocationId]  = useState(product?.locationId  ?? null)
 
   // Attributes map: Record<string, string>
   const [attributes,  setAttributes]  = useState(product?.attributes  ?? {})
@@ -362,9 +422,18 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       setBrandId(product.brandId       ?? null)
       setSupplierId(product.supplierId ?? null)
       setCategoryId(product.categoryId ?? null)
+      setLocationId(product.locationId ?? null)
       setAttributes(product.attributes ?? {})
+      setPhotoFile(null)
+      setPhotoPreview(imageSrc(product.imageUrl))
+      setPhotoRemoved(false)
     }
   }, [product?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCreateLocation = async (name) => {
+    const created = await createLocation.mutateAsync({ name })
+    setLocationId(created.id)
+  }
 
   const handleCreateBrand = async (name) => {
     const newBrand = await createBrand.mutateAsync({ name })
@@ -443,23 +512,27 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         supplierId,
         brandId:     brandId     || null,
         categoryId:  categoryId  || null,
+        locationId:  locationId  || null,
         attributes:  Object.keys(attributes).length > 0 ? attributes : null,
       }
 
+      let savedId
       if (isEdit) {
         await update.mutateAsync({
           id: product.id,
           data: {
             ...payload,
-            // supplier ya no se "clearea" — el campo es obligatorio. Brand y
-            // category siguen siendo opcionales. Presentation se borra explícito.
+            // supplier ya no se "clearea" — el campo es obligatorio. Brand,
+            // category y location siguen siendo opcionales. Presentation se borra explícito.
             clearBrandId:    !brandId,
             clearCategoryId: !categoryId,
+            clearLocationId: !locationId,
             clearPresentation: !presentation,
             clearExpirationDate: !expDate,
             clearBarcode: !(values.barcode?.trim()),
           },
         })
+        savedId = product.id
       } else {
         // Desde la recepción el stock inicial NO aplica: lo suma la recepción.
         const withInitial = !receiptContext && initialStock && Number(initialStock) > 0
@@ -469,7 +542,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           ? { ...withInitial, businessId: user.businessId }
           : withInitial
         const created = await create.mutateAsync(finalPayload)
+        savedId = created.id
         receiptContext?.onCreated?.(created)
+      }
+      // La foto va aparte: si falla, el producto YA quedó guardado — avisamos
+      // sin dejar el modal colgado (se puede reintentar desde Editar).
+      try {
+        await syncPhoto(savedId)
+      } catch (photoErr) {
+        toast.error(t('El producto se guardó, pero la foto no se pudo subir: {msg}', { msg: getErrorMessage(photoErr) }))
       }
       onClose()
     } catch (err) {
@@ -526,6 +607,44 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         {/* Body — scrollable */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+
+            {/* Foto del producto: para que el vendedor sepa cómo es (William).
+                Se reduce en el navegador y se sube aparte al guardar. */}
+            <div data-tutorial-target="photo" className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-3">
+              <input ref={cameraInputRef}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoPick} />
+              <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoPick} />
+              {photoPreview ? (
+                <img src={photoPreview} alt="" className="h-20 w-20 flex-shrink-0 rounded-xl border border-gray-200 bg-white object-cover" />
+              ) : (
+                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-300">
+                  {photoBusy ? <Loader2 size={22} className="animate-spin" /> : <Package size={28} />}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-700">{t('Foto del producto')}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-gray-400">
+                  {t('Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.')}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={photoBusy}
+                    className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:hidden">
+                    <Camera size={13} /> {t('Tomar foto')}
+                  </button>
+                  <button type="button" onClick={() => galleryInputRef.current?.click()} disabled={photoBusy}
+                    className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                    <ImagePlus size={13} /> {photoPreview ? t('Cambiar foto') : t('Elegir imagen')}
+                  </button>
+                  {photoPreview && (
+                    <button type="button" onClick={handlePhotoRemove} disabled={photoBusy}
+                      className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">
+                      <Trash2 size={13} /> {t('Quitar foto')}
+                    </button>
+                  )}
+                </div>
+                {photoBusy && <p className="mt-1 text-[11px] text-gray-400">{t('Procesando foto...')}</p>}
+                {photoError && <p className="mt-1 text-xs text-red-500">{photoError}</p>}
+              </div>
+            </div>
 
             {/* Nombre + Unidad + Presentación */}
             <div data-tutorial-target="name-unit" className="grid grid-cols-2 gap-3">
@@ -647,6 +766,23 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 newNamePlaceholder={t('Nombre de la nueva categoría (ej: Líquidos, Pinturas)')}
                 warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands, t)}
                 isCreating={createCategory.isPending}
+              />
+            </div>
+
+            {/* Ubicación física: en qué almacén / estante está (pedido de William) */}
+            <div data-tutorial-target="location-picker">
+              <EntityPicker
+                label={t('Ubicación en el negocio')}
+                helperText={t('Ej: Almacén 1, Estante B3, Vitrina')}
+                items={locations}
+                value={locationId}
+                onChange={setLocationId}
+                onCreate={handleCreateLocation}
+                placeholder={t('Buscar ubicación...')}
+                createLabel={t('Nueva ubicación')}
+                createButtonLabel={t('Crear ubicación')}
+                newNamePlaceholder={t('Nombre de la nueva ubicación (ej: Almacén 2)')}
+                isCreating={createLocation.isPending}
               />
             </div>
 
@@ -883,12 +1019,12 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </button>
             <button
               type="submit"
-              disabled={isBusy}
+              disabled={isBusy || photoSyncing}
               data-tutorial-target="save-button"
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             >
-              {isBusy && <Loader2 size={14} className="animate-spin" />}
-              {isBusy ? t('Guardando...') : t('Guardar')}
+              {(isBusy || photoSyncing) && <Loader2 size={14} className="animate-spin" />}
+              {isBusy || photoSyncing ? t('Guardando...') : t('Guardar')}
             </button>
           </div>
         </form>

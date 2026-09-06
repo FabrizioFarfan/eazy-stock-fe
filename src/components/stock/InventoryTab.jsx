@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Package, X } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Package, X, MapPin } from 'lucide-react'
+import ProductThumb from '../products/ProductThumb'
 import ProductDetailModal from '../products/ProductDetailModal'
 import MovementModal from '../../pages/stock/MovementModal'
 import SupplierReceiptModal from './SupplierReceiptModal'
@@ -291,12 +292,20 @@ export default function InventoryTab() {
                       className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}
                     >
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{p.sku}</td>
-                      <td className="max-w-[220px] px-4 py-3.5">
-                        <p className="truncate font-semibold text-gray-900">{p.name}</p>
-                        <p className="mt-0.5 flex items-center gap-1.5">
-                          <UnitBadge unit={p.unit} />
-                          {p.presentation && <span className="truncate text-xs text-gray-400">{p.presentation}</span>}
-                        </p>
+                      <td className="max-w-[240px] px-4 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <ProductThumb product={p} size={34} />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                            <p className="mt-0.5 flex items-center gap-1.5">
+                              <UnitBadge unit={p.unit} />
+                              {p.presentation && <span className="truncate text-xs text-gray-400">{p.presentation}</span>}
+                              {p.locationName && (
+                                <span className="inline-flex items-center gap-0.5 truncate text-[11px] font-medium text-amber-700"><MapPin size={10} /> {p.locationName}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3.5">
                         {p.supplierId ? (

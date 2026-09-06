@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings, Bell,
-  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award,
+  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
@@ -34,6 +34,7 @@ const OWNER_NAV = [
   { icon: Truck,           label: 'Proveedores',       path: '/suppliers',           permission: null },
   { icon: Tag,             label: 'Marcas',            path: '/brands',              permission: null },
   { icon: FolderOpen,      label: 'Categorías',        path: '/categories',          permission: null },
+  { icon: MapPin,          label: 'Ubicaciones',       path: '/locations',           permission: null },
   { icon: Users,           label: 'Empleados',         path: '/empleados',           permission: null },
   { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },

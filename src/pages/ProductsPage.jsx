@@ -8,6 +8,8 @@ import { getErrorMessage } from '../utils/handleApiError'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useBrands } from '../hooks/useBrands'
 import { useCategories } from '../hooks/useCategories'
+import { useLocations } from '../hooks/useLocations'
+import ProductThumb from '../components/products/ProductThumb'
 import { productsApi } from '../services/endpoints/products'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
@@ -26,7 +28,7 @@ import { useT } from '../i18n'
 // Estado inicial de los filtros por columna (embudo por encabezado).
 const EMPTY_COL_FILTERS = {
   sku: '', name: '', providerCode: '', unit: '',
-  categoryId: '', brandId: '', supplierId: '',
+  categoryId: '', brandId: '', supplierId: '', locationId: '',
   status: 'active',                  // active | inactive | all
   purchaseMin: '', purchaseMax: '',
   saleMin: '', saleMax: '',
@@ -43,7 +45,7 @@ const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 12 }).map((_, i) => (
+      {Array.from({ length: 13 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -133,7 +135,8 @@ export default function ProductsPage() {
   const [lowStock, setLowStock]         = useState(false)
   const [orphansOnly, setOrphansOnly]   = useState(false)
   const [variableOnly, setVariableOnly] = useState(searchParams.get('variablePrice') === '1')
-  const [colFilters, setColFilters]     = useState(EMPTY_COL_FILTERS)
+  // ?locationId= pre-activa el filtro de ubicación (link desde la página Ubicaciones)
+  const [colFilters, setColFilters]     = useState(() => ({ ...EMPTY_COL_FILTERS, locationId: searchParams.get('locationId') ?? '' }))
   const [sort, setSort]                 = useState(DEFAULT_SORT)
   const [page, setPage]                 = useState(0)
   const debouncedSearch                 = useDebounce(search, 400)
@@ -147,10 +150,12 @@ export default function ProductsPage() {
   const { data: suppliersData }  = useSuppliers({ size: 200, ...bizParam })
   const { data: brandsData }     = useBrands({ size: 200, ...bizParam })
   const { data: categoriesData } = useCategories({ size: 200, ...bizParam })
+  const { data: locationsData }  = useLocations({ size: 200, ...bizParam })
   const { data: unitsData }      = useProductUnits(bizParam)
   const supplierOpts  = (suppliersData?.content  ?? []).map((s) => ({ value: s.id, label: s.name }))
   const brandOpts     = (brandsData?.content     ?? []).map((b) => ({ value: b.id, label: b.name }))
   const categoryOpts  = (categoriesData?.content ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const locationOpts  = (locationsData?.content  ?? []).map((l) => ({ value: l.id, label: l.name }))
   const unitOpts      = (unitsData ?? []).map((u) => ({ value: u, label: u }))
 
   // Helpers de filtros por columna
@@ -199,6 +204,7 @@ export default function ProductsPage() {
     ...(c.unit && { unit: c.unit }),
     ...(c.categoryId && { categoryId: c.categoryId }),
     ...(c.brandId && { brandId: c.brandId }),
+    ...(c.locationId && { locationId: c.locationId }),
     ...(c.supplierId && { supplierId: c.supplierId }),
     ...(c.status !== '' && { active: c.status === 'active' }),
     ...(c.purchaseMin !== '' && { purchaseMin: c.purchaseMin }),
@@ -234,6 +240,7 @@ export default function ProductsPage() {
   if (colFilters.unit)         activeChips.push({ label: `${t('Unidad')}: ${colFilters.unit}`, onRemove: () => clearFields('unit') })
   if (colFilters.categoryId)   activeChips.push({ label: `${t('Categoría')}: ${labelOf(categoryOpts, colFilters.categoryId)}`, onRemove: () => clearFields('categoryId') })
   if (colFilters.brandId)      activeChips.push({ label: `${t('Marca')}: ${labelOf(brandOpts, colFilters.brandId)}`, onRemove: () => clearFields('brandId') })
+  if (colFilters.locationId)   activeChips.push({ label: `${t('Ubicación')}: ${labelOf(locationOpts, colFilters.locationId)}`, onRemove: () => clearFields('locationId') })
   if (colFilters.supplierId)   activeChips.push({ label: `${t('Proveedor')}: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
   if (colFilters.providerCode) activeChips.push({ label: `${t('Cód. prov.')}: "${colFilters.providerCode}"`, onRemove: () => clearFields('providerCode') })
   if (colFilters.purchaseMin !== '' || colFilters.purchaseMax !== '')
@@ -495,6 +502,10 @@ export default function ProductsPage() {
                   value={colFilters.brandId} onChange={(v) => setField('brandId', v)}
                   options={brandOpts} active={!!colFilters.brandId}
                   onClear={() => clearFields('brandId')} />
+                <ColumnFilter label={t('Ubicación')} type="select" align="left"
+                  value={colFilters.locationId} onChange={(v) => setField('locationId', v)}
+                  options={locationOpts} active={!!colFilters.locationId}
+                  onClear={() => clearFields('locationId')} />
                 <ColumnFilter label={t('Proveedor')} type="select" align="left"
                   value={colFilters.supplierId} onChange={(v) => setField('supplierId', v)}
                   options={supplierOpts} active={!!colFilters.supplierId}
@@ -540,7 +551,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={12}>
+                  <td colSpan={13}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         {showHidden
@@ -576,15 +587,21 @@ export default function ProductsPage() {
                     title={t('Ver detalles y opciones del producto')}
                     className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
-                    <td className="max-w-[180px] truncate px-5 py-3.5">
-                      <p className="font-semibold text-gray-900">{p.name}</p>
-                      {p.presentation && (
-                        <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
-                      )}
+                    <td className="max-w-[220px] px-5 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <ProductThumb product={p} size={34} />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                          {p.presentation && (
+                            <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
+                    <td className="px-5 py-3.5 text-xs text-gray-500">{p.locationName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-600">{p.providerCode || '—'}</td>
                     <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2 } from 'lucide-react'
 import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../common/LoadMoreRow'
+import ProductThumb from '../products/ProductThumb'
 import { useDebounce } from '../../hooks/useDebounce'
 import { printSupplierOrder } from '../../utils/printSupplierOrder'
 import { useT } from '../../i18n'
@@ -274,7 +275,8 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
                     <li key={p.id}>
                       <button type="button" onClick={() => add(p)}
                         className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-blue-50">
-                        <span className="min-w-0">
+                        <ProductThumb product={p} size={30} />
+                        <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-gray-900">{p.name}</span>
                           <span className="block text-xs text-gray-400">
                             {p.sku}{p.brandName ? ` · ${p.brandName}` : ''}{p.supplierName ? ` · ${p.supplierName}` : ''} · {t('stock')} {p.currentStock}

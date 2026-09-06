@@ -10,6 +10,7 @@ import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useProductSearch } from '../hooks/useProducts'
 import LoadMoreRow from '../components/common/LoadMoreRow'
+import ProductThumb from '../components/products/ProductThumb'
 import { useEmployees } from '../hooks/useEmployees'
 import { useDebounce } from '../hooks/useDebounce'
 import { productsApi } from '../services/endpoints/products'
@@ -268,7 +269,10 @@ export default function SalesPage() {
                       <button key={p.id} type="button"
                         onClick={() => addProduct(p)}
                         className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                        <span className="font-semibold text-gray-900">{p.name}</span>
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <ProductThumb product={p} size={28} />
+                          <span className="truncate font-semibold text-gray-900">{p.name}</span>
+                        </span>
                         <span className="ml-2 flex-shrink-0 font-mono text-xs text-gray-400">{p.sku}</span>
                       </button>
                     ))}

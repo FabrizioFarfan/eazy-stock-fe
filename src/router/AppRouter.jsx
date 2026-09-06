@@ -36,6 +36,7 @@ import SuppliersPage       from '../pages/SuppliersPage'
 import SupplierDetailPage  from '../pages/SupplierDetailPage'
 import BrandsPage          from '../pages/BrandsPage'
 import CategoriesPage      from '../pages/CategoriesPage'
+import LocationsPage       from '../pages/LocationsPage'
 import CustomersPage       from '../pages/CustomersPage'
 import CustomerDetailPage  from '../pages/CustomerDetailPage'
 import ReceivablesPage     from '../pages/ReceivablesPage'
@@ -114,6 +115,9 @@ export default function AppRouter() {
       } />
       <Route path="/brands" element={
         <ProtectedRoute allowedRoles={['OWNER']}><BrandsPage /></ProtectedRoute>
+      } />
+      <Route path="/locations" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><LocationsPage /></ProtectedRoute>
       } />
       <Route path="/categories" element={
         <ProtectedRoute allowedRoles={['OWNER']}><CategoriesPage /></ProtectedRoute>

@@ -1,7 +1,8 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2 } from 'lucide-react'
+import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2, MapPin } from 'lucide-react'
+import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useProductSearch } from '../hooks/useProducts'
@@ -331,7 +332,15 @@ export default function QuotePage() {
                       {results.map((p) => (
                         <button key={p.id} type="button" onClick={() => addProduct(p)}
                           className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl transition-colors">
-                          <span className="font-semibold text-gray-900">{p.name}</span>
+                          <span className="flex min-w-0 items-center gap-2.5">
+                            <ProductThumb product={p} size={30} />
+                            <span className="min-w-0">
+                              <span className="block truncate font-semibold text-gray-900">{p.name}</span>
+                              {p.locationName && (
+                                <span className="flex items-center gap-1 text-[11px] text-amber-700"><MapPin size={10} /> {p.locationName}</span>
+                              )}
+                            </span>
+                          </span>
                           <span className="ml-2 flex items-center gap-2 flex-shrink-0">
                             <span className="font-mono text-xs text-gray-400">{p.sku}</span>
                             <span className="text-xs font-semibold text-gray-600">

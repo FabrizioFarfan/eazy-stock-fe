@@ -7,7 +7,7 @@ import {
   Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
   Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
   Menu, X, Landmark, Bot, Coffee, Apple,
-  Award,
+  Award, Camera,
 } from 'lucide-react'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
@@ -205,6 +205,7 @@ const MARQUEE = [
   [Hash, 'Códigos automáticos y liberados'],
   [FileSpreadsheet, 'Importa tu Excel en minutos'],
   [Trophy, 'Ranking de vendedores'],
+  [Camera, 'Foto y ubicación de cada producto'],
   [Award, 'Mejores clientes y ventas por cliente'],
   [Shield, 'Permisos por empleado'],
   [Bell, 'Alertas de stock mínimo'],
@@ -517,6 +518,7 @@ const FEATURE_GROUPS = [
       [CalendarClock,  'Vencimiento + reporte «Por vencer»',  'Badge en la tabla y aviso 30 días antes.'],
       [AlertTriangle,  'Stock mínimo y alertas en vivo',      'Notificación en el acto cuando un producto cae bajo el mínimo.'],
       [Tag,            'Marcas y categorías',                 'Con atributos personalizados por categoría (talla, laboratorio, medida…).'],
+      [Camera,         'Foto y ubicación por producto',       'El vendedor ve cómo es y en qué almacén o estante está, sin preguntar a nadie.'],
       [ClipboardCheck, 'Recepción de mercadería',             'Un solo recibo, varios productos: entra el stock y se anota la deuda.'],
     ],
   },
