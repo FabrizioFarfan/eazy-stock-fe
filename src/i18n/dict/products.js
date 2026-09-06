@@ -27,7 +27,7 @@ export default {
     '1. Nombre y unidad': '1. Name and unit',
     'Empieza por aquí. El nombre aparecerá en tu catálogo (ej. "Aceite 5W30"). La unidad es cómo lo vendes: litros, kg, metros, unidad, galón. Ambos son obligatorios.': 'Start here. The name is what shows in your catalog (e.g. "5W30 Oil"). The unit is how you sell it: liters, kg, meters, each, gallon. Both are required.',
     '2. Marca: el fabricante': '2. Brand: the manufacturer',
-    'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Escribe en el buscador y haz clic en la marca para seleccionarla. Si no aparece, haz clic en "Nueva marca" y se crea al instante.': 'This is who makes the product: Bosch, Stanley, 3M, Castrol... Type in the search box and click the brand to select it. If it\'s not there, click "New brand" and it\'s created instantly.',
+    'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Toca la marca en la lista para elegirla (si hay muchas, aparece un buscador). Si no está, haz clic en "Nueva marca" y se crea al instante.': 'This is who makes the product: Bosch, Stanley, 3M, Castrol... Tap the brand in the list to choose it (with many brands a search box appears). If it\'s not there, click "New brand" and it\'s created instantly.',
     '3. Proveedor: a quién le compras': '3. Supplier: who you buy from',
     'Es distinto a la marca. El proveedor es a quién le compras el producto (ej. "Distribuidora Lima SAC", "Ferreconstruye"). Mismo patrón: búscalo y haz clic para seleccionarlo, o haz clic en "Nuevo proveedor" para crearlo.': 'Not the same as the brand. The supplier is who you buy the product from (e.g. "Distribuidora Lima SAC", "Ferreconstruye"). Same pattern: search and click to select, or click "New supplier" to create one.',
     '4. Categoría: tipo de producto': '4. Category: product type',
@@ -326,7 +326,6 @@ export default {
     'Error desconocido. Revisá los logs del servidor.': 'Unknown error. Check the server logs.',
     'Importar otro archivo': 'Import another file',
     'Descargar reporte': 'Download report',
-    'Ver productos': 'View products',
     'Volver': 'Back',
     'Importar productos desde Excel': 'Import products from Excel',
     'Historial': 'History',
@@ -542,6 +541,13 @@ export default {
 
     // ── Foto y ubicación del producto (sep-2026, pedido de William) ─────────
     'Máximo 80 caracteres': 'Max 80 characters',
+    // ── EntityPicker: elegir una opción (7-sep, Frank) ──
+    '1 opción': '1 option',
+    '{n} opciones': '{n} options',
+    'Seleccionado': 'Selected',
+    'Todavía no hay opciones. Crea la primera con el botón de abajo.': 'No options yet. Create the first one with the button below.',
+    'Toca la opción para elegirla, o crea una nueva.': 'Tap the option to choose it, or create a new one.',
+    'Toca una opción para elegirla, o crea una nueva.': 'Tap an option to choose it, or create a new one.',
     'Foto del producto': 'Product photo',
     'Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.': 'Optional · Shown in the product detail and as a thumbnail in lists, so the seller recognizes the product at a glance.',
     'Tomar foto': 'Take photo',
@@ -602,7 +608,7 @@ export default {
     '1. Nombre y unidad': '1. Nome e unità',
     'Empieza por aquí. El nombre aparecerá en tu catálogo (ej. "Aceite 5W30"). La unidad es cómo lo vendes: litros, kg, metros, unidad, galón. Ambos son obligatorios.': 'Inizia da qui. Il nome comparirà nel tuo catalogo (es. "Olio 5W30"). L\'unità è come lo vendi: litri, kg, metri, pezzo, gallone. Entrambi sono obbligatori.',
     '2. Marca: el fabricante': '2. Marca: il produttore',
-    'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Escribe en el buscador y haz clic en la marca para seleccionarla. Si no aparece, haz clic en "Nueva marca" y se crea al instante.': 'Qui va chi produce il prodotto: Bosch, Stanley, 3M, Castrol... Scrivi nella ricerca e clicca sulla marca per selezionarla. Se non compare, clicca su "Nuova marca" e viene creata all\'istante.',
+    'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Toca la marca en la lista para elegirla (si hay muchas, aparece un buscador). Si no está, haz clic en "Nueva marca" y se crea al instante.': 'Qui va chi produce il prodotto: Bosch, Stanley, 3M, Castrol... Tocca la marca nell\'elenco per sceglierla (se sono molte, compare un campo di ricerca). Se non c\'è, clicca "Nuova marca" e viene creata all\'istante.',
     '3. Proveedor: a quién le compras': '3. Fornitore: da chi compri',
     'Es distinto a la marca. El proveedor es a quién le compras el producto (ej. "Distribuidora Lima SAC", "Ferreconstruye"). Mismo patrón: búscalo y haz clic para seleccionarlo, o haz clic en "Nuevo proveedor" para crearlo.': 'È diverso dalla marca. Il fornitore è da chi compri il prodotto (es. "Distribuidora Lima SAC", "Ferreconstruye"). Stesso schema: cercalo e clicca per selezionarlo, oppure clicca su "Nuovo fornitore" per crearlo.',
     '4. Categoría: tipo de producto': '4. Categoria: tipo di prodotto',
@@ -901,7 +907,6 @@ export default {
     'Error desconocido. Revisá los logs del servidor.': 'Errore sconosciuto. Controlla i log del server.',
     'Importar otro archivo': 'Importa un altro file',
     'Descargar reporte': 'Scarica report',
-    'Ver productos': 'Vedi prodotti',
     'Volver': 'Indietro',
     'Importar productos desde Excel': 'Importa prodotti da Excel',
     'Historial': 'Cronologia',
@@ -1116,6 +1121,13 @@ export default {
 
     // ── Foto y ubicación del producto (sep-2026, pedido de William) ─────────
     'Máximo 80 caracteres': 'Massimo 80 caratteri',
+    // ── EntityPicker: elegir una opción (7-sep, Frank) ──
+    '1 opción': '1 opzione',
+    '{n} opciones': '{n} opzioni',
+    'Seleccionado': 'Selezionato',
+    'Todavía no hay opciones. Crea la primera con el botón de abajo.': 'Non ci sono ancora opzioni. Crea la prima con il pulsante qui sotto.',
+    'Toca la opción para elegirla, o crea una nueva.': 'Tocca l\'opzione per sceglierla, o creane una nuova.',
+    'Toca una opción para elegirla, o crea una nueva.': 'Tocca un\'opzione per sceglierla, o creane una nuova.',
     'Foto del producto': 'Foto del prodotto',
     'Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.': 'Facoltativa · Si vede nel dettaglio del prodotto e come miniatura nelle liste, così il venditore riconosce il prodotto a colpo d\'occhio.',
     'Tomar foto': 'Scatta foto',

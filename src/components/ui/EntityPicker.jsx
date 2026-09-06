@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X, Check, Search, Loader2, AlertTriangle } from 'lucide-react'
+import { Plus, X, Search, Loader2, AlertTriangle, CheckCircle2, Circle } from 'lucide-react'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useT } from '../../i18n'
 
@@ -68,12 +68,17 @@ export default function EntityPicker({
     setCreateError(null)
   }
 
+  // Con pocas opciones el buscador es ruido (y confundía: parecía que había
+  // que ESCRIBIR la marca en vez de tocar una). Solo aparece con muchas.
+  const showSearch = items.length > 6
+  const optionCount = items.length
+
   return (
     <div className="flex flex-col gap-1.5">
-      {/* Label + clear button */}
+      {/* Label + contador / quitar */}
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700">{label}</label>
-        {selectedItem && (
+        {selectedItem ? (
           <button
             type="button"
             onClick={() => onChange(null)}
@@ -82,54 +87,82 @@ export default function EntityPicker({
             <X size={11} />
             {t('Quitar')}
           </button>
-        )}
+        ) : optionCount > 0 ? (
+          <span className="text-[11px] text-gray-400">
+            {optionCount === 1 ? t('1 opción') : t('{n} opciones', { n: optionCount })}
+          </span>
+        ) : null}
       </div>
       {helperText && (
         <p className="-mt-0.5 text-xs text-gray-400">{helperText}</p>
       )}
 
-      {/* Selected badge */}
-      {selectedItem && (
-        <div className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1.5">
-          <Check size={13} className="text-blue-600 flex-shrink-0" />
-          <span className="text-sm font-medium text-blue-700 truncate">{selectedItem.name}</span>
-        </div>
-      )}
-
-      {/* Search */}
-      <div className="relative">
-        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
-        />
-      </div>
-
-      {/* Chips: envuelven en varias filas y scrollean en vertical — en PC no hay
-          gesto natural para arrastrar lateral y obligaba a escribir el nombre entero */}
-      <div className="flex max-h-40 flex-wrap content-start gap-2 overflow-y-auto pb-0.5 pr-1">
-        {filtered.length === 0 ? (
-          <span className="py-1 text-xs text-gray-400 flex-shrink-0">
-            {search ? t('Sin resultados') : t('No hay elementos')}
-          </span>
+      {/* Caja del selector: que se vea como UN campo, con la instrucción
+          adentro — «elige una» — para que una sola opción no se confunda
+          con una etiqueta (pedido de Frank tras agregar Ubicación). */}
+      <div className={`rounded-xl border px-3 py-2.5 ${
+        selectedItem ? 'border-blue-200 bg-blue-50/40' : 'border-gray-200 bg-gray-50/60'
+      }`}>
+        {selectedItem ? (
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 size={15} className="flex-shrink-0 text-blue-600" />
+            <span className="text-xs text-blue-700">{t('Seleccionado')}:</span>
+            <span className="truncate text-sm font-semibold text-blue-800">{selectedItem.name}</span>
+          </div>
+        ) : optionCount === 0 ? (
+          <p className="text-xs text-gray-500">{t('Todavía no hay opciones. Crea la primera con el botón de abajo.')}</p>
         ) : (
-          filtered.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onChange(value === item.id ? null : item.id)}
-              className={`flex-shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                value === item.id
-                  ? 'border-blue-600 bg-blue-600 text-white'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:text-blue-700'
-              }`}
-            >
-              {item.name}
-            </button>
-          ))
+          <p className="text-xs text-gray-500">
+            {optionCount === 1
+              ? t('Toca la opción para elegirla, o crea una nueva.')
+              : t('Toca una opción para elegirla, o crea una nueva.')}
+          </p>
+        )}
+
+        {showSearch && (
+          <div className="relative mt-2">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+            />
+          </div>
+        )}
+
+        {/* Opciones como «radio»: círculo vacío → elegible; check → elegida.
+            Envuelven en varias filas y scrollean en vertical. */}
+        {optionCount > 0 && (
+          <div className="mt-2 flex max-h-40 flex-wrap content-start gap-2 overflow-y-auto pb-0.5 pr-1">
+            {filtered.length === 0 ? (
+              <span className="py-1 text-xs text-gray-400 flex-shrink-0">{t('Sin resultados')}</span>
+            ) : (
+              filtered.map((item) => {
+                const active = value === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => onChange(active ? null : item.id)}
+                    className={`flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      active
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700'
+                    }`}
+                  >
+                    {active
+                      ? <CheckCircle2 size={13} className="flex-shrink-0" />
+                      : <Circle size={13} className="flex-shrink-0 text-gray-300" />}
+                    {item.name}
+                  </button>
+                )
+              })
+            )}
+          </div>
         )}
       </div>
 
@@ -138,7 +171,11 @@ export default function EntityPicker({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="flex w-fit items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-500 hover:border-blue-500 hover:text-blue-700 transition-colors"
+          className={`flex w-fit items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
+            optionCount === 0
+              ? 'border border-blue-300 bg-blue-50 font-semibold text-blue-700 hover:bg-blue-100'
+              : 'border border-dashed border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-700'
+          }`}
         >
           <Plus size={11} />
           {createText}

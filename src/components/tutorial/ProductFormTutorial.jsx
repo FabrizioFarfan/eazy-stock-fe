@@ -27,7 +27,7 @@ const STEPS = [
   {
     target: 'brand-picker',
     title: '2. Marca: el fabricante',
-    desc: 'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Escribe en el buscador y haz clic en la marca para seleccionarla. Si no aparece, haz clic en "Nueva marca" y se crea al instante.',
+    desc: 'Aquí va quién fabrica el producto: Bosch, Stanley, 3M, Castrol... Toca la marca en la lista para elegirla (si hay muchas, aparece un buscador). Si no está, haz clic en "Nueva marca" y se crea al instante.',
   },
   {
     target: 'supplier-picker',
