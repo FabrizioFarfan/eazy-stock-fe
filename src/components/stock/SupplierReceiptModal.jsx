@@ -9,6 +9,8 @@ import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../common/LoadMoreRow'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
+import { useReferenceCheck } from '../../hooks/useReceipts'
+import ReferenceCheckHint from './ReferenceCheckHint'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
 import ProductFormModal from '../products/ProductFormModal'
@@ -120,6 +122,9 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const [referenceDocument, setReferenceDocument]   = useState(draft?.referenceDocument ?? '')
   const [notes, setNotes]                           = useState(draft?.notes ?? '')
   const [error, setError]                           = useState(null)
+  // Factura / guía unívoca por proveedor (pedido de William): se chequea en vivo.
+  const refCheck = useReferenceCheck(supplier?.id, referenceDocument)
+  const refDuplicated = !!(refCheck.result?.exists && refCheck.result?.sameSupplier)
 
   // Autosave del borrador en cada cambio; sin contenido, se limpia solo.
   useEffect(() => {
@@ -268,6 +273,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
     }
     if (!finalTotal || finalTotal <= 0) {
       setError(t('Ingresá el monto total de la compra'))
+      return
+    }
+    if (refDuplicated) {
+      setError(t('La factura «{ref}» ya está registrada para {supplier}. Corregí el número o anulá la recepción anterior.', { ref: refCheck.result.referenceDocument, supplier: supplier.name }))
       return
     }
 
@@ -640,8 +649,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                 onChange={(e) => setReferenceDocument(e.target.value)}
                 maxLength={100}
                 placeholder={t('Factura 0023-001234')}
-                className={inputCls}
+                className={`${inputCls} ${refDuplicated ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                aria-invalid={refDuplicated || undefined}
               />
+              <ReferenceCheckHint result={refCheck.result} checking={refCheck.checking} supplierName={supplier?.name} />
             </section>
 
             <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>

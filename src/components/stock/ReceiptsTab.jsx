@@ -46,6 +46,16 @@ export default function ReceiptsTab() {
 
   const { data, isLoading, isFetching, isError } = useReceipts(params)
   const items         = data?.content       ?? []
+  // Facturas repetidas dentro de la página (mismo proveedor, mismo número sin
+  // espacios ni mayúsculas): así William encuentra las que cargó dos veces.
+  const refCounts = items.reduce((acc, r) => {
+    if (!r.referenceDocument) return acc
+    const key = `${r.supplierId}|${r.referenceDocument.replace(/\s+/g, '').toUpperCase()}`
+    acc[key] = (acc[key] ?? 0) + 1
+    return acc
+  }, {})
+  const isRepeated = (r) => !!r.referenceDocument
+    && refCounts[`${r.supplierId}|${r.referenceDocument.replace(/\s+/g, '').toUpperCase()}`] > 1
   const totalElements = data?.totalElements ?? 0
   const totalPages    = data?.totalPages    ?? 0
   const fromRow       = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
@@ -162,7 +172,15 @@ export default function ReceiptsTab() {
                     className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-500">{formatDate(r.createdAt)}</td>
                     <td className="px-4 py-3.5 font-semibold text-gray-900">{r.supplierName}</td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{r.referenceDocument ?? '—'}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-gray-500">
+                      {r.referenceDocument ?? '—'}
+                      {isRepeated(r) && (
+                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wide text-red-700"
+                          title={t('Este número de factura está cargado más de una vez para este proveedor. Abrí la recepción para corregir el número o anularla.')}>
+                          <AlertTriangle size={10} /> {t('repetida')}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3.5 text-center font-mono text-gray-700">{r.movements?.length ?? 0}</td>
                     <td className="px-4 py-3.5 text-center">
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${

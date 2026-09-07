@@ -5,6 +5,8 @@ import PriceInput from '../inputs/PriceInput'
 import { formatPrice } from '../../utils/formatMoney'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useT } from '../../i18n'
+import { useReferenceCheck } from '../../hooks/useReceipts'
+import ReferenceCheckHint from '../stock/ReferenceCheckHint'
 
 /**
  * Registrar manualmente "el proveedor X nos entregó mercadería al fiado por S/ Y".
@@ -21,6 +23,9 @@ export default function DebtAddModal({ supplier, mutation, onClose }) {
   const [refDoc, setRefDoc] = useState('')
   const [notes,  setNotes]  = useState('')
   const [error,  setError]  = useState(null)
+  // Factura / guía unívoca por proveedor (misma regla que en las recepciones).
+  const refCheck = useReferenceCheck(supplier?.id, refDoc)
+  const refDuplicated = !!(refCheck.result?.exists && refCheck.result?.sameSupplier)
 
   const debt    = Number(supplier?.currentDebt ?? 0)
   const limit   = supplier?.creditLimitFromSupplier != null ? Number(supplier.creditLimitFromSupplier) : null
@@ -32,6 +37,10 @@ export default function DebtAddModal({ supplier, mutation, onClose }) {
     setError(null)
     if (!amount || amount <= 0) {
       setError(t('Ingresá un monto mayor a 0'))
+      return
+    }
+    if (refDuplicated) {
+      setError(t('La factura «{ref}» ya está registrada para {supplier}. Corregí el número o anulá la recepción anterior.', { ref: refCheck.result.referenceDocument, supplier: supplier.name }))
       return
     }
     try {
@@ -79,8 +88,10 @@ export default function DebtAddModal({ supplier, mutation, onClose }) {
               onChange={(e) => setRefDoc(e.target.value)}
               maxLength={100}
               placeholder={t('Factura 0023-001234')}
-              className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+              className={`rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 ${refDuplicated ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-600 focus:ring-blue-600/20'}`}
+              aria-invalid={refDuplicated || undefined}
             />
+            <ReferenceCheckHint result={refCheck.result} checking={refCheck.checking} supplierName={supplier?.name} />
           </div>
 
           <div className="flex flex-col gap-1">
