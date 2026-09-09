@@ -3,6 +3,19 @@
 // deuda, recordatorio de WhatsApp y DateRangeQuick. El español es la llave.
 export default {
   en: {
+    // ── 10-sep: cierre de caja neto por medio (pedido de William) ──
+    'Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. Sirve para cerrar la caja del día: el número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy.': 'It is the first card on the page. It splits the period\'s cash-and-carry sales by how you got paid: Cash, Yape, Transfer or whatever you typed when selling. Use it to close the day\'s register: the big Cash number is the money that should be in the drawer from today\'s sales.',
+    'Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.': 'If there were cash refunds, they are already subtracted: each method shows what SHOULD BE THERE (sold − refunded) with the detail below. The final line "Should be in the register" is the total you count the money against.',
+    'Las ventas al fiado van en su propia línea y no entran en caja (todavía no cobraste). Los cobros de fiado del día sí entraron, pero no registran medio de pago, por eso también van aparte.': 'Credit sales go on their own line and do not enter the register (you have not collected yet). Debt payments received today did come in, but they have no payment method, so they also go separately.',
+    'Compara lo que anotaste a mano con lo que dice el sistema: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. El número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.': 'Compare what you wrote down by hand with what the system says: Cash, Yape, Transfer or whatever you typed when selling. The big Cash number is the money that should be in the drawer from today\'s sales. If it matches, the register closes fine.',
+    'Las ventas al fiado van en su propia línea y no entran en caja (todavía no se cobraron). Los cobros de fiado del día sí entraron, pero no tienen medio de pago registrado, por eso van aparte.': 'Credit sales go on their own line and do not enter the register (not collected yet). Debt payments received today did come in, but have no payment method recorded, so they go separately.',
+    'Solo devoluciones': 'Refunds only',
+    '{n} devoluciones': '{n} refunds',
+    '{n} devolución': '{n} refund',
+    '{amount} sin medio registrado (devoluciones de ventas al fiado)': '{amount} with no method recorded (refunds of credit sales)',
+    'Debe haber en caja': 'Should be in the register',
+    'Ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.': 'Cash sales + debt payments − refunds. This is the number you count the money against.',
+    'Todos los medios juntos. Contra este número cuentas la plata.': 'All methods together. This is the number you count the money against.',
     // ── Borradores y scroll infinito (29-ago) ──
     'Se restauró el pedido que estabas armando para este proveedor.': 'The order you were building for this supplier was restored.',
     'Empezar de nuevo': 'Start over',
@@ -353,6 +366,19 @@ export default {
   },
 
   it: {
+    // ── 10-sep: cierre de caja neto por medio (pedido de William) ──
+    'Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. Sirve para cerrar la caja del día: el número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy.': 'È la prima card della pagina. Divide le vendite pagate del periodo per come ti hanno pagato: Contanti, Yape, Bonifico o quello che hai scritto vendendo. Serve per chiudere la cassa del giorno: il numero grande di Contanti è il denaro che deve esserci nel cassetto per le vendite di oggi.',
+    'Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.': 'Se ci sono stati rimborsi in denaro, sono già sottratti: ogni metodo mostra quanto DEVE ESSERCI (venduto − rimborsato) e sotto il dettaglio. La riga finale «Deve esserci in cassa» è il totale contro cui conti i soldi.',
+    'Las ventas al fiado van en su propia línea y no entran en caja (todavía no cobraste). Los cobros de fiado del día sí entraron, pero no registran medio de pago, por eso también van aparte.': 'Le vendite a credito vanno su una riga propria e non entrano in cassa (non hai ancora incassato). Gli incassi di crediti di oggi sono entrati, ma non registrano il metodo di pagamento, per questo vanno a parte.',
+    'Compara lo que anotaste a mano con lo que dice el sistema: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. El número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.': 'Confronta quello che hai annotato a mano con quello che dice il sistema: Contanti, Yape, Bonifico o quello che hai scritto vendendo. Il numero grande di Contanti è il denaro che deve esserci nel cassetto per le vendite di oggi. Se coincide, la cassa chiude bene.',
+    'Las ventas al fiado van en su propia línea y no entran en caja (todavía no se cobraron). Los cobros de fiado del día sí entraron, pero no tienen medio de pago registrado, por eso van aparte.': 'Le vendite a credito vanno su una riga propria e non entrano in cassa (non ancora incassate). Gli incassi di crediti di oggi sono entrati, ma non hanno metodo di pagamento registrato, per questo vanno a parte.',
+    'Solo devoluciones': 'Solo rimborsi',
+    '{n} devoluciones': '{n} rimborsi',
+    '{n} devolución': '{n} rimborso',
+    '{amount} sin medio registrado (devoluciones de ventas al fiado)': '{amount} senza metodo registrato (rimborsi di vendite a credito)',
+    'Debe haber en caja': 'Deve esserci in cassa',
+    'Ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.': 'Vendite pagate + incassi di crediti − rimborsi. È il numero contro cui conti i soldi.',
+    'Todos los medios juntos. Contra este número cuentas la plata.': 'Tutti i metodi insieme. È il numero contro cui conti i soldi.',
     // ── Borradores y scroll infinito (29-ago) ──
     'Se restauró el pedido que estabas armando para este proveedor.': 'L’ordine che stavi preparando per questo fornitore è stato ripristinato.',
     'Empezar de nuevo': 'Ricomincia da capo',

@@ -3,6 +3,23 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    // ── 10-sep: nombre repetido al crear (pedido de William) ──
+    'Revisando si ya lo tienes…': 'Checking whether you already have it…',
+    'Ya tienes este producto con el mismo proveedor': 'You already have this product with the same supplier',
+    'Ya tienes un producto con este nombre (otro proveedor)': 'You already have a product with this name (another supplier)',
+    'Ya tienes este producto, pero está oculto': 'You already have this product, but it is hidden',
+    'y {n} más con ese nombre': 'and {n} more with that name',
+    'stock {n}': 'stock {n}',
+    'Ya está en tu catálogo: ciérralo y búscalo en la recepción por su nombre o código.': 'It is already in your catalog: close this and search for it in the receipt by name or code.',
+    'Si es el mismo, no lo crees de nuevo: edítalo o súmale stock. Si de verdad es otro, cambia el nombre (por ejemplo, agrega la presentación) o guarda igual.': 'If it is the same one, do not create it again: edit it or add stock. If it really is another product, change the name (for example, add the presentation) or save anyway.',
+    'Reactívalo desde Productos › Ocultos: vuelve con su mismo código e historial. Crear otro te deja dos códigos para lo mismo.': 'Reactivate it from Products › Hidden: it comes back with its same code and history. Creating another leaves you with two codes for the same thing.',
+    'Abrir ese producto': 'Open that product',
+    'Ver ocultos y reactivar': 'See hidden and reactivate',
+    'Ya tienes un producto con este nombre': 'You already have a product with this name',
+    'No se guardó. Si es el mismo producto, edita el que ya tienes; si es otro distinto, puedes guardarlo igual.': 'Not saved. If it is the same product, edit the one you already have; if it is a different one, you can save it anyway.',
+    'Revisar el nombre': 'Review the name',
+    'Guardar de todos modos': 'Save anyway',
+    'Crear de todos modos': 'Create anyway',
     // ── ColumnFilter / badges ─────────────────────────────────────────────
     'Ascendente': 'Ascending',
     'Descendente': 'Descending',
@@ -584,6 +601,23 @@ export default {
   },
 
   it: {
+    // ── 10-sep: nombre repetido al crear (pedido de William) ──
+    'Revisando si ya lo tienes…': 'Controllo se ce l\'hai già…',
+    'Ya tienes este producto con el mismo proveedor': 'Hai già questo prodotto con lo stesso fornitore',
+    'Ya tienes un producto con este nombre (otro proveedor)': 'Hai già un prodotto con questo nome (altro fornitore)',
+    'Ya tienes este producto, pero está oculto': 'Hai già questo prodotto, ma è nascosto',
+    'y {n} más con ese nombre': 'e altri {n} con quel nome',
+    'stock {n}': 'stock {n}',
+    'Ya está en tu catálogo: ciérralo y búscalo en la recepción por su nombre o código.': 'È già nel tuo catalogo: chiudi e cercalo nella ricezione per nome o codice.',
+    'Si es el mismo, no lo crees de nuevo: edítalo o súmale stock. Si de verdad es otro, cambia el nombre (por ejemplo, agrega la presentación) o guarda igual.': 'Se è lo stesso, non crearlo di nuovo: modificalo o aggiungi stock. Se davvero è un altro, cambia il nome (per esempio, aggiungi la confezione) o salva comunque.',
+    'Reactívalo desde Productos › Ocultos: vuelve con su mismo código e historial. Crear otro te deja dos códigos para lo mismo.': 'Riattivalo da Prodotti › Nascosti: torna con lo stesso codice e la sua storia. Crearne un altro ti lascia due codici per la stessa cosa.',
+    'Abrir ese producto': 'Apri quel prodotto',
+    'Ver ocultos y reactivar': 'Vedi nascosti e riattiva',
+    'Ya tienes un producto con este nombre': 'Hai già un prodotto con questo nome',
+    'No se guardó. Si es el mismo producto, edita el que ya tienes; si es otro distinto, puedes guardarlo igual.': 'Non salvato. Se è lo stesso prodotto, modifica quello che hai già; se è un altro, puoi salvarlo comunque.',
+    'Revisar el nombre': 'Rivedi il nome',
+    'Guardar de todos modos': 'Salva comunque',
+    'Crear de todos modos': 'Crea comunque',
     // ── ColumnFilter / badges ─────────────────────────────────────────────
     'Ascendente': 'Crescente',
     'Descendente': 'Decrescente',

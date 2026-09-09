@@ -39,10 +39,13 @@ function BalanceHelp() {
       </S>
       <S title={t('2 · Cierre de caja — cuánto entró por cada medio de pago')}>
         <p>
-          {t('Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. Sirve para cerrar la caja del día: la línea de Efectivo es la plata que deberías tener en el cajón por las ventas de hoy.')}
+          {t('Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. Sirve para cerrar la caja del día: el número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy.')}
+        </p>
+        <p>
+          {t('Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.')}
         </p>
         <p className="text-xs text-gray-400">
-          {t('Las ventas al fiado van en su propia línea y no entran en caja (todavía no cobraste). Los cobros de fiado del día sí entraron, pero no registran medio de pago, por eso también van aparte. Las devoluciones en dinero salieron de caja.')}
+          {t('Las ventas al fiado van en su propia línea y no entran en caja (todavía no cobraste). Los cobros de fiado del día sí entraron, pero no registran medio de pago, por eso también van aparte.')}
         </p>
         <p className="text-xs text-gray-400">
           {t('Un vendedor con el permiso «Ver cierre de caja» solo ve esta card: nunca ganancias, costos ni valorización del negocio.')}
@@ -90,10 +93,13 @@ function CashClosingHelp() {
       </S>
       <S title={t('2 · El confronto de fin de día')}>
         <p>
-          {t('Compara lo que anotaste a mano con lo que dice el sistema: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. La línea de Efectivo es la plata que deberías tener en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.')}
+          {t('Compara lo que anotaste a mano con lo que dice el sistema: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. El número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.')}
+        </p>
+        <p>
+          {t('Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.')}
         </p>
         <p className="text-xs text-gray-400">
-          {t('Las ventas al fiado van en su propia línea y no entran en caja (todavía no se cobraron). Los cobros de fiado del día sí entraron, pero no tienen medio de pago registrado, por eso van aparte. Las devoluciones en dinero salieron de caja.')}
+          {t('Las ventas al fiado van en su propia línea y no entran en caja (todavía no se cobraron). Los cobros de fiado del día sí entraron, pero no tienen medio de pago registrado, por eso van aparte.')}
         </p>
       </S>
     </>
@@ -144,13 +150,15 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
       return <p className="py-8 text-center text-sm text-gray-400">{t('Sin ventas al contado en este período.')}</p>
     }
 
-    const max = Math.max(...cc.byMethod.map((l) => Number(l.total)), 1)
+    const hasRefunds = Number(cc.cashRefunds) > 0
+    const max = Math.max(...cc.byMethod.map((l) => Number(l.net)), 1)
     return (
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           {cc.byMethod.map((line) => {
             const { Icon, cls } = methodIcon(line.method)
-            const pct = Math.max(4, Math.round((Number(line.total) / max) * 100))
+            const refunded = Number(line.refunded) > 0
+            const pct = Math.max(refunded || Number(line.net) > 0 ? 4 : 0, Math.round((Number(line.net) / max) * 100))
             return (
               <div key={line.method} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
                 <div className="flex items-center gap-3">
@@ -159,12 +167,29 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold uppercase tracking-widest text-gray-500">{line.method}</p>
-                    <p className="text-xl font-extrabold tabular-nums text-gray-900">{formatPrice(line.total)}</p>
+                    <p className="text-xl font-extrabold tabular-nums text-gray-900">{formatPrice(line.net)}</p>
                   </div>
                   <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-gray-500 ring-1 ring-gray-100">
-                    {line.salesCount !== 1 ? t('{n} ventas', { n: line.salesCount }) : t('{n} venta', { n: line.salesCount })}
+                    {line.salesCount === 0 && refunded
+                      ? t('Solo devoluciones')
+                      : line.salesCount !== 1 ? t('{n} ventas', { n: line.salesCount }) : t('{n} venta', { n: line.salesCount })}
                   </span>
                 </div>
+                {/* Devoluciones ya restadas: William contaba el cajón, veía menos que
+                    lo vendido y no le cuadraba. El número grande es lo que DEBE HABER. */}
+                {refunded && (
+                  <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500">
+                    <span>{t('Vendido')} <span className="font-semibold tabular-nums text-gray-700">{formatPrice(line.sold)}</span></span>
+                    <span className="text-gray-300">·</span>
+                    <span className="inline-flex items-center gap-1 text-red-600">
+                      <Undo2 size={12} />
+                      {t('Devuelto')} <span className="font-semibold tabular-nums">−{formatPrice(line.refunded)}</span>
+                      <span className="text-red-400">
+                        ({line.refundsCount !== 1 ? t('{n} devoluciones', { n: line.refundsCount }) : t('{n} devolución', { n: line.refundsCount })})
+                      </span>
+                    </span>
+                  </p>
+                )}
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200/70">
                   <div className="h-full rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
                 </div>
@@ -175,8 +200,8 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
 
         <div className="divide-y divide-gray-50 rounded-2xl border border-gray-100 px-4">
           <div className="flex items-center justify-between py-2.5">
-            <span className="text-sm font-bold text-gray-800">{t('Total ventas al contado')}</span>
-            <span className="text-lg font-extrabold tabular-nums text-gray-900">{formatPrice(cc.cashSalesTotal)}</span>
+            <span className="text-sm text-gray-600">{t('Total ventas al contado')}</span>
+            <span className="font-semibold tabular-nums text-gray-900">{formatPrice(cc.cashSalesTotal)}</span>
           </div>
           {Number(cc.debtPaymentsReceived) > 0 && (
             <div className="flex items-center justify-between py-2.5">
@@ -188,9 +213,36 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
               <span className="font-semibold tabular-nums text-gray-900">+{formatPrice(cc.debtPaymentsReceived)}</span>
             </div>
           )}
-          {Number(cc.cashRefunds) > 0 && (
-            <BalanceLine label={t('Devoluciones en dinero')} value={cc.cashRefunds} negative />
+          {hasRefunds && (
+            <div className="py-2.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <Undo2 size={14} className="text-red-400" />
+                  {t('Devoluciones en dinero')}
+                </span>
+                <span className="font-semibold tabular-nums text-red-600">−{formatPrice(cc.cashRefunds)}</span>
+              </div>
+              {Number(cc.cashRefundsUnassigned) > 0 && (
+                <p className="mt-0.5 text-right text-xs text-gray-400">
+                  {t('{amount} sin medio registrado (devoluciones de ventas al fiado)', { amount: formatPrice(cc.cashRefundsUnassigned) })}
+                </p>
+              )}
+            </div>
           )}
+          <div className="flex items-center justify-between gap-3 py-3">
+            <div>
+              <p className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold text-gray-800">
+                <Banknote size={15} className="text-emerald-600" />
+                {t('Debe haber en caja')}
+              </p>
+              <p className="text-xs text-gray-400">
+                {hasRefunds || Number(cc.debtPaymentsReceived) > 0
+                  ? t('Ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.')
+                  : t('Todos los medios juntos. Contra este número cuentas la plata.')}
+              </p>
+            </div>
+            <span className="shrink-0 text-xl font-extrabold tabular-nums text-emerald-600">{formatPrice(cc.expectedInCash)}</span>
+          </div>
           {cc.creditSalesCount > 0 && (
             <div className="flex items-center justify-between py-2.5">
               <span className="text-sm text-gray-400">

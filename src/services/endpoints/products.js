@@ -8,6 +8,10 @@ export const productsApi = {
 
   create: (data) => api.post('/products', data),
 
+  // ¿Ya tengo un producto con este nombre? Chequeo en vivo del formulario
+  // (William creó «Waype Kg Blanco» dos veces). params: { name, supplierId, excludeId }
+  checkName: (params) => api.get('/products/check-name', { params }),
+
   update: (id, data) => api.put(`/products/${id}`, data),
 
   deactivate: (id) => api.delete(`/products/${id}`),

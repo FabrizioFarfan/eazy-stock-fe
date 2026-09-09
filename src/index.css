@@ -672,3 +672,9 @@ html.dark .hover\:bg-fuchsia-100:hover { background-color: rgb(112 26 117 / 0.5)
 /* rojo secundario (cerrar sesión en todos) legible en claro */
 .text-red-400 { color: #DC2626; }
 html.dark .text-red-400 { color: #FCA5A5; }
+
+/* 10-sep: aviso de nombre repetido (ProductFormModal) y banner «crear de todos modos» */
+html.dark .border-amber-300 { border-color: rgb(180 83 9 / 0.6); }
+html.dark .border-red-300   { border-color: rgb(185 28 28 / 0.6); }
+html.dark .bg-amber-600     { background-color: #b45309; }
+html.dark .hover\:bg-amber-700:hover { background-color: #92400e; }

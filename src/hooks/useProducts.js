@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useDebounce } from './useDebounce'
 import { productsApi } from '../services/endpoints/products'
 import { useInfiniteSearch } from './useInfiniteSearch'
 
@@ -35,6 +36,35 @@ export function useFreeCodes(options = {}) {
     queryFn: () => productsApi.freeCodes().then((r) => r.data.data),
     ...options,
   })
+}
+
+/**
+ * Chequeo en vivo «¿ya tengo un producto con este nombre?» (William agregó
+ * «Waype Kg Blanco» dos veces sin darse cuenta). Devuelve { result, checking }:
+ * result es null hasta que hay ≥3 letras y el debounce alcanzó lo tipeado.
+ * `excludeId` para la edición (el propio producto no cuenta).
+ */
+export function useProductNameCheck(name, supplierId, excludeId = null, businessId = null) {
+  const debounced = useDebounce((name ?? '').trim(), 400)
+  const enabled = debounced.length >= 3
+  const query = useQuery({
+    queryKey: [PRODUCTS_KEY, 'check-name', debounced, supplierId ?? null, excludeId, businessId],
+    queryFn: () => productsApi
+      .checkName({
+        name: debounced,
+        ...(supplierId && { supplierId }),
+        ...(excludeId && { excludeId }),
+        ...(businessId && { businessId }),
+      })
+      .then((r) => r.data.data),
+    enabled,
+    staleTime: 10_000,
+  })
+  const current = (name ?? '').trim() === debounced
+  return {
+    result: enabled && current ? (query.data ?? null) : null,
+    checking: enabled && (!current || query.isFetching),
+  }
 }
 
 export function useCreateProduct() {

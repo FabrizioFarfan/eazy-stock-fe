@@ -650,6 +650,8 @@ export default function ProductsPage() {
           product={formModal.product}
           autoTutorial={formModal.tutorial}
           onClose={closeForm}
+          // «Ya tienes este producto» → salta a editar el existente en vez de duplicar
+          onEditExisting={(p) => setFormModal({ open: true, product: p, tutorial: false })}
         />
       )}
       {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}

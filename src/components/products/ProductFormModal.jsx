@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage } from '../../hooks/useProducts'
+import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage, useProductNameCheck } from '../../hooks/useProducts'
+import { productsApi } from '../../services/endpoints/products'
+import { formatPrice } from '../../utils/formatMoney'
 import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useBrands, useCreateBrand } from '../../hooks/useBrands'
 import { useCategories, useCreateCategory, useSuggestedAttributes } from '../../hooks/useCategories'
@@ -149,6 +151,85 @@ function FreeCodesHint({ codes, onPick }) {
   )
 }
 
+/**
+ * Aviso en vivo: «ya tienes un producto con este nombre». William agregó
+ * «Waype Kg Blanco» dos veces (no sabía que ya lo tenía) y quedó con dos
+ * códigos para lo mismo. Rojo si es el MISMO proveedor (casi seguro es el
+ * mismo producto), ámbar si es otro proveedor. Si el repetido está oculto,
+ * lo que conviene es reactivarlo, no crear otro.
+ */
+function DuplicateNameHint({ result, checking, onEditExisting, onShowHidden, inReceipt, supplierChosen }) {
+  const t = useT()
+  if (!result?.exists) {
+    return checking ? <p className="mt-1 text-[11px] text-gray-400">{t('Revisando si ya lo tienes…')}</p> : null
+  }
+  const strong = result.sameSupplier
+  const box = strong
+    ? 'border-red-200 bg-red-50 text-red-900'
+    : 'border-amber-200 bg-amber-50 text-amber-900'
+  const iconCls = strong ? 'text-red-500' : 'text-amber-500'
+  const btnCls = strong
+    ? 'border-red-300 bg-white text-red-800 hover:bg-red-100'
+    : 'border-amber-300 bg-white text-amber-800 hover:bg-amber-100'
+  const stock = Number(result.currentStock ?? 0)
+  return (
+    <div className={`mt-2 rounded-lg border px-3 py-2 ${box}`}>
+      <div className="flex items-start gap-2">
+        {result.active
+          ? <AlertTriangle size={15} className={`mt-0.5 shrink-0 ${iconCls}`} />
+          : <EyeOff size={15} className={`mt-0.5 shrink-0 ${iconCls}`} />}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold">
+            {result.active
+              ? (strong
+                  ? t('Ya tienes este producto con el mismo proveedor')
+                  : supplierChosen
+                    ? t('Ya tienes un producto con este nombre (otro proveedor)')
+                    : t('Ya tienes un producto con este nombre'))
+              : t('Ya tienes este producto, pero está oculto')}
+            {result.others > 0 && (
+              <span className="font-normal"> · {t('y {n} más con ese nombre', { n: result.others })}</span>
+            )}
+          </p>
+          <p className="mt-0.5 text-xs">
+            <span className="font-semibold">{result.name}</span>
+            <span className="opacity-80"> · <span className="font-mono">{result.sku}</span></span>
+            {result.unit && <span className="opacity-80"> · {result.unit}</span>}
+            {result.salePrice != null && Number(result.salePrice) > 0 && (
+              <span className="opacity-80"> · {formatPrice(result.salePrice)}</span>
+            )}
+            {result.supplierName && <span className="opacity-80"> · {result.supplierName}</span>}
+            <span className="opacity-80"> · {t('stock {n}', { n: stock })}</span>
+          </p>
+          <p className="mt-1 text-[11px] leading-snug opacity-80">
+            {inReceipt
+              ? t('Ya está en tu catálogo: ciérralo y búscalo en la recepción por su nombre o código.')
+              : result.active
+                ? t('Si es el mismo, no lo crees de nuevo: edítalo o súmale stock. Si de verdad es otro, cambia el nombre (por ejemplo, agrega la presentación) o guarda igual.')
+                : t('Reactívalo desde Productos › Ocultos: vuelve con su mismo código e historial. Crear otro te deja dos códigos para lo mismo.')}
+          </p>
+          {!inReceipt && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {result.active && onEditExisting && (
+                <button type="button" onClick={() => onEditExisting(result.id)}
+                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition ${btnCls}`}>
+                  <Pencil size={11} /> {t('Abrir ese producto')}
+                </button>
+              )}
+              {!result.active && onShowHidden && (
+                <button type="button" onClick={onShowHidden}
+                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition ${btnCls}`}>
+                  <EyeOff size={11} /> {t('Ver ocultos y reactivar')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Devuelve una función para detectar si el nombre que el usuario está escribiendo
 // como "nueva categoría" coincide con un proveedor o marca ya cargado — caso
 // real que vimos con un cliente que escribió el nombre de un proveedor en el
@@ -181,7 +262,7 @@ function warnIfLooksLikeSupplierOrBrand(suppliers, brands, t) {
  * se oculta (la recepción es la que suma el stock — sería doble conteo) y el
  * producto creado se devuelve para caer al carrito.
  */
-export default function ProductFormModal({ product, onClose, autoTutorial = false, receiptContext = null }) {
+export default function ProductFormModal({ product, onClose, autoTutorial = false, receiptContext = null, onEditExisting = null }) {
   const isEdit = !!product
   const t = useT()
   const schema = useMemo(() => makeSchema(t), [t])
@@ -399,6 +480,32 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   const unitValue = watch('unit')
   const priceIsVariable = watch('priceIsVariable')
+  const nameValue = watch('name')
+
+  // «¿Ya tengo un producto con este nombre?» en vivo. En edición solo cuenta
+  // si el nombre cambió de verdad (el propio producto no se avisa a sí mismo).
+  const compact = (v) => (v ?? '').replace(/\s+/g, '').toLowerCase()
+  const nameChanged = !isEdit || compact(nameValue) !== compact(product?.name)
+  const nameCheck = useProductNameCheck(
+    nameChanged ? nameValue : '',
+    supplierId,
+    product?.id ?? null,
+    user.role === 'SUPER_ADMIN' ? user.businessId : null,
+  )
+  // 409 DUPLICATE_PRODUCT_NAME: el BE frenó el guardado; guardamos lo tipeado
+  // para poder «guardar de todos modos» con allowDuplicateName.
+  const [dupPending, setDupPending] = useState(null)
+
+  const openExisting = async (id) => {
+    try {
+      const r = await productsApi.getById(id)
+      if (r.data.data) onEditExisting?.(r.data.data)
+    } catch { /* si no carga, el usuario lo busca en la lista */ }
+  }
+  const showHidden = () => {
+    onClose()
+    window.dispatchEvent(new CustomEvent('eazystock:show-hidden-products'))
+  }
 
   useEffect(() => {
     if (isEdit) {
@@ -484,6 +591,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   const onSubmit = async (values) => {
     setSupplierError(null)
+    setDupPending(null)
     if (!supplierId) {
       setSupplierError(t('Elegí un proveedor para este producto'))
       return
@@ -557,7 +665,12 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       const field = getErrorField(err)
       const code  = getErrorCode(err)
       const known = ['name', 'sku', 'unit', 'description', 'providerCode', 'barcode', 'purchasePrice', 'salePrice', 'minStock']
-      if (code === 'DUPLICATE_SKU') {
+      if (code === 'DUPLICATE_PRODUCT_NAME') {
+        // No es un error de tipeo: es una decisión. Se muestra abajo con el
+        // botón «guardar de todos modos» y se marca el campo.
+        setDupPending({ values, message: getErrorMessage(err) })
+        setError('name', { type: 'server', message: t('Ya tienes un producto con este nombre') })
+      } else if (code === 'DUPLICATE_SKU') {
         setError('sku', {
           type: 'server',
           message: `${getErrorMessage(err)}. ${t('Usa otro código.')}`,
@@ -668,6 +781,14 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 )}
               </Field>
             </div>
+            <DuplicateNameHint
+              result={nameCheck.result}
+              checking={nameCheck.checking}
+              onEditExisting={onEditExisting ? openExisting : null}
+              onShowHidden={showHidden}
+              inReceipt={!!receiptContext}
+              supplierChosen={!!supplierId}
+            />
 
             {/* Código del producto (SKU) */}
             <Field label={t('Código del producto')} error={errors.sku?.message}>
@@ -1001,7 +1122,34 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               </div>
             </div>
 
-            {mutation.isError && (
+            {dupPending ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
+                  <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                  <span>{dupPending.message}</span>
+                </p>
+                <p className="mt-1 text-xs text-amber-800">
+                  {t('No se guardó. Si es el mismo producto, edita el que ya tienes; si es otro distinto, puedes guardarlo igual.')}
+                </p>
+                <div className="mt-2 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDupPending(null)}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                  >
+                    {t('Revisar el nombre')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => onSubmit({ ...dupPending.values, allowDuplicateName: true })}
+                    className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+                  >
+                    {isEdit ? t('Guardar de todos modos') : t('Crear de todos modos')}
+                  </button>
+                </div>
+              </div>
+            ) : mutation.isError && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                 {getErrorMessage(mutation.error)}
               </p>
