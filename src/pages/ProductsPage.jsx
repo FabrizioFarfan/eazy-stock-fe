@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
 import { useProducts, useReactivateProduct, useProductUnits } from '../hooks/useProducts'
@@ -16,6 +16,7 @@ import ProductFormModal from '../components/products/ProductFormModal'
 import ProductDetailModal from '../components/products/ProductDetailModal'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
 import DeleteProductModal from '../components/products/DeleteProductModal'
+import DeletedProductsModal from '../components/products/DeletedProductsModal'
 import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
@@ -180,6 +181,13 @@ export default function ProductsPage() {
     return () => window.removeEventListener('eazystock:show-hidden-products', handler)
   }, [])
 
+  // Lo dispara el aviso de "producto borrado (conserva el historial)".
+  useEffect(() => {
+    const handler = () => setDeletedOpen(true)
+    window.addEventListener('eazystock:show-deleted-products', handler)
+    return () => window.removeEventListener('eazystock:show-deleted-products', handler)
+  }, [])
+
   useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, sortBy, debouncedCol])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
@@ -187,6 +195,7 @@ export default function ProductsPage() {
   const [detailModal, setDetailModal] = useState(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [removeModal, setRemoveModal] = useState(null)   // producto a ocultar/borrar
+  const [deletedOpen, setDeletedOpen] = useState(false)  // la papelera («Borrados»)
   const reactivate = useReactivateProduct()
 
   const c = debouncedCol
@@ -340,8 +349,8 @@ export default function ProductsPage() {
               <p className="mt-1">{t('Cada producto tiene un QR del sistema y un código de barras (Code 128) descargables para etiquetar. Si el empaque trae su propio EAN de fábrica, guárdalo en "Código de barras": el escáner (cámara o pistola) lo reconoce al vender y al recibir mercadería.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🙈 {t('Ocultar, borrar definitivamente o borrar forzado')}</p>
-              <p className="mt-1">{t('Ocultar: el producto deja de aparecer y de venderse, pero conserva su historial y su código queda reservado; lo ves con el filtro "Ocultos" y puedes reactivarlo. Borrar definitivamente: solo si nunca se vendió ni se recibió; desaparece y libera su código. Borrar forzado: para productos de prueba con historial; arrasa en cascada con sus ventas, fiados, devoluciones y recepciones, recalcula saldos y libera el código. Solo el dueño puede hacerlo y hay que escribir BORRAR.')}</p>
+              <p className="font-semibold text-gray-800">🙈 {t('Ocultar o borrar un producto')}</p>
+              <p className="mt-1">{t('Ocultar es para lo que VA A VOLVER (de temporada, el proveedor lo repone): deja de verse y venderse, conserva todo y su código queda reservado; lo ves en "Ocultos" y lo reactivas cuando vuelva. Borrar es para lo que NO vuelve. Si nunca se usó, "Borrar definitivamente" lo elimina y libera su código. Si tiene ventas o recepciones, "Borrar del catálogo (conserva el historial)" lo saca de todas las listas, deja su stock en 0 con un ajuste anotado, retira su código y guarda una copia en "Borrados", desde donde se puede restaurar; sus ventas y recepciones no se tocan. Solo el dueño borra, y para confirmar hay que escribir el nombre del producto.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">📥 {t('Importar y exportar')}</p>
@@ -431,6 +440,17 @@ export default function ProductsPage() {
           <EyeOff size={14} className={showHidden ? 'text-white' : 'text-gray-400'} />
           <span className={`font-semibold ${showHidden ? 'text-white' : 'text-gray-600'}`}>{t('Ocultos')}</span>
         </label>
+
+        {/* La papelera: lo borrado conservando el historial. Vive aparte de
+            Ocultos a propósito — los ocultos VAN A VOLVER, los borrados no. */}
+        {isManager && (
+          <button type="button" onClick={() => setDeletedOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors select-none"
+            title={t('Productos borrados conservando su historial (ventas y recepciones intactas). Desde aquí se pueden restaurar.')}>
+            <Archive size={14} className="text-gray-400" />
+            <span className="font-semibold text-gray-600">{t('Borrados')}</span>
+          </button>
+        )}
 
         <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm hover:bg-amber-100 transition-colors select-none"
           title={t("Productos vinculados al placeholder 'Sin proveedor asignado' — data legacy a reasignar")}>
@@ -669,6 +689,13 @@ export default function ProductsPage() {
         <DeleteProductModal product={removeModal} onClose={() => setRemoveModal(null)} />
       )}
       {bulkDeleteOpen && <BulkDeleteModal onClose={() => setBulkDeleteOpen(false)} />}
+      {deletedOpen && (
+        <DeletedProductsModal
+          onClose={() => setDeletedOpen(false)}
+          canRestore={isManager}
+          businessId={user?.role === 'SUPER_ADMIN' ? user?.businessId : undefined}
+        />
+      )}
     </div>
   )
 }

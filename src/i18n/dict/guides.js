@@ -2,6 +2,21 @@
 // fiado + tarjetas de empleados (2-sep-2026). Llave = texto en español.
 export default {
   en: {
+    // ── 14-sep: guía «Ocultar o borrar un producto» ──
+    'Ocultar o borrar un producto': 'Hide or delete a product',
+    '¿Va a volver o no vuelve más? Eso decide todo': 'Coming back or gone for good? That decides everything',
+    'Ocultar: para lo que VA A VOLVER': 'Hide: for what WILL COME BACK',
+    'Producto de temporada o que el proveedor repone más adelante. Se oculta del catálogo y del punto de venta, conserva todo y su código queda reservado. Lo encuentras con el botón «Ocultos» de Productos y lo reactivas con un toque.': 'Seasonal products or ones the supplier restocks later. It is hidden from the catalogue and the point of sale, keeps everything and its code stays reserved. Find it with the “Hidden” button in Products and reactivate it with one tap.',
+    'Borrar: para lo que NO vuelve': 'Delete: for what will NOT come back',
+    'Si nunca se vendió ni se recibió (prueba, error de carga), «Borrar definitivamente» lo elimina y su código vuelve a quedar libre para el próximo producto.': 'If it was never sold or received (a test, a loading mistake), “Delete permanently” removes it and its code is free again for the next product.',
+    'Con historial: borrar conservando': 'With history: delete but keep it',
+    'Si tiene ventas o recepciones, elige «Borrar del catálogo (conserva el historial)». Desaparece de Productos, Ocultos y el POS; el stock queda en 0 con un ajuste anotado; su código se retira; las ventas y recepciones no se tocan y siguen mostrando su nombre.': 'If it has sales or receipts, choose “Delete from catalogue (keeps the history)”. It disappears from Products, Hidden and the POS; stock goes to 0 with a recorded adjustment; its code is retired; sales and receipts are untouched and still show its name.',
+    'Seguridad: escribe el nombre': 'Safety: type the name',
+    'Solo el dueño puede borrar y, como en GitHub, tiene que escribir el nombre del producto tal como aparece para confirmar. Así nadie borra nada por un toque de más.': 'Only the owner can delete and, like on GitHub, must type the product name exactly as shown to confirm. Nothing gets deleted by an extra tap.',
+    'Si te arrepientes: «Borrados»': 'Changed your mind? “Deleted”',
+    'En Productos › «Borrados» está la copia completa de cada producto borrado (precios, proveedor, stock que tenía, quién lo borró). «Restaurar» lo devuelve al catálogo con su mismo código y stock 0: regístrale una entrada si tienes unidades.': 'Products › “Deleted” holds the full copy of every deleted product (prices, supplier, stock it had, who deleted it). “Restore” returns it to the catalogue with the same code and stock 0: record an entry if you have units.',
+    'La opción avanzada': 'The advanced option',
+    '«Borrar el producto y TODO su historial» arrasa también sus ventas, fiados, devoluciones y recepciones. Queda plegada a propósito: es solo para productos de prueba que se usaron por error, nunca para mercadería real.': '“Delete the product and ALL its history” also wipes its sales, credit sales, returns and receipts. It is folded away on purpose: only for test products used by mistake, never for real goods.',
     // ── welcome ──
     '¡Bienvenido a Eazy Stock!': 'Welcome to Eazy Stock!',
     'Todo lo que necesitas para gestionar el inventario, las ventas y el fiado de tu negocio en un solo lugar, fácil y rápido.': 'Everything you need to run your inventory, sales and credit accounts in one place, fast and simple.',
@@ -131,6 +146,21 @@ export default {
     'Editar': 'Edit',
   },
   it: {
+    // ── 14-sep: guía «Ocultar o borrar un producto» ──
+    'Ocultar o borrar un producto': 'Nascondere o eliminare un prodotto',
+    '¿Va a volver o no vuelve más? Eso decide todo': 'Tornerà o non torna più? Questo decide tutto',
+    'Ocultar: para lo que VA A VOLVER': 'Nascondi: per ciò che TORNERÀ',
+    'Producto de temporada o que el proveedor repone más adelante. Se oculta del catálogo y del punto de venta, conserva todo y su código queda reservado. Lo encuentras con el botón «Ocultos» de Productos y lo reactivas con un toque.': 'Prodotto stagionale o che il fornitore rifornirà più avanti. Si nasconde dal catalogo e dal punto vendita, conserva tutto e il codice resta riservato. Lo trovi con il pulsante «Nascosti» in Prodotti e lo riattivi con un tocco.',
+    'Borrar: para lo que NO vuelve': 'Elimina: per ciò che NON torna',
+    'Si nunca se vendió ni se recibió (prueba, error de carga), «Borrar definitivamente» lo elimina y su código vuelve a quedar libre para el próximo producto.': 'Se non è mai stato venduto né ricevuto (prova, errore di caricamento), «Elimina definitivamente» lo rimuove e il codice torna libero per il prossimo prodotto.',
+    'Con historial: borrar conservando': 'Con cronologia: elimina conservando',
+    'Si tiene ventas o recepciones, elige «Borrar del catálogo (conserva el historial)». Desaparece de Productos, Ocultos y el POS; el stock queda en 0 con un ajuste anotado; su código se retira; las ventas y recepciones no se tocan y siguen mostrando su nombre.': 'Se ha vendite o ricezioni, scegli «Elimina dal catalogo (conserva la cronologia)». Scompare da Prodotti, Nascosti e POS; lo stock va a 0 con una rettifica registrata; il codice viene ritirato; vendite e ricezioni non si toccano e mostrano ancora il suo nome.',
+    'Seguridad: escribe el nombre': 'Sicurezza: scrivi il nome',
+    'Solo el dueño puede borrar y, como en GitHub, tiene que escribir el nombre del producto tal como aparece para confirmar. Así nadie borra nada por un toque de más.': 'Solo il titolare può eliminare e, come su GitHub, deve scrivere il nome del prodotto così come appare per confermare. Così nessuno elimina nulla con un tocco di troppo.',
+    'Si te arrepientes: «Borrados»': 'Se cambi idea: «Eliminati»',
+    'En Productos › «Borrados» está la copia completa de cada producto borrado (precios, proveedor, stock que tenía, quién lo borró). «Restaurar» lo devuelve al catálogo con su mismo código y stock 0: regístrale una entrada si tienes unidades.': 'In Prodotti › «Eliminati» c\'è la copia completa di ogni prodotto eliminato (prezzi, fornitore, stock che aveva, chi lo ha eliminato). «Ripristina» lo riporta nel catalogo con lo stesso codice e stock 0: registra un\'entrata se hai unità.',
+    'La opción avanzada': 'L\'opzione avanzata',
+    '«Borrar el producto y TODO su historial» arrasa también sus ventas, fiados, devoluciones y recepciones. Queda plegada a propósito: es solo para productos de prueba que se usaron por error, nunca para mercadería real.': '«Elimina il prodotto e TUTTA la sua cronologia» cancella anche vendite, crediti, resi e ricezioni. È ripiegata di proposito: solo per prodotti di prova usati per errore, mai per merce reale.',
     '¡Bienvenido a Eazy Stock!': 'Benvenuto in Eazy Stock!',
     'Todo lo que necesitas para gestionar el inventario, las ventas y el fiado de tu negocio en un solo lugar, fácil y rápido.': 'Tutto ciò che ti serve per gestire inventario, vendite e credito ai clienti in un unico posto, facile e veloce.',
     'Gestiona tus productos': 'Gestisci i tuoi prodotti',

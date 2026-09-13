@@ -2,6 +2,7 @@ import {
   Package, ShoppingCart, ArrowUpDown, BarChart2, Sparkles, CalendarClock, Scale, HandCoins,
   FileText, ClipboardList, Smartphone, Bell, Users, Shield, Search, CreditCard, Check,
   UserPlus, Send, Wallet, Truck, FileSpreadsheet, Coins, Phone, Globe, Moon, AlertTriangle, Receipt,
+  EyeOff, Trash2, Archive, RotateCcw, KeyRound,
 } from 'lucide-react'
 
 /**
@@ -75,6 +76,19 @@ export const GUIDES = {
       { icon: FileSpreadsheet, color: 'bg-emerald-600', title: 'Importa y exporta', desc: 'Desde Productos importa tu lista desde Excel (con vista previa y detección de duplicados) y exporta el inventario cuando quieras.' },
     ],
   },
+  borrar: {
+    title: 'Ocultar o borrar un producto',
+    subtitle: '¿Va a volver o no vuelve más? Eso decide todo',
+    icon: Trash2, color: 'bg-red-50', iconColor: 'text-red-600',
+    steps: [
+      { icon: EyeOff,   color: 'bg-amber-500',  title: 'Ocultar: para lo que VA A VOLVER', desc: 'Producto de temporada o que el proveedor repone más adelante. Se oculta del catálogo y del punto de venta, conserva todo y su código queda reservado. Lo encuentras con el botón «Ocultos» de Productos y lo reactivas con un toque.' },
+      { icon: Trash2,   color: 'bg-red-500',    title: 'Borrar: para lo que NO vuelve', desc: 'Si nunca se vendió ni se recibió (prueba, error de carga), «Borrar definitivamente» lo elimina y su código vuelve a quedar libre para el próximo producto.' },
+      { icon: Archive,  color: 'bg-red-600',    title: 'Con historial: borrar conservando', desc: 'Si tiene ventas o recepciones, elige «Borrar del catálogo (conserva el historial)». Desaparece de Productos, Ocultos y el POS; el stock queda en 0 con un ajuste anotado; su código se retira; las ventas y recepciones no se tocan y siguen mostrando su nombre.' },
+      { icon: KeyRound, color: 'bg-slate-700',  title: 'Seguridad: escribe el nombre', desc: 'Solo el dueño puede borrar y, como en GitHub, tiene que escribir el nombre del producto tal como aparece para confirmar. Así nadie borra nada por un toque de más.' },
+      { icon: RotateCcw, color: 'bg-emerald-600', title: 'Si te arrepientes: «Borrados»', desc: 'En Productos › «Borrados» está la copia completa de cada producto borrado (precios, proveedor, stock que tenía, quién lo borró). «Restaurar» lo devuelve al catálogo con su mismo código y stock 0: regístrale una entrada si tienes unidades.' },
+      { icon: AlertTriangle, color: 'bg-gray-600', title: 'La opción avanzada', desc: '«Borrar el producto y TODO su historial» arrasa también sus ventas, fiados, devoluciones y recepciones. Queda plegada a propósito: es solo para productos de prueba que se usaron por error, nunca para mercadería real.' },
+    ],
+  },
   empleados: {
     title: 'Empleados y permisos',
     subtitle: 'Qué puede hacer cada vendedor',
@@ -101,4 +115,4 @@ export const GUIDES = {
   },
 }
 
-export const GUIDE_ORDER = ['venta', 'fiado', 'cotizacion', 'stock', 'empleados', 'ajustes']
+export const GUIDE_ORDER = ['venta', 'fiado', 'cotizacion', 'stock', 'borrar', 'empleados', 'ajustes']

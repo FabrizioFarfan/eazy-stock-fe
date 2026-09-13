@@ -28,6 +28,14 @@ export const productsApi = {
   forceDeletePreview: (id) => api.get(`/products/${id}/force-delete/preview`),
   forceDelete: (id) => api.delete(`/products/${id}/force`),
 
+  // Borrar CONSERVANDO el historial (pedido de William): el producto sale del
+  // catálogo y de Ocultos, su stock queda en 0 con un ajuste registrado, el
+  // código queda retirado y las ventas/recepciones siguen intactas. Va a la
+  // papelera («Borrados»), desde donde se puede restaurar.
+  deleteKeepHistory: (id) => api.delete(`/products/${id}/keep-history`),
+  restore: (id) => api.post(`/products/${id}/restore`),
+  listDeleted: (params) => api.get('/products/deleted', { params }),
+
   // Huecos reutilizables en la numeración: códigos de productos borrados que
   // nunca tuvieron movimientos. Se sugieren al dar de alta un producto nuevo.
   freeCodes: () => api.get('/products/free-codes'),

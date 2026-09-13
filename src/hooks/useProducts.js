@@ -151,6 +151,39 @@ export function useForceDeleteProduct() {
   })
 }
 
+export const DELETED_PRODUCTS_KEY = 'products-deleted'
+
+/** La papelera: productos borrados conservando el historial, con su copia plana. */
+export function useDeletedProducts(params, options = {}) {
+  return useQuery({
+    queryKey: [DELETED_PRODUCTS_KEY, params],
+    queryFn: () => productsApi.listDeleted(params).then((r) => r.data.data),
+    ...options,
+  })
+}
+
+/**
+ * Borrar CONSERVANDO el historial: el producto desaparece de las listas, su
+ * stock baja a 0 (movimiento registrado) y va a la papelera. Toca stock y
+ * movimientos, así que invalida todo.
+ */
+export function useDeleteProductKeepHistory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productsApi.deleteKeepHistory(id).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
+/** Saca un producto de la papelera: vuelve activo, con su código y stock 0. */
+export function useRestoreProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => productsApi.restore(id).then((r) => r.data.data),
+    onSuccess: () => qc.invalidateQueries(),
+  })
+}
+
 /** Borrado masivo por rango de fecha de creación. */
 export function useBulkDeleteProducts() {
   const qc = useQueryClient()
