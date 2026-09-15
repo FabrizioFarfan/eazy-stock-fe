@@ -6,6 +6,7 @@ import { formatPrice } from '../../utils/formatMoney'
 import ExpiryBadge from '../common/ExpiryBadge'
 import { formatShortDate } from '../../utils/formatDate'
 import { useT, dateLocale } from '../../i18n'
+import { useAuth } from '../../context/AuthContext'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -44,6 +45,8 @@ function MovementTypeIcon({ type }) {
 
 function MovementTypeBadge({ type }) {
   const t = useT()
+  const { user } = useAuth()
+  const hidesCost = user?.role === 'EMPLOYEE'
   if (type === 'SALE')
     return <span className="text-xs font-semibold text-red-500">{t('Venta')}</span>
   if (type === 'PURCHASE_ENTRY')
@@ -195,7 +198,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 </div>
               )}
             </div>
-            <Row label={t('P. compra')} value={formatPrice(product.purchasePrice)} />
+            {!hidesCost && <Row label={t('P. compra')} value={formatPrice(product.purchasePrice)} />}
             <Row label={t('P. venta')}  value={
               product.priceIsVariable ? (
                 <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
@@ -203,11 +206,11 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 </span>
               ) : formatPrice(product.salePrice)
             } />
-            <Row label={t('Margen')}    value={
+            {!hidesCost && <Row label={t('Margen')}    value={
               !product.priceIsVariable && product.purchasePrice && product.salePrice
                 ? `${(((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)}%`
                 : null
-            } />
+            } />}
           </Section>
 
           {/* Stock */}

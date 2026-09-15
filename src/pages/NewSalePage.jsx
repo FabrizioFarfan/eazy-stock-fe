@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown } from 'lucide-react'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -109,9 +109,10 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
             <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
           )}
           {/* El precio se puede ajustar ANTES de agregar — un click y aparece
-              el input; cerrar vuelve al precio de lista. Variable siempre
-              puede definirse; fijo solo con permiso de modificar precios. */}
-          {!inCart && !noStock && (canApplyDiscount || isVariable) && (
+              el input; cerrar vuelve al precio de lista. Cualquier vendedor
+              puede (William, 15-sep): vender bajo el precio se AVISA y queda
+              marcado, nunca se impide. */}
+          {!inCart && !noStock && (
             <button type="button"
               onClick={() => { setPriceOpen((o) => !o); setPrice(null) }}
               className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
@@ -155,6 +156,11 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
             maxDecimals={6}
             autoFocus
           />
+          {!isVariable && price != null && Number(price) < Number(product.salePrice ?? 0) - 0.0000005 && (
+            <p className="mt-1 text-[11px] font-semibold text-red-600">
+              {t('Por debajo del precio de venta ({list}): −{diff} por {unit}', { list: formatCurrency(product.salePrice), diff: formatCurrency(Number(product.salePrice) - Number(price)), unit: product.unit || t('unidad') })}
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -169,19 +175,23 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
   const subtotal     = (Number(quantity) || 0) * numericPrice
-  const isModified   = !isVariable && Math.abs(numericPrice - Number(product.salePrice ?? 0)) > 0.0000005
+  const listPrice    = Number(product.salePrice ?? 0)
+  const isModified   = !isVariable && Math.abs(numericPrice - listPrice) > 0.0000005
+  const isBelow      = !isVariable && numericPrice < listPrice - 0.0000005
   const variableMissing = isVariable && (unitPrice === '' || unitPrice == null || numericPrice <= 0)
 
-  // Si es variable, el input de precio está habilitado siempre (no es un override:
-  // es el único precio). Autofoco al montar para que el cajero lo defina rápido.
-  const priceInputDisabled = isVariable ? false : !canApplyDiscount
+  // El precio de la línea lo puede tocar cualquier vendedor (William, 15-sep):
+  // por debajo del precio de venta se avisa y queda marcado, nunca se impide.
+  const priceInputDisabled = false
 
   return (
     <div className={`rounded-xl border p-3 ${
       variableMissing
         ? 'border-orange-300 bg-orange-50/70 ring-1 ring-orange-200'
-        : 'border-gray-100 bg-gray-50/60'
-    }`}>
+        : isBelow
+          ? 'border-red-200 bg-red-50/60 ring-1 ring-red-100'
+          : 'border-gray-100 bg-gray-50/60'
+    }`} data-below-list={isBelow || undefined}>
       <div className="flex items-start justify-between gap-2">
         <p className="flex-1 text-sm font-semibold leading-snug text-gray-900">{product.name}</p>
         <button onClick={() => onRemove(product.id)} aria-label={t('Quitar')}
@@ -223,9 +233,11 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
               <Tag size={10} />{t('Precio definido en la venta')}
             </span>
           )
-        ) : !canApplyDiscount ? (
-          <p className="mt-1 text-[10px] text-gray-400">
-            {t('Tu administrador no te ha autorizado a modificar precios')}
+        ) : isBelow ? (
+          <p className="mt-1.5 text-[11px] font-semibold text-red-600">
+            <TrendingDown size={11} className="-mt-0.5 mr-1 inline" />
+            {t('Por debajo del precio de venta ({list}): −{diff} por {unit}', { list: formatCurrency(listPrice), diff: formatCurrency(listPrice - numericPrice), unit: product.unit || t('unidad') })}
+            {Number(quantity) > 1 && ` · ${t('−{total} en la línea', { total: formatCurrency((listPrice - numericPrice) * Number(quantity)) })}`}
           </p>
         ) : isModified ? (
           <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
@@ -617,6 +629,12 @@ export default function NewSalePage() {
       : Math.min(subtotal, numericDiscount)
   const total = Math.max(0, subtotal - discountAmount)
 
+  // Líneas vendidas por debajo del precio de venta: se avisa (no se bloquea)
+  const belowLines = cart.filter((i) => !i.product.priceIsVariable
+    && parseNumber(i.unitPrice) < Number(i.product.salePrice ?? 0) - 0.0000005)
+  const belowAmount = belowLines.reduce(
+    (sum, i) => sum + (Number(i.product.salePrice ?? 0) - parseNumber(i.unitPrice)) * (Number(i.quantity) || 0), 0)
+
   const isFiado = canSellOnCredit && onCredit
   const fiadoMissingCustomer = isFiado && !customer
   const fiadoCustomerNoCredit = isFiado && customer && (
@@ -661,9 +679,10 @@ export default function NewSalePage() {
         const enteredPrice = parseNumber(i.unitPrice)
         const original     = Number(i.product.salePrice ?? 0)
         // Para precio variable, el override SIEMPRE viaja — es el único precio.
-        // Para precio fijo, sólo si el cajero lo cambió y tiene permiso.
+        // Para precio fijo, si el cajero lo cambió (cualquier vendedor puede;
+        // por debajo del precio de venta se avisa y queda marcado).
         const overrideUsed = i.product.priceIsVariable
-          || (canApplyDiscount && Math.abs(enteredPrice - original) > 0.0001)
+          || Math.abs(enteredPrice - original) > 0.0001
         return {
           productId: i.product.id,
           quantity: i.quantity,
@@ -965,6 +984,14 @@ export default function NewSalePage() {
               </p>
             )}
 
+            {belowLines.length > 0 && (
+              <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100" data-testid="below-list-summary">
+                <TrendingDown size={13} />
+                {belowLines.length === 1
+                  ? t('1 producto por debajo del precio de venta · −{amount}', { amount: formatCurrency(belowAmount) })
+                  : t('{n} productos por debajo del precio de venta · −{amount}', { n: belowLines.length, amount: formatCurrency(belowAmount) })}
+              </p>
+            )}
             <button
               onClick={handleSubmit}
               disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}

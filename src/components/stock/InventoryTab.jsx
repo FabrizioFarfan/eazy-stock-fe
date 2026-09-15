@@ -249,6 +249,7 @@ export default function InventoryTab() {
                   ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('stockMin', 'stockMax')} />
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Mín.')}</th>
+                {user?.role !== 'EMPLOYEE' && (
                 <ColumnFilter label={t('Último costo')} type="range" align="right"
                   rangeMin={colFilters.purchaseMin} rangeMax={colFilters.purchaseMax}
                   onRangeChange={setRange('purchaseMin', 'purchaseMax')}
@@ -256,6 +257,7 @@ export default function InventoryTab() {
                   sortState={sortStateFor('purchasePrice')} onSort={onSortBy('purchasePrice')}
                   ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('purchaseMin', 'purchaseMax')} />
+                )}
                 <ColumnFilter label={t('Vence')} type="select" align="center"
                   value={colFilters.expiryStatus} onChange={(v) => setField('expiryStatus', v)}
                   options={EXPIRY_OPTS.map((o) => ({ ...o, label: t(o.label) }))} active={!!colFilters.expiryStatus}
@@ -326,9 +328,11 @@ export default function InventoryTab() {
                         <StockBadge current={p.currentStock} min={p.minStock} />
                       </td>
                       <td className="px-4 py-3.5 text-center text-xs text-gray-500">{p.minStock}</td>
+                      {user?.role !== 'EMPLOYEE' && (
                       <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">
                         {formatPrice(p.purchasePrice)}
                       </td>
+                      )}
                       <td className="px-4 py-3.5 text-center"><ExpiryBadge product={p} dash /></td>
                       <td className="px-4 py-3.5 text-center">
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${

@@ -3,6 +3,7 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    'Este es el catálogo: todo lo que se vende vive acá, con su precio de venta y stock.': 'This is the catalog: everything on sale lives here, with its sale price and stock.',
     // ── 14-sep: borrar conservando el historial + papelera (pedido de William) ──
     '"Borrados"': '"Deleted"',
     '"{name}" se borró del catálogo. Sus ventas y recepciones siguen intactas.': '"{name}" was deleted from the catalogue. Its sales and receipts are untouched.',
@@ -656,6 +657,7 @@ export default {
   },
 
   it: {
+    'Este es el catálogo: todo lo que se vende vive acá, con su precio de venta y stock.': 'Questo è il catalogo: tutto ciò che si vende vive qui, con prezzo di vendita e stock.',
     // ── 14-sep: borrar conservando el historial + papelera (pedido de William) ──
     '"Borrados"': '"Eliminati"',
     '"{name}" se borró del catálogo. Sus ventas y recepciones siguen intactas.': '"{name}" è stato eliminato dal catalogo. Vendite e ricezioni restano intatte.',

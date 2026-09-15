@@ -1,7 +1,7 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound, TrendingDown } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
 import ColumnFilter from '../components/common/ColumnFilter'
@@ -490,6 +490,21 @@ export default function SalesPage() {
                             className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700"
                           >
                             {sale.paymentMethod}
+                          </span>
+                        )}
+                        {/* Vendido por debajo del precio de venta (William, 15-sep): se ve sin abrir el detalle */}
+                        {Number(sale.belowListAmount) > 0 && (
+                          <span
+                            title={
+                              sale.belowListCount === 1
+                                ? t('1 producto vendido por debajo del precio de venta (−{amount})', { amount: formatCurrency(sale.belowListAmount) })
+                                : t('{n} productos vendidos por debajo del precio de venta (−{amount})', { n: sale.belowListCount, amount: formatCurrency(sale.belowListAmount) })
+                            }
+                            className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700"
+                            data-testid="below-list-pill"
+                          >
+                            <TrendingDown size={9} />
+                            −{formatCurrency(sale.belowListAmount)}
                           </span>
                         )}
                         {sale.discountAmount > 0 && (

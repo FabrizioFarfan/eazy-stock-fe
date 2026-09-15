@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2, UserPlus } from 'lucide-react'
+import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2, UserPlus, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSaleDetail } from '../../hooks/useReports'
 import { useSaleReturns, useCreateSaleReturn, useAssignSaleCustomer } from '../../hooks/useSales'
@@ -254,12 +254,18 @@ export default function SaleDetailModal({ saleId, onClose }) {
                         <td className="py-2.5">
                           <p className="font-medium text-gray-900">{item.productName}</p>
                           <p className="font-mono text-xs text-gray-400">{item.productSku}</p>
-                          {hasOverride && (
+                          {hasOverride && item.belowList ? (
+                            <p className="mt-0.5 text-xs font-semibold text-red-600" data-testid="below-list-line">
+                              <TrendingDown size={10} className="-mt-0.5 inline" /> {t('Por debajo del precio de venta')}{' '}
+                              <span className="line-through">{formatCurrency(item.unitPrice)}</span>
+                              {' · '}−{formatCurrency(item.belowListAmount)}
+                            </p>
+                          ) : hasOverride ? (
                             <p className="mt-0.5 text-xs text-orange-600">
                               <Tag size={10} className="-mt-0.5 inline" /> {t('Precio modificado de')}{' '}
                               <span className="line-through">{formatCurrency(item.unitPrice)}</span>
                             </p>
-                          )}
+                          ) : null}
                           {returned > 0 && (
                             <p className="mt-0.5 text-xs text-purple-600">
                               <Undo2 size={10} className="-mt-0.5 inline" /> {t('Devuelto')}: {returned}
@@ -267,7 +273,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                           )}
                         </td>
                         <td className="py-2.5 text-center font-mono text-gray-700">{item.quantity}</td>
-                        <td className={`py-2.5 text-right ${hasOverride ? 'font-semibold text-orange-600' : 'text-gray-600'}`}>
+                        <td className={`py-2.5 text-right ${hasOverride ? (item.belowList ? 'font-semibold text-red-600' : 'font-semibold text-orange-600') : 'text-gray-600'}`}>
                           {formatCurrency(effectivePrice)}
                         </td>
                         <td className="py-2.5 text-right font-semibold text-gray-900">{formatCurrency(item.subtotal)}</td>
@@ -349,6 +355,17 @@ export default function SaleDetailModal({ saleId, onClose }) {
                 </div>
                 <div className="my-1.5 border-t border-gray-200" />
               </>
+            )}
+            {Number(sale.belowListAmount) > 0 && (
+              <div className="flex items-center justify-between text-red-600" data-testid="below-list-total">
+                <span className="flex items-center gap-1">
+                  <TrendingDown size={13} />
+                  {sale.belowListCount === 1
+                    ? t('1 producto por debajo del precio de venta')
+                    : t('{n} productos por debajo del precio de venta', { n: sale.belowListCount })}
+                </span>
+                <span className="font-semibold">−{formatCurrency(sale.belowListAmount)}</span>
+              </div>
             )}
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-700">

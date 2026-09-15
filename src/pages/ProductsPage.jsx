@@ -83,6 +83,8 @@ function StatusBadge({ active }) {
 
 const PAGE_SIZE = 20
 const canMutate = (u) => u?.role === 'OWNER' || (u?.role === 'SUPER_ADMIN' && !!u?.businessId)
+// Un vendedor nunca ve el precio de compra (William, 15-sep): ni columna, ni filtro, ni ficha.
+const hidesCost = (u) => u?.role === 'EMPLOYEE'
 
 export default function ProductsPage() {
   const { user, seenTutorials, markTutorialSeen } = useAuth()
@@ -252,7 +254,7 @@ export default function ProductsPage() {
   if (colFilters.locationId)   activeChips.push({ label: `${t('Ubicación')}: ${labelOf(locationOpts, colFilters.locationId)}`, onRemove: () => clearFields('locationId') })
   if (colFilters.supplierId)   activeChips.push({ label: `${t('Proveedor')}: ${labelOf(supplierOpts, colFilters.supplierId)}`, onRemove: () => clearFields('supplierId') })
   if (colFilters.providerCode) activeChips.push({ label: `${t('Cód. prov.')}: "${colFilters.providerCode}"`, onRemove: () => clearFields('providerCode') })
-  if (colFilters.purchaseMin !== '' || colFilters.purchaseMax !== '')
+  if (!hidesCost(user) && (colFilters.purchaseMin !== '' || colFilters.purchaseMax !== ''))
     activeChips.push({ label: rangeChip(colFilters.purchaseMin, colFilters.purchaseMax, t('P. compra'), true), onRemove: () => clearFields('purchaseMin', 'purchaseMax') })
   if (colFilters.saleMin !== '' || colFilters.saleMax !== '')
     activeChips.push({ label: rangeChip(colFilters.saleMin, colFilters.saleMax, t('P. venta'), true), onRemove: () => clearFields('saleMin', 'saleMax') })
@@ -307,7 +309,7 @@ export default function ProductsPage() {
         <div className="flex items-center gap-3">
           <PageTitle icon={Package} tone="cyan">{t('Productos')}</PageTitle>
           <HelpDrawer title={t('Cómo usar Productos')} buttonLabel={t('¿Cómo funciona?')} autoOpenKey="eazystock_products_help_v2">
-            <p>{t('Este es tu catálogo: todo lo que vendes vive acá, con su precio de compra, precio de venta y stock.')}</p>
+            <p>{hidesCost(user) ? t('Este es el catálogo: todo lo que se vende vive acá, con su precio de venta y stock.') : t('Este es tu catálogo: todo lo que vendes vive acá, con su precio de compra, precio de venta y stock.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">➕ {t('Agregar productos')}</p>
               <p className="mt-1">{t('Con "Nuevo producto" los cargas uno por uno, o usa "Importar" para subir todo tu inventario desde un Excel de una sola vez.')}</p>
@@ -534,6 +536,7 @@ export default function ProductsPage() {
                   value={colFilters.providerCode} onChange={(v) => setField('providerCode', v)}
                   placeholder={t('Buscar código...')} active={!!colFilters.providerCode}
                   onClear={() => clearFields('providerCode')} />
+                {!hidesCost(user) && (
                 <ColumnFilter label={t('P. Compra')} type="range" align="right"
                   rangeMin={colFilters.purchaseMin} rangeMax={colFilters.purchaseMax}
                   onRangeChange={setRange('purchaseMin', 'purchaseMax')}
@@ -541,6 +544,7 @@ export default function ProductsPage() {
                   sortState={sortStateFor('purchasePrice')} onSort={onSortBy('purchasePrice')}
                   ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('purchaseMin', 'purchaseMax')} />
+                )}
                 <ColumnFilter label={t('P. Venta')} type="range" align="right"
                   rangeMin={colFilters.saleMin} rangeMax={colFilters.saleMax}
                   onRangeChange={setRange('saleMin', 'saleMax')}
@@ -624,7 +628,7 @@ export default function ProductsPage() {
                     <td className="px-5 py-3.5 text-xs text-gray-500">{p.locationName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-600">{p.providerCode || '—'}</td>
-                    <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>
+                    {!hidesCost(user) && <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>}
                     <td className="px-5 py-3.5 text-right font-semibold text-gray-900">
                       {p.priceIsVariable ? (
                         <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">

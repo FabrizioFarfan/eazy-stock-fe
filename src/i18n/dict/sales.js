@@ -3,6 +3,16 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    // ── Vender por debajo del precio de venta: se avisa y queda marcado, nunca se impide (William, 15-sep) ──
+    'Por debajo del precio de venta ({list}): −{diff} por {unit}': 'Below the sale price ({list}): −{diff} per {unit}',
+    '−{total} en la línea': '−{total} on this line',
+    '1 producto por debajo del precio de venta · −{amount}': '1 product below the sale price · −{amount}',
+    '{n} productos por debajo del precio de venta · −{amount}': '{n} products below the sale price · −{amount}',
+    '1 producto vendido por debajo del precio de venta (−{amount})': '1 product sold below the sale price (−{amount})',
+    '{n} productos vendidos por debajo del precio de venta (−{amount})': '{n} products sold below the sale price (−{amount})',
+    'Por debajo del precio de venta': 'Below the sale price',
+    '1 producto por debajo del precio de venta': '1 product below the sale price',
+    '{n} productos por debajo del precio de venta': '{n} products below the sale price',
     // ── Cotizaciones: PDF, WhatsApp/correo, cliente vinculado, editar y duplicar (29-ago) ──
     "cotizacion": "quote",
     "Correo": "Email",
@@ -440,6 +450,16 @@ export default {
   },
 
   it: {
+    // ── Vendere sotto il prezzo di vendita: si avvisa e resta segnato, mai bloccato (William, 15-sep) ──
+    'Por debajo del precio de venta ({list}): −{diff} por {unit}': 'Sotto il prezzo di vendita ({list}): −{diff} per {unit}',
+    '−{total} en la línea': '−{total} sulla riga',
+    '1 producto por debajo del precio de venta · −{amount}': '1 prodotto sotto il prezzo di vendita · −{amount}',
+    '{n} productos por debajo del precio de venta · −{amount}': '{n} prodotti sotto il prezzo di vendita · −{amount}',
+    '1 producto vendido por debajo del precio de venta (−{amount})': '1 prodotto venduto sotto il prezzo di vendita (−{amount})',
+    '{n} productos vendidos por debajo del precio de venta (−{amount})': '{n} prodotti venduti sotto il prezzo di vendita (−{amount})',
+    'Por debajo del precio de venta': 'Sotto il prezzo di vendita',
+    '1 producto por debajo del precio de venta': '1 prodotto sotto il prezzo di vendita',
+    '{n} productos por debajo del precio de venta': '{n} prodotti sotto il prezzo di vendita',
     // ── Cotizaciones: PDF, WhatsApp/correo, cliente vinculado, editar y duplicar (29-ago) ──
     "cotizacion": "preventivo",
     "Correo": "Email",

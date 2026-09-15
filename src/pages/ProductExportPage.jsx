@@ -84,6 +84,8 @@ function Stepper({ current }) {
 function ConfigureStep({ onStarted }) {
   const t = useT()
   const { user } = useAuth()
+  // Un vendedor nunca ve el precio de compra: tampoco lo exporta (William, 15-sep)
+  const columnOptions = user?.role === 'EMPLOYEE' ? COLUMN_OPTIONS.filter((c) => c.key !== 'purchasePrice') : COLUMN_OPTIONS
   const businessId = user?.role === 'SUPER_ADMIN' ? user?.businessId : undefined
 
   const { data: suppliersData } = useSuppliers({ size: 200, ...(businessId && { businessId }) })
@@ -97,13 +99,13 @@ function ConfigureStep({ onStarted }) {
   const [stock, setStock] = useState('ALL')
   const [format, setFormat] = useState('XLSX')
   const [columns, setColumns] = useState(
-    () => Object.fromEntries(COLUMN_OPTIONS.map((c) => [c.key, c.def])),
+    () => Object.fromEntries(columnOptions.map((c) => [c.key, c.def])),
   )
   const [starting, setStarting] = useState(false)
 
   const selectedKeys = useMemo(
-    () => COLUMN_OPTIONS.filter((c) => columns[c.key]).map((c) => c.key),
-    [columns],
+    () => columnOptions.filter((c) => columns[c.key]).map((c) => c.key),
+    [columns, columnOptions],
   )
 
   // Para que el archivo se pueda volver a importar tiene que poder identificar
@@ -184,7 +186,7 @@ function ConfigureStep({ onStarted }) {
           {t('Si vas a editar el archivo y volver a subirlo, deja marcadas SKU, Nombre y Código del proveedor — son las que el sistema usa para identificar cada producto.')}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {COLUMN_OPTIONS.map((c) => (
+          {columnOptions.map((c) => (
             <label key={c.key}
               className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
                 columns[c.key] ? 'border-blue-500 bg-blue-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'
