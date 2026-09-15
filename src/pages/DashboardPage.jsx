@@ -13,6 +13,7 @@ import { useUsers } from '../hooks/useUsers'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
 import HelpDrawer from '../components/common/HelpDrawer'
+import CashFloatCard from '../components/dashboard/CashFloatCard'
 import { localISODate } from '../utils/formatDate'
 import { useT, dateLocale } from '../i18n'
 
@@ -344,6 +345,9 @@ function OwnerDashboard({ name, businessId }) {
         )}
       </div>
 
+      {/* Fondo de caja del día (William, 15-sep): el sencillo para dar vuelto */}
+      <CashFloatCard canRegister canSeeDrawer scopeParams={scopeParams} />
+
       {/* Presupuestos — feature destacada */}
       <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -598,6 +602,9 @@ function EmployeeDashboard({ name }) {
             iconColor={bajosDeStock > 0 ? 'text-red-500' : 'text-emerald-500'} />
         )}
       </div>
+
+      {/* El vendedor ve cuánto sencillo le dejaron hoy (y el cajón si puede ver el cierre) */}
+      <CashFloatCard canRegister={false} canSeeDrawer={can('canViewCashClosing') || can('canViewReports')} />
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>

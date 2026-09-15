@@ -145,7 +145,7 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
     if (!cc) return null
 
     const noMovement = cc.byMethod.length === 0 && Number(cc.creditSalesTotal) === 0
-      && Number(cc.debtPaymentsReceived) === 0 && Number(cc.cashRefunds) === 0
+      && Number(cc.debtPaymentsReceived) === 0 && Number(cc.cashRefunds) === 0 && Number(cc.cashFloat ?? 0) === 0
     if (noMovement) {
       return <p className="py-8 text-center text-sm text-gray-400">{t('Sin ventas al contado en este período.')}</p>
     }
@@ -229,6 +229,18 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
               )}
             </div>
           )}
+          {Number(cc.cashFloat) > 0 && (
+            <div className="flex items-center justify-between py-2.5" data-testid="closing-cash-float">
+              <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                <Banknote size={14} className="text-emerald-500" />
+                {t('Fondo de caja (sencillo para vuelto)')}
+                <span className="text-xs text-gray-400">
+                  {cc.cashFloatEntries === 1 ? t('(1 entrega)') : t('({n} entregas)', { n: cc.cashFloatEntries })}
+                </span>
+              </span>
+              <span className="font-semibold tabular-nums text-gray-900">+{formatPrice(cc.cashFloat)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between gap-3 py-3">
             <div>
               <p className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold text-gray-800">
@@ -236,13 +248,25 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
                 {t('Debe haber en caja')}
               </p>
               <p className="text-xs text-gray-400">
-                {hasRefunds || Number(cc.debtPaymentsReceived) > 0
-                  ? t('Ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.')
-                  : t('Todos los medios juntos. Contra este número cuentas la plata.')}
+                {Number(cc.cashFloat) > 0
+                  ? t('Fondo de caja + ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.')
+                  : hasRefunds || Number(cc.debtPaymentsReceived) > 0
+                    ? t('Ventas al contado + cobros de fiado − devoluciones. Contra este número cuentas la plata.')
+                    : t('Todos los medios juntos. Contra este número cuentas la plata.')}
               </p>
             </div>
-            <span className="shrink-0 text-xl font-extrabold tabular-nums text-emerald-600">{formatPrice(cc.expectedInCash)}</span>
+            <span className="shrink-0 text-xl font-extrabold tabular-nums text-emerald-600">{formatPrice(cc.expectedWithFloat ?? cc.expectedInCash)}</span>
           </div>
+          {cc.drawerExpected != null && Number(cc.drawerExpected) !== Number(cc.expectedWithFloat ?? cc.expectedInCash) && (
+            <div className="flex items-center justify-between py-2.5" data-testid="closing-drawer">
+              <span className="flex items-center gap-1.5 text-sm text-gray-600">
+                <HandCoins size={14} className="text-emerald-500" />
+                {t('De eso, en el cajón (efectivo + fondo)')}
+                <span className="text-xs text-gray-400">{t('— Yape y transferencias no están en el cajón')}</span>
+              </span>
+              <span className="font-semibold tabular-nums text-emerald-700">{formatPrice(cc.drawerExpected)}</span>
+            </div>
+          )}
           {cc.creditSalesCount > 0 && (
             <div className="flex items-center justify-between py-2.5">
               <span className="text-sm text-gray-400">
