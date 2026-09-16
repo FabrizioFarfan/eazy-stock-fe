@@ -15,7 +15,7 @@ import { productsApi } from '../services/endpoints/products'
 import ScannerInput from '../components/ScannerInput'
 import PriceInput from '../components/inputs/PriceInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
-import { formatPrice } from '../utils/formatMoney'
+import { formatAmount, formatPrice } from '../utils/formatMoney'
 import { quoteNumberLabel } from '../utils/quotePdf'
 import QuoteActions from '../components/quotes/QuoteActions'
 import QuoteCustomerSection from '../components/quotes/QuoteCustomerSection'
@@ -401,7 +401,7 @@ export default function QuotePage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap">
-                          {formatPrice((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}
+                          {formatAmount((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button onClick={() => removeItem(it.productId)} title={t('Quitar')}

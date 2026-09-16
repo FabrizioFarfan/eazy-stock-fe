@@ -25,7 +25,7 @@ import { useT } from '../../i18n'
  * Modal de recepción de mercadería — flujo en 2 pasos:
  *   1. Elegir proveedor (obligatorio antes que cualquier otra cosa).
  *   2. Cargar productos: el picker busca en TODO el catálogo. Un producto
- *      habitual de OTRO proveedor entra igual (el BE crea/reusa la versión de
+ *      habitual de OTRO proveedor entra igual (al MISMO producto — William, 16-sep:
  *      este proveedor al registrar) y si no existe se crea inline. Cada línea
  *      pide cantidad y precio unitario (default product.purchasePrice, editable).
  *
@@ -86,8 +86,9 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const scanLockRef = useRef(false)
   const debouncedProduct = useDebounce(productQuery, 350)
   // Busca en TODOS los productos (no solo los del proveedor elegido): si William
-  // le compra a un proveedor nuevo un producto que ya vende, lo encuentra igual
-  // y el BE crea la versión de este proveedor al registrar.
+  // le compra a un proveedor nuevo un producto que ya vende, lo encuentra igual:
+  // la mercadería entra al MISMO producto (físicamente es uno) y la compra
+  // queda a nombre de este proveedor en la recepción.
   //
   // Scroll infinito (useProductSearch): páginas de 30 que se acumulan al bajar
   // en el dropdown. El mismo buscador que usan venta, cotización y ajustes.
@@ -243,7 +244,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       }
       addProduct(product)
       if (isForeign(product)) {
-        toast.info(t('{product} es habitual de {other} — se creará la versión de {supplier}', { product: product.name, other: product.supplierName ?? t('otro proveedor'), supplier: supplier.name }))
+        toast.info(t('{product} es habitual de {other} — entra al mismo producto; esta compra queda a nombre de {supplier}', { product: product.name, other: product.supplierName ?? t('otro proveedor'), supplier: supplier.name }))
       } else {
         toast.success(product.name)
       }
@@ -566,17 +567,17 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               <span className="font-semibold">{formatPrice(it.salePrice)}</span>
                             </p>
                           )}
-                          {/* Producto habitual de otro proveedor: nace su versión
-                              para este proveedor, con su propio código y este costo. */}
+                          {/* Producto habitual de otro proveedor: es el MISMO producto —
+                              el stock se suma y la compra queda a nombre de este proveedor. */}
                           {isForeign(it.product) && (
                             <p className="mt-1.5 text-xs font-medium text-violet-600">
-                              {t('Habitual de {other} — se creará como producto nuevo de', { other: it.product.supplierName ?? t('otro proveedor') })}{' '}
-                              <span className="font-semibold">{supplier?.name}</span> {t('con este costo')}
+                              {t('Habitual de {other} — es el mismo producto: el stock se suma y esta compra queda a nombre de', { other: it.product.supplierName ?? t('otro proveedor') })}{' '}
+                              <span className="font-semibold">{supplier?.name}</span>
                             </p>
                           )}
                           {/* El costo tipeado pasa a ser el precio de compra del producto:
                               decirlo acá, no sorprender después en Productos. */}
-                          {!isForeign(it.product) && it.unitCost != null
+                          {it.unitCost != null
                             && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
                             <p className="mt-1.5 text-xs text-blue-600">
                               {t('El precio de compra pasará de {from} a', { from: formatPrice(it.product.purchasePrice) })}{' '}

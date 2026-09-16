@@ -687,6 +687,7 @@ export default function ProductsPage() {
           onShowQr={isManager ? (p) => { setDetailModal(null); setQrModal(p) } : undefined}
           onDeactivate={isManager ? (p) => { setDetailModal(null); handleRemove(p) } : undefined}
           onReactivate={isManager ? handleReactivate : undefined}
+          onMerged={isManager ? (updated) => setDetailModal(updated) : undefined}
         />
       )}
       {removeModal && (

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X } from
 import { useAuth } from '../../context/AuthContext'
 import { useMovements, useSalesSummary } from '../../hooks/useStock'
 import { useSuppliers } from '../../hooks/useSuppliers'
-import { formatPrice } from '../../utils/formatMoney'
+import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
 
 function formatDate(str) {
@@ -366,7 +366,7 @@ export default function MovementsTab() {
                         </td>
                         <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} /></td>
                         <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
-                        <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatPrice(m.subtotal)}</td>
+                        <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>
                       </tr>
                     )
                   })

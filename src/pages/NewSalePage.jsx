@@ -18,7 +18,7 @@ import QuantityInput from '../components/inputs/QuantityInput'
 import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import CustomerSelectModal from '../components/customers/CustomerSelectModal'
 import { formatPhoneDisplay } from '../utils/phone'
-import { formatPrice, currencySymbol } from '../utils/formatMoney'
+import { formatAmount, round2, formatPrice, currencySymbol } from '../utils/formatMoney'
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
@@ -26,6 +26,8 @@ import { useT } from '../i18n'
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
 // decimals from the BE — `formatPrice` falls through to the same formatting.
 const formatCurrency = formatPrice
+// importes (líneas, subtotal, descuento, total): siempre 2 decimales; los
+// precios unitarios (formatCurrency/formatPrice) conservan sus 3-6 decimales
 
 // Parse a user-entered numeric string into a number, treating empty/invalid as 0.
 function parseNumber(s) {
@@ -174,7 +176,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
   const { product, quantity, unitPrice } = item
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
-  const subtotal     = (Number(quantity) || 0) * numericPrice
+  const subtotal     = round2((Number(quantity) || 0) * numericPrice)
   const listPrice    = Number(product.salePrice ?? 0)
   const isModified   = !isVariable && Math.abs(numericPrice - listPrice) > 0.0000005
   const isBelow      = !isVariable && numericPrice < listPrice - 0.0000005
@@ -210,7 +212,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
           className="w-36"
           label={t('Cantidad')}
         />
-        <p className="pb-2 text-sm font-bold text-gray-900">{formatPrice(subtotal)}</p>
+        <p className="pb-2 text-sm font-bold text-gray-900">{formatAmount(subtotal)}</p>
       </div>
 
       <div className="mt-2">
@@ -237,7 +239,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
           <p className="mt-1.5 text-[11px] font-semibold text-red-600">
             <TrendingDown size={11} className="-mt-0.5 mr-1 inline" />
             {t('Por debajo del precio de venta ({list}): −{diff} por {unit}', { list: formatCurrency(listPrice), diff: formatCurrency(listPrice - numericPrice), unit: product.unit || t('unidad') })}
-            {Number(quantity) > 1 && ` · ${t('−{total} en la línea', { total: formatCurrency((listPrice - numericPrice) * Number(quantity)) })}`}
+            {Number(quantity) > 1 && ` · ${t('−{total} en la línea', { total: formatAmount((listPrice - numericPrice) * Number(quantity)) })}`}
           </p>
         ) : isModified ? (
           <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
@@ -310,13 +312,13 @@ function DiscountSection({ subtotal, discountType, setDiscountType, discountValu
         <div className="mt-3 space-y-1 border-t border-gray-100 pt-3 text-sm">
           <div className="flex items-center justify-between text-gray-500">
             <span>{t('Subtotal')}</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span>{formatAmount(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between text-orange-600">
             <span>
               {t('Descuento')}{discountType === 'PERCENTAGE' ? ` (${numericValue}%)` : ''}
             </span>
-            <span>−{formatCurrency(safeAmount)}</span>
+            <span>−{formatAmount(safeAmount)}</span>
           </div>
         </div>
       )}
@@ -617,17 +619,19 @@ export default function NewSalePage() {
   }
 
   // ── live totals ───────────────────────────────────────────────────────────
-  const subtotal = cart.reduce(
-    (sum, i) => sum + i.quantity * parseNumber(i.unitPrice),
+  // cada línea redondeada a centavos ANTES de sumar — igual que el servidor —
+  // para que las líneas que se ven sumen exactamente el total que se cobra
+  const subtotal = round2(cart.reduce(
+    (sum, i) => sum + round2(i.quantity * parseNumber(i.unitPrice)),
     0,
-  )
+  ))
   const numericDiscount = canApplyDiscount ? parseNumber(discountValue) : 0
   const discountAmount  = !canApplyDiscount || numericDiscount <= 0
     ? 0
     : discountType === 'PERCENTAGE'
       ? Math.min(subtotal, subtotal * Math.min(numericDiscount, 100) / 100)
       : Math.min(subtotal, numericDiscount)
-  const total = Math.max(0, subtotal - discountAmount)
+  const total = round2(Math.max(0, subtotal - discountAmount))
 
   // Líneas vendidas por debajo del precio de venta: se avisa (no se bloquea)
   const belowLines = cart.filter((i) => !i.product.priceIsVariable
@@ -971,17 +975,17 @@ export default function NewSalePage() {
               <div className="mb-3 space-y-1 border-b border-gray-100 pb-3 text-sm">
                 <div className="flex items-center justify-between text-gray-500">
                   <span>{t('Subtotal')}</span>
-                  <span>{formatCurrency(subtotal)}</span>
+                  <span>{formatAmount(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-orange-600">
                   <span>{t('Descuento')}</span>
-                  <span>−{formatCurrency(discountAmount)}</span>
+                  <span>−{formatAmount(discountAmount)}</span>
                 </div>
               </div>
             )}
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">{t('Total a cobrar')}</span>
-              <span className="text-2xl font-extrabold text-gray-900">{formatCurrency(total)}</span>
+              <span className="text-2xl font-extrabold text-gray-900">{formatAmount(total)}</span>
             </div>
 
             {createSale.isError && (
@@ -994,8 +998,8 @@ export default function NewSalePage() {
               <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100" data-testid="below-list-summary">
                 <TrendingDown size={13} />
                 {belowLines.length === 1
-                  ? t('1 producto por debajo del precio de venta · −{amount}', { amount: formatCurrency(belowAmount) })
-                  : t('{n} productos por debajo del precio de venta · −{amount}', { n: belowLines.length, amount: formatCurrency(belowAmount) })}
+                  ? t('1 producto por debajo del precio de venta · −{amount}', { amount: formatAmount(belowAmount) })
+                  : t('{n} productos por debajo del precio de venta · −{amount}', { n: belowLines.length, amount: formatAmount(belowAmount) })}
               </p>
             )}
             <button
@@ -1020,10 +1024,10 @@ export default function NewSalePage() {
             <div className="flex-1">
               <p className="text-xs text-gray-500">
                 {t('{n} producto(s)', { n: cart.length })}
-                {discountAmount > 0 && ` · −${formatCurrency(discountAmount)} ${t('desc.')}`}
+                {discountAmount > 0 && ` · −${formatAmount(discountAmount)} ${t('desc.')}`}
               </p>
               <p className="text-lg font-extrabold text-gray-900 leading-none">
-                {formatCurrency(total)}
+                {formatAmount(total)}
               </p>
             </div>
             <button

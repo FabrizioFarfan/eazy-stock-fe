@@ -381,6 +381,7 @@ export default function InventoryTab() {
           // solo con ventas, recepciones y devoluciones — ni ve el botón
           onAdjust={user?.role === 'EMPLOYEE' ? undefined : (p) => setAdjusting(p)}
           onEdit={(p) => navigate(`/products?edit=${p.id}`)}
+          onMerged={user?.role === 'EMPLOYEE' ? undefined : (updated) => setDetail(updated)}
         />
       )}
 

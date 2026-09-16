@@ -67,6 +67,21 @@ export function useProductNameCheck(name, supplierId, excludeId = null, business
   }
 }
 
+/** Fusionar un repetido dentro de un producto: invalida productos, stock y códigos libres. */
+export function useMergeProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ keepId, duplicateId }) => productsApi.merge(keepId, duplicateId).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+      qc.invalidateQueries({ queryKey: ['stock-movements'] })
+      qc.invalidateQueries({ queryKey: ['stock'] })
+      qc.invalidateQueries({ queryKey: ['product-duplicates'] })
+      qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
+    },
+  })
+}
+
 export function useCreateProduct() {
   const qc = useQueryClient()
   return useMutation({

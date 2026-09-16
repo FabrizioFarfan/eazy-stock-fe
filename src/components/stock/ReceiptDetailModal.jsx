@@ -7,7 +7,7 @@ import {
   useAnnulReceiptPreview, useAnnulReceipt,
 } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
-import { formatPrice } from '../../utils/formatMoney'
+import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useT, dateLocale } from '../../i18n'
@@ -255,7 +255,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                       </td>
                       <td className="py-2.5 text-center font-mono text-gray-700">{m.quantity}</td>
                       <td className="py-2.5 text-right text-gray-600">{formatPrice(m.unitCost)}</td>
-                      <td className="py-2.5 text-right font-semibold text-gray-900">{formatPrice(m.subtotal)}</td>
+                      <td className="py-2.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>

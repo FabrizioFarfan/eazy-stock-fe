@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { formatPrice } from './formatMoney'
+import { formatPrice, formatAmount } from './formatMoney'
 import { t, dateLocale } from '../i18n'
 
 function fmtDate(str) {
@@ -134,7 +134,7 @@ export function buildStatementPdf(statement) {
     for (const it of m.items ?? []) {
       body.push([
         { content: '', styles: { cellPadding: 0.6 } },
-        { content: `   · ${fmtQty(it.quantity)} × ${it.productName} @ ${formatPrice(it.unitPrice)} = ${formatPrice(it.subtotal)}`,
+        { content: `   · ${fmtQty(it.quantity)} × ${it.productName} @ ${formatPrice(it.unitPrice)} = ${formatAmount(it.subtotal)}`,
           colSpan: 4, styles: { fontSize: 8, textColor: [107, 114, 128], cellPadding: { top: 0.6, bottom: 0.6, left: 2, right: 2 } } },
       ])
     }

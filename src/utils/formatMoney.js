@@ -87,6 +87,28 @@ export function formatPrice(value, currency = currentCurrency) {
 }
 
 /**
+ * Money AMOUNTS (a line subtotal, a sale total, a discount, a debt) are always
+ * 2 decimals HALF_UP — 12 × 0.1666 = 1.9992 reads «S/ 2.00». Unit prices keep
+ * their 3-6 decimals through formatPrice(); amounts never show them
+ * (William, 16-sep: «antes me lo redondeaba a 2 soles»).
+ */
+export function formatAmount(value, currency = currentCurrency) {
+  if (value == null) return '—'
+  const n = typeof value === 'number' ? value : parseFloat(value)
+  if (!Number.isFinite(n)) return '—'
+  const { code, locale } = CURRENCIES[currency] ?? CURRENCIES.PEN
+  return new Intl.NumberFormat(locale, {
+    style: 'currency', currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2,
+  }).format(round2(n))
+}
+
+/** Half-up rounding to cents, defeating float noise (1.005 → 1.01, 1.9992 → 2). */
+export function round2(n) {
+  const x = Number(n) || 0
+  return Math.round((x + Number.EPSILON) * 100) / 100
+}
+
+/**
  * Returns the number of decimals needed to faithfully render `n`:
  *  - 2 if the value has 0-2 meaningful decimals
  *  - up to 6 otherwise, dropping trailing zeros (25.5037 → 4, 0.5 → 2, 0.05037 → 5)

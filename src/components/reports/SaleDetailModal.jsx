@@ -5,7 +5,7 @@ import { useSaleDetail } from '../../hooks/useReports'
 import { useSaleReturns, useCreateSaleReturn, useAssignSaleCustomer } from '../../hooks/useSales'
 import CustomerSelectModal from '../customers/CustomerSelectModal'
 import { useAuth } from '../../context/AuthContext'
-import { formatPrice } from '../../utils/formatMoney'
+import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
 
 // Per-line prices may carry up to 6 decimals (extended price precision);
@@ -94,7 +94,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
       { items, notes: returnNotes || undefined },
       {
         onSuccess: (data) => {
-          toast.success(`${t('Devolución registrada')} · ${formatCurrency(data.totalRefund)}`)
+          toast.success(`${t('Devolución registrada')} · ${formatAmount(data.totalRefund)}`)
           setReturnMode(false)
           setReturnQty({})
           setReturnNotes('')
@@ -203,7 +203,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     <Tag size={11} />
                     {sale.discountType === 'PERCENTAGE'
                       ? `−${sale.discountValue}%`
-                      : `−${formatCurrency(sale.discountAmount)}`}
+                      : `−${formatAmount(sale.discountAmount)}`}
                   </span>
                 )}
               </div>
@@ -217,7 +217,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                       {t('Venta al fiado — cobro pendiente.')}
                       {sale.customerName && (
                         <> {t('Deuda actual de')} <span className="font-semibold">{sale.customerName}</span>:{' '}
-                        <span className="font-bold">{formatCurrency(sale.customerDebtAfter)}</span></>
+                        <span className="font-bold">{formatAmount(sale.customerDebtAfter)}</span></>
                       )}
                     </span>
                   </div>
@@ -258,7 +258,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                             <p className="mt-0.5 text-xs font-semibold text-red-600" data-testid="below-list-line">
                               <TrendingDown size={10} className="-mt-0.5 inline" /> {t('Por debajo del precio de venta')}{' '}
                               <span className="line-through">{formatCurrency(item.unitPrice)}</span>
-                              {' · '}−{formatCurrency(item.belowListAmount)}
+                              {' · '}−{formatAmount(item.belowListAmount)}
                             </p>
                           ) : hasOverride ? (
                             <p className="mt-0.5 text-xs text-orange-600">
@@ -276,7 +276,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                         <td className={`py-2.5 text-right ${hasOverride ? (item.belowList ? 'font-semibold text-red-600' : 'font-semibold text-orange-600') : 'text-gray-600'}`}>
                           {formatCurrency(effectivePrice)}
                         </td>
-                        <td className="py-2.5 text-right font-semibold text-gray-900">{formatCurrency(item.subtotal)}</td>
+                        <td className="py-2.5 text-right font-semibold text-gray-900">{formatAmount(item.subtotal)}</td>
                         {returnMode && (
                           <td className="py-2.5 text-right">
                             {remaining > 0 ? (
@@ -328,7 +328,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                           {formatDateFull(r.createdAt)}
                           {r.notes ? <span className="text-gray-400"> · {r.notes}</span> : null}
                         </span>
-                        <span className="font-semibold text-purple-700">−{formatCurrency(r.totalRefund)}</span>
+                        <span className="font-semibold text-purple-700">−{formatAmount(r.totalRefund)}</span>
                       </li>
                     ))}
                   </ul>
@@ -345,13 +345,13 @@ export default function SaleDetailModal({ saleId, onClose }) {
               <>
                 <div className="flex items-center justify-between text-gray-500">
                   <span>{t('Subtotal')}</span>
-                  <span>{formatCurrency(subtotal)}</span>
+                  <span>{formatAmount(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-orange-600">
                   <span>
                     {t('Descuento')}{sale.discountType === 'PERCENTAGE' ? ` (${sale.discountValue}%)` : ''}
                   </span>
-                  <span>−{formatCurrency(sale.discountAmount)}</span>
+                  <span>−{formatAmount(sale.discountAmount)}</span>
                 </div>
                 <div className="my-1.5 border-t border-gray-200" />
               </>
@@ -364,19 +364,19 @@ export default function SaleDetailModal({ saleId, onClose }) {
                     ? t('1 producto por debajo del precio de venta')
                     : t('{n} productos por debajo del precio de venta', { n: sale.belowListCount })}
                 </span>
-                <span className="font-semibold">−{formatCurrency(sale.belowListAmount)}</span>
+                <span className="font-semibold">−{formatAmount(sale.belowListAmount)}</span>
               </div>
             )}
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-700">
                 {sale.onCredit && debtPending ? t('Total de la venta') : t('Total cobrado')}
               </span>
-              <span className="text-lg font-bold text-gray-900">{formatCurrency(sale.total)}</span>
+              <span className="text-lg font-bold text-gray-900">{formatAmount(sale.total)}</span>
             </div>
             {totalReturned > 0 && (
               <div className="flex items-center justify-between text-purple-700">
                 <span>{t('Total devuelto')}</span>
-                <span className="font-semibold">−{formatCurrency(totalReturned)}</span>
+                <span className="font-semibold">−{formatAmount(totalReturned)}</span>
               </div>
             )}
 

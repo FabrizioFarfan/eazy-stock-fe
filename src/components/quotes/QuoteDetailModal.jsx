@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Trash2, X, CheckCircle2, AlertTriangle, Loader2, PencilLine, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQuote, useDeleteQuote } from '../../hooks/useQuotes'
-import { formatPrice } from '../../utils/formatMoney'
+import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import QuoteActions from './QuoteActions'
 import { quoteDraftKey } from '../../utils/quoteDraft'
@@ -151,7 +151,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
                           <p className="font-mono text-xs text-gray-400">{it.productSku}</p>
                           {!it.productActive && <p className="text-xs font-semibold text-red-500">{t('ya no está en el catálogo')}</p>}
                         </div>
-                        <span className="flex-shrink-0 font-semibold text-gray-900 whitespace-nowrap">{formatPrice(it.subtotal)}</span>
+                        <span className="flex-shrink-0 font-semibold text-gray-900 whitespace-nowrap">{formatAmount(it.subtotal)}</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
                         <span>{formatQty(it.quantity)} {it.unit} × {formatPrice(it.unitPrice)}</span>
@@ -184,7 +184,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
                         </td>
                         <td className="px-3 py-2.5 text-center text-gray-700">{formatQty(it.quantity)} {it.unit}</td>
                         <td className="px-3 py-2.5 text-right text-gray-700 whitespace-nowrap">{formatPrice(it.unitPrice)}</td>
-                        <td className="px-3 py-2.5 text-right font-semibold text-gray-900 whitespace-nowrap">{formatPrice(it.subtotal)}</td>
+                        <td className="px-3 py-2.5 text-right font-semibold text-gray-900 whitespace-nowrap">{formatAmount(it.subtotal)}</td>
                         <td className={`px-5 py-2.5 text-right whitespace-nowrap sm:px-6 ${short ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>
                           {short && <AlertTriangle size={12} className="mr-1 inline" />}{formatQty(it.currentStock ?? 0)}
                         </td>

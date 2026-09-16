@@ -33,6 +33,10 @@ export const productsApi = {
   // código queda retirado y las ventas/recepciones siguen intactas. Va a la
   // papelera («Borrados»), desde donde se puede restaurar.
   deleteKeepHistory: (id) => api.delete(`/products/${id}/keep-history`),
+  /** los repetidos (mismo nombre) de un producto, para fusionarlos */
+  duplicates: (id) => api.get(`/products/${id}/duplicates`),
+  /** fusiona `duplicateId` dentro de `keepId` (historial + stock pasan, el otro se borra) */
+  merge: (keepId, duplicateId) => api.post(`/products/${keepId}/merge/${duplicateId}`),
   restore: (id) => api.post(`/products/${id}/restore`),
   listDeleted: (params) => api.get('/products/deleted', { params }),
 

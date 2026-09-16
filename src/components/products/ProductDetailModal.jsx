@@ -1,6 +1,11 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2 } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2 } from 'lucide-react'
 import { imageSrc } from '../../utils/productImage'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { productsApi } from '../../services/endpoints/products'
+import { useMergeProduct } from '../../hooks/useProducts'
+import { formatQty } from '../../utils/quantity'
 import { stockApi } from '../../services/endpoints/stock'
 import { formatPrice } from '../../utils/formatMoney'
 import ExpiryBadge from '../common/ExpiryBadge'
@@ -61,7 +66,7 @@ function MovementTypeBadge({ type }) {
  * columnas de la tabla. onRegisterEntry/onAdjust los usa la página Stock para
  * abrir el MovementModal ya prefijado con este producto.
  */
-export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust }) {
+export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust, onMerged }) {
   const t = useT()
   // (16-sep) esto vivía dentro de MovementTypeBadge desde el 15-sep y la ficha
   // reventaba con «hidesCost is not defined» para todos, dueño incluido
@@ -248,6 +253,10 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
             </Section>
           )}
 
+          {/* Repetidos: mismo nombre con otro código. Hasta el 16-sep cada recepción
+              de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
+          {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
+
           {/* Historial reciente */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
@@ -359,5 +368,69 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * «Este producto está repetido»: lista los otros productos del negocio con el
+ * mismo nombre y deja fusionarlos en ESTE (historial, ventas, devoluciones,
+ * cotizaciones y stock pasan aquí; el otro se borra y libera su código).
+ * Dos toques para confirmar, como todo lo que borra.
+ */
+function DuplicatesSection({ product, onMerged }) {
+  const t = useT()
+  const merge = useMergeProduct()
+  const [armed, setArmed] = useState(null)
+  const { data: dups = [] } = useQuery({
+    queryKey: ['product-duplicates', product.id],
+    queryFn: () => productsApi.duplicates(product.id).then((r) => r.data.data ?? []),
+    enabled: !!product.id,
+  })
+  if (!dups.length) return null
+
+  const doMerge = async (dup) => {
+    if (armed !== dup.id) { setArmed(dup.id); setTimeout(() => setArmed((a) => (a === dup.id ? null : a)), 4000); return }
+    try {
+      const updated = await merge.mutateAsync({ keepId: product.id, duplicateId: dup.id })
+      toast.success(t('Fusionado: «{name}» ({sku}) pasó a este producto', { name: dup.name, sku: dup.sku }))
+      setArmed(null)
+      onMerged?.(updated)
+    } catch (e) {
+      toast.error(e?.response?.data?.message ?? t('No se pudo fusionar'))
+    }
+  }
+
+  return (
+    <Section title={t('Producto repetido')}>
+      <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3" data-testid="duplicates-section">
+        <p className="text-xs text-amber-900">
+          {t('Hay {n} producto(s) más con este nombre. Si físicamente es el mismo, fusiónalo aquí: su historial (ventas, recepciones, devoluciones, cotizaciones) y su stock pasan a este producto y el otro se borra; su código queda libre.', { n: dups.length })}
+        </p>
+        <ul className="mt-2 space-y-1.5">
+          {dups.map((d) => (
+            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-amber-100" data-testid="duplicate-row">
+              <div className="min-w-0 text-xs">
+                <span className="font-mono font-semibold text-gray-700">{d.sku}</span>
+                {d.supplierName && <span className="ml-2 text-gray-500">{d.supplierName}</span>}
+                <span className="ml-2 text-gray-500">· {t('stock')} {formatQty(d.currentStock)}</span>
+                {!d.active && <span className="ml-2 text-gray-400">· {t('oculto')}</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => doMerge(d)}
+                disabled={merge.isPending}
+                data-armed={armed === d.id || undefined}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                  armed === d.id ? 'bg-amber-600 text-white' : 'border border-amber-300 bg-white text-amber-800 hover:bg-amber-100'
+                }`}
+              >
+                {merge.isPending && armed === d.id ? <Loader2 size={12} className="animate-spin" /> : <Merge size={12} />}
+                {armed === d.id ? t('¿Seguro? Toca otra vez para fusionar') : t('Fusionar en este producto')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Section>
   )
 }
