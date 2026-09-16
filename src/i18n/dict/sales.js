@@ -199,6 +199,7 @@ export default {
     'hasta 6 dec.': 'up to 6 dec.',
     'Formato de precio': 'Price format',
     'Formato del precio': 'Price format',
+    'Este precio tiene {n} decimales: se edita separado para no redondearlo.': 'This price has {n} decimals: it is edited in split mode so it is never rounded.',
 
     // ── NewSalePage ────────────────────────────────────────────────────────
     'Precio variable': 'Variable price',
@@ -646,6 +647,7 @@ export default {
     'hasta 6 dec.': 'fino a 6 dec.',
     'Formato de precio': 'Formato prezzo',
     'Formato del precio': 'Formato prezzo',
+    'Este precio tiene {n} decimales: se edita separado para no redondearlo.': 'Questo prezzo ha {n} decimali: si modifica in modo separato per non arrotondarlo.',
 
     // ── NewSalePage ────────────────────────────────────────────────────────
     'Precio variable': 'Prezzo variabile',

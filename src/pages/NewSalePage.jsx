@@ -732,13 +732,19 @@ export default function NewSalePage() {
   return (
     <div className="flex flex-col gap-4 pb-24 lg:pb-0">
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button onClick={requestLeave}
           className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">{t('Volver')}</span>
         </button>
         <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Nueva venta')}</h2>
+        {/* el formato del precio a la vista desde el primer producto (William, 16-sep:
+            solo estaba dentro del carrito y con el carrito vacío no se veía) */}
+        <div className="flex items-center gap-1.5" data-testid="price-mode-header">
+          <span className="hidden text-[11px] text-gray-400 sm:inline">{t('Formato de precio')}</span>
+          <PriceInputModeToggle />
+        </div>
         {fromQuote?.number && (
           <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
             {t('Desde la cotización N.º {n}', { n: fromQuote.number })}

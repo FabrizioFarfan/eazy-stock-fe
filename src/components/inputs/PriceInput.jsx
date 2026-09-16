@@ -40,6 +40,15 @@ const PriceInput = forwardRef(function PriceInput(
   ref,
 ) {
   const [mode] = usePriceInputMode()
+  const t = useT()
+
+  // William (16-sep): un tornillo a 0.0357 se veía como «0.04» en modo
+  // calculadora (2 decimales fijos) y la venta «no cuadraba». Un valor con más
+  // de 2 decimales se edita SIEMPRE en modo separado, elija lo que elija el
+  // cajero: la precisión nunca se pierde ni se muestra redondeada.
+  const extraDecimals = countDecimals(value)
+  const forcedSplit = mode === 'calculator' && extraDecimals > 2
+  const effectiveMode = forcedSplit ? 'split' : mode
 
   const symbol = currencySymbol(currency ?? getCurrentCurrency())
 
@@ -53,7 +62,7 @@ const PriceInput = forwardRef(function PriceInput(
         <label className="text-sm font-medium text-gray-700">{label}</label>
       )}
 
-      {mode === 'calculator' ? (
+      {effectiveMode === 'calculator' ? (
         <div
           className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 ring-2 ring-transparent transition-colors focus-within:ring-2 ${borderCls} ${
             disabled ? 'cursor-not-allowed bg-gray-50 opacity-70' : ''
@@ -90,6 +99,11 @@ const PriceInput = forwardRef(function PriceInput(
 
       {error && <p className="text-xs text-red-500">{error}</p>}
       {!error && helperText && <p className="text-xs text-gray-400">{helperText}</p>}
+      {!error && forcedSplit && (
+        <p className="text-[11px] text-amber-700" data-testid="price-extra-decimals">
+          {t('Este precio tiene {n} decimales: se edita separado para no redondearlo.', { n: extraDecimals })}
+        </p>
+      )}
     </div>
   )
 })
@@ -290,6 +304,17 @@ const CalculatorBody = forwardRef(function CalculatorBody(
 })
 
 // ── helpers: modo split ──────────────────────────────────────────────────────
+
+/** Decimales significativos de un valor (0.0357 → 4, 25.5 → 1, 4 → 0); 0 si vacío. */
+function countDecimals(value) {
+  if (value == null || value === '') return 0
+  const n = typeof value === 'number' ? value : parseFloat(value)
+  if (!Number.isFinite(n)) return 0
+  const fixed = n.toFixed(6)
+  const dot = fixed.indexOf('.')
+  if (dot < 0) return 0
+  return fixed.slice(dot + 1).replace(/0+$/, '').length
+}
 
 function initWhole(value) {
   if (value == null || value === '') return ''

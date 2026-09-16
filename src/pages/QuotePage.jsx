@@ -396,7 +396,7 @@ export default function QuotePage() {
                             <PriceInput
                               value={it.unitPrice === '' ? null : it.unitPrice}
                               onChange={(v) => updateItem(it.productId, { unitPrice: v ?? 0 })}
-                              maxDecimals={2}
+                              maxDecimals={6}
                             />
                           </div>
                         </td>
