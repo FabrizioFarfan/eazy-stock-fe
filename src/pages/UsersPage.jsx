@@ -61,7 +61,6 @@ function SkeletonRow() {
 const PERMISSION_META = [
   { key: 'canManageProducts',      label: 'Gestionar productos' },
   { key: 'canReceiveMerchandise',  label: 'Recibir mercadería' },
-  { key: 'canModifyStockManually', label: 'Ajuste de stock manual' },
   { key: 'canRegisterSale',        label: 'Registrar ventas' },
   { key: 'canCancelSale',          label: 'Cancelar ventas' },
   { key: 'canApplyDiscount',       label: 'Aplicar descuentos' },
@@ -388,7 +387,7 @@ export default function UsersPage() {
             <p>{t('Aquí ves todas las cuentas que entran a tu negocio: tú (Owner) y tus empleados. Cada uno tiene su propio usuario y contraseña.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
-              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
+              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>

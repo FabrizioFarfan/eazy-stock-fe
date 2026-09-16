@@ -42,7 +42,6 @@ const inputCls =
 const PERMISSION_META = [
   { key: 'canManageProducts',      label: 'Gestionar productos' },
   { key: 'canReceiveMerchandise',  label: 'Recibir mercadería' },
-  { key: 'canModifyStockManually', label: 'Ajuste de stock manual' },
   { key: 'canRegisterSale',        label: 'Registrar ventas' },
   { key: 'canCancelSale',          label: 'Cancelar ventas' },
   { key: 'canApplyDiscount',       label: 'Aplicar descuentos' },
@@ -346,7 +345,7 @@ function PermissionsBanner({ onDismiss }) {
           <span className="inline-flex items-center gap-1 rounded-lg bg-orange-500 px-1.5 py-0.5 align-middle text-xs font-semibold text-white">
             <Shield size={11} /> {t('Permisos')}
           </span>{' '}
-          {t('al lado de cada empleado para activar o desactivar acciones individuales (vender, modificar stock, aplicar descuentos, ver reportes y más).')}
+          {t('al lado de cada empleado para activar o desactivar acciones individuales (vender, recibir mercadería, aplicar descuentos, ver reportes y más).')}
         </p>
       </div>
       <button
@@ -427,7 +426,7 @@ export default function EmployeesPage() {
             <p>{t('Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
-              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.')}</p>
+              <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>
@@ -615,7 +614,7 @@ export default function EmployeesPage() {
                       <div className="mx-auto max-w-md space-y-2">
                         <p className="font-semibold text-gray-700">{t('Aún no tenés empleados')}</p>
                         <p className="text-gray-500">
-                          {t('Creá empleados y asignales permisos individuales: vender, modificar stock, aplicar descuentos, ver reportes y más.')}
+                          {t('Creá empleados y asignales permisos individuales: vender, recibir mercadería, aplicar descuentos, ver reportes y más.')}
                         </p>
                       </div>
                       )

@@ -45,8 +45,6 @@ function MovementTypeIcon({ type }) {
 
 function MovementTypeBadge({ type }) {
   const t = useT()
-  const { user } = useAuth()
-  const hidesCost = user?.role === 'EMPLOYEE'
   if (type === 'SALE')
     return <span className="text-xs font-semibold text-red-500">{t('Venta')}</span>
   if (type === 'PURCHASE_ENTRY')
@@ -65,6 +63,10 @@ function MovementTypeBadge({ type }) {
  */
 export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust }) {
   const t = useT()
+  // (16-sep) esto vivía dentro de MovementTypeBadge desde el 15-sep y la ficha
+  // reventaba con «hidesCost is not defined» para todos, dueño incluido
+  const { user } = useAuth()
+  const hidesCost = user?.role === 'EMPLOYEE'
   const { data: movementsData, isLoading: loadingMov } = useQuery({
     queryKey: ['stock-movements', 'product', product.id],
     queryFn: () => stockApi.getMovementsByProduct(product.id, { size: 5 })

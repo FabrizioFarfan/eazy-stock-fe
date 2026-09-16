@@ -377,7 +377,9 @@ export default function InventoryTab() {
           product={items.find((i) => i.id === detail.id) ?? detail}
           onClose={() => setDetail(null)}
           onRegisterEntry={(p) => setReceiving(p)}
-          onAdjust={(p) => setAdjusting(p)}
+          // el ajuste manual es del dueño (William, 16-sep): el vendedor mueve stock
+          // solo con ventas, recepciones y devoluciones — ni ve el botón
+          onAdjust={user?.role === 'EMPLOYEE' ? undefined : (p) => setAdjusting(p)}
           onEdit={(p) => navigate(`/products?edit=${p.id}`)}
         />
       )}

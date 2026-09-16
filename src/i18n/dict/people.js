@@ -27,8 +27,10 @@ export default {
     'Aquí ves todas las cuentas que entran a tu negocio: tú (Owner) y tus empleados. Cada uno tiene su propio usuario y contraseña.':
       'Here you see every account that signs in to your business: you (Owner) and your employees. Each one has their own username and password.',
     'Permisos finos': 'Fine-grained permissions',
-    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.':
-      'With each employee\'s "Permissions" button you turn actions on or off one by one: manage products, receive goods, adjust stock manually, register and cancel sales, apply discounts, edit prices, view reports, manage suppliers and brands, view the audit log, sell on store credit and manage customers. Whatever you don\'t enable, they don\'t see. Changes apply instantly.',
+    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.':
+      'With each employee\'s "Permissions" button you turn actions on or off one by one: manage products, receive goods, register and cancel sales, apply discounts, edit prices, view reports, manage suppliers and brands, sell on store credit and manage customers. Whatever you don\'t enable, they don\'t see. Changes apply instantly. Manual stock adjustment is never delegated: only the owner does it; a seller moves stock through sales, receipts and returns.',
+    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.':
+      'With each employee\'s "Permissions" button you turn actions on or off one by one: manage products, receive goods, register and cancel sales, apply discounts, edit prices, view reports, manage suppliers and brands, view the audit log, sell on store credit and manage customers. Whatever you don\'t enable, they don\'t see. Changes apply instantly. Manual stock adjustment is never delegated: only the owner does it; a seller moves stock through sales, receipts and returns.',
     'Ver cierre de caja (sin ganancias ni costos)': 'View cash closing (no profits or costs)',
     'Permiso pensado para quien cierra el turno: el empleado ve en Balance el cierre de caja del día por medio de pago (efectivo, Yape, Plin, tarjeta…) y el total vendido, pero NO ve ganancias, costos ni márgenes. Así puede cuadrar la caja sin conocer cuánto ganas.':
       'A permission for whoever closes the shift: the employee sees in Balance the day\'s cash closing by payment method (cash, Yape, Plin, card…) and the total sold, but does NOT see profits, costs or margins. They can balance the register without knowing how much you earn.',
@@ -73,8 +75,8 @@ export default {
     'Crear empleado': 'Create employee',
     'Tip: configurá qué puede hacer cada empleado': 'Tip: set what each employee can do',
     'Hacé click en el botón': 'Click the button',
-    'al lado de cada empleado para activar o desactivar acciones individuales (vender, modificar stock, aplicar descuentos, ver reportes y más).':
-      'next to each employee to enable or disable individual actions (sell, modify stock, apply discounts, view reports and more).',
+    'al lado de cada empleado para activar o desactivar acciones individuales (vender, recibir mercadería, aplicar descuentos, ver reportes y más).':
+      'next to each employee to enable or disable individual actions (sell, receive goods, apply discounts, view reports and more).',
     'Entendido': 'Got it',
     'Cómo usar Empleados': 'How to use Employees',
     'Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.':
@@ -86,8 +88,8 @@ export default {
       'If someone stops working with you, deactivate them: they lose access but their sales history is kept.',
     'Buscar por nombre o email...': 'Search by name or email...',
     'Aún no tenés empleados': 'You have no employees yet',
-    'Creá empleados y asignales permisos individuales: vender, modificar stock, aplicar descuentos, ver reportes y más.':
-      'Create employees and give them individual permissions: sell, modify stock, apply discounts, view reports and more.',
+    'Creá empleados y asignales permisos individuales: vender, recibir mercadería, aplicar descuentos, ver reportes y más.':
+      'Create employees and give them individual permissions: sell, receive goods, apply discounts, view reports and more.',
     'Configurar permisos': 'Set permissions',
     'Desactivar empleado': 'Deactivate employee',
     'Activar empleado': 'Activate employee',
@@ -231,8 +233,10 @@ export default {
     'Aquí ves todas las cuentas que entran a tu negocio: tú (Owner) y tus empleados. Cada uno tiene su propio usuario y contraseña.':
       'Qui vedi tutti gli account che accedono alla tua attività: tu (Owner) e i tuoi dipendenti. Ognuno ha il proprio utente e la propria password.',
     'Permisos finos': 'Permessi dettagliati',
-    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, ajustar stock a mano, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante.':
-      'Con il pulsante "Permessi" di ogni dipendente attivi o disattivi le azioni una per una: gestire prodotti, ricevere merce, rettificare lo stock a mano, registrare e annullare vendite, applicare sconti, modificare prezzi, vedere i report, gestire fornitori e marche, vedere il log di audit, vendere a credito (fiado) e gestire i clienti. Ciò che non attivi, non lo vede. Le modifiche si applicano all\'istante.',
+    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.':
+      'Con il pulsante "Permessi" di ogni dipendente attivi o disattivi le azioni una per una: gestire prodotti, ricevere merce, registrare e annullare vendite, applicare sconti, modificare prezzi, vedere i report, gestire fornitori e marche, vendere a credito e gestire i clienti. Ciò che non attivi, non lo vede. Le modifiche si applicano all\'istante. La rettifica manuale dello stock non si delega: la fa solo il titolare; il venditore muove lo stock con vendite, ricezioni e resi.',
+    'En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, ver el log de auditoría, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.':
+      'Con il pulsante "Permessi" di ogni dipendente attivi o disattivi le azioni una per una: gestire prodotti, ricevere merce, registrare e annullare vendite, applicare sconti, modificare prezzi, vedere i report, gestire fornitori e marche, vedere il log di audit, vendere a credito (fiado) e gestire i clienti. Ciò che non attivi, non lo vede. Le modifiche si applicano all\'istante. La rettifica manuale dello stock non si delega: la fa solo il titolare; il venditore muove lo stock con vendite, ricezioni e resi.',
     'Ver cierre de caja (sin ganancias ni costos)': 'Vedi chiusura di cassa (senza utili né costi)',
     'Permiso pensado para quien cierra el turno: el empleado ve en Balance el cierre de caja del día por medio de pago (efectivo, Yape, Plin, tarjeta…) y el total vendido, pero NO ve ganancias, costos ni márgenes. Así puede cuadrar la caja sin conocer cuánto ganas.':
       'Permesso pensato per chi chiude il turno: il dipendente vede in Bilancio la chiusura di cassa del giorno per metodo di pagamento (contanti, Yape, Plin, carta…) e il totale venduto, ma NON vede utili, costi né margini. Così può far quadrare la cassa senza sapere quanto guadagni.',
@@ -277,8 +281,8 @@ export default {
     'Crear empleado': 'Crea dipendente',
     'Tip: configurá qué puede hacer cada empleado': 'Suggerimento: configura cosa può fare ogni dipendente',
     'Hacé click en el botón': 'Clicca sul pulsante',
-    'al lado de cada empleado para activar o desactivar acciones individuales (vender, modificar stock, aplicar descuentos, ver reportes y más).':
-      'accanto a ogni dipendente per attivare o disattivare singole azioni (vendere, modificare lo stock, applicare sconti, vedere i report e altro).',
+    'al lado de cada empleado para activar o desactivar acciones individuales (vender, recibir mercadería, aplicar descuentos, ver reportes y más).':
+      'accanto a ogni dipendente per attivare o disattivare singole azioni (vendere, ricevere merce, applicare sconti, vedere i report e altro).',
     'Entendido': 'Ho capito',
     'Cómo usar Empleados': 'Come usare Dipendenti',
     'Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.':
@@ -290,8 +294,8 @@ export default {
       'Se qualcuno smette di lavorare con te, disattivalo: perde l\'accesso ma il suo storico vendite si conserva.',
     'Buscar por nombre o email...': 'Cerca per nome o email...',
     'Aún no tenés empleados': 'Non hai ancora dipendenti',
-    'Creá empleados y asignales permisos individuales: vender, modificar stock, aplicar descuentos, ver reportes y más.':
-      'Crea dipendenti e assegna loro permessi individuali: vendere, modificare lo stock, applicare sconti, vedere i report e altro.',
+    'Creá empleados y asignales permisos individuales: vender, recibir mercadería, aplicar descuentos, ver reportes y más.':
+      'Crea dipendenti e assegna loro permessi individuali: vendere, ricevere merce, applicare sconti, vedere i report e altro.',
     'Configurar permisos': 'Configura permessi',
     'Desactivar empleado': 'Disattiva dipendente',
     'Activar empleado': 'Attiva dipendente',
