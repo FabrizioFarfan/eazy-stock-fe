@@ -1,0 +1,163 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Eazy Stock — qué es</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #111827; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 16mm 14mm; position: relative; overflow: hidden; page-break-after: always; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  .cover { background: linear-gradient(160deg, #1d4ed8 0%, #2563eb 55%, #38bdf8 130%); color: #fff; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { width: 44px; height: 44px; border-radius: 12px; background: #fff; padding: 4px; }
+  .brand b { font-size: 22px; letter-spacing: -0.3px; }
+  h1 { font-size: 46px; line-height: 1.02; letter-spacing: -1.2px; margin: 34mm 0 8px; font-weight: 800; }
+  .cover p.lead { font-size: 19px; line-height: 1.35; margin: 0 0 26px; max-width: 105mm; opacity: .96; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; max-width: 110mm; }
+  .chip { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; }
+  .cover .phone { position: absolute; right: 14mm; top: 46mm; }
+  .cover .three { position: absolute; left: 16mm; bottom: 20mm; display: flex; gap: 10px; width: 178mm; }
+  .cover .three div { flex: 1; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); border-radius: 16px; padding: 12px 14px; }
+  .cover .three b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .cover .three span { font-size: 12px; line-height: 1.35; opacity: .95; }
+  .phone { width: 62mm; border-radius: 22px; border: 6px solid #0f172a; box-shadow: 0 20px 40px rgba(0,0,0,.28); overflow: hidden; background: #0f172a; }
+  .phone img { display: block; width: 100%; }
+  .phone.sm { width: 47mm; }
+  .kicker { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #2563eb; margin: 0 0 6px; }
+  h2 { font-size: 30px; line-height: 1.08; letter-spacing: -0.8px; margin: 0 0 6px; font-weight: 800; }
+  p.sub { font-size: 14px; color: #4b5563; margin: 0 0 14px; line-height: 1.45; max-width: 120mm; }
+  .cols { display: flex; gap: 10mm; align-items: flex-start; }
+  .cols .txt { flex: 1; }
+  .shots { display: flex; gap: 4mm; align-items: flex-start; flex: none; }
+  ul.feat { list-style: none; padding: 0; margin: 0; }
+  ul.feat li { display: flex; gap: 10px; margin: 0 0 11px; font-size: 13.5px; line-height: 1.4; }
+  ul.feat li .ic { flex: none; width: 26px; height: 26px; border-radius: 9px; background: #eff6ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; font-family: 'DejaVu Sans', sans-serif; }
+  ul.feat li b { display: block; }
+  .tip { margin-top: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 10px 14px; font-size: 12.5px; color: #14532d; line-height: 1.4; }
+  .tip.amber { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+  .foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between; font-size: 10.5px; color: #9ca3af; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 12px 14px; }
+  .card b { display: block; font-size: 14px; margin-bottom: 3px; }
+  .card span { font-size: 12.5px; color: #4b5563; line-height: 1.4; }
+  .cta { margin-top: 14px; background: #111827; color: #fff; border-radius: 20px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .cta b { font-size: 20px; display: block; letter-spacing: -0.4px; }
+  .cta span { font-size: 12.5px; color: #cbd5e1; display: block; margin-top: 3px; line-height: 1.4; }
+  .cta .url { background: #2563eb; border-radius: 12px; padding: 12px 16px; font-weight: 800; font-size: 16px; white-space: nowrap; }
+  .steps { display: flex; gap: 8px; margin-top: 12px; }
+  .steps div { flex: 1; background: #f8fafc; border-radius: 14px; padding: 10px 12px; font-size: 12.5px; line-height: 1.4; }
+  .steps div b { display: block; color: #2563eb; font-size: 18px; margin-bottom: 2px; }
+
+  .cols.stack { flex-direction: column; gap: 6mm; }
+  .cols.stack .txt { width: 100%; }
+  .cols.stack ul.feat { display: grid; grid-template-columns: 1fr 1fr; column-gap: 9mm; row-gap: 2px; }
+  .cols.stack ul.feat li { margin-bottom: 8px; }
+  .cols.stack .shots { order: 2; align-self: center; gap: 8mm; }
+  .cols.stack .shots .phone.sm { width: 60mm; }
+  .cols.stack .tip { margin-top: 4px; }
+  .page:last-child .shots .phone.sm { width: 66mm; }
+  p.sub { max-width: 150mm; }
+</style></head><body>
+
+<!-- 1 · PORTADA -->
+<section class="page cover">
+  <div class="brand"><img src="logo.png" alt=""><b>Eazy Stock</b></div>
+  <h1>Tu negocio,<br>ordenado.</h1>
+  <p class="lead">Vende, cobra y controla el stock desde el celular. Sin cuaderno, sin Excel a mano, sin adivinar cuánto entró a la caja.</p>
+  <div class="chips"><span class="chip">Ferreterías</span><span class="chip">Bodegas</span><span class="chip">Minimarkets</span><span class="chip">Farmacias</span><span class="chip">Distribuidoras</span></div>
+  <div class="phone"><img src="../shots/dashboard.png" alt=""></div>
+  <div class="three">
+    <div><b>Vendes en segundos</b><span>Buscas o escaneas, pones la cantidad y cobras. Efectivo, Yape, transferencia o fiado.</span></div>
+    <div><b>Sabes qué tienes</b><span>Cada producto con su stock real. Te avisa qué se acaba y qué está por vencer.</span></div>
+    <div><b>Cierras la caja tranquilo</b><span>Al final del día sabes cuánto entró y por dónde. Lo que se ve es lo que se cobró.</span></div>
+  </div>
+</section>
+
+<!-- 2 · VENDER -->
+<section class="page">
+  <p class="kicker">Vender</p>
+  <h2>Cobras rápido, aunque haya cola</h2>
+  <p class="sub">La venta está pensada para el mostrador: pocos toques, sin pantallas raras, y funciona igual en el celular del vendedor que en la compu.</p>
+  <div class="cols stack">
+    <div class="txt">
+      <ul class="feat">
+        <li><span class="ic">⌕</span><div><b>Busca o escanea</b>Por nombre, código o con la cámara del celular. Con lector, cada lectura suma una unidad.</div></li>
+        <li><span class="ic">kg</span><div><b>Por unidad, kilo, metro o lo que vendas</b>Cantidades con decimales para lo que se pesa o se mide. Nunca vendes más de lo que tienes.</div></li>
+        <li><span class="ic">S/</span><div><b>Cobra como quieras</b>Efectivo, Yape/Plin, transferencia o al fiado a nombre del cliente. El precio de cada línea se puede ajustar y queda marcado.</div></li>
+        <li><span class="ic">↩</span><div><b>Devoluciones sin drama</b>Devuelves una o varias unidades y el stock vuelve solo.</div></li>
+        <li><span class="ic">✎</span><div><b>Cotizaciones en PDF</b>Armas el presupuesto, lo mandas por WhatsApp y, si el cliente acepta, lo conviertes en venta de un toque.</div></li>
+      </ul>
+      <div class="tip">✓ Un producto a S/ 0.1666 la unidad (12 por S/ 2) se cobra exacto: la línea cierra en centavos y el total suma lo que ves.</div>
+    </div>
+    <div class="shots"><div class="phone sm"><img src="../shots/venta.png" alt=""></div><div class="phone sm"><img src="../shots/ventas.png" alt=""></div></div>
+  </div>
+  <div class="foot"><span>Eazy Stock · eazy-stock.com</span><span>2 / 5</span></div>
+</section>
+
+<!-- 3 · STOCK -->
+<section class="page">
+  <p class="kicker">Stock</p>
+  <h2>Sabes qué tienes, qué se acaba y qué pedir</h2>
+  <p class="sub">Miles de productos, cada uno con su código, su foto, su ubicación en el almacén y su mínimo. Y lo encuentras en un segundo.</p>
+  <div class="cols stack">
+    <div class="shots"><div class="phone sm"><img src="../shots/productos.png" alt=""></div><div class="phone sm"><img src="../shots/stock.png" alt=""></div></div>
+    <div class="txt">
+      <ul class="feat">
+        <li><span class="ic">▲</span><div><b>Sube tu catálogo desde Excel</b>En una tarde tienes todo cargado. Códigos automáticos que siguen tu numeración.</div></li>
+        <li><span class="ic">→</span><div><b>Recepciones del proveedor</b>Registras la factura o guía y de una vez sube el stock, se actualiza el costo y queda la deuda con el proveedor.</div></li>
+        <li><span class="ic">!</span><div><b>Avisos de stock bajo y de vencimiento</b>Te avisa qué se está acabando y qué vence en 30 días, para sacarlo a promoción a tiempo.</div></li>
+        <li><span class="ic">≡</span><div><b>Cada movimiento con nombre y hora</b>Entradas, ventas, devoluciones y ajustes: quién lo hizo y cuánto quedó después.</div></li>
+        <li><span class="ic">✎</span><div><b>Pedido al proveedor en PDF</b>Del resumen de reposición sale el pedido listo para mandar.</div></li>
+      </ul>
+      <div class="tip amber">⚠ El vendedor no ajusta stock a mano ni ve el precio de compra. El stock solo se mueve con ventas, recepciones y devoluciones.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Eazy Stock · eazy-stock.com</span><span>3 / 5</span></div>
+</section>
+
+<!-- 4 · CAJA Y CLIENTES -->
+<section class="page">
+  <p class="kicker">Caja, fiado y reportes</p>
+  <h2>Cierras el día sabiendo cuánto entró y por dónde</h2>
+  <p class="sub">La caja se cuadra sola: cuánto en efectivo, cuánto por Yape, cuánto por transferencia y cuánto quedó al fiado.</p>
+  <div class="cols stack">
+    <div class="txt">
+      <ul class="feat">
+        <li><span class="ic">=</span><div><b>Cierre de caja por medio de pago</b>Vendido menos devuelto, por cada medio. Y «lo que debe haber en el cajón», contando el fondo de caja del día.</div></li>
+        <li><span class="ic">✓</span><div><b>Fiado con nombre y apellido</b>Cada cliente con su saldo y su límite. Le mandas su estado de cuenta por WhatsApp con todo el historial.</div></li>
+        <li><span class="ic">→</span><div><b>Cuentas por pagar</b>Lo que le debes a cada proveedor, recepción por recepción, con los pagos y abonos.</div></li>
+        <li><span class="ic">%</span><div><b>Reportes que sí sirven</b>Qué vendes más, cuánto ganas, cómo va cada vendedor, quiénes son tus mejores clientes y quién dejó de venir.</div></li>
+        <li><span class="ic">▼</span><div><b>Todo se exporta a Excel</b>Ventas, productos, reportes: para tu contador o para ti.</div></li>
+      </ul>
+    </div>
+    <div class="shots"><div class="phone sm"><img src="../shots/caja.png" alt=""></div><div class="phone sm"><img src="../shots/reportes.png" alt=""></div></div>
+  </div>
+  <div class="foot"><span>Eazy Stock · eazy-stock.com</span><span>4 / 5</span></div>
+</section>
+
+<!-- 5 · EQUIPO Y EMPEZAR -->
+<section class="page">
+  <p class="kicker">Tu equipo y cómo empezar</p>
+  <h2>Cada quien ve lo suyo, y tú lo ves todo</h2>
+  <p class="sub">Creas usuarios para tus vendedores y decides qué puede hacer cada uno. Los cambios se aplican al toque.</p>
+  <div class="cols">
+    <div class="txt">
+      <div class="grid2">
+        <div class="card"><b>≡  Empleados con permisos</b><span>Vender, recibir mercadería, aplicar descuentos, ver reportes, fiar… activas solo lo que necesita cada uno.</span></div>
+        <div class="card"><b>▣  Celular y computadora</b><span>Se instala como app en el celular y funciona igual en la compu. Mismos datos, al instante.</span></div>
+        <div class="card"><b>◎  Español, inglés e italiano</b><span>La app habla el idioma de quien la usa. Y la moneda es la de tu negocio.</span></div>
+        <div class="card"><b>! Avisos y notificaciones</b><span>Stock bajo, vencimientos, fiados vencidos: te llegan solos.</span></div>
+      </div>
+      <div class="steps">
+        <div><b>1</b>Creas tu negocio en eazy-stock.com, gratis.</div>
+        <div><b>2</b>Subes tu Excel o cargas tus productos.</div>
+        <div><b>3</b>Vendes desde el celular ese mismo día.</div>
+      </div>
+      <div class="cta">
+        <div><b>Empieza hoy, sin tarjeta</b><span>Si no te ordena la tienda, no nos debes nada. Escríbenos y te ayudamos a cargar tu catálogo.<br>WhatsApp +48 792 417 352 · kontakt.eazylife@gmail.com</span></div>
+        <div class="url">eazy-stock.com</div>
+      </div>
+    </div>
+    <div class="shots"><div class="phone sm"><img src="../shots/cotizacion.png" alt=""></div></div>
+  </div>
+  <div class="foot"><span>Eazy Stock · una app de Eazy Life Company</span><span>5 / 5</span></div>
+</section>
+</body></html>
