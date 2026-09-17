@@ -15,30 +15,10 @@ import { Reveal, Counter, GridPattern, GlowOrbs, SectionHead, LandingStyles } fr
 import {
   AppMockup, CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
 } from './landing/mockups'
+import { PricingSection } from './landing/Pricing'
+import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 
 const CTA = '/login'
-
-/**
- * La landing tiene su propio diseño oscuro fijo: el mapa `html.dark` de la app
- * (index.css) NO debe tocarla — con él, «bg-white» se volvía gris oscuro y el
- * botón de «Iniciar sesión» quedaba con texto invisible (Frank, 2-sep). Se
- * quita la clase mientras la landing está montada y se restaura al salir según
- * lo guardado; el script pre-paint de index.html ya no la pone en «/» sin sesión.
- */
-function useNoAppDarkMode() {
-  useEffect(() => {
-    const html = document.documentElement
-    html.classList.remove('dark')
-    return () => {
-      let dark = false
-      try {
-        const saved = localStorage.getItem('eazystock_theme')
-        dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
-      } catch { /* storage bloqueado */ }
-      html.classList.toggle('dark', dark)
-    }
-  }, [])
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Navbar
@@ -49,12 +29,15 @@ const NAV = [
   { href: '#funciones',  label: 'Funciones' },
   { href: '#fiado',      label: 'Fiado' },
   { href: '#para-quien', label: 'Para quién' },
+  { href: '#precios',    label: 'Precios' },
   { href: '#roadmap',    label: 'Lo que viene' },
   { href: '#faq',        label: 'FAQ' },
 ]
 
-function Navbar() {
+/** `home=false` (p. ej. en /planes): los anclas vuelven a la portada. */
+export function Navbar({ home = true }) {
   const t = useT()
+  const href = (h) => (home ? h : `/${h}`)
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
@@ -75,7 +58,7 @@ function Navbar() {
 
         <nav className="hidden items-center gap-7 lg:flex">
           {NAV.map((n) => (
-            <a key={n.href} href={n.href} className="text-sm text-slate-400 transition-colors hover:text-white">{t(n.label)}</a>
+            <a key={n.href} href={href(n.href)} className="text-sm text-slate-400 transition-colors hover:text-white">{t(n.label)}</a>
           ))}
         </nav>
 
@@ -103,7 +86,7 @@ function Navbar() {
         <div className="border-t border-white/10 bg-[#0a0e1a] px-5 pb-5 pt-3 lg:hidden">
           <nav className="flex flex-col">
             {NAV.map((n) => (
-              <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t(n.label)}</a>
+              <a key={n.href} href={href(n.href)} onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t(n.label)}</a>
             ))}
           </nav>
           <div className="mt-4 flex gap-2">
@@ -787,7 +770,7 @@ function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Cuando salgan los planes mensuales, todos tendrán prueba gratis para que decidas con calma.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -838,7 +821,7 @@ function Faq() {
 //  CTA + Footer
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CtaBanner() {
+export function CtaBanner() {
   const t = useT()
   const chips = [
     [Check,        'Sin tarjeta'],
@@ -918,7 +901,7 @@ function CtaBanner() {
   )
 }
 
-function Footer() {
+export function Footer({ home = true }) {
   const t = useT()
   return (
     <footer className="bg-[#0a0e1a] py-16">
@@ -938,7 +921,7 @@ function Footer() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Producto')}</p>
             <ul className="space-y-2 text-sm">
               {NAV.map((n) => (
-                <li key={n.href}><a href={n.href} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</a></li>
+                <li key={n.href}><a href={home ? n.href : `/${n.href}`} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</a></li>
               ))}
             </ul>
           </div>
@@ -946,6 +929,7 @@ function Footer() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Empezar')}</p>
             <ul className="space-y-2 text-sm">
               <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Probar gratis')}</Link></li>
+              <li><Link to="/planes" className="text-slate-500 transition-colors hover:text-white">{t('Planes y precios')}</Link></li>
               <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Iniciar sesión')}</Link></li>
             </ul>
           </div>
@@ -994,6 +978,7 @@ export default function LandingPage() {
       <Industries />
       <HowItWorks />
       <Testimonial />
+      <PricingSection />
       <ComingSoon />
       <Faq />
       <CtaBanner />

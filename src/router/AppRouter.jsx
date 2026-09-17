@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
+import PlansPage      from '../pages/PlansPage'
 
 const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/sales/new' }
 
@@ -52,6 +53,8 @@ export default function AppRouter() {
       {/* Public */}
       <Route path="/" element={<LandingRoute />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/planes" element={<PlansPage />} />
+      <Route path="/precios" element={<Navigate to="/planes" replace />} />
 
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={
