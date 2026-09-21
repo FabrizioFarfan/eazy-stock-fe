@@ -5,6 +5,7 @@ import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import ReceiptDetailModal from './ReceiptDetailModal'
+import ProductFilterPicker from './ProductFilterPicker'
 import { useT, dateLocale } from '../../i18n'
 
 function formatDate(str) {
@@ -24,13 +25,14 @@ export default function ReceiptsTab() {
   const [to, setTo]                     = useState('')
   const [reference, setReference]       = useState('')
   const [paymentMode, setPaymentMode]   = useState('')
+  const [product, setProduct]           = useState(null)
   const [selectedReceiptId, setSelectedReceiptId] = useState(null)
   const debouncedReference = useDebounce(reference, 350)
 
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
-  const hasFilters = !!(supplierId || from || to || reference || paymentMode)
+  const hasFilters = !!(supplierId || from || to || reference || paymentMode || product)
 
   // Fechas planas yyyy-MM-dd: el BE las interpreta como día en la zona del
   // usuario (ClientDay). El `T00:00:00` viejo era hora del SERVER (Berlín) y
@@ -42,6 +44,7 @@ export default function ReceiptsTab() {
     ...(to   && { to }),
     ...(debouncedReference.trim() && { reference: debouncedReference.trim() }),
     ...(paymentMode && { paymentMode }),
+    ...(product && { productId: product.id }),
   }
 
   const { data, isLoading, isFetching, isError } = useReceipts(params)
@@ -68,6 +71,10 @@ export default function ReceiptsTab() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+        {/* «¿En qué recepciones me llegó este producto?» */}
+        <ProductFilterPicker product={product} onChange={(p) => { setProduct(p); setPage(0) }}
+          placeholder={t('Recepciones de un producto...')} className="w-full sm:w-72" />
+
         <select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(0) }}
           className={`${selectCls} min-w-48`}>
           <option value="">{t('Todos los proveedores')}</option>
@@ -107,7 +114,7 @@ export default function ReceiptsTab() {
         </select>
 
         {hasFilters && (
-          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setPage(0) }}
+          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setProduct(null); setPage(0) }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
             {t('Limpiar')}
           </button>

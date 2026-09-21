@@ -23,6 +23,17 @@ export function useSalesSummary(params, options = {}) {
   })
 }
 
+// Totales por tipo de UN producto en el rango (cabecera de su historial).
+export function useProductTotals(productId, params, options = {}) {
+  return useQuery({
+    queryKey: [MOVEMENTS_KEY, 'product-totals', productId, params],
+    queryFn: () => stockApi.getProductTotals(productId, params).then((r) => r.data.data),
+    enabled: !!productId,
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
+
 export function useCreateMovement() {
   const qc = useQueryClient()
   return useMutation({

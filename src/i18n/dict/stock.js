@@ -3,6 +3,27 @@
 // Cuentas por pagar. El español es la llave.
 export default {
   en: {
+    // ── Historial de un producto (filtro por producto en Movimientos / Recepciones)
+    'Buscar un producto por nombre o código...': 'Search a product by name or code...',
+    'Quitar el filtro de producto': 'Remove product filter',
+    'Elige el producto exacto:': 'Pick the exact product:',
+    'Todo el historial': 'Full history',
+    'Último mes': 'Last month',
+    'Últimos 3 meses': 'Last 3 months',
+    'Últimos 6 meses': 'Last 6 months',
+    'Este año': 'This year',
+    'Entró': 'Came in',
+    'Se vendió': 'Sold',
+    'Devuelto': 'Returned',
+    'Historial del producto': 'Product history',
+    'Totales {range}.': 'Totals {range}.',
+    'Totales desde que el producto entró a tu catálogo.': 'Totals since the product joined your catalog.',
+    'Ver todo el historial de este producto': 'See this product\'s full history',
+    'Este producto no tuvo movimientos en este período — prueba con «Todo el historial».': 'This product had no movements in this period — try "Full history".',
+    'Ver todo su historial': 'See full history',
+    'Recepciones de un producto...': 'Receipts of a product...',
+    'Busca un producto para ver solo las recepciones donde te llegó.': 'Search a product to see only the receipts where it arrived.',
+    '¿Quieres el historial de UN producto? Búscalo por nombre o código en el primer filtro y elígelo de la lista: verás todos sus movimientos desde que entró a tu catálogo, con los totales de cuánto entró y cuánto se vendió. Con los botones de período (Último mes, Últimos 3 meses…) acotas el tiempo de un toque. También llegas desde la ficha del producto con «Ver todo su historial».': 'Want the history of ONE product? Search it by name or code in the first filter and pick it from the list: you\'ll see all its movements since it joined your catalog, with totals of how much came in and how much was sold. The period buttons (Last month, Last 3 months…) narrow the time in one tap. You can also get here from the product card with "See full history".',
     // ── StockPage
     'Stock': 'Stock',
     'Movimientos': 'Movements',
@@ -325,6 +346,27 @@ export default {
   },
 
   it: {
+    // ── Historial de un producto (filtro por producto en Movimientos / Recepciones)
+    'Buscar un producto por nombre o código...': 'Cerca un prodotto per nome o codice...',
+    'Quitar el filtro de producto': 'Rimuovi il filtro prodotto',
+    'Elige el producto exacto:': 'Scegli il prodotto esatto:',
+    'Todo el historial': 'Tutto lo storico',
+    'Último mes': 'Ultimo mese',
+    'Últimos 3 meses': 'Ultimi 3 mesi',
+    'Últimos 6 meses': 'Ultimi 6 mesi',
+    'Este año': 'Quest\'anno',
+    'Entró': 'Entrato',
+    'Se vendió': 'Venduto',
+    'Devuelto': 'Reso',
+    'Historial del producto': 'Storico del prodotto',
+    'Totales {range}.': 'Totali {range}.',
+    'Totales desde que el producto entró a tu catálogo.': 'Totali da quando il prodotto è entrato nel tuo catalogo.',
+    'Ver todo el historial de este producto': 'Vedi tutto lo storico di questo prodotto',
+    'Este producto no tuvo movimientos en este período — prueba con «Todo el historial».': 'Questo prodotto non ha avuto movimenti in questo periodo — prova con «Tutto lo storico».',
+    'Ver todo su historial': 'Vedi tutto lo storico',
+    'Recepciones de un producto...': 'Ricezioni di un prodotto...',
+    'Busca un producto para ver solo las recepciones donde te llegó.': 'Cerca un prodotto per vedere solo le ricezioni in cui è arrivato.',
+    '¿Quieres el historial de UN producto? Búscalo por nombre o código en el primer filtro y elígelo de la lista: verás todos sus movimientos desde que entró a tu catálogo, con los totales de cuánto entró y cuánto se vendió. Con los botones de período (Último mes, Últimos 3 meses…) acotas el tiempo de un toque. También llegas desde la ficha del producto con «Ver todo su historial».': 'Vuoi lo storico di UN prodotto? Cercalo per nome o codice nel primo filtro e sceglilo dalla lista: vedrai tutti i suoi movimenti da quando è entrato nel catalogo, con i totali di quanto è entrato e quanto è stato venduto. Con i pulsanti di periodo (Ultimo mese, Ultimi 3 mesi…) restringi il tempo con un tocco. Ci arrivi anche dalla scheda del prodotto con «Vedi tutto lo storico».',
     // ── StockPage
     'Stock': 'Magazzino',
     'Movimientos': 'Movimenti',

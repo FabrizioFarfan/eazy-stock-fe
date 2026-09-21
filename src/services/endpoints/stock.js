@@ -10,6 +10,10 @@ export const stockApi = {
   getMovementsByProduct: (productId, params) =>
     api.get(`/stock/movements/product/${productId}`, { params }),
 
+  getProductTotals: (productId, params) =>
+    api.get(`/stock/movements/product/${productId}/totals`, { params }),
+  // params: { from, to } — [{ type, quantity, movements }] sumado sobre todo el rango
+
   createMovement: (data) => api.post('/stock/movements', data),
   // body: { productId, type, quantity, notes }
   // type: PURCHASE_ENTRY | ADJUSTMENT

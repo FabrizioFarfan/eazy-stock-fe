@@ -24,3 +24,10 @@ export function quickRange(key) {
   }
   return null
 }
+
+/** Últimos `n` meses hasta hoy (mismo día del mes, n meses atrás). */
+export function lastMonthsRange(n) {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth() - n, now.getDate())
+  return { from: toISODate(start), to: toISODate(now) }
+}

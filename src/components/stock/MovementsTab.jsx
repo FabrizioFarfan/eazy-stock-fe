@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { useMovements, useSalesSummary } from '../../hooks/useStock'
+import { useQuery } from '@tanstack/react-query'
+import { useMovements, useSalesSummary, useProductTotals } from '../../hooks/useStock'
+import { productsApi } from '../../services/endpoints/products'
+import { lastMonthsRange, quickRange } from '../../utils/dateRanges'
+import ProductFilterPicker from './ProductFilterPicker'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
@@ -232,7 +236,73 @@ function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
 
 const PAGE_SIZE = 20
 
-export default function MovementsTab() {
+// Períodos de un toque (pedido de William: «los 2 o 3 últimos meses» o «desde
+// que entró el producto» sin pelearse con los calendarios).
+const PERIODS = [
+  { key: 'all', label: 'Todo el historial', range: () => ({ from: '', to: '' }) },
+  { key: 'm1',  label: 'Último mes',        range: () => lastMonthsRange(1) },
+  { key: 'm3',  label: 'Últimos 3 meses',   range: () => lastMonthsRange(3) },
+  { key: 'm6',  label: 'Últimos 6 meses',   range: () => lastMonthsRange(6) },
+  { key: 'year', label: 'Este año',         range: () => quickRange('year') },
+]
+
+/**
+ * Cabecera del historial de UN producto: stock de hoy + cuánto entró, se
+ * vendió, se devolvió y se ajustó en el período (suma el servidor sobre todo
+ * el rango, no sobre la página visible).
+ */
+function ProductHistoryHeader({ product, from, to }) {
+  const t = useT()
+  const range = rangeLabel(t, from, to)
+  const { data: totals } = useProductTotals(product.id, {
+    ...(from && { from }), ...(to && { to }),
+  })
+  const byType = Object.fromEntries((totals ?? []).map((r) => [r.type, r]))
+  const qty = (type) => parseFloat(byType[type]?.quantity ?? 0)
+  const adj = qty('ADJUSTMENT')
+  const cells = [
+    { label: 'Entró',      value: `+${fmtQty(qty('PURCHASE_ENTRY'))}`, cls: 'text-emerald-600' },
+    { label: 'Se vendió',  value: `-${fmtQty(qty('SALE'))}`,           cls: 'text-red-500' },
+    { label: 'Devuelto',   value: `+${fmtQty(qty('RETURN'))}`,         cls: 'text-purple-600' },
+    { label: 'Ajustes',    value: `${adj > 0 ? '+' : ''}${fmtQty(adj)}`, cls: 'text-amber-600' },
+  ]
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-blue-50/40 px-4 py-3.5 sm:px-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">{t('Historial del producto')}</p>
+          <h3 className="truncate text-base font-bold text-gray-900">
+            {product.name} {product.sku && <span className="ml-1 font-mono text-xs font-normal text-gray-500">{product.sku}</span>}
+          </h3>
+        </div>
+        {product.currentStock != null && (
+          <p className="text-sm text-gray-500">
+            {t('Stock actual:')} <span className="text-base font-bold text-gray-900">{fmtQty(product.currentStock)}</span>
+            {product.unit && <span className="ml-1 text-xs text-gray-500">{product.unit}</span>}
+          </p>
+        )}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {cells.map((c) => (
+          <div key={c.label} className="rounded-xl border border-gray-100 bg-white px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t(c.label)}</p>
+            <p className={`text-lg font-bold ${c.cls}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-gray-500">
+        {range ? t('Totales {range}.', { range }) : t('Totales desde que el producto entró a tu catálogo.')}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * `productId` vive en la URL (?product=) para que la ficha del producto pueda
+ * traer hasta acá con el filtro puesto; `productHint` es el producto ya cargado
+ * (viene de la ficha o del buscador) y evita pedirlo de nuevo.
+ */
+export default function MovementsTab({ productId = null, productHint = null, onProductChange = () => {} }) {
   const t = useT()
   const { user } = useAuth()
   const [typeFilter, setTypeFilter]   = useState('')
@@ -243,17 +313,28 @@ export default function MovementsTab() {
   const [detailRow, setDetailRow]     = useState(null)
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(0) }, [typeFilter, supplierId, from, to])
+  useEffect(() => { setPage(0) }, [typeFilter, supplierId, from, to, productId])
+
+  const hint = productHint?.id === productId ? productHint : null
+  const { data: fetchedProduct } = useQuery({
+    queryKey: ['products', 'by-id', productId],
+    queryFn: () => productsApi.getById(productId).then((r) => r.data.data),
+    enabled: !!productId && !hint,
+    retry: false,
+  })
 
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
-  const isSalesFilter = typeFilter === 'SALE'
+  // Con un producto elegido siempre se ve SU historial, también si filtra Ventas:
+  // el resumen de reposición es la vista de TODOS los productos.
+  const isSalesFilter = typeFilter === 'SALE' && !productId
 
   const params = {
     page, size: PAGE_SIZE,
     ...(typeFilter && { type: typeFilter }),
     ...(supplierId && { supplierId }),
+    ...(productId && { productId }),
     ...(from && { from }),
     ...(to   && { to   }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
@@ -275,6 +356,18 @@ export default function MovementsTab() {
   const fromRow       = totalElements === 0 ? 0 : page * PAGE_SIZE + 1
   const toRow         = Math.min((page + 1) * PAGE_SIZE, totalElements)
 
+  // Un producto oculto no responde a /products/{id}: su nombre sale de sus movimientos.
+  const firstRow = productId ? movements.find((m) => m.productId === productId) : null
+  const product = !productId ? null
+    : hint ?? fetchedProduct
+      ?? { id: productId, name: firstRow?.productName ?? '…', sku: firstRow?.productSku }
+
+  const activePeriod = PERIODS.find((p) => {
+    const r = p.range()
+    return r.from === from && r.to === to
+  })?.key
+  const hasFilters = !!(typeFilter || supplierId || from || to || productId)
+
   const selectCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
   return (
@@ -282,7 +375,7 @@ export default function MovementsTab() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-        <Calendar size={15} className="flex-shrink-0 text-gray-400" />
+        <ProductFilterPicker product={product} onChange={onProductChange} className="w-full sm:w-80" />
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className={selectCls}>
           <option value="">{t('Todos los tipos')}</option>
           <option value="PURCHASE_ENTRY">{t('Entradas')}</option>
@@ -304,16 +397,34 @@ export default function MovementsTab() {
           <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={selectCls} />
         </div>
-        {(typeFilter || supplierId || from || to) && (
-          <button onClick={() => { setTypeFilter(''); setSupplierId(''); setFrom(''); setTo('') }}
+        {hasFilters && (
+          <button onClick={() => { setTypeFilter(''); setSupplierId(''); setFrom(''); setTo(''); onProductChange(null) }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
             {t('Limpiar')}
           </button>
         )}
+
+        {/* Períodos de un toque */}
+        <div className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 overflow-x-auto border-t border-gray-100 px-1 pb-1 pt-3 sm:flex-wrap">
+          <Calendar size={15} className="flex-shrink-0 text-gray-400" />
+          {PERIODS.map((p) => (
+            <button key={p.key} type="button"
+              onClick={() => { const r = p.range(); setFrom(r.from); setTo(r.to) }}
+              className={`flex-shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition-all ${
+                activePeriod === p.key
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                  : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              }`}>
+              {t(p.label)}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {product && <ProductHistoryHeader product={product} from={from} to={to} />}
+
       {/* Guía fija (pedido de Frank): la feature no es banal, que se descubra sola */}
-      {!isSalesFilter && (
+      {!isSalesFilter && !productId && (
         <p className="flex items-start gap-2 px-1 text-[13px] leading-snug text-gray-500">
           <Lightbulb size={15} className="mt-0.5 flex-shrink-0 text-amber-500" />
           <span>
@@ -349,7 +460,9 @@ export default function MovementsTab() {
                 ) : movements.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-14 text-center text-sm font-medium text-gray-400">
-                      {t('No hay movimientos en este período')}
+                      {productId && (from || to)
+                        ? t('Este producto no tuvo movimientos en este período — prueba con «Todo el historial».')
+                        : t('No hay movimientos en este período')}
                     </td>
                   </tr>
                 ) : (
@@ -358,7 +471,15 @@ export default function MovementsTab() {
                     return (
                       <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/70 transition-colors ${isFetching ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
-                        <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900">{m.productName}</td>
+                        <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900">
+                          {productId ? m.productName : (
+                            <button type="button" title={t('Ver todo el historial de este producto')}
+                              onClick={() => onProductChange({ id: m.productId, name: m.productName, sku: m.productSku })}
+                              className="max-w-full truncate text-left hover:text-blue-600 hover:underline">
+                              {m.productName}
+                            </button>
+                          )}
+                        </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
                         <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>
                         <td className="px-4 py-3.5 text-center">

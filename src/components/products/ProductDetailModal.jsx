@@ -1,6 +1,7 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2 } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2, History } from 'lucide-react'
 import { imageSrc } from '../../utils/productImage'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { productsApi } from '../../services/endpoints/products'
@@ -68,6 +69,7 @@ function MovementTypeBadge({ type }) {
  */
 export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust, onMerged }) {
   const t = useT()
+  const navigate = useNavigate()
   // (16-sep) esto vivía dentro de MovementTypeBadge desde el 15-sep y la ficha
   // reventaba con «hidesCost is not defined» para todos, dueño incluido
   const { user } = useAuth()
@@ -259,9 +261,22 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
 
           {/* Historial reciente */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
-              {t('Historial reciente')}
-            </p>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                {t('Historial reciente')}
+              </p>
+              {/* Pedido de William: acá solo se ven los últimos 5; el historial
+                  entero vive en Stock › Movimientos, ya filtrado por este producto */}
+              <button type="button"
+                onClick={() => {
+                  onClose()
+                  navigate(`/stock?tab=movements&product=${product.id}`, { state: { product } })
+                }}
+                className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                <History size={13} />
+                {t('Ver todo su historial')}
+              </button>
+            </div>
             {loadingMov ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (

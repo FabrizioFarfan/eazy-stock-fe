@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { PackagePlus, SlidersHorizontal, ArrowUpDown } from 'lucide-react'
 import PageTitle from '../../components/common/PageTitle'
 import HelpDrawer from '../../components/common/HelpDrawer'
@@ -21,7 +22,20 @@ export default function StockPage() {
   const { user }  = useAuth()
   const isManager = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
 
-  const [activeTab, setActiveTab]       = useState('movements')
+  // Pestaña y producto filtrado viven en la URL: la ficha del producto trae
+  // hasta Movimientos con «?tab=movements&product=<id>» ya filtrado.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location  = useLocation()
+  const tabParam  = searchParams.get('tab')
+  const activeTab = TABS.some((tab) => tab.id === tabParam) ? tabParam : 'movements'
+  const productId = searchParams.get('product')
+  const [pickedProduct, setPickedProduct] = useState(null)
+
+  const setActiveTab = (id) => setSearchParams(id === 'movements' ? {} : { tab: id }, { replace: true })
+  const setProduct = (p) => {
+    setPickedProduct(p)
+    setSearchParams(p ? { tab: 'movements', product: p.id } : {}, { replace: true })
+  }
   const [modal, setModal]               = useState(null) // null | 'ADJUSTMENT'
   const [showReceiptModal, setShowReceiptModal] = useState(false)
 
@@ -42,6 +56,9 @@ export default function StockPage() {
               </p>
               <p className="mt-1">
                 {t('Cada movimiento lleva su tipo (Entrada, Ajuste, Venta o Devolución) y, entre paréntesis, el stock que quedó del producto justo después. Filtra por Ventas para ver el Resumen de reposición: cuánto vendiste de cada producto, listo para armar tu pedido.')}
+              </p>
+              <p className="mt-1">
+                {t('¿Quieres el historial de UN producto? Búscalo por nombre o código en el primer filtro y elígelo de la lista: verás todos sus movimientos desde que entró a tu catálogo, con los totales de cuánto entró y cuánto se vendió. Con los botones de período (Último mes, Últimos 3 meses…) acotas el tiempo de un toque. También llegas desde la ficha del producto con «Ver todo su historial».')}
               </p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -65,6 +82,7 @@ export default function StockPage() {
                 {t('Las compras de mercadería a tus proveedores. Cada recepción registra qué productos llegaron, a qué costo y cómo se pagó: al contado (no genera deuda) o a crédito (se suma a la cuenta por pagar del proveedor — la ves en Cuentas). Responde "¿qué me llegó y qué le debo a cada proveedor?".')}
               </p>
               <p className="mt-1">
+                {t('Busca un producto para ver solo las recepciones donde te llegó.')}{' '}
                 {t('Puedes buscar por número de factura/guía y filtrar por modalidad. Las fechas se interpretan en tu zona horaria: si filtras "hoy" verás las recepciones de tu día, no del servidor.')}
               </p>
             </div>
@@ -115,7 +133,11 @@ export default function StockPage() {
       {/* Tab content */}
       {activeTab === 'inventory' && <InventoryTab />}
       {activeTab === 'receipts'  && <ReceiptsTab />}
-      {activeTab === 'movements' && <MovementsTab />}
+      {activeTab === 'movements' && (
+        <MovementsTab productId={productId}
+          productHint={pickedProduct ?? location.state?.product ?? null}
+          onProductChange={setProduct} />
+      )}
 
       {modal && <MovementModal type={modal} onClose={() => setModal(null)} />}
       {showReceiptModal && <SupplierReceiptModal onClose={() => setShowReceiptModal(false)} />}
