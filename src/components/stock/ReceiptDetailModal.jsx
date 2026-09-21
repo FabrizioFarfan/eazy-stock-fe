@@ -289,7 +289,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
               )}
 
               {(receipt.returns ?? []).length > 0 && (
-                <div className="mt-4 rounded-xl bg-purple-50/60 px-4 py-3 text-sm ring-1 ring-purple-100">
+                <div className="mt-4 rounded-xl bg-purple-50 px-4 py-3 text-sm ring-1 ring-purple-100">
                   <p className="font-semibold text-purple-900">{t('Devuelto al proveedor')}</p>
                   <ul className="mt-1.5 space-y-1">
                     {receipt.returns.map((m) => (

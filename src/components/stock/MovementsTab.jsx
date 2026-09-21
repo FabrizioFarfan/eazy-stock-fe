@@ -285,7 +285,7 @@ function ProductHistoryHeader({ product, from, to }) {
           </p>
         )}
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className={`mt-3 grid grid-cols-2 gap-2 ${cells.length > 4 ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
         {cells.map((c) => (
           <div key={c.label} className="rounded-xl border border-gray-100 bg-white px-3 py-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t(c.label)}</p>
@@ -487,7 +487,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                         <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
                         <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>
                         <td className="px-4 py-3.5 text-center">
-                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
+                          <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
                         </td>
                         <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} /></td>
                         <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>

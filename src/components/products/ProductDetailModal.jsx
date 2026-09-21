@@ -44,7 +44,7 @@ function Row({ label, value, mono }) {
 
 function MovementTypeIcon({ type }) {
   if (type === 'SALE') return <TrendingDown size={13} className="text-red-400" />
-  if (type === 'SUPPLIER_RETURN') return <TrendingDown size={13} className="text-rose-400" />
+  if (type === 'SUPPLIER_RETURN') return <TrendingDown size={13} className="text-rose-500" />
   if (type === 'PURCHASE_ENTRY') return <TrendingUp size={13} className="text-emerald-500" />
   if (type === 'RETURN') return <TrendingUp size={13} className="text-purple-500" />
   return <ArrowUpDown size={13} className="text-blue-400" />

@@ -38,7 +38,7 @@ export default function ProductFilterPicker({ product, onChange, placeholder, cl
       <div className={`flex min-w-0 max-w-full items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 py-1.5 pl-3 pr-1.5 ${className}`}>
         <Package size={15} className="flex-shrink-0 text-blue-600" />
         <span className="min-w-0 truncate text-sm font-semibold text-blue-900">{product.name}</span>
-        {product.sku && <span className="flex-shrink-0 font-mono text-xs text-blue-700/70">{product.sku}</span>}
+        {product.sku && <span className="flex-shrink-0 font-mono text-xs font-semibold text-blue-700">{product.sku}</span>}
         <button type="button" onClick={() => onChange(null)}
           className="flex-shrink-0 rounded-lg p-1.5 text-blue-700 hover:bg-blue-100 transition-colors"
           aria-label={t('Quitar el filtro de producto')} title={t('Quitar el filtro de producto')}>
@@ -61,7 +61,7 @@ export default function ProductFilterPicker({ product, onChange, placeholder, cl
         className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-8 pr-3 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400"
       />
       {open && debounced && (
-        <div className="absolute left-0 z-20 mt-1 max-h-80 w-full min-w-[280px] overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
+        <div className="absolute left-0 z-40 mt-1 max-h-80 w-full min-w-[280px] overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
           {isLoading ? (
             <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
           ) : results.length === 0 ? (

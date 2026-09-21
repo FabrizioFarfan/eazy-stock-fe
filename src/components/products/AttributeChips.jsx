@@ -16,7 +16,7 @@ export default function AttributeChips({ attributes, max = 2, empty = '—' }) {
     <span className="inline-flex max-w-full flex-wrap items-center gap-1" title={`${t('Atributos')} — ${all}`}>
       {entries.slice(0, max).map(([k, v]) => (
         <span key={k} className="inline-flex max-w-[150px] items-baseline gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-xs ring-1 ring-indigo-100">
-          <span className="truncate text-[10px] font-medium uppercase tracking-wide text-indigo-400">{k}</span>
+          <span className="truncate text-[10px] font-medium uppercase tracking-wide text-indigo-500">{k}</span>
           <span className="truncate font-bold text-indigo-800">{v}</span>
         </span>
       ))}
