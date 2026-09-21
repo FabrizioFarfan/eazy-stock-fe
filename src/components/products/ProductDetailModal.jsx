@@ -70,7 +70,7 @@ function MovementTypeBadge({ type }) {
  * columnas de la tabla. onRegisterEntry/onAdjust los usa la página Stock para
  * abrir el MovementModal ya prefijado con este producto.
  */
-export default function ProductDetailModal({ product, onClose, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust, onMerged }) {
+export default function ProductDetailModal({ product, onClose, hideHistoryLink = false, onEdit, onShowQr, onDeactivate, onReactivate, onRegisterEntry, onAdjust, onMerged }) {
   const t = useT()
   const navigate = useNavigate()
   // (16-sep) esto vivía dentro de MovementTypeBadge desde el 15-sep y la ficha
@@ -270,7 +270,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
               </p>
               {/* Pedido de William: acá solo se ven los últimos 5; el historial
                   entero vive en Stock › Movimientos, ya filtrado por este producto */}
-              <button type="button"
+              {!hideHistoryLink && <button type="button"
                 onClick={() => {
                   onClose()
                   navigate(`/stock?tab=movements&product=${product.id}`, { state: { product } })
@@ -278,7 +278,7 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                 className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                 <History size={13} />
                 {t('Ver todo su historial')}
-              </button>
+              </button>}
             </div>
             {loadingMov ? (
               <div className="space-y-2">

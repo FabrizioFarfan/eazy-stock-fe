@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X, Eye } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import { useMovements, useSalesSummary, useProductTotals } from '../../hooks/useStock'
 import { productsApi } from '../../services/endpoints/products'
 import { lastMonthsRange, quickRange } from '../../utils/dateRanges'
 import ProductFilterPicker from './ProductFilterPicker'
+import ProductDetailModal from '../products/ProductDetailModal'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
@@ -252,7 +253,7 @@ const PERIODS = [
  * vendió, se devolvió y se ajustó en el período (suma el servidor sobre todo
  * el rango, no sobre la página visible).
  */
-function ProductHistoryHeader({ product, from, to }) {
+function ProductHistoryHeader({ product, from, to, onShowDetail }) {
   const t = useT()
   const range = rangeLabel(t, from, to)
   const { data: totals } = useProductTotals(product.id, {
@@ -278,12 +279,21 @@ function ProductHistoryHeader({ product, from, to }) {
             {product.name} {product.sku && <span className="ml-1 font-mono text-xs font-normal text-gray-500">{product.sku}</span>}
           </h3>
         </div>
-        {product.currentStock != null && (
-          <p className="text-sm text-gray-500">
-            {t('Stock actual:')} <span className="text-base font-bold text-gray-900">{fmtQty(product.currentStock)}</span>
-            {product.unit && <span className="ml-1 text-xs text-gray-500">{product.unit}</span>}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {product.currentStock != null && (
+            <p className="text-sm text-gray-500">
+              {t('Stock actual:')} <span className="text-base font-bold text-gray-900">{fmtQty(product.currentStock)}</span>
+              {product.unit && <span className="ml-1 text-xs text-gray-500">{product.unit}</span>}
+            </p>
+          )}
+          {/* La ficha se abre encima, solo para mirar: al cerrarla sigue el filtro puesto */}
+          {onShowDetail && (
+            <button type="button" onClick={onShowDetail}
+              className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">
+              <Eye size={15} /> {t('Ver ficha')}
+            </button>
+          )}
+        </div>
       </div>
       <div className={`mt-3 grid grid-cols-2 gap-2 ${cells.length > 4 ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
         {cells.map((c) => (
@@ -314,6 +324,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
   const [to, setTo]                   = useState('')
   const [page, setPage]               = useState(0)
   const [detailRow, setDetailRow]     = useState(null)
+  const [showProductDetail, setShowProductDetail] = useState(false)
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(0) }, [typeFilter, supplierId, from, to, productId])
@@ -322,7 +333,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
   const { data: fetchedProduct } = useQuery({
     queryKey: ['products', 'by-id', productId],
     queryFn: () => productsApi.getById(productId).then((r) => r.data.data),
-    enabled: !!productId && !hint,
+    enabled: !!productId,
     retry: false,
   })
 
@@ -362,7 +373,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
   // Un producto oculto no responde a /products/{id}: su nombre sale de sus movimientos.
   const firstRow = productId ? movements.find((m) => m.productId === productId) : null
   const product = !productId ? null
-    : hint ?? fetchedProduct
+    : fetchedProduct ?? hint
       ?? { id: productId, name: firstRow?.productName ?? '…', sku: firstRow?.productSku }
 
   const activePeriod = PERIODS.find((p) => {
@@ -425,7 +436,13 @@ export default function MovementsTab({ productId = null, productHint = null, onP
         </div>
       </div>
 
-      {product && <ProductHistoryHeader product={product} from={from} to={to} />}
+      {product && (
+        <ProductHistoryHeader product={product} from={from} to={to}
+          onShowDetail={fetchedProduct ? () => setShowProductDetail(true) : null} />
+      )}
+      {showProductDetail && fetchedProduct && (
+        <ProductDetailModal product={fetchedProduct} hideHistoryLink onClose={() => setShowProductDetail(false)} />
+      )}
 
       {/* Guía fija (pedido de Frank): la feature no es banal, que se descubra sola */}
       {!isSalesFilter && !productId && (
