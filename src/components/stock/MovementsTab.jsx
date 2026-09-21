@@ -22,16 +22,17 @@ const TYPE_CONFIG = {
   SALE:           { label: 'Venta',      cls: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' },
   ADJUSTMENT:     { label: 'Ajuste',     cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' },
   RETURN:         { label: 'Devolución', cls: 'bg-purple-50 text-purple-700 ring-1 ring-purple-100' },
+  SUPPLIER_RETURN: { label: 'Devuelto a proveedor', cls: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100' },
 }
 
 function QuantityCell({ type, quantity, stockAfter }) {
   const t = useT()
   const isPositive = type === 'PURCHASE_ENTRY' || type === 'RETURN' || (type === 'ADJUSTMENT' && quantity > 0)
-  const isNegative = type === 'SALE'           || (type === 'ADJUSTMENT' && quantity < 0)
+  const isNegative = type === 'SALE' || type === 'SUPPLIER_RETURN' || (type === 'ADJUSTMENT' && quantity < 0)
   const cls = isPositive ? 'font-bold text-emerald-600'
             : isNegative ? 'font-bold text-red-500'
             : 'font-medium text-gray-700'
-  const sign = isPositive ? '+' : type === 'SALE' ? '-' : ''
+  const sign = isPositive ? '+' : (type === 'SALE' || type === 'SUPPLIER_RETURN') ? '-' : ''
   return (
     <span className={`whitespace-nowrap ${cls}`}>
       {sign}{Math.abs(quantity)}
@@ -264,6 +265,8 @@ function ProductHistoryHeader({ product, from, to }) {
     { label: 'Entró',      value: `+${fmtQty(qty('PURCHASE_ENTRY'))}`, cls: 'text-emerald-600' },
     { label: 'Se vendió',  value: `-${fmtQty(qty('SALE'))}`,           cls: 'text-red-500' },
     { label: 'Devuelto',   value: `+${fmtQty(qty('RETURN'))}`,         cls: 'text-purple-600' },
+    ...(qty('SUPPLIER_RETURN') > 0
+      ? [{ label: 'A proveedor', value: `-${fmtQty(qty('SUPPLIER_RETURN'))}`, cls: 'text-rose-600' }] : []),
     { label: 'Ajustes',    value: `${adj > 0 ? '+' : ''}${fmtQty(adj)}`, cls: 'text-amber-600' },
   ]
   return (
@@ -382,6 +385,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           <option value="SALE">{t('Ventas')}</option>
           <option value="ADJUSTMENT">{t('Ajustes')}</option>
           <option value="RETURN">{t('Devoluciones')}</option>
+          <option value="SUPPLIER_RETURN">{t('Devuelto a proveedor')}</option>
         </select>
         <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} min-w-48`}>
           <option value="">{t('Todos los proveedores')}</option>

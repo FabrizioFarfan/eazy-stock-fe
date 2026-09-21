@@ -8,4 +8,6 @@ export const receiptsApi = {
   updateReference: (id, referenceDocument) => api.patch(`/receipts/${id}/reference`, { referenceDocument }),
   annulPreview:    (id)                  => api.get(`/receipts/${id}/annul-preview`),
   annul:           (id)                  => api.delete(`/receipts/${id}`),
+  // Devolver al proveedor parte de lo recibido. body: { items: [{ productId, quantity }], notes }
+  returnItems:     (id, data)            => api.post(`/receipts/${id}/returns`, data),
 }

@@ -44,6 +44,7 @@ function Row({ label, value, mono }) {
 
 function MovementTypeIcon({ type }) {
   if (type === 'SALE') return <TrendingDown size={13} className="text-red-400" />
+  if (type === 'SUPPLIER_RETURN') return <TrendingDown size={13} className="text-rose-400" />
   if (type === 'PURCHASE_ENTRY') return <TrendingUp size={13} className="text-emerald-500" />
   if (type === 'RETURN') return <TrendingUp size={13} className="text-purple-500" />
   return <ArrowUpDown size={13} className="text-blue-400" />
@@ -57,6 +58,8 @@ function MovementTypeBadge({ type }) {
     return <span className="text-xs font-semibold text-emerald-600">{t('Entrada')}</span>
   if (type === 'RETURN')
     return <span className="text-xs font-semibold text-purple-600">{t('Devolución')}</span>
+  if (type === 'SUPPLIER_RETURN')
+    return <span className="text-xs font-semibold text-rose-600">{t('Devuelto a proveedor')}</span>
   return <span className="text-xs font-semibold text-blue-500">{t('Ajuste')}</span>
 }
 
@@ -300,9 +303,9 @@ export default function ProductDetailModal({ product, onClose, onEdit, onShowQr,
                       <p className="text-xs text-gray-400 mt-0.5">{formatDate(m.createdAt)}</p>
                     </div>
                     <span className={`text-sm font-bold shrink-0 ${
-                      m.type === 'SALE' ? 'text-red-500' : 'text-emerald-600'
+                      (m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? 'text-red-500' : 'text-emerald-600'
                     }`}>
-                      {m.type === 'SALE' ? '-' : '+'}{m.quantity}
+                      {(m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? '-' : '+'}{m.quantity}
                     </span>
                   </div>
                 ))}

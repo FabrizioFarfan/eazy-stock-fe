@@ -214,7 +214,7 @@ function SuperAdminDashboard({ name }) {
 
 // ── Owner ─────────────────────────────────────────────────────────────────────
 
-const TYPE_LABEL = { PURCHASE_ENTRY: 'Entrada', SALE: 'Venta', ADJUSTMENT: 'Ajuste', RETURN: 'Devolución' }
+const TYPE_LABEL = { PURCHASE_ENTRY: 'Entrada', SALE: 'Venta', ADJUSTMENT: 'Ajuste', RETURN: 'Devolución', SUPPLIER_RETURN: 'Devuelto a proveedor' }
 const TYPE_CLS   = {
   PURCHASE_ENTRY: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100',
   SALE:           'bg-blue-50 text-blue-700 ring-1 ring-blue-100',

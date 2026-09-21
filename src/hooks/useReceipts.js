@@ -78,6 +78,15 @@ export function useAnnulReceipt() {
   })
 }
 
+/** Devolver al proveedor parte de la recepción: baja stock y, si fue a crédito, la deuda. */
+export function useReturnReceiptItems() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, items, notes }) => receiptsApi.returnItems(id, { items, notes }).then((r) => r.data.data),
+    onSuccess: (_, vars) => invalidateAfterReceiptChange(qc, vars.supplierId),
+  })
+}
+
 /** Corregir el número de factura / guía de una recepción ya registrada. */
 export function useUpdateReceiptReference() {
   const qc = useQueryClient()

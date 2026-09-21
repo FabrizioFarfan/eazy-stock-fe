@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Truck, Loader2, FileText, Pencil, Trash2, AlertTriangle, ArrowRight, Check } from 'lucide-react'
+import { X, Truck, Loader2, FileText, Pencil, Trash2, AlertTriangle, ArrowRight, Check, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -7,6 +7,7 @@ import {
   useAnnulReceiptPreview, useAnnulReceipt,
 } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
+import ReceiptReturnPanel from './ReceiptReturnPanel'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
@@ -28,6 +29,8 @@ function formatDate(str) {
  *    lo que había sumado y baja la deuda con el proveedor si fue a crédito.
  *    Antes muestra el impacto producto por producto y bloquea si algún stock
  *    quedaría negativo.
+ *  - «Devolver productos» (solo OWNER): regresa al proveedor parte de lo recibido;
+ *    baja el stock y, si fue a crédito, la deuda (ReceiptReturnPanel).
  */
 export default function ReceiptDetailModal({ receiptId, onClose }) {
   const t = useT()
@@ -59,6 +62,9 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
     }
   }
 
+  // ── Devolver productos al proveedor ──
+  const [returning, setReturning] = useState(false)
+
   // ── Anular ──
   const [annulling, setAnnulling] = useState(false)
   const [annulError, setAnnulError] = useState(null)
@@ -79,6 +85,12 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
     }
   }
 
+  const hasReturns = (receipt?.returns ?? []).length > 0
+  const returnedByProduct = (receipt?.returns ?? []).reduce((acc, m) => {
+    acc[m.productId] = (acc[m.productId] ?? 0) + Number(m.quantity)
+    return acc
+  }, {})
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -89,7 +101,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
             <h3 className="font-semibold text-gray-900">
-              {annulling ? t('Anular recepción') : t('Detalle de recepción')}
+              {annulling ? t('Anular recepción') : returning ? t('Devolver productos al proveedor') : t('Detalle de recepción')}
             </h3>
             {receipt && (
               <p className="mt-0.5 text-xs text-gray-400">{formatDate(receipt.createdAt)}</p>
@@ -179,6 +191,9 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
               )}
               {annulError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{annulError}</p>}
             </div>
+          ) : returning ? (
+            <ReceiptReturnPanel receipt={receipt}
+              onDone={() => setReturning(false)} onCancel={() => setReturning(false)} />
           ) : (
             /* ── Detalle normal ── */
             <>
@@ -253,7 +268,12 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                         <p className="font-medium text-gray-900">{m.productName}</p>
                         <p className="font-mono text-xs text-gray-400">{m.productSku}</p>
                       </td>
-                      <td className="py-2.5 text-center font-mono text-gray-700">{m.quantity}</td>
+                      <td className="py-2.5 text-center font-mono text-gray-700">
+                        {m.quantity}
+                        {returnedByProduct[m.productId] > 0 && (
+                          <span className="block whitespace-nowrap text-[11px] font-semibold text-purple-600">{t('devuelto −{n}', { n: formatQty(returnedByProduct[m.productId]) })}</span>
+                        )}
+                      </td>
                       <td className="py-2.5 text-right text-gray-600">{formatPrice(m.unitCost)}</td>
                       <td className="py-2.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>
                     </tr>
@@ -261,12 +281,37 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                 </tbody>
               </table>
 
+              {isOwner && (
+                <button type="button" onClick={() => setReturning(true)}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                  <Undo2 size={15} /> {t('Devolver productos al proveedor')}
+                </button>
+              )}
+
+              {(receipt.returns ?? []).length > 0 && (
+                <div className="mt-4 rounded-xl bg-purple-50/60 px-4 py-3 text-sm ring-1 ring-purple-100">
+                  <p className="font-semibold text-purple-900">{t('Devuelto al proveedor')}</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {receipt.returns.map((m) => (
+                      <li key={m.id} className="flex items-baseline justify-between gap-3 text-xs text-purple-900">
+                        <span className="min-w-0">
+                          <span className="font-mono font-semibold">−{formatQty(m.quantity)}</span> {m.productName}
+                          <span className="ml-1 text-purple-500">· {formatDate(m.createdAt)}</span>
+                        </span>
+                        <span className="flex-shrink-0 font-mono font-semibold">−{formatAmount(m.subtotal)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {receipt.transaction && (
                 <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm ring-1 ring-amber-100">
                   <p className="font-semibold text-amber-900">{t('Generó cuenta por pagar')}</p>
                   <p className="mt-0.5 text-xs text-amber-700">
                     {t('Esta recepción sumó')} <span className="font-mono font-semibold">{formatPrice(receipt.transaction.amount)}</span>{' '}
                     {t('a la deuda con el proveedor. Saldo después: {balance}.', { balance: formatPrice(receipt.transaction.balanceAfter) })}
+                    {hasReturns && ' ' + t('Las devoluciones ya le restaron {amount}.', { amount: formatPrice(receipt.returnedAmount) })}
                   </p>
                 </div>
               )}
@@ -274,8 +319,8 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           )}
         </div>
 
-        {receipt && (
-          <div className="flex items-center justify-between gap-3 rounded-b-2xl border-t border-gray-200 bg-gray-50 px-6 py-4">
+        {receipt && !returning && (
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-b-2xl border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
             {annulling ? (
               <>
                 <button type="button" onClick={() => { setAnnulling(false); setAnnulError(null) }}
@@ -293,14 +338,15 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
               <>
                 {isOwner ? (
                   <button type="button" onClick={() => setAnnulling(true)}
-                    className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                    className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                     title={t('Borra la recepción y revierte el stock y la deuda (para una factura cargada dos veces)')}>
                     <Trash2 size={14} /> {t('Anular recepción')}
                   </button>
                 ) : <span />}
-                <div className="flex items-baseline gap-2">
+                <div className="ml-auto flex items-baseline gap-2 whitespace-nowrap">
                   <span className="text-sm font-semibold text-gray-500">{t('Total recepción')}</span>
-                  <span className="text-lg font-bold text-gray-900">{formatPrice(receipt.totalAmount)}</span>
+                  {hasReturns && <span className="text-sm text-gray-400 line-through">{formatPrice(receipt.totalAmount)}</span>}
+                  <span className="text-lg font-bold text-gray-900">{formatPrice(hasReturns ? receipt.netAmount : receipt.totalAmount)}</span>
                 </div>
               </>
             )}

@@ -198,7 +198,14 @@ export default function ReceiptsTab() {
                         {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-right font-bold text-gray-900">{formatPrice(r.totalAmount)}</td>
+                    <td className="px-4 py-3.5 text-right font-bold text-gray-900">
+                      {formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}
+                      {r.returns?.length > 0 && (
+                        <span className="block text-[11px] font-semibold text-purple-600" title={t('Se devolvieron productos de esta recepción al proveedor')}>
+                          {t('con devolución')} −{formatPrice(r.returnedAmount)}
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}

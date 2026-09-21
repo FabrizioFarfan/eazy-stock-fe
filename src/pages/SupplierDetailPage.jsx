@@ -28,6 +28,7 @@ const TYPE_CONFIG = {
   DEBT_ADD:   { label: 'Cargo',  cls: 'bg-red-50 text-red-700 ring-red-100',         icon: TrendingUp,   sign: '+' },
   PAYMENT:    { label: 'Pago',   cls: 'bg-emerald-50 text-emerald-700 ring-emerald-100', icon: TrendingDown, sign: '−' },
   ADJUSTMENT: { label: 'Ajuste', cls: 'bg-amber-50 text-amber-700 ring-amber-100',   icon: Sliders,      sign: '±' },
+  RETURN:     { label: 'Devolución de mercadería', cls: 'bg-purple-50 text-purple-700 ring-purple-100', icon: TrendingDown, sign: '−' },
 }
 
 function StatCard({ label, value, tone = 'default' }) {
@@ -161,7 +162,7 @@ export default function SupplierDetailPage() {
             {txns.map((tx) => {
               const cfg = TYPE_CONFIG[tx.type] ?? TYPE_CONFIG.ADJUSTMENT
               const Icon = cfg.icon
-              const isDecrease = tx.type === 'PAYMENT'
+              const isDecrease = tx.type === 'PAYMENT' || tx.type === 'RETURN'
                 || (tx.type === 'ADJUSTMENT' && tx.adjustmentDirection === 'DECREASE')
               const sign = isDecrease ? '−' : '+'
               return (
