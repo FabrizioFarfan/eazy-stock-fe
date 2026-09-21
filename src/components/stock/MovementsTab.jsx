@@ -471,9 +471,9 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                     return (
                       <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/70 transition-colors ${isFetching ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-3.5 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
-                        <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900">
+                        <td className="max-w-[180px] truncate px-4 py-3.5 font-semibold text-gray-900" title={m.productName}>
                           {productId ? m.productName : (
-                            <button type="button" title={t('Ver todo el historial de este producto')}
+                            <button type="button" title={`${m.productName}\n${t('Click para ver todo el historial de este producto')}`}
                               onClick={() => onProductChange({ id: m.productId, name: m.productName, sku: m.productSku })}
                               className="max-w-full truncate text-left hover:text-blue-600 hover:underline">
                               {m.productName}

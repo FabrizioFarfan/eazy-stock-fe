@@ -3,6 +3,11 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    // ── Nombre completo al pasar el mouse + columna Atributos (pedido de William)
+    'Click para ver detalles y opciones del producto': 'Click to see product details and options',
+    'Click para ver el detalle del producto': 'Click to see the product detail',
+    'Click para ver todo el historial de este producto': 'Click to see this product\'s full history',
+    '¿Tienes el mismo producto en varias medidas (por ejemplo una armella de 1/4", 1/2" y 1")? No metas la medida en el nombre: ponla como atributo al editar el producto (Medida → 1/2"). El nombre queda corto y la columna "Atributos" te muestra de un vistazo cuál es cuál. Y si un nombre se corta, pasa el mouse por la fila para leerlo entero.': 'Do you have the same product in several sizes (for example an eye bolt in 1/4", 1/2" and 1")? Don\'t put the size in the name: add it as an attribute when editing the product (Size → 1/2"). The name stays short and the "Attributes" column shows at a glance which is which. And if a name gets cut off, hover the row to read it in full.',
     'Este es el catálogo: todo lo que se vende vive acá, con su precio de venta y stock.': 'This is the catalog: everything on sale lives here, with its sale price and stock.',
     // ── 14-sep: borrar conservando el historial + papelera (pedido de William) ──
     '"Borrados"': '"Deleted"',
@@ -664,6 +669,11 @@ export default {
   },
 
   it: {
+    // ── Nombre completo al pasar el mouse + columna Atributos (pedido de William)
+    'Click para ver detalles y opciones del producto': 'Clicca per vedere dettagli e opzioni del prodotto',
+    'Click para ver el detalle del producto': 'Clicca per vedere il dettaglio del prodotto',
+    'Click para ver todo el historial de este producto': 'Clicca per vedere tutto lo storico di questo prodotto',
+    '¿Tienes el mismo producto en varias medidas (por ejemplo una armella de 1/4", 1/2" y 1")? No metas la medida en el nombre: ponla como atributo al editar el producto (Medida → 1/2"). El nombre queda corto y la columna "Atributos" te muestra de un vistazo cuál es cuál. Y si un nombre se corta, pasa el mouse por la fila para leerlo entero.': 'Hai lo stesso prodotto in più misure (ad esempio un golfare da 1/4", 1/2" e 1")? Non mettere la misura nel nome: inseriscila come attributo quando modifichi il prodotto (Misura → 1/2"). Il nome resta corto e la colonna "Attributi" ti mostra a colpo d\'occhio qual è quale. E se un nome viene tagliato, passa il mouse sulla riga per leggerlo intero.',
     'Este es el catálogo: todo lo que se vende vive acá, con su precio de venta y stock.': 'Questo è il catalogo: tutto ciò che si vende vive qui, con prezzo di vendita e stock.',
     // ── 14-sep: borrar conservando el historial + papelera (pedido de William) ──
     '"Borrados"': '"Eliminati"',

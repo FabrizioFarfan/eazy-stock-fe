@@ -15,6 +15,7 @@ import { useCategories } from '../../hooks/useCategories'
 import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import UnitBadge from '../../components/common/UnitBadge'
+import AttributeChips from '../products/AttributeChips'
 import { useT } from '../../i18n'
 
 const PAGE_SIZE = 20
@@ -290,17 +291,18 @@ export default function InventoryTab() {
                     <tr
                       key={p.id}
                       onClick={() => setDetail(p)}
-                      title={t('Ver detalle del producto')}
+                      title={`${p.name}${p.presentation ? ` · ${p.presentation}` : ''}\n${t('Click para ver el detalle del producto')}`}
                       className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/30 ${isFetching ? 'opacity-60' : ''}`}
                     >
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{p.sku}</td>
-                      <td className="max-w-[240px] px-4 py-3.5">
+                      <td className="min-w-[240px] max-w-[320px] px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <ProductThumb product={p} size={34} />
                           <div className="min-w-0">
-                            <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                            <p className="line-clamp-2 break-words font-semibold leading-snug text-gray-900">{p.name}</p>
                             <p className="mt-0.5 flex items-center gap-1.5">
                               <UnitBadge unit={p.unit} />
+                              <AttributeChips attributes={p.attributes} empty={null} />
                               {p.presentation && <span className="truncate text-xs text-gray-400">{p.presentation}</span>}
                               {p.locationName && (
                                 <span className="inline-flex items-center gap-0.5 truncate text-[11px] font-medium text-amber-700"><MapPin size={10} /> {p.locationName}</span>

@@ -21,6 +21,7 @@ import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import UnitBadge from '../components/common/UnitBadge'
+import AttributeChips from '../components/products/AttributeChips'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -46,7 +47,7 @@ const DEFAULT_SORT = { key: 'name', dir: 'asc' }
 function SkeletonRow() {
   return (
     <tr>
-      {Array.from({ length: 13 }).map((_, i) => (
+      {Array.from({ length: 14 }).map((_, i) => (
         <td key={i} className="px-5 py-3.5">
           <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
         </td>
@@ -324,6 +325,7 @@ export default function ProductsPage() {
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">📦 {t('Presentación y unidad de venta')}</p>
+              <p className="mt-1">{t('¿Tienes el mismo producto en varias medidas (por ejemplo una armella de 1/4", 1/2" y 1")? No metas la medida en el nombre: ponla como atributo al editar el producto (Medida → 1/2"). El nombre queda corto y la columna "Atributos" te muestra de un vistazo cuál es cuál. Y si un nombre se corta, pasa el mouse por la fila para leerlo entero.')}</p>
               <p className="mt-1">{t('La unidad (unidad, metro, kilo, litro, paquete, gramo…) es cómo lo vendes y se ve como etiqueta en la tabla; puedes filtrar por ella desde la columna "Unidad". La presentación ("Saco de 25 kg", "Caja de 100") es solo informativa y no afecta cómo se vende.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -516,6 +518,8 @@ export default function ProductsPage() {
                   value={colFilters.unit} onChange={(v) => setField('unit', v)}
                   options={unitOpts} active={!!colFilters.unit}
                   onClear={() => clearFields('unit')} />
+                {/* Atributos (medida, color, material…): distinguen productos de mismo nombre */}
+                <th className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Atributos')}</th>
                 <ColumnFilter label={t('Categoría')} type="select" align="left"
                   value={colFilters.categoryId} onChange={(v) => setField('categoryId', v)}
                   options={categoryOpts} active={!!colFilters.categoryId}
@@ -575,7 +579,7 @@ export default function ProductsPage() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={13}>
+                  <td colSpan={14}>
                     <div className="flex flex-col items-center gap-4 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         {showHidden
@@ -608,14 +612,14 @@ export default function ProductsPage() {
                 products.map((p) => (
                   <tr key={p.id}
                     onClick={() => setDetailModal(p)}
-                    title={t('Ver detalles y opciones del producto')}
+                    title={`${p.name}${p.presentation ? ` · ${p.presentation}` : ''}\n${t('Click para ver detalles y opciones del producto')}`}
                     className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40 ${isFetching ? 'opacity-60' : ''}`}>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
-                    <td className="max-w-[220px] px-5 py-3.5">
+                    <td className="min-w-[260px] max-w-[320px] px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <ProductThumb product={p} size={34} />
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-gray-900">{p.name}</p>
+                          <p className="line-clamp-2 break-words font-semibold leading-snug text-gray-900">{p.name}</p>
                           {p.presentation && (
                             <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
                           )}
@@ -623,6 +627,7 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
+                    <td className="min-w-[170px] max-w-[260px] px-5 py-3.5"><AttributeChips attributes={p.attributes} /></td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
                     <td className="px-5 py-3.5 text-xs text-gray-500">{p.locationName || '—'}</td>
