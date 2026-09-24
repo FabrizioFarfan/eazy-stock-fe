@@ -65,7 +65,7 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <LandingStyles />
-      <Navbar home={false} />
+      <Navbar />
 
       {/* Cabecera oscura con las tarjetas */}
       <section className="relative overflow-hidden bg-[#0a0e1a] pb-24 pt-28 sm:pt-36">
@@ -153,7 +153,7 @@ export default function PlansPage() {
       </section>
 
       <CtaBanner />
-      <Footer home={false} />
+      <Footer />
     </div>
   )
 }

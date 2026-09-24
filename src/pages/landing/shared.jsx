@@ -144,6 +144,7 @@ export function LandingStyles() {
       .lp-scanline { animation: lp-scan 2.6s ease-in-out infinite; }
       .lp-blink { animation: lp-blink 1.1s steps(1) infinite; }
       .lp-ring { animation: lp-ring 1.8s ease-out infinite; }
+      .lp-fade { animation: lp-pop .35s cubic-bezier(.22,1,.36,1); }
 
       @media (prefers-reduced-motion: no-preference) {
         .lp-floaty      { animation: lp-floaty 5s ease-in-out infinite; }

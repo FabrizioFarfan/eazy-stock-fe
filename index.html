@@ -90,14 +90,18 @@
     </script>
 
     <!-- Anti-FOUC: apply dark class before first paint. Y la landing prerenderizada
-         se esconde de entrada si hay sesión o si la URL no es la portada: React la
+         se esconde de entrada si la URL no es una página pública (o es la portada con sesión): React la
          reemplaza al montar y el usuario logueado va directo a su panel. -->
     <script>
       (function () {
         var t = localStorage.getItem('eazystock_theme')
         var hasSession = false
         try { hasSession = !!localStorage.getItem('eazystock_token') } catch (e) { /* storage bloqueado */ }
-        var isLanding = location.pathname === '/' && !hasSession
+        // Web pública (multipágina desde el 25-sep-2026): la portada solo sin sesión
+        // (con sesión redirige al panel); el resto de páginas públicas, siempre.
+        var path = location.pathname.replace(/\/+$/, '') || '/'
+        var PUBLIC = ['/funciones', '/para-quien', '/planes', '/preguntas']
+        var isLanding = (path === '/' && !hasSession) || PUBLIC.indexOf(path) !== -1
         // la landing tiene su propio diseño oscuro: el modo oscuro de la app no se le aplica
         if (!isLanding && (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches))) {
           document.documentElement.classList.add('dark')

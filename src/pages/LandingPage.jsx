@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
@@ -15,8 +15,9 @@ import { Reveal, Counter, GridPattern, GlowOrbs, SectionHead, LandingStyles } fr
 import {
   AppMockup, CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
 } from './landing/mockups'
-import { PricingSection } from './landing/Pricing'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
+import { PUBLIC_PAGES, usePageSeo } from './landing/site'
+import { PLANS } from './landing/plans'
 
 const CTA = '/login'
 
@@ -24,20 +25,11 @@ const CTA = '/login'
 //  Navbar
 // ═══════════════════════════════════════════════════════════════════════════
 
-const NAV = [
-  { href: '#beneficios', label: 'Beneficios' },
-  { href: '#producto',   label: 'Producto' },
-  { href: '#funciones',  label: 'Funciones' },
-  { href: '#fiado',      label: 'Fiado' },
-  { href: '#para-quien', label: 'Para quién' },
-  { href: '#precios',    label: 'Precios' },
-  { href: '#faq',        label: 'FAQ' },
-]
+const NAV = PUBLIC_PAGES
 
 /** `home=false` (p. ej. en /planes): los anclas vuelven a la portada. */
-export function Navbar({ home = true }) {
+export function Navbar() {
   const t = useT()
-  const href = (h) => (home ? h : `/${h}`)
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
@@ -58,12 +50,18 @@ export function Navbar({ home = true }) {
 
         <nav className="hidden items-center gap-7 lg:flex">
           {NAV.map((n) => (
-            <a key={n.href} href={href(n.href)} className="text-sm text-slate-400 transition-colors hover:text-white">{t(n.label)}</a>
+            <NavLink key={n.to} to={n.to}
+              className={({ isActive }) => `text-sm transition-colors hover:text-white ${isActive ? 'font-semibold text-white' : 'text-slate-400'}`}>
+              {t(n.label)}
+            </NavLink>
           ))}
         </nav>
 
         <div className="flex items-center gap-2">
           <LangSwitcher compact className="!border-white/15 !bg-white/5 !text-slate-200 [&_select]:text-slate-200 [&_option]:text-gray-900" />
+          <Link to={CTA} className="hidden px-2 text-sm font-semibold text-slate-300 transition-colors hover:text-white lg:block">
+            {t('Iniciar sesión')}
+          </Link>
           <Link
             to={CTA}
             className="group hidden items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a0e1a] transition-all hover:bg-blue-50 sm:flex"
@@ -85,8 +83,12 @@ export function Navbar({ home = true }) {
       {open && (
         <div className="border-t border-white/10 bg-[#0a0e1a] px-5 pb-5 pt-3 lg:hidden">
           <nav className="flex flex-col">
+            <Link to="/" onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t('Inicio')}</Link>
             {NAV.map((n) => (
-              <a key={n.href} href={href(n.href)} onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t(n.label)}</a>
+              <NavLink key={n.to} to={n.to} onClick={() => setOpen(false)}
+                className={({ isActive }) => `border-b border-white/5 py-3 text-sm font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                {t(n.label)}
+              </NavLink>
             ))}
           </nav>
           <div className="mt-4 flex gap-2">
@@ -107,7 +109,7 @@ export function Navbar({ home = true }) {
 //  Hero
 // ═══════════════════════════════════════════════════════════════════════════
 
-function Hero() {
+export function Hero() {
   const t = useT()
   return (
     <section className="relative overflow-hidden bg-[#0a0e1a] pb-20 pt-28 sm:pb-28 sm:pt-36">
@@ -117,11 +119,11 @@ function Hero() {
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-10">
           <div className="flex-1 text-center lg:text-left">
-            <a href="#producto" className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-200 backdrop-blur transition-colors hover:bg-amber-300/20">
+            <Link to="/funciones" className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-200 backdrop-blur transition-colors hover:bg-amber-300/20">
               <Sparkles size={12} />
-              {t('Nuevo: vencimientos, cierre de caja por medio de pago y pedidos al proveedor en PDF')}
+              {t('Nuevo: devoluciones al proveedor, historial de cada producto y precios que se corrigen al vender')}
               <ArrowRight size={12} />
-            </a>
+            </Link>
 
             <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.6rem]">
               {t('Tu negocio, ordenado.')}<br />
@@ -142,12 +144,12 @@ function Hero() {
                 {t('Probar gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <a
-                href="#producto"
+              <Link
+                to="/funciones"
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/10 sm:w-auto"
               >
                 {t('Ver cómo funciona')}
-              </a>
+              </Link>
             </div>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 lg:justify-start">
@@ -197,7 +199,7 @@ const MARQUEE = [
   [Languages, 'ES · EN · IT'],
 ]
 
-function Marquee() {
+export function Marquee() {
   const t = useT()
   const items = [...MARQUEE, ...MARQUEE]
   return (
@@ -218,7 +220,7 @@ function Marquee() {
 //  Stats con contadores
 // ═══════════════════════════════════════════════════════════════════════════
 
-function Stats() {
+export function Stats() {
   const t = useT()
   const stats = [
     { to: 7,  label: 'reportes listos',   sub: 'Ventas, día, producto, proveedor, stock bajo, por vencer, resurtido' },
@@ -289,10 +291,11 @@ const BENEFITS = [
   },
 ]
 
-function Benefits() {
+export function Benefits({ teaser = false }) {
   const t = useT()
+  const list = teaser ? BENEFITS.slice(0, 3) : BENEFITS
   return (
-    <section id="beneficios" className="bg-white pb-24 pt-10">
+    <section id="beneficios" className={`scroll-mt-28 bg-white ${teaser ? 'py-24' : 'pb-24 pt-10'}`}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -302,7 +305,7 @@ function Benefits() {
           />
         </Reveal>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {BENEFITS.map(({ icon: Icon, color, chip, title, before, after }, i) => (
+          {list.map(({ icon: Icon, color, chip, title, before, after }, i) => (
             <Reveal key={title} delay={(i % 3) * 90}>
               <article className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gray-200/60">
                 <div className="flex items-start justify-between gap-3">
@@ -330,6 +333,13 @@ function Benefits() {
             </Reveal>
           ))}
         </div>
+        {teaser ? (
+          <Reveal className="mt-10 text-center">
+            <Link to="/para-quien" className="group inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-900 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
+              {t('Ver los 6 beneficios y para qué negocios sirve')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </Reveal>
+        ) : (
         <Reveal>
           <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
             <p className="text-base font-semibold text-white sm:text-lg">
@@ -341,6 +351,7 @@ function Benefits() {
             </Link>
           </div>
         </Reveal>
+        )}
       </div>
     </section>
   )
@@ -359,7 +370,7 @@ function Showcase({ id, kicker, kickerIcon: KIcon, tone, title, desc, bullets, m
     violet:  { pill: 'border-violet-200 bg-violet-50 text-violet-700', icon: 'bg-violet-100 text-violet-700',   check: 'text-violet-500' },
   }[tone]
   return (
-    <div id={id} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+    <div id={id} className="scroll-mt-32 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <Reveal className={flip ? 'lg:order-2' : ''}>
         <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${tones.pill}`}>
           <KIcon size={12} /> {t(kicker)}
@@ -385,10 +396,10 @@ function Showcase({ id, kicker, kickerIcon: KIcon, tone, title, desc, bullets, m
   )
 }
 
-function ProductShowcases() {
+export function ProductShowcases() {
   const t = useT()
   return (
-    <section id="producto" className="bg-gray-50 py-24">
+    <section id="producto" className="scroll-mt-28 bg-gray-50 py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -400,6 +411,7 @@ function ProductShowcases() {
 
         <div className="space-y-24">
           <Showcase
+            id="vender"
             kicker="Nueva venta"
             kickerIcon={ScanLine}
             tone="emerald"
@@ -416,6 +428,7 @@ function ProductShowcases() {
           />
 
           <Showcase
+            id="caja"
             kicker="Cierre de caja"
             kickerIcon={Wallet}
             tone="blue"
@@ -432,6 +445,7 @@ function ProductShowcases() {
           />
 
           <Showcase
+            id="pedidos"
             kicker="Reportes › Stock bajo"
             kickerIcon={Truck}
             tone="amber"
@@ -456,7 +470,7 @@ function ProductShowcases() {
 //  Vencimientos + filtros + códigos (bloque bento sobre el catálogo)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function CatalogBento() {
+export function CatalogBento() {
   const t = useT()
   const cards = [
     {
@@ -535,9 +549,9 @@ function CatalogBento() {
 //  Fiado
 // ═══════════════════════════════════════════════════════════════════════════
 
-function FiadoSection() {
+export function FiadoSection() {
   return (
-    <section id="fiado" className="bg-gradient-to-b from-gray-50 to-white py-24">
+    <section id="fiado" className="scroll-mt-28 bg-gradient-to-b from-gray-50 to-white py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Showcase
           kicker="Fiado y cuentas por cobrar"
@@ -564,9 +578,9 @@ function FiadoSection() {
 //  Import
 // ═══════════════════════════════════════════════════════════════════════════
 
-function ImportSection() {
+export function ImportSection() {
   return (
-    <section id="importar" className="bg-white py-24">
+    <section id="importar" className="scroll-mt-28 bg-white py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Showcase
           kicker="Importar y exportar"
@@ -649,10 +663,14 @@ const FEATURE_GROUPS = [
   },
 ]
 
-function Features() {
+export function Features() {
   const t = useT()
+  // Pestañas por área: antes las 4 listas iban una debajo de otra (Frank,
+  // 25-sep: «todo amontonado»). Se ve un área a la vez.
+  const [tab, setTab] = useState(0)
+  const group = FEATURE_GROUPS[tab]
   return (
-    <section id="funciones" className="bg-gray-50 py-24">
+    <section id="funciones" className="scroll-mt-28 bg-gray-50 py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -662,30 +680,32 @@ function Features() {
           />
         </Reveal>
 
-        <div className="space-y-14">
-          {FEATURE_GROUPS.map((group) => (
-            <Reveal key={group.title}>
-              <div className="mb-5 flex items-center gap-3">
-                <div className={`h-1.5 w-10 rounded-full bg-gradient-to-r ${group.color}`} />
-                <h3 className="text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl">{t(group.title)}</h3>
+        <div role="tablist" className="mx-auto mb-10 flex max-w-2xl flex-wrap justify-center gap-2">
+          {FEATURE_GROUPS.map((g, i) => (
+            <button key={g.title} type="button" role="tab" aria-selected={tab === i} onClick={() => setTab(i)}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-all ${
+                tab === i ? 'bg-[#0a0e1a] text-white shadow-lg' : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900'}`}>
+              <span className={`h-2 w-2 rounded-full bg-gradient-to-r ${g.color}`} />
+              {t(g.title)}
+              <span className={`text-xs font-semibold ${tab === i ? 'text-slate-400' : 'text-gray-400'}`}>{g.items.length}</span>
+            </button>
+          ))}
+        </div>
+
+        <div key={group.title} className="lp-fade grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {group.items.map(([Icon, title, desc]) => (
+            <div key={title} className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50">
+              <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${group.color} opacity-0 blur-2xl transition-opacity group-hover:opacity-20`} />
+              <div className="relative flex gap-4">
+                <div className={`inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${group.color} text-white shadow-md`}>
+                  <Icon size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900">{t(title)}</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(desc)}</p>
+                </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {group.items.map(([Icon, title, desc]) => (
-                  <div key={title} className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50">
-                    <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${group.color} opacity-0 blur-2xl transition-opacity group-hover:opacity-20`} />
-                    <div className="relative flex gap-4">
-                      <div className={`inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${group.color} text-white shadow-md`}>
-                        <Icon size={18} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900">{t(title)}</h4>
-                        <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(desc)}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
+            </div>
           ))}
         </div>
       </div>
@@ -706,10 +726,10 @@ const INDUSTRIES = [
   [Coffee, 'Cualquier tienda de barrio', 'Si vendes y anotas en cuaderno, esto es para ti. Se aprende en una tarde.', 'from-violet-500 to-fuchsia-600'],
 ]
 
-function Industries() {
+export function Industries() {
   const t = useT()
   return (
-    <section id="para-quien" className="relative overflow-hidden bg-[#0a0e1a] py-24">
+    <section id="para-quien" className="scroll-mt-28 relative overflow-hidden bg-[#0a0e1a] py-24">
       <GridPattern />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
@@ -747,7 +767,7 @@ function Industries() {
 //  Cómo funciona
 // ═══════════════════════════════════════════════════════════════════════════
 
-function HowItWorks() {
+export function HowItWorks() {
   const t = useT()
   const steps = [
     [Users,           'Crea tu negocio',       'Abres tu cuenta, pones el nombre de la tienda e invitas a tu gente con los permisos que tú decidas.'],
@@ -789,7 +809,7 @@ function HowItWorks() {
 //  Testimonio (genérico, sin nombres reales)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function Testimonial() {
+export function Testimonial() {
   const t = useT()
   return (
     <section className="bg-gray-50 py-24">
@@ -837,10 +857,10 @@ const COMING = [
     desc: 'Pregúntale a tu negocio cuánto vendiste, qué reponer o qué se te está venciendo. Como hablar con tu contador, pero al instante.' },
 ]
 
-function ComingSoon() {
+export function ComingSoon() {
   const t = useT()
   return (
-    <section id="roadmap" className="bg-white py-24">
+    <section id="roadmap" className="scroll-mt-28 bg-white py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -902,15 +922,17 @@ function FaqItem({ q, a, open, onToggle }) {
   )
 }
 
-function Faq() {
+export function Faq({ head = true }) {
   const t = useT()
   const [openIdx, setOpenIdx] = useState(0)
   return (
-    <section id="faq" className="bg-gray-50 py-24">
+    <section id="faq" className="scroll-mt-28 bg-gray-50 py-24">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <Reveal>
-          <SectionHead kicker={t('Preguntas frecuentes')} title={t('Lo que todos preguntan')} />
-        </Reveal>
+        {head && (
+          <Reveal>
+            <SectionHead kicker={t('Preguntas frecuentes')} title={t('Lo que todos preguntan')} />
+          </Reveal>
+        )}
         <Reveal delay={100}>
           <div className="space-y-3">
             {FAQS.map(([q, a], i) => (
@@ -1007,7 +1029,7 @@ export function CtaBanner() {
   )
 }
 
-export function Footer({ home = true }) {
+export function Footer() {
   const t = useT()
   return (
     <footer className="bg-[#0a0e1a] py-16">
@@ -1026,8 +1048,9 @@ export function Footer({ home = true }) {
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Producto')}</p>
             <ul className="space-y-2 text-sm">
+              <li><Link to="/" className="text-slate-500 transition-colors hover:text-white">{t('Inicio')}</Link></li>
               {NAV.map((n) => (
-                <li key={n.href}><a href={home ? n.href : `/${n.href}`} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</a></li>
+                <li key={n.to}><Link to={n.to} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</Link></li>
               ))}
             </ul>
           </div>
@@ -1067,8 +1090,98 @@ export function Footer({ home = true }) {
 //  Página
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Inicio: cuatro tarjetas que llevan a cada parte de Funciones (en vez de las
+// maquetas largas, que ahora viven en /funciones).
+const HIGHLIGHTS = [
+  { icon: ScanLine,   color: 'from-emerald-500 to-teal-600',  to: '/funciones#vender',  title: 'Vende en segundos',       desc: 'Escaneas con la cámara del celular, cobras por cualquier medio y el stock se descuenta solo.' },
+  { icon: Wallet,     color: 'from-blue-500 to-indigo-600',   to: '/funciones#caja',    title: 'Cierra la caja sin dudas', desc: 'Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.' },
+  { icon: CreditCard, color: 'from-violet-500 to-fuchsia-600', to: '/funciones#fiado',  title: 'Controla el fiado',       desc: 'Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.' },
+  { icon: Truck,      color: 'from-amber-500 to-orange-600',  to: '/funciones#pedidos', title: 'Nunca te quedes sin stock', desc: 'Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.' },
+]
+
+function Highlights() {
+  const t = useT()
+  return (
+    <section className="bg-gray-50 py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <SectionHead kicker={t('Un día con Eazy Stock')} title={t('De la venta al cierre de caja, sin hojas sueltas')} />
+        </Reveal>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {HIGHLIGHTS.map(({ icon: Icon, color, to, title, desc }, i) => (
+            <Reveal key={to} delay={i * 80}>
+              <Link to={to} className="group flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50">
+                <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-md`}>
+                  <Icon size={22} />
+                </div>
+                <h3 className="text-lg font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-500">{t(desc)}</p>
+                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
+                  {t('Ver cómo funciona')} <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className="mt-10 text-center">
+          <Link to="/funciones" className="group inline-flex items-center gap-2 rounded-xl bg-[#0a0e1a] px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02]">
+            {t('Ver todas las funciones')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+// Inicio: los precios en una línea; el detalle vive en /planes.
+function PricingTeaser() {
+  const t = useT()
+  return (
+    <section className="bg-white py-20">
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl bg-[#0a0e1a] px-6 py-10 sm:px-10">
+            <GridPattern />
+            <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{t('Gratis durante el lanzamiento')}</h2>
+                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Quien entra ahora conserva el precio de lanzamiento.')}</p>
+              </div>
+              <div className="grid flex-shrink-0 grid-cols-3 gap-2 sm:gap-3">
+                {PLANS.map((p) => (
+                  <div key={p.key} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-center">
+                    <p className="text-xs font-bold text-slate-300">{p.name}</p>
+                    <p className="mt-0.5 whitespace-nowrap text-lg font-extrabold text-white sm:text-xl">S/ {p.monthly}<span className="text-xs font-medium text-slate-400">{t('/mes')}</span></p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative mt-8 flex justify-center lg:justify-start">
+              <Link to="/planes" className="group inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-gray-100">
+                {t('Ver planes y precios')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Inicio (/) — corto: qué es y por qué te sirve. Desde el 25-sep-2026 la web
+ * es multipágina (Frank: la landing de una sola página se veía amontonada):
+ * Funciones, Para quién, Planes y Preguntas son páginas propias.
+ */
 export default function LandingPage() {
   useNoAppDarkMode()
+  const t = useT()
+  usePageSeo({
+    title: t('Eazy Stock — Inventario, ventas y fiado para tu negocio'),
+    description: t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo y al cierre sabes cuánto hay en caja. Gratis para empezar.'),
+    path: '/',
+  })
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <LandingStyles />
@@ -1076,18 +1189,11 @@ export default function LandingPage() {
       <Hero />
       <Marquee />
       <Stats />
-      <Benefits />
-      <ProductShowcases />
-      <CatalogBento />
-      <FiadoSection />
-      <ImportSection />
-      <Features />
-      <Industries />
+      <Benefits teaser />
+      <Highlights />
       <HowItWorks />
       <Testimonial />
-      <PricingSection />
-      <ComingSoon />
-      <Faq />
+      <PricingTeaser />
       <CtaBanner />
       <Footer />
     </div>
