@@ -7,7 +7,7 @@ import {
   Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
   Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
   Menu, X, Landmark, Bot, Coffee, Apple,
-  Award, Camera,
+  Award, Camera, History, Undo2, Banknote, EyeOff,
 } from 'lucide-react'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
@@ -25,12 +25,12 @@ const CTA = '/login'
 // ═══════════════════════════════════════════════════════════════════════════
 
 const NAV = [
+  { href: '#beneficios', label: 'Beneficios' },
   { href: '#producto',   label: 'Producto' },
   { href: '#funciones',  label: 'Funciones' },
   { href: '#fiado',      label: 'Fiado' },
   { href: '#para-quien', label: 'Para quién' },
   { href: '#precios',    label: 'Precios' },
-  { href: '#roadmap',    label: 'Lo que viene' },
   { href: '#faq',        label: 'FAQ' },
 ]
 
@@ -240,6 +240,107 @@ function Stats() {
             </Reveal>
           ))}
         </div>
+      </div>
+    </section>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Beneficios concretos — lo que GANA el dueño, con su antes y su ahora
+//  (Frank, 25-sep: «que muestre detalladamente cada beneficio concreto»)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BENEFITS = [
+  {
+    icon: Wallet, color: 'from-emerald-500 to-teal-600', chip: 'Al centavo',
+    title: 'La caja cuadra, todos los días',
+    before: 'Cierras contando billetes y nunca sabes si falta plata o se anotó mal.',
+    after: 'La app te dice cuánto debe haber en el cajón: el fondo para dar vuelto, más el efectivo vendido, menos las devoluciones. Y lo mismo por cada medio de pago.',
+  },
+  {
+    icon: CreditCard, color: 'from-violet-500 to-fuchsia-600', chip: 'WhatsApp en 1 clic',
+    title: 'El fiado se cobra',
+    before: 'El cuaderno se moja, se pierde o nadie recuerda quién debe cuánto.',
+    after: 'Cada cliente tiene su límite, su deuda al día y su estado de cuenta en PDF. El recordatorio de cobro sale por WhatsApp con un clic.',
+  },
+  {
+    icon: AlertTriangle, color: 'from-orange-500 to-red-500', chip: 'Pedido en PDF',
+    title: 'Nunca más «se acabó»',
+    before: 'Te enteras de que no hay stock cuando el cliente ya lo está pidiendo.',
+    after: 'Cada producto tiene su mínimo y avisa en vivo cuando baja. El pedido al proveedor sale en PDF en dos clics, con lo que falta de cada uno.',
+  },
+  {
+    icon: Shield, color: 'from-blue-500 to-indigo-600', chip: 'Cada venta con nombre',
+    title: 'Tu equipo vende, tú controlas',
+    before: 'Dejas la tienda y no sabes quién vendió qué, ni a qué precio.',
+    after: 'Cada venta queda con el nombre del vendedor y la hora. El vendedor no ve tus costos ni toca el stock a mano, y tú decides cada permiso.',
+  },
+  {
+    icon: Tag, color: 'from-amber-500 to-orange-600', chip: 'Hasta 6 decimales',
+    title: 'Precios siempre al día',
+    before: 'Precios viejos o mal redondeados que te comen el margen en silencio.',
+    after: 'Corriges el precio en plena venta y queda para siempre, con aviso. Los precios con céntimos de céntimo nunca se redondean, y vender por debajo del precio queda marcado.',
+  },
+  {
+    icon: BarChart2, color: 'from-cyan-500 to-blue-600', chip: 'Ganancia real',
+    title: 'Sabes qué te deja plata',
+    before: 'Vendes todo el mes y no sabes si ganaste, ni con qué producto.',
+    after: 'Ganancia del mes, productos que más rinden, mejores clientes y vendedores. Y lo que está por vencer, para liquidarlo antes de perderlo.',
+  },
+]
+
+function Benefits() {
+  const t = useT()
+  return (
+    <section id="beneficios" className="bg-white pb-24 pt-10">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <SectionHead
+            kicker={t('Beneficios concretos')}
+            title={t('Lo que cambia en tu negocio desde la primera semana')}
+            sub={t('No es una lista de botones. Es plata que deja de perderse y tiempo que vuelve a tus manos.')}
+          />
+        </Reveal>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {BENEFITS.map(({ icon: Icon, color, chip, title, before, after }, i) => (
+            <Reveal key={title} delay={(i % 3) * 90}>
+              <article className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gray-200/60">
+                <div className="flex items-start justify-between gap-3">
+                  <div className={`inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-md`}>
+                    <Icon size={22} />
+                  </div>
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-600">{t(chip)}</span>
+                </div>
+                <h3 className="mt-5 text-xl font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
+                <div className="mt-4 flex gap-3 rounded-2xl bg-red-50 p-3.5">
+                  <X size={16} className="mt-0.5 flex-shrink-0 text-red-500" />
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-red-600">{t('Antes')}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-gray-600">{t(before)}</p>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex flex-1 gap-3 rounded-2xl bg-emerald-50 p-3.5">
+                  <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-600" />
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">{t('Con Eazy Stock')}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-gray-800">{t(after)}</p>
+                  </div>
+                </div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal>
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
+            <p className="text-base font-semibold text-white sm:text-lg">
+              {t('Menos cuaderno, menos plata perdida, más tiempo para vender.')}
+              <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde. Gratis durante el lanzamiento, sin tarjeta.')}</span>
+            </p>
+            <Link to={CTA} className="group inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-gray-100">
+              {t('Probar gratis')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -502,7 +603,9 @@ const FEATURE_GROUPS = [
       [AlertTriangle,  'Stock mínimo y alertas en vivo',      'Notificación en el acto cuando un producto cae bajo el mínimo.'],
       [Tag,            'Marcas y categorías',                 'Con atributos personalizados por categoría (talla, laboratorio, medida…).'],
       [Camera,         'Foto y ubicación por producto',       'El vendedor ve cómo es y en qué almacén o estante está, sin preguntar a nadie.'],
-      [ClipboardCheck, 'Recepción de mercadería',             'Un solo recibo, varios productos: entra el stock y se anota la deuda.'],
+      [ClipboardCheck, 'Recepción de mercadería',             'Un solo recibo, varios productos: entra el stock y se anota la deuda. La misma factura nunca se registra dos veces.'],
+      [History,        'Historial de cada producto',          'Cuánto entró, se vendió, se devolvió y se ajustó, por período y en qué recepciones llegó.'],
+      [Undo2,          'Devolución al proveedor',             'Devuelves mercadería desde la recepción: baja el stock y, si fue a crédito, baja la deuda.'],
     ],
   },
   {
@@ -515,6 +618,9 @@ const FEATURE_GROUPS = [
       [FileText,   'Cotizaciones en PDF',            'Arma el presupuesto, mándalo por WhatsApp; no toca el stock.'],
       [Receipt,    'Devoluciones',                   'Totales o parciales, con su burbuja en la lista de ventas.'],
       [Award,      'Ranking de vendedores y de clientes', 'Quién vendió cuánto; y quién te compra más, qué lleva y quién no vuelve, con WhatsApp.'],
+      [Tag,        'Precio corregido al vender',     'Cambias el precio de un producto en plena venta y queda para siempre, con aviso y permiso.'],
+      [Banknote,   'Fondo de caja',                  'El sencillo para dar vuelto queda anotado y entra en el cierre del día.'],
+      [EyeOff,     'Costos ocultos al vendedor',     'El vendedor nunca ve el precio de compra ni tu ganancia.'],
     ],
   },
   {
@@ -970,6 +1076,7 @@ export default function LandingPage() {
       <Hero />
       <Marquee />
       <Stats />
+      <Benefits />
       <ProductShowcases />
       <CatalogBento />
       <FiadoSection />
