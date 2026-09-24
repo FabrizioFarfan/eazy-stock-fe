@@ -4,7 +4,7 @@ import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, Al
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
-import { useProductSearch } from '../hooks/useProducts'
+import { useProductSearch, PRODUCTS_KEY } from '../hooks/useProducts'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useCreateSale } from '../hooks/useSales'
 import { useQueryClient } from '@tanstack/react-query'
@@ -39,7 +39,7 @@ function parseNumber(s) {
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
-function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
+function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }) {
   const t = useT()
   const noStock    = product.currentStock === 0
   const isVariable = !!product.priceIsVariable
@@ -51,6 +51,31 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
   const [qty, setQty]           = useState(1)
   const [priceOpen, setPriceOpen] = useState(false)
   const [price, setPrice]       = useState(null) // null = precio de lista
+  // «Cambiar precio de venta» cambia el precio del PRODUCTO para siempre
+  // (William, 25-sep): el precio de una sola venta ya se toca en el carrito.
+  // Sirve para corregir al vuelo los precios que el import dejó viejos o mal
+  // redondeados. Dueño siempre; vendedor solo con el permiso «Editar precios».
+  const [listEditOpen, setListEditOpen] = useState(false)
+  const [newListPrice, setNewListPrice] = useState(null)
+  const [confirmList, setConfirmList]   = useState(false)
+  const [savingList, setSavingList]     = useState(false)
+  const listPrice = Number(product.salePrice ?? 0)
+  const newListValid = newListPrice != null && Number(newListPrice) > 0
+    && Math.abs(Number(newListPrice) - listPrice) > 0.0000005
+
+  const saveListPrice = async () => {
+    setSavingList(true)
+    try {
+      const updated = (await productsApi.updateSalePrice(product.id, Number(newListPrice))).data.data
+      toast.success(t('Precio de venta actualizado: {name} ahora cuesta {price}', { name: product.name, price: formatCurrency(updated.salePrice) }))
+      setConfirmList(false); setListEditOpen(false); setNewListPrice(null)
+      onSalePriceSaved?.(updated)
+    } catch (e) {
+      toast.error(e?.response?.data?.message || t('No se pudo cambiar el precio'))
+    } finally {
+      setSavingList(false)
+    }
+  }
 
   const q = Number(qty)
   const qtyInvalid = !Number.isFinite(q) || q <= 0
@@ -110,15 +135,21 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
           ) : (
             <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
           )}
-          {/* El precio se puede ajustar ANTES de agregar — un click y aparece
-              el input; cerrar vuelve al precio de lista. Cualquier vendedor
-              puede (William, 15-sep): vender bajo el precio se AVISA y queda
-              marcado, nunca se impide. */}
-          {!inCart && !noStock && (
+          {/* Precio variable: se define para ESTA venta antes de agregar.
+              Precio fijo: el botón cambia el precio del producto (ver arriba);
+              el precio de una sola venta se ajusta en el carrito. */}
+          {!inCart && !noStock && isVariable && (
             <button type="button"
               onClick={() => { setPriceOpen((o) => !o); setPrice(null) }}
               className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
-              {priceOpen ? t('dejar precio de lista') : isVariable ? t('Definir precio de venta') : t('Cambiar precio de venta')}
+              {priceOpen ? t('dejar precio de lista') : t('Definir precio de venta')}
+            </button>
+          )}
+          {!isVariable && canEditPrices && (
+            <button type="button" data-testid="change-list-price"
+              onClick={() => { setListEditOpen((o) => !o); setNewListPrice(null) }}
+              className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
+              {listEditOpen ? t('Cancelar') : t('Cambiar precio de venta')}
             </button>
           )}
         </div>
@@ -149,7 +180,72 @@ function ProductCard({ product, inCart, onAdd, canApplyDiscount }) {
         )}
       </div>
 
-      {priceOpen && !inCart && !noStock && (
+      {listEditOpen && !isVariable && (
+        <div className="mt-2.5 border-t border-gray-100 pt-2.5">
+          <div className="mb-2 flex gap-2 rounded-xl bg-amber-50 p-2.5 text-[11px] leading-snug text-amber-800 ring-1 ring-amber-200">
+            <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+            <p>
+              <strong>{t('Cambia el precio del producto para siempre.')}</strong>{' '}
+              {t('Todas las ventas desde ahora saldrán con el precio nuevo. Si solo quieres otro precio en esta venta, agrégalo y cámbialo en el carrito.')}
+            </p>
+          </div>
+          <PriceInput
+            label={t('Nuevo precio de venta')}
+            value={newListPrice ?? listPrice}
+            onChange={setNewListPrice}
+            maxDecimals={6}
+            autoFocus
+          />
+          <div className="mt-2 flex gap-2">
+            <button type="button" onClick={() => { setListEditOpen(false); setNewListPrice(null) }}
+              className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              {t('Cancelar')}
+            </button>
+            <button type="button" disabled={!newListValid} onClick={() => setConfirmList(true)}
+              data-testid="save-list-price"
+              className="flex-1 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+              {t('Guardar precio nuevo')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmList && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-100">
+                <Tag size={18} className="text-orange-600" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-gray-900">{t('¿Cambiar el precio de venta?')}</h3>
+                <p className="mt-1 break-words text-sm font-semibold text-gray-700">{product.name}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-3 rounded-xl bg-gray-50 p-3">
+              <span className="text-base font-semibold text-gray-400 line-through">{formatCurrency(listPrice)}</span>
+              <span className="text-gray-400">→</span>
+              <span className="text-lg font-bold text-gray-900">{formatCurrency(Number(newListPrice))}</span>
+            </div>
+            <p className="mt-3 text-sm text-gray-500">
+              {t('Desde ahora este producto se venderá a {price} en todas las ventas, las tuyas y las de tus vendedores. Las ventas ya hechas no cambian.', { price: formatCurrency(Number(newListPrice)) })}
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button type="button" onClick={saveListPrice} disabled={savingList} data-testid="confirm-list-price"
+                className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+                {savingList && <Loader2 size={14} className="animate-spin" />}
+                {t('Sí, cambiar el precio')}
+              </button>
+              <button type="button" onClick={() => setConfirmList(false)} disabled={savingList}
+                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                {t('Cancelar')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {priceOpen && !inCart && !noStock && isVariable && (
         <div className="mt-2.5 border-t border-gray-100 pt-2.5">
           <PriceInput
             label={isVariable ? t('Precio de venta de esta venta') : t('Nuevo precio de venta')}
@@ -470,6 +566,7 @@ export default function NewSalePage() {
   const t             = useT()
   const { user, can } = useAuth()
   const canApplyDiscount = can('canApplyDiscount')
+  const canEditPrices    = can('canEditPrices')
   const canSellOnCredit  = can('canSellOnCredit')
 
   const createSale    = useCreateSale()
@@ -585,6 +682,18 @@ export default function NewSalePage() {
           : product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
       },
     ])
+  }
+  // Precio del producto cambiado desde su tarjeta: se refresca la búsqueda y,
+  // si ya estaba en el carrito a precio de lista, la línea pasa al precio nuevo
+  // (si el cajero le había puesto otro precio a mano, se respeta el suyo).
+  const onSalePriceSaved = (updated) => {
+    setCart((prev) => prev.map((i) => {
+      if (i.product.id !== updated.id) return i
+      const wasList = Math.abs(parseNumber(i.unitPrice) - Number(i.product.salePrice ?? 0)) <= 0.0000005
+      return { ...i, product: { ...i.product, salePrice: updated.salePrice },
+        unitPrice: wasList ? Number(updated.salePrice) : i.unitPrice }
+    }))
+    qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
   }
   const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.product.id !== id))
   // Cantidad escribible directa (incl. decimales para productos divisibles).
@@ -766,7 +875,7 @@ export default function NewSalePage() {
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">{t('💲 Precio variable y cambio de precio')}</p>
-            <p className="mt-1">{t('Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). Con permiso de modificar precios también puedes cambiar el precio de lista de cualquier producto; queda marcado como «Precio modificado».')}</p>
+            <p className="mt-1">{t('Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). El precio de UNA venta se cambia en el carrito (queda marcado como «Precio modificado»). El botón «Cambiar precio de venta» de la tarjeta cambia el precio del producto para siempre: lo tiene el dueño y el vendedor con el permiso «Cambiar precios de venta».')}</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">{t('🏷️ Descuentos')}</p>
@@ -826,7 +935,7 @@ export default function NewSalePage() {
             <div className="space-y-2.5">
               {searchResults.map((p) => (
                 <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart}
-                  canApplyDiscount={canApplyDiscount} />
+                  canEditPrices={canEditPrices} onSalePriceSaved={onSalePriceSaved} />
               ))}
               <LoadMoreRow search={productSearch} className="border-t-0" />
             </div>

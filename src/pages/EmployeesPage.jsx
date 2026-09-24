@@ -45,7 +45,7 @@ const PERMISSION_META = [
   { key: 'canRegisterSale',        label: 'Registrar ventas' },
   { key: 'canCancelSale',          label: 'Cancelar ventas' },
   { key: 'canApplyDiscount',       label: 'Aplicar descuentos' },
-  { key: 'canEditPrices',          label: 'Editar precios' },
+  { key: 'canEditPrices',          label: 'Cambiar precios de venta' },
   { key: 'canViewReports',         label: 'Ver reportes' },
   { key: 'canViewCashClosing',     label: 'Ver cierre de caja (sin ganancias ni costos)' },
   { key: 'canManageEmployees',     label: 'Gestionar empleados' },

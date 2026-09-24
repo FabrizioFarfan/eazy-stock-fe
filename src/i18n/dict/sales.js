@@ -205,6 +205,15 @@ export default {
     'Precio variable': 'Variable price',
     'dejar precio de lista': 'keep list price',
     'Definir precio de venta': 'Set sale price',
+    'Cambia el precio del producto para siempre.': 'This changes the product price for good.',
+    'Todas las ventas desde ahora saldrán con el precio nuevo. Si solo quieres otro precio en esta venta, agrégalo y cámbialo en el carrito.': 'Every sale from now on will use the new price. If you only want a different price in this sale, add it and change it in the cart.',
+    'Guardar precio nuevo': 'Save new price',
+    '¿Cambiar el precio de venta?': 'Change the sale price?',
+    'Desde ahora este producto se venderá a {price} en todas las ventas, las tuyas y las de tus vendedores. Las ventas ya hechas no cambian.': 'From now on this product sells at {price} in every sale, yours and your sellers\'. Past sales do not change.',
+    'Sí, cambiar el precio': 'Yes, change the price',
+    'Precio de venta actualizado: {name} ahora cuesta {price}': 'Sale price updated: {name} now costs {price}',
+    'No se pudo cambiar el precio': 'Could not change the price',
+    'Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). El precio de UNA venta se cambia en el carrito (queda marcado como «Precio modificado»). El botón «Cambiar precio de venta» de la tarjeta cambia el precio del producto para siempre: lo tiene el dueño y el vendedor con el permiso «Cambiar precios de venta».': 'Products marked "Variable price" come in with no price: set it before charging (the sale cannot be confirmed until then). The price of ONE sale is changed in the cart (flagged as "Price changed"). The card\'s "Change sale price" button changes the product price for good: the owner has it, and sellers with the "Change sale prices" permission.',
     'Cambiar precio de venta': 'Change sale price',
     'En carrito': 'In cart',
     'Sin stock': 'Out of stock',
@@ -281,8 +290,6 @@ export default {
     'En la tarjeta indicas cuánto lleva antes de agregar. Los productos por kilo, litro, metro o gramo aceptan decimales (1.5 kg); los que se venden por unidad, solo enteros. Nunca podrás superar el stock disponible.':
       'On the card you enter how much they take before adding. Products sold by kilo, liter, meter or gram accept decimals (1.5 kg); those sold per unit, whole numbers only. You can never exceed available stock.',
     '💲 Precio variable y cambio de precio': '💲 Variable price and price changes',
-    'Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). Con permiso de modificar precios también puedes cambiar el precio de lista de cualquier producto; queda marcado como «Precio modificado».':
-      'Products marked "Variable price" come in with no price: set it before charging (the sale cannot be confirmed until then). With the price-change permission you can also change the list price of any product; it is flagged as "Price changed".',
     '🏷️ Descuentos': '🏷️ Discounts',
     'Con permiso, aplica un descuento al total en porcentaje o monto fijo. Verás subtotal, descuento y total a cobrar antes de confirmar.':
       'With permission, apply a discount to the total as a percentage or fixed amount. You will see subtotal, discount and total to charge before confirming.',
@@ -653,6 +660,15 @@ export default {
     'Precio variable': 'Prezzo variabile',
     'dejar precio de lista': 'lascia prezzo di listino',
     'Definir precio de venta': 'Imposta prezzo di vendita',
+    'Cambia el precio del producto para siempre.': 'Cambia il prezzo del prodotto per sempre.',
+    'Todas las ventas desde ahora saldrán con el precio nuevo. Si solo quieres otro precio en esta venta, agrégalo y cámbialo en el carrito.': 'Tutte le vendite da ora in poi useranno il nuovo prezzo. Se vuoi un prezzo diverso solo in questa vendita, aggiungilo e cambialo nel carrello.',
+    'Guardar precio nuevo': 'Salva nuovo prezzo',
+    '¿Cambiar el precio de venta?': 'Cambiare il prezzo di vendita?',
+    'Desde ahora este producto se venderá a {price} en todas las ventas, las tuyas y las de tus vendedores. Las ventas ya hechas no cambian.': 'Da ora questo prodotto si vende a {price} in tutte le vendite, tue e dei tuoi venditori. Le vendite già fatte non cambiano.',
+    'Sí, cambiar el precio': 'Sì, cambia il prezzo',
+    'Precio de venta actualizado: {name} ahora cuesta {price}': 'Prezzo di vendita aggiornato: {name} ora costa {price}',
+    'No se pudo cambiar el precio': 'Impossibile cambiare il prezzo',
+    'Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). El precio de UNA venta se cambia en el carrito (queda marcado como «Precio modificado»). El botón «Cambiar precio de venta» de la tarjeta cambia el precio del producto para siempre: lo tiene el dueño y el vendedor con el permiso «Cambiar precios de venta».': 'I prodotti con «Prezzo variabile» entrano senza prezzo: definiscilo prima di incassare (la vendita non si conferma fino ad allora). Il prezzo di UNA vendita si cambia nel carrello (segnato come «Prezzo modificato»). Il pulsante «Cambia prezzo di vendita» della scheda cambia il prezzo del prodotto per sempre: ce l\'ha il titolare e il venditore con il permesso «Cambiare prezzi di vendita».',
     'Cambiar precio de venta': 'Cambia prezzo di vendita',
     'En carrito': 'Nel carrello',
     'Sin stock': 'Esaurito',
@@ -729,8 +745,6 @@ export default {
     'En la tarjeta indicas cuánto lleva antes de agregar. Los productos por kilo, litro, metro o gramo aceptan decimales (1.5 kg); los que se venden por unidad, solo enteros. Nunca podrás superar el stock disponible.':
       'Nella scheda indichi quanto prende prima di aggiungere. I prodotti a chilo, litro, metro o grammo accettano decimali (1,5 kg); quelli venduti a pezzo solo numeri interi. Non potrai mai superare la scorta disponibile.',
     '💲 Precio variable y cambio de precio': '💲 Prezzo variabile e modifica del prezzo',
-    'Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). Con permiso de modificar precios también puedes cambiar el precio de lista de cualquier producto; queda marcado como «Precio modificado».':
-      'I prodotti con «Prezzo variabile» entrano senza prezzo: impostalo prima di incassare (la vendita non si conferma finché non lo fai). Con il permesso di modificare i prezzi puoi anche cambiare il prezzo di listino di qualsiasi prodotto; resta segnato come «Prezzo modificato».',
     '🏷️ Descuentos': '🏷️ Sconti',
     'Con permiso, aplica un descuento al total en porcentaje o monto fijo. Verás subtotal, descuento y total a cobrar antes de confirmar.':
       'Con il permesso, applica uno sconto sul totale in percentuale o importo fisso. Vedrai subtotale, sconto e totale da incassare prima di confermare.',

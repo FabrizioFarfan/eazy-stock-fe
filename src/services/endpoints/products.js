@@ -14,6 +14,10 @@ export const productsApi = {
 
   update: (id, data) => api.put(`/products/${id}`, data),
 
+  // Solo el precio de venta, para siempre (botón «Cambiar precio de venta» de
+  // Nueva venta). Dueño, o vendedor con el permiso canEditPrices.
+  updateSalePrice: (id, salePrice) => api.patch(`/products/${id}/sale-price`, { salePrice }),
+
   deactivate: (id) => api.delete(`/products/${id}`),
 
   // Camino de vuelta: devuelve al catálogo un producto oculto, con su mismo código
