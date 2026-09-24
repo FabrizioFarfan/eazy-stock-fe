@@ -1,12 +1,14 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useNavigate } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown,
+  ShoppingCart, TrendingUp, ArrowUpDown,
   AlertTriangle, Building2, Users, CheckCircle2,
-  FileText, Trophy, ArrowRight, Sparkles, CalendarClock, Award, UserX, UserRound,
+  FileText, ArrowRight, CalendarClock, UserX, UserRound, TrendingDown,
+  CalendarDays, PackagePlus, BarChart3, ArrowDownToLine, SlidersHorizontal, Undo2,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers } from '../hooks/useReports'
+import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers, useSalesBalance } from '../hooks/useReports'
+import { formatQty } from '../utils/quantity'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useBusinesses } from '../hooks/useBusinesses'
 import { useUsers } from '../hooks/useUsers'
@@ -79,8 +81,8 @@ function PageHeader({ name }) {
       <HelpDrawer title={t('Qué muestra el Dashboard')} autoOpenKey="eazystock_dashboard_help_v2">
         <p>{t('Tu negocio')} <strong>{t('de un vistazo')}</strong>, {t('actualizado en tiempo real.')}</p>
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-          <p className="font-semibold text-gray-800">📊 {t('Tarjetas de arriba')}</p>
-          <p className="mt-1">{t('Ventas del día (cuántos tickets), unidades vendidas, ingresos del día y movimientos de hoy (entradas, ventas, ajustes y devoluciones de stock). Es lo primero que conviene mirar al abrir la app.')}</p>
+          <p className="font-semibold text-gray-800">📊 {t('Lo de arriba')}</p>
+          <p className="mt-1">{t('La franja azul muestra lo que vendiste hoy y cuánto cambió contra ayer, con número de ventas, ticket promedio y unidades. Al lado, lo vendido y la ganancia del mes, y «Pide tu atención»: stock bajo, productos por vencer y clientes que no vuelven, cada uno lleva a su reporte.')}</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
           <p className="font-semibold text-gray-800">🕒 {t('«Hoy» según tu hora local')}</p>
@@ -92,7 +94,7 @@ function PageHeader({ name }) {
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
           <p className="font-semibold text-gray-800">🧭 {t('¿Y después?')}</p>
-          <p className="mt-1">{t('Todo lo que ves acá tiene su página completa en el menú de la izquierda: Ventas, Stock, Reportes… Este es solo el resumen. Desde Acciones rápidas creas una venta o una cotización en un toque.')}</p>
+          <p className="mt-1">{t('Todo lo que ves acá tiene su página completa en el menú: Ventas, Stock, Reportes… Este es solo el resumen. Con los accesos grandes creas una venta, un presupuesto o una entrada de mercadería en un toque.')}</p>
         </div>
       </HelpDrawer>
     </div>
@@ -220,6 +222,7 @@ const TYPE_CLS   = {
   SALE:           'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
   ADJUSTMENT:     'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
   RETURN:         'bg-purple-50 text-purple-700 ring-1 ring-purple-100',
+  SUPPLIER_RETURN: 'bg-purple-50 text-purple-700 ring-1 ring-purple-100',
 }
 
 // ── Clientes este mes (tarea 250) ─────────────────────────────────────────────
@@ -233,8 +236,8 @@ function firstOfMonthStr() {
 
 function MiniStat({ label, value, hint, tone = 'text-gray-900' }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+    <div className="min-w-0 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-400">{label}</p>
       <p className={`mt-0.5 text-xl font-bold ${tone}`}>{value}</p>
       {hint && <p className="text-xs text-gray-400">{hint}</p>}
     </div>
@@ -254,24 +257,16 @@ function CustomersBlock({ scopeParams }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50">
-          <UserRound size={15} className="text-indigo-500" />
-        </div>
-        <h3 className="text-sm font-semibold text-gray-900">{t('Clientes este mes')}</h3>
-        <button onClick={() => navigate('/reports/customers')}
-          className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
-          {t('Ver análisis de clientes')} <ArrowRight size={13} />
-        </button>
-      </div>
+      <PanelHeader icon={UserRound} iconCls="bg-indigo-50 text-indigo-600" title={t('Clientes este mes')}
+        action={t('Ver análisis')} onAction={() => navigate('/reports/customers')} />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-3">
           {[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />)}
         </div>
       ) : (
-        <div className="flex flex-col gap-4 p-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="flex flex-col gap-4 p-5">
+          <div className="grid grid-cols-3 gap-2">
             <MiniStat label={t('Clientes que compraron')} value={rows.length} />
             <MiniStat label={t('Ventas con cliente')} value={`${pct}%`}
               hint={t('{n} de {total}', { n: ranking?.salesWithCustomer ?? 0, total: ranking?.totalSales ?? 0 })} />
@@ -313,6 +308,299 @@ function CustomersBlock({ scopeParams }) {
   )
 }
 
+function yesterdayStr() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return localISODate(d)
+}
+
+// Cabecera de cada panel: ícono + título + acción a la derecha (siempre visible)
+function PanelHeader({ icon: Icon, iconCls, title, badge, action, onAction }) {
+  return (
+    <div className="flex items-center gap-2.5 border-b border-gray-100 px-5 py-3.5">
+      <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${iconCls}`}>
+        <Icon size={15} />
+      </div>
+      <h3 className="min-w-0 truncate text-sm font-semibold text-gray-900">{title}</h3>
+      {badge}
+      {action && (
+        <button onClick={onAction}
+          className="ml-auto flex flex-shrink-0 items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700">
+          {action} <ArrowRight size={13} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// Acceso grande: ícono + nombre + para qué sirve. Se entiende sin leer el menú.
+function ActionTile({ icon: Icon, label, hint, onClick, primary }) {
+  return (
+    <button onClick={onClick}
+      className={`group flex items-center gap-3 rounded-2xl p-4 text-left transition-all active:scale-[0.98] ${
+        primary
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 hover:bg-blue-700'
+          : 'border border-gray-100 bg-white shadow-sm hover:border-blue-200 hover:shadow-md'
+      }`}>
+      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+        primary ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+        <Icon size={19} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-bold ${primary ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+        <p className={`truncate text-xs ${primary ? 'text-white/80' : 'text-gray-400'}`}>{hint}</p>
+      </div>
+      <ArrowRight size={15} className={`flex-shrink-0 transition-transform group-hover:translate-x-0.5 ${primary ? 'text-white/80' : 'text-gray-300'}`} />
+    </button>
+  )
+}
+
+// Variación contra ayer: ▲ verde / ▼ rojo / «igual». Sin ventas ayer no hay %.
+function DeltaVsYesterday({ today, yesterday }) {
+  const t = useT()
+  const a = Number(today ?? 0), b = Number(yesterday ?? 0)
+  if (b <= 0) {
+    return <span className="text-xs text-white/80">{t('Ayer: {v}', { v: formatCurrency(b) })}</span>
+  }
+  const pct = Math.round(((a - b) / b) * 100)
+  const up = pct >= 0
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-white/80">
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-white/20 px-2 py-0.5 font-bold text-white">
+        {up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        {pct === 0 ? t('igual') : `${up ? '+' : ''}${pct}%`}
+      </span>
+      {t('vs ayer ({v})', { v: formatCurrency(b) })}
+    </span>
+  )
+}
+
+function TodayHero({ summary, yesterday, loading }) {
+  const t = useT()
+  const sales   = summary?.totalSales ?? 0
+  const revenue = Number(summary?.totalRevenue ?? 0)
+  const avg     = sales > 0 ? revenue / sales : 0
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-5 text-white shadow-md shadow-blue-600/30 sm:p-6 lg:col-span-2" data-testid="today-hero">
+      <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/10" />
+      <div className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/5" />
+      <p className="relative text-xs font-semibold uppercase tracking-widest text-white/80">{t('Ingresos de hoy')}</p>
+      {loading ? (
+        <div className="relative mt-2 h-10 w-40 animate-pulse rounded-lg bg-white/20" />
+      ) : (
+        <>
+          <p className="relative mt-1 text-4xl font-extrabold tracking-tight sm:text-5xl">{formatCurrency(revenue)}</p>
+          <div className="relative mt-2"><DeltaVsYesterday today={revenue} yesterday={yesterday?.totalRevenue} /></div>
+        </>
+      )}
+      <div className="relative mt-5 grid grid-cols-3 gap-2 border-t border-white/20 pt-4">
+        {[
+          [t('Ventas'), loading ? '—' : sales],
+          [t('Ticket promedio'), loading ? '—' : formatCurrency(avg)],
+          [t('Unidades'), loading ? '—' : formatQty(summary?.totalItemsSold ?? 0)],
+        ].map(([label, value]) => (
+          <div key={label} className="min-w-0">
+            <p className="truncate text-[11px] font-medium uppercase tracking-wide text-white/70">{label}</p>
+            <p className="truncate text-lg font-bold">{value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MonthCard({ scopeParams }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const { data, isLoading } = useSalesBalance({ from: firstOfMonthStr(), to: todayStr(), ...scopeParams })
+  const monthName = new Intl.DateTimeFormat(dateLocale(), { month: 'long' }).format(new Date())
+  const profit = Number(data?.profit ?? 0)
+  return (
+    <button onClick={() => navigate('/reports/balance')}
+      className="group flex flex-col rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-shadow hover:shadow-md sm:p-6">
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <CalendarDays size={15} />
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+          {t('Este mes')} · <span className="capitalize">{monthName}</span>
+        </p>
+      </div>
+      {isLoading ? (
+        <div className="mt-3 h-8 w-32 animate-pulse rounded-lg bg-gray-100" />
+      ) : (
+        <>
+          <p className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">{formatCurrency(data?.netSales ?? 0)}</p>
+          <p className="text-xs text-gray-400">{t('vendido en {n} ventas', { n: data?.salesCount ?? 0 })}</p>
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+            <span className="text-xs text-gray-500">{t('Ganancia')}</span>
+            <span className={`text-base font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(profit)}</span>
+          </div>
+        </>
+      )}
+      <span className="mt-2 flex items-center gap-1 text-xs font-semibold text-blue-600 group-hover:text-blue-700">
+        {t('Ver balance')} <ArrowRight size={13} />
+      </span>
+    </button>
+  )
+}
+
+// Lo que pide atención HOY, cada fila lleva a su reporte
+function AttentionCard({ lowCount, expCount, inactiveCount, loading }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const rows = [
+    { key: 'low', icon: AlertTriangle, n: lowCount, label: t('productos con stock bajo'), to: '/reports?tab=low-stock', bad: 'bg-red-50 text-red-600' },
+    { key: 'exp', icon: CalendarClock, n: expCount, label: t('productos por vencer'), to: '/reports?tab=expiring', bad: 'bg-amber-50 text-amber-600' },
+    { key: 'cli', icon: UserX, n: inactiveCount, label: t('clientes sin volver +30 días'), to: '/reports/customers', bad: 'bg-indigo-50 text-indigo-600' },
+  ]
+  const allGood = !loading && rows.every((r) => !r.n)
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:col-span-3 xl:col-span-1">
+      <PanelHeader icon={AlertTriangle} iconCls="bg-amber-50 text-amber-600" title={t('Pide tu atención')} />
+      {allGood ? (
+        <div className="flex flex-1 items-center gap-3 p-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><CheckCircle2 size={20} /></div>
+          <p className="text-sm font-medium text-gray-600">{t('Todo en orden: sin alertas por ahora.')}</p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {rows.map(({ key, icon: Icon, n, label, to, bad }) => (
+            <li key={key}>
+              <button onClick={() => navigate(to)} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-gray-50">
+                <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${n ? bad : 'bg-gray-100 text-gray-400'}`}><Icon size={15} /></span>
+                <span className={`text-lg font-bold ${n ? 'text-gray-900' : 'text-gray-300'}`}>{loading ? '…' : (n ?? 0)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm text-gray-500">{label}</span>
+                <ArrowRight size={14} className="flex-shrink-0 text-gray-300" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function LowStockPanel({ items, total, loading }) {
+  const t = useT()
+  const navigate = useNavigate()
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <PanelHeader icon={AlertTriangle} iconCls="bg-red-50 text-red-600" title={t('Stock bajo')}
+        badge={!loading && total > 0 && (
+          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">{total}</span>
+        )}
+        action={total > 0 ? t('Ver todos') : null} onAction={() => navigate('/reports?tab=low-stock')} />
+      {loading ? (
+        <div className="space-y-3 p-5">{[1, 2, 3].map((i) => <div key={i} className="h-8 animate-pulse rounded-lg bg-gray-100" />)}</div>
+      ) : items.length === 0 ? (
+        <div className="flex items-center gap-3 p-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><CheckCircle2 size={20} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-700">{t('Todo el stock está en orden')}</p>
+            <p className="text-xs text-gray-400">{t('Ningún producto está por debajo del mínimo')}</p>
+          </div>
+        </div>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {items.slice(0, 6).map((item) => {
+            const pct = item.minStock > 0 ? Math.max(0, Math.min(100, (item.currentStock / item.minStock) * 100)) : 0
+            const empty = Number(item.currentStock) <= 0
+            return (
+              <li key={item.productId} className="px-5 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="min-w-0 truncate text-sm font-medium text-gray-900" title={item.productName}>{item.productName}</p>
+                  <p className="flex-shrink-0 text-xs text-gray-500">
+                    <span className={`font-bold ${empty ? 'text-red-600' : 'text-gray-900'}`}>{formatQty(item.currentStock)}</span>
+                    {' / '}{formatQty(item.minStock)}
+                  </p>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div className={`h-full rounded-full ${empty ? 'bg-red-500' : pct < 50 ? 'bg-orange-500' : 'bg-amber-400'}`} style={{ width: `${Math.max(pct, 3)}%` }} />
+                  </div>
+                  <span className="font-mono text-[11px] text-gray-400">{item.productSku}</span>
+                  <span className="text-[11px] font-semibold text-red-600">{t('faltan {n}', { n: formatQty(item.deficit) })}</span>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function ExpiringPanel({ items, total }) {
+  const t = useT()
+  const navigate = useNavigate()
+  if (items.length === 0) return null
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <PanelHeader icon={CalendarClock} iconCls="bg-amber-50 text-amber-600" title={t('Productos por vencer')}
+        badge={<span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">{total}</span>}
+        action={t('Ver todos')} onAction={() => navigate('/reports?tab=expiring')} />
+      <ul className="divide-y divide-gray-100">
+        {items.slice(0, 5).map((item) => (
+          <li key={item.productId} className="flex items-center gap-3 px-5 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-gray-900" title={item.productName}>{item.productName}</p>
+              <p className="text-xs text-gray-400">{t('Stock')}: {formatQty(item.currentStock)}</p>
+            </div>
+            <ExpiryBadge product={{
+              expirationDate: item.expirationDate,
+              expired: item.expired,
+              expiringSoon: !item.expired,
+              daysToExpire: item.daysToExpire,
+            }} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+const TYPE_ICON = { PURCHASE_ENTRY: ArrowDownToLine, SALE: ShoppingCart, ADJUSTMENT: SlidersHorizontal, RETURN: Undo2, SUPPLIER_RETURN: Undo2 }
+
+function MovementsPanel({ movements }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const timeOf = (iso) => iso ? new Date(iso).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) : ''
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <PanelHeader icon={ArrowUpDown} iconCls="bg-blue-50 text-blue-600" title={t('Movimientos de hoy')}
+        badge={movements.length > 0 && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{movements.length}</span>}
+        action={t('Ver todos')} onAction={() => navigate('/stock')} />
+      {movements.length === 0 ? (
+        <p className="p-5 text-sm text-gray-400">{t('Todavía no hay movimientos hoy. Las ventas, entradas y ajustes aparecen aquí al momento.')}</p>
+      ) : (
+        <ul className="divide-y divide-gray-100">
+          {movements.slice(0, 8).map((m) => {
+            const Icon = TYPE_ICON[m.type] ?? ArrowUpDown
+            const qty = Number(m.quantity)
+            return (
+              <li key={m.id} className="flex items-center gap-3 px-5 py-2.5">
+                <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${TYPE_CLS[m.type] ?? 'bg-gray-100 text-gray-600'}`}>
+                  <Icon size={14} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-900" title={m.productName}>{m.productName}</p>
+                  <p className="truncate text-xs text-gray-400">
+                    {TYPE_LABEL[m.type] ? t(TYPE_LABEL[m.type]) : m.type}{m.createdByName ? ` · ${m.createdByName}` : ''}{m.createdAt ? ` · ${timeOf(m.createdAt)}` : ''}
+                  </p>
+                </div>
+                <span className={`flex-shrink-0 text-sm font-bold ${qty > 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
+                  {qty > 0 ? `+${formatQty(qty)}` : formatQty(qty)}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function OwnerDashboard({ name, businessId }) {
   const t = useT()
   const navigate    = useNavigate()
@@ -321,254 +609,51 @@ function OwnerDashboard({ name, businessId }) {
   // Fecha explícita del navegador: el server está en Europa y su "hoy" empieza
   // a las 19:00 de Lima — sin esto el resumen salía en 0 por las tardes.
   const { data: summary,      isLoading: loadingSummary } = useDailySummary({ date: todayStr(), ...scopeParams })
+  const { data: ySummary }                                 = useDailySummary({ date: yesterdayStr(), ...scopeParams })
   const { data: lowStockPage, isLoading: loadingLow }     = useReportsLowStock({ size: 10, ...scopeParams })
   const { data: expiringPage, isLoading: loadingExp }     = useReportsExpiring({ size: 10, ...scopeParams })
+  const { data: inactive }                                = useInactiveCustomers({ days: 30, ...scopeParams })
 
   const lowStock  = lowStockPage?.content ?? []
   const expiring  = expiringPage?.content ?? []
   const movements = summary?.movements    ?? []
 
+  // Rediseño 25-sep (Frank): arriba lo que importa HOY (plata, comparación con
+  // ayer, el mes y lo que pide atención); después los accesos grandes y dos
+  // columnas con listas compactas en vez de tablas anchas.
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader name={name} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {loadingSummary ? (
-          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-        ) : (
-          <>
-            <StatCard icon={ShoppingCart} label={t('Ventas del día')}      value={summary?.totalSales ?? 0}                   iconBg="bg-blue-50"   iconColor="text-blue-500" />
-            <StatCard icon={Package}      label={t('Unidades vendidas')}   value={summary?.totalItemsSold ?? 0}               iconBg="bg-indigo-50" iconColor="text-indigo-500" />
-            <StatCard icon={TrendingUp}   label={t('Ingresos del día')}    value={formatCurrency(summary?.totalRevenue)}      iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-            <StatCard icon={ArrowUpDown}  label={t('Movimientos de hoy')}  value={movements.length}                           iconBg="bg-amber-50"  iconColor="text-amber-500" />
-          </>
-        )}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+        <TodayHero summary={summary} yesterday={ySummary} loading={loadingSummary} />
+        <MonthCard scopeParams={scopeParams} />
+        <AttentionCard loading={loadingLow || loadingExp}
+          lowCount={lowStockPage?.totalElements} expCount={expiringPage?.totalElements}
+          inactiveCount={inactive?.customers?.length} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <ActionTile primary icon={ShoppingCart} label={t('Nueva venta')} hint={t('Cobrar y descontar stock')} onClick={() => navigate('/sales/new')} />
+        <ActionTile icon={FileText} label={t('Nuevo presupuesto')} hint={t('Cotización en PDF o WhatsApp')} onClick={() => navigate('/cotizaciones')} />
+        <ActionTile icon={PackagePlus} label={t('Registrar entrada')} hint={t('Mercadería del proveedor')} onClick={() => navigate('/stock?tab=receipts')} />
+        <ActionTile icon={BarChart3} label={t('Reportes')} hint={t('Ventas, ganancias y vendedores')} onClick={() => navigate('/reports')} />
       </div>
 
       {/* Fondo de caja del día (William, 15-sep): el sencillo para dar vuelto */}
       <CashFloatCard canRegister canSeeDrawer scopeParams={scopeParams} />
 
-      {/* Presupuestos — feature destacada */}
-      <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md">
-              <FileText size={22} />
-            </div>
-            <div>
-              <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-                <Sparkles size={10} /> {t('Nuevo')}
-              </div>
-              <h3 className="text-base font-bold text-gray-900">{t('Crea presupuestos para tus clientes')}</h3>
-              <p className="mt-0.5 text-sm text-gray-500">
-                {t('Arma una cotización en segundos y expórtala en PDF para enviarla por WhatsApp o correo. No descuenta stock ni registra una venta.')}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/cotizaciones')}
-            className="group flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
-          >
-            <FileText size={15} />
-            {t('Crear presupuesto')}
-            <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-          </button>
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-5">
+          <LowStockPanel items={lowStock} total={lowStockPage?.totalElements ?? 0} loading={loadingLow} />
+          <MovementsPanel movements={movements} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-5">
+          {/* Clientes este mes (tarea 250) */}
+          <CustomersBlock scopeParams={scopeParams} />
+          <ExpiringPanel items={expiring} total={expiringPage?.totalElements ?? 0} />
         </div>
       </div>
-
-      {/* Acciones rápidas */}
-      <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => navigate('/sales/new')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]"
-          >
-            <ShoppingCart size={15} />
-            {t('Nueva venta')}
-          </button>
-          <button
-            onClick={() => navigate('/cotizaciones')}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <FileText size={15} />
-            {t('Nuevo presupuesto')}
-          </button>
-          <button
-            onClick={() => navigate('/reports/sellers')}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <Trophy size={15} />
-            {t('Rendimiento de vendedores')}
-          </button>
-          <button
-            onClick={() => navigate('/reports/customers')}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            <Award size={15} />
-            {t('Análisis de clientes')}
-          </button>
-        </div>
-      </div>
-
-      {/* Clientes este mes (tarea 250) */}
-      <CustomersBlock scopeParams={scopeParams} />
-
-      {/* Low-stock alerts */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
-            <AlertTriangle size={15} className="text-amber-500" />
-          </div>
-          <h3 className="text-sm font-semibold text-gray-900">{t('Alertas de stock bajo')}</h3>
-          {!loadingLow && lowStockPage?.totalElements > 0 && (
-            <span className="ml-auto rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">
-              {t('{n} productos', { n: lowStockPage.totalElements })}
-            </span>
-          )}
-        </div>
-
-        {loadingLow ? (
-          <div className="space-y-3 p-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-4 animate-pulse rounded-lg bg-gray-100" />
-            ))}
-          </div>
-        ) : lowStock.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50">
-              <CheckCircle2 size={22} className="text-emerald-500" />
-            </div>
-            <p className="text-sm font-medium text-gray-500">{t('Todo el stock está en orden')}</p>
-            <p className="text-xs text-gray-400">{t('Ningún producto está por debajo del mínimo')}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50 bg-gray-50/60">
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Código')}</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Stock')}</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Mínimo')}</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Déficit')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStock.map((item) => (
-                  <tr key={item.productId} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                    <td className="max-w-[200px] truncate px-6 py-3.5 font-medium text-gray-900">{item.productName}</td>
-                    <td className="px-6 py-3.5 font-mono text-xs text-gray-400">{item.productSku}</td>
-                    <td className="px-6 py-3.5 text-center">
-                      <span className={item.currentStock === 0 ? 'font-bold text-red-600' : 'font-medium text-gray-700'}>
-                        {item.currentStock}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-center text-gray-500">{item.minStock}</td>
-                    <td className="px-6 py-3.5 text-center">
-                      <span className="inline-flex rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-red-100">
-                        -{item.deficit}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Expiring alerts — solo se muestra si hay productos con fecha por vencer/vencidos */}
-      {(loadingExp || expiring.length > 0) && (
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex items-center gap-2.5 border-b border-gray-100 px-6 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50">
-              <CalendarClock size={15} className="text-amber-500" />
-            </div>
-            <h3 className="text-sm font-semibold text-gray-900">{t('Productos por vencer')}</h3>
-            {!loadingExp && expiringPage?.totalElements > 0 && (
-              <span className="ml-auto rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">
-                {t('{n} productos', { n: expiringPage.totalElements })}
-              </span>
-            )}
-          </div>
-
-          {loadingExp ? (
-            <div className="space-y-3 p-6">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-4 animate-pulse rounded-lg bg-gray-100" />
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-50 bg-gray-50/60">
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Código')}</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Stock')}</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Vence')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expiring.map((item) => (
-                    <tr key={item.productId} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                      <td className="max-w-[200px] truncate px-6 py-3.5 font-medium text-gray-900">{item.productName}</td>
-                      <td className="px-6 py-3.5 font-mono text-xs text-gray-400">{item.productSku}</td>
-                      <td className="px-6 py-3.5 text-center text-gray-700">{item.currentStock}</td>
-                      <td className="px-6 py-3.5 text-center">
-                        <ExpiryBadge product={{
-                          expirationDate: item.expirationDate,
-                          expired: item.expired,
-                          expiringSoon: !item.expired,
-                          daysToExpire: item.daysToExpire,
-                        }} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Recent movements */}
-      {movements.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h3 className="text-sm font-semibold text-gray-900">{t('Movimientos de hoy')}</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50 bg-gray-50/60">
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Producto')}</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Tipo')}</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Cantidad')}</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Usuario')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements.slice(0, 8).map((m) => (
-                  <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                    <td className="max-w-[220px] truncate px-6 py-3.5 font-medium text-gray-900">{m.productName}</td>
-                    <td className="px-6 py-3.5 text-center">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${TYPE_CLS[m.type] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {TYPE_LABEL[m.type] ? t(TYPE_LABEL[m.type]) : m.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-center font-semibold text-gray-800">
-                      {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                    </td>
-                    <td className="max-w-[130px] truncate px-6 py-3.5 text-gray-400">{m.createdByName ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -606,26 +691,11 @@ function EmployeeDashboard({ name }) {
       {/* El vendedor ve cuánto sencillo le dejaron hoy (y el cajón si puede ver el cierre) */}
       <CashFloatCard canRegister={false} canSeeDrawer={can('canViewCashClosing') || can('canViewReports')} />
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => navigate('/sales/new')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
-          >
-            <ShoppingCart size={15} />
-            {t('Nueva venta')}
-          </button>
-          {can('canRegisterSale') && (
-            <button
-              onClick={() => navigate('/cotizaciones')}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <FileText size={15} />
-              {t('Nuevo presupuesto')}
-            </button>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ActionTile primary icon={ShoppingCart} label={t('Nueva venta')} hint={t('Cobrar y descontar stock')} onClick={() => navigate('/sales/new')} />
+        {can('canRegisterSale') && (
+          <ActionTile icon={FileText} label={t('Nuevo presupuesto')} hint={t('Cotización en PDF o WhatsApp')} onClick={() => navigate('/cotizaciones')} />
+        )}
       </div>
     </div>
   )

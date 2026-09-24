@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown } from 'lucide-react'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
@@ -210,8 +211,11 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
         </div>
       )}
 
-      {confirmList && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+      {/* Portal al <body>: dentro de la tarjeta el fixed quedaba atrapado en
+          el contexto de apilado de la lista y el fondo oscuro no tapaba el
+          carrito ni la barra superior (Frank, 25-sep). */}
+      {confirmList && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-100">
@@ -242,7 +246,8 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {priceOpen && !inCart && !noStock && isVariable && (
