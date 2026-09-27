@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Filter, ArrowUp, ArrowDown, Check } from 'lucide-react'
 import { useT } from '../../i18n'
 
@@ -11,6 +12,9 @@ import { useT } from '../../i18n'
  *
  * Opcionalmente ordena por la columna (`onSort`). El encabezado se resalta en
  * azul cuando la columna tiene filtro u orden activo.
+ *
+ * El popover va en un portal con posición fija: dentro de la tabla (overflow)
+ * quedaba cortado cuando el filtro dejaba una sola fila.
  *
  * El estado real vive en el padre; este componente es controlado. Para 'text'
  * y 'range' conviene que el padre debouncee los valores antes de pegarle al API.
@@ -42,11 +46,42 @@ export default function ColumnFilter({
   const ascText  = ascLabel  ?? t('Ascendente')
   const descText = descLabel ?? t('Descendente')
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState(null)
   const ref = useRef(null)
+  const popRef = useRef(null)
+
+  const POP_W = 224 // w-56
+  const place = () => {
+    const r = ref.current?.getBoundingClientRect()
+    if (!r) return
+    let left = align === 'right' ? r.right - POP_W
+      : align === 'center' ? r.left + r.width / 2 - POP_W / 2
+      : r.left
+    left = Math.max(8, Math.min(left, window.innerWidth - POP_W - 8))
+    setPos({ top: r.bottom + 6, left })
+  }
+  const toggle = () => {
+    if (!open) place()
+    setOpen((o) => !o)
+  }
+
+  // Sigue al encabezado si la página o la tabla se desplazan
+  useEffect(() => {
+    if (!open) return
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  })
 
   useEffect(() => {
     if (!open) return
-    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const onDoc = (e) => {
+      if (ref.current?.contains(e.target) || popRef.current?.contains(e.target)) return
+      setOpen(false)
+    }
     const onEsc = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onDoc)
     document.addEventListener('keydown', onEsc)
@@ -58,7 +93,6 @@ export default function ColumnFilter({
 
   const alignCls = { left: 'text-left', right: 'text-right', center: 'text-center' }[align]
   const rowCls   = { left: 'justify-start', right: 'justify-end', center: 'justify-center' }[align]
-  const popCls   = { left: 'left-0', right: 'right-0', center: 'left-1/2 -translate-x-1/2' }[align]
 
   const highlighted = active || !!sortState
 
@@ -70,7 +104,7 @@ export default function ColumnFilter({
       <div ref={ref} className={`flex ${rowCls} items-center`}>
         <button
           type="button"
-          onClick={() => setOpen((o) => !o)}
+          onClick={toggle}
           title={t('Filtrar u ordenar por {col}', { col: label })}
           className={`group inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-widest transition-colors ${
             highlighted ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
@@ -88,9 +122,11 @@ export default function ColumnFilter({
           />
         </button>
 
-        {open && (
+        {open && pos && createPortal(
           <div
-            className={`absolute top-full z-30 mt-1.5 w-56 rounded-xl border border-gray-100 bg-white p-2 shadow-xl ${popCls}`}
+            ref={popRef}
+            style={{ position: 'fixed', top: pos.top, left: pos.left, maxHeight: `calc(100vh - ${pos.top + 8}px)` }}
+            className="z-50 w-56 overflow-y-auto rounded-xl border border-gray-100 bg-white p-2 text-left text-sm font-normal normal-case tracking-normal shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {type === 'text' && (
@@ -183,7 +219,8 @@ export default function ColumnFilter({
                 {t('Limpiar filtro')}
               </button>
             )}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </th>

@@ -504,34 +504,11 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
-                <ColumnFilter label={t('Código')} type="text" align="left"
-                  value={colFilters.sku} onChange={(v) => setField('sku', v)}
-                  placeholder={t('Buscar código...')} active={!!colFilters.sku}
-                  sortState={sortStateFor('sku')} onSort={onSortBy('sku')} ascLabel="A–Z" descLabel="Z–A"
-                  onClear={() => clearFields('sku')} />
                 <ColumnFilter label={t('Nombre')} type="text" align="left"
                   value={colFilters.name} onChange={(v) => setField('name', v)}
                   placeholder={t('Buscar nombre...')} active={!!colFilters.name}
                   sortState={sortStateFor('name')} onSort={onSortBy('name')} ascLabel="A–Z" descLabel="Z–A"
                   onClear={() => clearFields('name')} />
-                <ColumnFilter label={t('Unidad')} type="select" align="left"
-                  value={colFilters.unit} onChange={(v) => setField('unit', v)}
-                  options={unitOpts} active={!!colFilters.unit}
-                  onClear={() => clearFields('unit')} />
-                {/* Atributos (medida, color, material…): distinguen productos de mismo nombre */}
-                <th className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Atributos')}</th>
-                <ColumnFilter label={t('Categoría')} type="select" align="left"
-                  value={colFilters.categoryId} onChange={(v) => setField('categoryId', v)}
-                  options={categoryOpts} active={!!colFilters.categoryId}
-                  onClear={() => clearFields('categoryId')} />
-                <ColumnFilter label={t('Marca')} type="select" align="left"
-                  value={colFilters.brandId} onChange={(v) => setField('brandId', v)}
-                  options={brandOpts} active={!!colFilters.brandId}
-                  onClear={() => clearFields('brandId')} />
-                <ColumnFilter label={t('Ubicación')} type="select" align="left"
-                  value={colFilters.locationId} onChange={(v) => setField('locationId', v)}
-                  options={locationOpts} active={!!colFilters.locationId}
-                  onClear={() => clearFields('locationId')} />
                 <ColumnFilter label={t('Proveedor')} type="select" align="left"
                   value={colFilters.supplierId} onChange={(v) => setField('supplierId', v)}
                   options={supplierOpts} active={!!colFilters.supplierId}
@@ -563,6 +540,29 @@ export default function ProductsPage() {
                   sortState={sortStateFor('currentStock')} onSort={onSortBy('currentStock')}
                   ascLabel={t('Menor')} descLabel={t('Mayor')}
                   onClear={() => clearFields('stockMin', 'stockMax')} />
+                <ColumnFilter label={t('Código')} type="text" align="left"
+                  value={colFilters.sku} onChange={(v) => setField('sku', v)}
+                  placeholder={t('Buscar código...')} active={!!colFilters.sku}
+                  sortState={sortStateFor('sku')} onSort={onSortBy('sku')} ascLabel="A–Z" descLabel="Z–A"
+                  onClear={() => clearFields('sku')} />
+                {/* Atributos (medida, color, material…): distinguen productos de mismo nombre */}
+                <th className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Atributos')}</th>
+                <ColumnFilter label={t('Unidad')} type="select" align="left"
+                  value={colFilters.unit} onChange={(v) => setField('unit', v)}
+                  options={unitOpts} active={!!colFilters.unit}
+                  onClear={() => clearFields('unit')} />
+                <ColumnFilter label={t('Categoría')} type="select" align="left"
+                  value={colFilters.categoryId} onChange={(v) => setField('categoryId', v)}
+                  options={categoryOpts} active={!!colFilters.categoryId}
+                  onClear={() => clearFields('categoryId')} />
+                <ColumnFilter label={t('Marca')} type="select" align="left"
+                  value={colFilters.brandId} onChange={(v) => setField('brandId', v)}
+                  options={brandOpts} active={!!colFilters.brandId}
+                  onClear={() => clearFields('brandId')} />
+                <ColumnFilter label={t('Ubicación')} type="select" align="left"
+                  value={colFilters.locationId} onChange={(v) => setField('locationId', v)}
+                  options={locationOpts} active={!!colFilters.locationId}
+                  onClear={() => clearFields('locationId')} />
                 <ColumnFilter label={t('Vence')} type="select" align="center"
                   value={colFilters.expiryStatus} onChange={(v) => setField('expiryStatus', v)}
                   options={EXPIRY_OPTS.map((o) => ({ ...o, label: t(o.label) }))} active={!!colFilters.expiryStatus}
@@ -614,7 +614,6 @@ export default function ProductsPage() {
                     onClick={() => setDetailModal(p)}
                     title={`${p.name}${p.presentation ? ` · ${p.presentation}` : ''}\n${t('Click para ver detalles y opciones del producto')}`}
                     className={`cursor-pointer border-b border-gray-50 transition-colors hover:bg-blue-50/40 ${isFetching ? 'opacity-60' : ''}`}>
-                    <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
                     <td className="min-w-[260px] max-w-[320px] px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <ProductThumb product={p} size={34} />
@@ -626,11 +625,6 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
-                    <td className="min-w-[170px] max-w-[260px] px-5 py-3.5"><AttributeChips attributes={p.attributes} /></td>
-                    <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
-                    <td className="px-5 py-3.5 text-xs text-gray-500">{p.locationName || '—'}</td>
                     <td className="max-w-[120px] truncate px-5 py-3.5 text-gray-500">{p.supplierName || '—'}</td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-600">{p.providerCode || '—'}</td>
                     {!hidesCost(user) && <td className="px-5 py-3.5 text-right text-gray-600">{formatPrice(p.purchasePrice)}</td>}
@@ -644,6 +638,12 @@ export default function ProductsPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
+                    <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
+                    <td className="min-w-[170px] max-w-[260px] px-5 py-3.5"><AttributeChips attributes={p.attributes} /></td>
+                    <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
+                    <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
+                    <td className="px-5 py-3.5 text-xs text-gray-500">{p.locationName || '—'}</td>
                     <td className="px-5 py-3.5 text-center"><ExpiryBadge product={p} dash /></td>
                     <td className="px-5 py-3.5 text-center"><StatusBadge active={p.active} /></td>
                   </tr>
