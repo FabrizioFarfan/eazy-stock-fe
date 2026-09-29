@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Tag, Edit, Trash2, Loader2, X } from 'lucide-react'
+import { Plus, Tag, Loader2, X } from 'lucide-react'
+import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
+import { useProducts } from '../hooks/useProducts'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -115,31 +117,14 @@ function BrandModal({ brand, onClose }) {
 function BrandCard({ brand, onEdit, onDelete }) {
   const t = useT()
   const initial = brand.name[0]?.toUpperCase() ?? '?'
-  const colorCls = brandColor(brand.name)
-
   return (
-    <div className="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all"
-      onClick={() => onEdit(brand)}>
-      <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold ${colorCls}`}>
-        {initial}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-gray-900 truncate">{brand.name}</p>
-        {brand.notes && (
-          <p className="mt-0.5 text-xs text-gray-400 truncate">{brand.notes}</p>
-        )}
-      </div>
-      <div className="flex gap-1">
-        <button onClick={(e) => { e.stopPropagation(); onEdit(brand) }} title={t('Editar')}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-          <Edit size={14} />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(brand) }} title={t('Eliminar')}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </div>
+    <EntityCard
+      avatar={<div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold ${brandColor(brand.name)}`}>{initial}</div>}
+      title={brand.name}
+      subtitle={brand.notes || null}
+      onOpen={() => onEdit(brand)} onEdit={() => onEdit(brand)} onDelete={() => onDelete(brand)}
+      link={{ to: `/products?brandId=${brand.id}`, label: t('Ver sus productos') }}
+    />
   )
 }
 
@@ -159,6 +144,7 @@ export default function BrandsPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const brands = data?.content ?? []
+  const { data: catalog } = useProducts({ page: 0, size: 1, active: true, ...adminBizParam(user) })
 
   const handleDelete = async (b) => {
     if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asociados.', { name: b.name }))) return
@@ -169,9 +155,9 @@ export default function BrandsPage() {
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">{t('Marcas')}</h2>
+      <ReportHeader icon={Tag} title={t('Marcas')}
+        subtitle={t('De qué marca es cada producto')}
+        help={(
           <HelpDrawer title={t('Cómo usar Marcas')} autoOpenKey="eazystock_brands_help_v1">
             <p>{t('Registra las marcas de lo que vendes y asígnalas a tus productos.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -179,26 +165,19 @@ export default function BrandsPage() {
               <p className="mt-1">{t('Para filtrar el catálogo y para los reportes: puedes ver cuánto vendes de cada marca y decidir cuáles te convienen más.')}</p>
             </div>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {data?.totalElements ?? 0}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setModal({ brand: null })}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-          <Plus size={15} />
-          {t('Nueva marca')}
-        </button>
-      </div>
+        )}
+        right={<NewButton onClick={() => setModal({ brand: null })}><Plus size={15} />{t('Nueva marca')}</NewButton>} />
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder={t('Buscar marca...')} value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-      </div>
+      <CatalogSwitcher />
+
+      <ReportHero icon={Tag} label={t('Tus marcas')} loading={isLoading}
+        value={data?.totalElements ?? 0}
+        cells={[
+          [t('Productos en el catálogo'), catalog?.totalElements ?? '—'],
+          [t('Con notas'), brands.filter((x) => x.notes).length],
+        ]} />
+
+      <BigSearch value={search} onChange={setSearch} placeholder={t('Buscar marca...')} />
 
       {/* Grid */}
       {isLoading ? (
@@ -223,7 +202,7 @@ export default function BrandsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {brands.map((b) => (
             <BrandCard key={b.id} brand={b}
               onEdit={(br) => setModal({ brand: br })}

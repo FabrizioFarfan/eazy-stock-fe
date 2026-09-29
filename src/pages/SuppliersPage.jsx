@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Truck, Edit, Trash2, Loader2, X, Phone, User, FileText } from 'lucide-react'
+import { Plus, Truck, Loader2, X, Phone, User, FileText } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,7 +7,10 @@ import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier }
 import { useAuth } from '../context/AuthContext'
 import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
-import PageTitle from '../components/common/PageTitle'
+import { AccountsSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
+import { usePayables } from '../hooks/useReports'
+import { formatPrice } from '../utils/formatMoney'
+import { useNavigate } from 'react-router-dom'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
@@ -128,62 +131,41 @@ function SupplierModal({ supplier, onClose }) {
 
 // ── Supplier card ─────────────────────────────────────────────────────────────
 
-function SupplierCard({ supplier, onEdit, onDelete }) {
+function SupplierCard({ supplier, debt, onOpen, onEdit, onDelete }) {
   const t = useT()
   const initials = supplier.name
     .split(' ')
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
+  const owes = Number(debt ?? 0) > 0
 
   return (
-    <div className="flex cursor-pointer flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all"
-      onClick={() => onEdit(supplier)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-blue-600">
-            {initials}
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">{supplier.name}</p>
-            {supplier.ruc && (
-              <p className="text-xs font-mono text-gray-400 mt-0.5">RUC: {supplier.ruc}</p>
-            )}
-          </div>
+    <EntityCard
+      avatar={(
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white shadow-md shadow-blue-600/25">
+          {initials}
         </div>
-        <div className="flex gap-1">
-          <button onClick={(e) => { e.stopPropagation(); onEdit(supplier) }} title={t('Editar')}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-            <Edit size={14} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(supplier) }} title={t('Eliminar')}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        {supplier.contact && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <User size={12} className="flex-shrink-0 text-gray-400" />
-            {supplier.contact}
-          </div>
-        )}
-        {supplier.phone && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Phone size={12} className="flex-shrink-0 text-gray-400" />
-            {formatPhoneDisplay(supplier.phone)}
-          </div>
-        )}
-        {supplier.notes && (
-          <div className="flex items-start gap-2 text-xs text-gray-400">
-            <FileText size={12} className="mt-0.5 flex-shrink-0" />
-            <span className="line-clamp-2">{supplier.notes}</span>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+      title={supplier.name}
+      subtitle={supplier.ruc ? <span className="font-mono">RUC {supplier.ruc}</span> : null}
+      onOpen={onOpen} onEdit={onEdit} onDelete={onDelete}
+      link={{ to: `/products?supplierId=${supplier.id}`, label: t('Ver sus productos') }}
+    >
+      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+        owes ? 'bg-amber-50 text-amber-700 ring-amber-100' : 'bg-emerald-50 text-emerald-700 ring-emerald-100'}`}>
+        {owes ? t('Le debes {amount}', { amount: formatPrice(debt) }) : t('Sin deuda')}
+      </span>
+      {supplier.contact && (
+        <p className="flex items-center gap-2 text-xs text-gray-500"><User size={12} className="flex-shrink-0 text-gray-400" />{supplier.contact}</p>
+      )}
+      {supplier.phone && (
+        <p className="flex items-center gap-2 text-xs text-gray-500"><Phone size={12} className="flex-shrink-0 text-gray-400" />{formatPhoneDisplay(supplier.phone)}</p>
+      )}
+      {supplier.notes && (
+        <p className="flex items-start gap-2 text-xs text-gray-400"><FileText size={12} className="mt-0.5 flex-shrink-0" /><span className="line-clamp-2">{supplier.notes}</span></p>
+      )}
+    </EntityCard>
   )
 }
 
@@ -203,6 +185,12 @@ export default function SuppliersPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const suppliers = data?.content ?? []
+  const navigate  = useNavigate()
+
+  // Deuda por proveedor (Cuentas por pagar) para pintarla en cada tarjeta.
+  const { data: payables } = usePayables(adminBizParam(user)?.businessId ? adminBizParam(user) : undefined)
+  const debtById = Object.fromEntries((payables?.rows ?? []).map((r) => [r.supplierId, r.currentDebt]))
+  const withPhone = suppliers.filter((x) => x.phone).length
 
   const handleDelete = async (s) => {
     if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asociados.', { name: s.name }))) return
@@ -212,10 +200,9 @@ export default function SuppliersPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageTitle icon={Truck} tone="cyan">{t('Proveedores')}</PageTitle>
+      <ReportHeader icon={Truck} title={t('Proveedores')}
+        subtitle={t('A quién le compras la mercadería y cuánto le debes')}
+        help={(
           <HelpDrawer title={t('Cómo usar Proveedores')} autoOpenKey="eazystock_suppliers_help_v2">
             <p>{t('Tus proveedores: a quién le compras la mercadería y cuánto le debes a cada uno.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -232,26 +219,20 @@ export default function SuppliersPage() {
             </div>
             <p className="text-xs text-gray-400">{t('Tip: asigna proveedor a tus productos para usar el reporte "Resurtido" como lista de compras.')}</p>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {data?.totalElements ?? 0}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setModal({ supplier: null })}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-          <Plus size={15} />
-          {t('Nuevo proveedor')}
-        </button>
-      </div>
+        )}
+        right={<NewButton onClick={() => setModal({ supplier: null })}><Plus size={15} />{t('Nuevo proveedor')}</NewButton>} />
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder={t('Buscar proveedor...')} value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-      </div>
+      <AccountsSwitcher />
+
+      <ReportHero icon={Truck} label={t('Tus proveedores')} loading={isLoading}
+        value={data?.totalElements ?? 0}
+        cells={[
+          [t('Les debes'), formatPrice(payables?.totalPayable ?? 0)],
+          [t('Con deuda'), payables?.rows?.length ?? 0, Number(payables?.rows?.length) > 0 ? 'text-amber-200' : ''],
+          [t('Con teléfono'), withPhone],
+        ]} />
+
+      <BigSearch value={search} onChange={setSearch} placeholder={t('Buscar proveedor...')} />
 
       {/* Grid */}
       {isLoading ? (
@@ -278,9 +259,10 @@ export default function SuppliersPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {suppliers.map((s) => (
-            <SupplierCard key={s.id} supplier={s}
-              onEdit={(sup) => setModal({ supplier: sup })}
-              onDelete={handleDelete} />
+            <SupplierCard key={s.id} supplier={s} debt={debtById[s.id]}
+              onOpen={() => navigate(`/suppliers/${s.id}`)}
+              onEdit={() => setModal({ supplier: s })}
+              onDelete={() => handleDelete(s)} />
           ))}
         </div>
       )}

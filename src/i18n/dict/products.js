@@ -3,6 +3,25 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    // ── 29-sep: Proveedores, Marcas, Categorías, Ubicaciones rediseñadas + grupos del menú
+    'A quién le compras': 'Who you buy from',
+    'De qué marca es cada producto': 'Which brand each product is',
+    'Cómo ordenas el catálogo': 'How you organise the catalogue',
+    'Dónde está cada producto': 'Where each product is',
+    'Ver sus productos': 'See its products',
+    'Le debes {amount}': 'You owe {amount}',
+    'A quién le compras la mercadería y cuánto le debes': 'Who you buy goods from and how much you owe',
+    'Tus proveedores': 'Your suppliers',
+    'Les debes': 'You owe them',
+    'Con teléfono': 'With phone',
+    'Tus marcas': 'Your brands',
+    'Productos en el catálogo': 'Products in the catalogue',
+    'Con notas': 'With notes',
+    'Sin atributos sugeridos': 'No suggested attributes',
+    'Tus categorías': 'Your categories',
+    'Ver sus {n} producto(s)': 'See its {n} product(s)',
+    'Tus ubicaciones': 'Your locations',
+    'Productos ubicados': 'Products placed',
     // ── 29-sep: formulario de producto a dos columnas
     'Lo marcado con * es obligatorio; lo demás lo puedes completar después.': 'Fields marked * are required; you can fill in the rest later.',
     'Qué es': 'What it is',
@@ -692,6 +711,25 @@ export default {
   },
 
   it: {
+    // ── 29-sep: Proveedores, Marcas, Categorías, Ubicaciones rediseñadas + grupos del menú
+    'A quién le compras': 'Da chi compri',
+    'De qué marca es cada producto': 'Di che marca è ogni prodotto',
+    'Cómo ordenas el catálogo': 'Come organizzi il catalogo',
+    'Dónde está cada producto': 'Dove si trova ogni prodotto',
+    'Ver sus productos': 'Vedi i suoi prodotti',
+    'Le debes {amount}': 'Gli devi {amount}',
+    'A quién le compras la mercadería y cuánto le debes': 'Da chi compri la merce e quanto devi',
+    'Tus proveedores': 'I tuoi fornitori',
+    'Les debes': 'Gli devi',
+    'Con teléfono': 'Con telefono',
+    'Tus marcas': 'Le tue marche',
+    'Productos en el catálogo': 'Prodotti nel catalogo',
+    'Con notas': 'Con note',
+    'Sin atributos sugeridos': 'Nessun attributo suggerito',
+    'Tus categorías': 'Le tue categorie',
+    'Ver sus {n} producto(s)': 'Vedi i suoi {n} prodotti',
+    'Tus ubicaciones': 'Le tue posizioni',
+    'Productos ubicados': 'Prodotti posizionati',
     // ── 29-sep: formulario de producto a dos columnas
     'Lo marcado con * es obligatorio; lo demás lo puedes completar después.': 'I campi con * sono obbligatori; il resto puoi completarlo dopo.',
     'Qué es': 'Cos\'è',

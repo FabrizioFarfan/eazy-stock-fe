@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Plus, Search, MapPin, Edit, Trash2, Loader2, X, Package } from 'lucide-react'
+import { Plus, MapPin, Loader2, X, Package } from 'lucide-react'
+import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
+import { useProducts } from '../hooks/useProducts'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -110,38 +111,18 @@ function LocationCard({ location, onEdit, onDelete }) {
   const t = useT()
   const n = location.productCount ?? 0
   return (
-    <div className="flex cursor-pointer items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-all"
-      onClick={() => onEdit(location)}>
-      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-        <MapPin size={20} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-gray-900 truncate">{location.name}</p>
-        {location.notes && (
-          <p className="mt-0.5 text-xs text-gray-400 truncate">{location.notes}</p>
-        )}
-        {n > 0 ? (
-          <Link to={`/products?locationId=${location.id}`} onClick={(e) => e.stopPropagation()}
-            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline">
-            <Package size={11} /> {t('{n} producto(s)', { n })}
-          </Link>
-        ) : (
-          <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-400">
-            <Package size={11} /> {t('Sin productos')}
-          </p>
-        )}
-      </div>
-      <div className="flex gap-1">
-        <button onClick={(e) => { e.stopPropagation(); onEdit(location) }} title={t('Editar')}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-          <Edit size={14} />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(location) }} title={t('Eliminar')}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </div>
+    <EntityCard
+      avatar={<div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600"><MapPin size={22} /></div>}
+      title={location.name}
+      subtitle={location.notes || null}
+      onOpen={() => onEdit(location)} onEdit={() => onEdit(location)} onDelete={() => onDelete(location)}
+      link={n > 0 ? { to: `/products?locationId=${location.id}`, label: t('Ver sus {n} producto(s)', { n }) } : null}
+    >
+      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
+        n > 0 ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'bg-gray-50 text-gray-400 ring-gray-100'}`}>
+        <Package size={11} /> {n > 0 ? t('{n} producto(s)', { n }) : t('Sin productos')}
+      </span>
+    </EntityCard>
   )
 }
 
@@ -161,6 +142,7 @@ export default function LocationsPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const locations = data?.content ?? []
+  const { data: catalog } = useProducts({ page: 0, size: 1, active: true, ...adminBizParam(user) })
 
   const handleDelete = async (l) => {
     if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asignados.', { name: l.name }))) return
@@ -170,9 +152,9 @@ export default function LocationsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">{t('Ubicaciones')}</h2>
+      <ReportHeader icon={MapPin} title={t('Ubicaciones')}
+        subtitle={t('Dónde está cada producto')}
+        help={(
           <HelpDrawer title={t('Cómo usar Ubicaciones')} autoOpenKey="eazystock_locations_help_v1">
             <p>{t('Define los lugares físicos de tu negocio (almacén, estante, vitrina) y asigna cada producto a uno.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -180,25 +162,19 @@ export default function LocationsPage() {
               <p className="mt-1">{t('Cuando el vendedor busca un producto, ve dónde está sin preguntar. También puedes filtrar el catálogo por ubicación.')}</p>
             </div>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {data?.totalElements ?? 0}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setModal({ location: null })}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-          <Plus size={15} />
-          {t('Nueva ubicación')}
-        </button>
-      </div>
+        )}
+        right={<NewButton onClick={() => setModal({ location: null })}><Plus size={15} />{t('Nueva ubicación')}</NewButton>} />
 
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder={t('Buscar ubicación...')} value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-      </div>
+      <CatalogSwitcher />
+
+      <ReportHero icon={MapPin} label={t('Tus ubicaciones')} loading={isLoading}
+        value={data?.totalElements ?? 0}
+        cells={[
+          [t('Productos ubicados'), locations.reduce((n, l) => n + (l.productCount ?? 0), 0)],
+          [t('Productos en el catálogo'), catalog?.totalElements ?? '—'],
+        ]} />
+
+      <BigSearch value={search} onChange={setSearch} placeholder={t('Buscar ubicación...')} />
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -222,7 +198,7 @@ export default function LocationsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {locations.map((l) => (
             <LocationCard key={l.id} location={l}
               onEdit={(loc) => setModal({ location: loc })}

@@ -19,7 +19,8 @@ const SUPER_ADMIN_NAV = [
 ]
 
 // Páginas hermanas agrupadas bajo una flecha (Frank, 29-sep): Ventas con Nueva
-// venta y Cotización; Reportes con Balance, Vendedores y Análisis de clientes.
+// venta y Cotización; Reportes con Balance, Vendedores y Análisis de clientes;
+// Clientes y proveedores con sus cuentas; Catálogo con marcas, categorías y ubicaciones.
 // El grupo se abre solo cuando estás en una de sus páginas.
 const OWNER_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',         path: '/dashboard',           permission: null },
@@ -36,13 +37,17 @@ const OWNER_NAV = [
     { icon: Trophy,        label: 'Vendedores',        path: '/reports/sellers',     permission: 'canViewReports' },
     { icon: Award,         label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
   ] },
-  { icon: Users,           label: 'Clientes',          path: '/customers',           permission: null },
-  { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
-  { icon: HandCoins,       label: 'Cuentas x pagar',   path: '/reports/payables',    permission: null },
-  { icon: Truck,           label: 'Proveedores',       path: '/suppliers',           permission: null },
-  { icon: Tag,             label: 'Marcas',            path: '/brands',              permission: null },
-  { icon: FolderOpen,      label: 'Categorías',        path: '/categories',          permission: null },
-  { icon: MapPin,          label: 'Ubicaciones',       path: '/locations',           permission: null },
+  { icon: Wallet,          label: 'Clientes y proveedores', group: 'accounts', children: [
+    { icon: Users,         label: 'Clientes',          path: '/customers',           permission: null },
+    { icon: Wallet,        label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+    { icon: Truck,         label: 'Proveedores',       path: '/suppliers',           permission: null },
+    { icon: HandCoins,     label: 'Cuentas x pagar',   path: '/reports/payables',    permission: null },
+  ] },
+  { icon: FolderOpen,      label: 'Catálogo', group: 'catalog', children: [
+    { icon: Tag,           label: 'Marcas',            path: '/brands',              permission: null },
+    { icon: FolderOpen,    label: 'Categorías',        path: '/categories',          permission: null },
+    { icon: MapPin,        label: 'Ubicaciones',       path: '/locations',           permission: null },
+  ] },
   { icon: Users,           label: 'Empleados',         path: '/empleados',           permission: null },
   { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
@@ -64,8 +69,10 @@ const EMPLOYEE_NAV = [
     { icon: Scale,         label: 'Cierre de caja',    path: '/reports/balance',     permission: 'canViewCashClosing', hideIfPermission: 'canViewReports' },
     { icon: Award,         label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
   ] },
-  { icon: Users,           label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
-  { icon: Wallet,          label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+  { icon: Wallet,          label: 'Clientes y proveedores', group: 'accounts', children: [
+    { icon: Users,         label: 'Clientes',          path: '/customers',           permission: 'canManageCustomers' },
+    { icon: Wallet,        label: 'Cuentas x cobrar',  path: '/reports/receivables', permission: 'canViewReports' },
+  ] },
   { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },
   { icon: Settings,        label: 'Ajustes',           path: '/settings',            permission: null },
 ]

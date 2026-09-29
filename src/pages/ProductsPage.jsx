@@ -269,7 +269,14 @@ export default function ProductsPage() {
   const [orphansOnly, setOrphansOnly]   = useState(false)
   const [variableOnly, setVariableOnly] = useState(searchParams.get('variablePrice') === '1')
   // ?locationId= pre-activa el filtro de ubicación (link desde la página Ubicaciones)
-  const [colFilters, setColFilters]     = useState(() => ({ ...EMPTY_COL_FILTERS, locationId: searchParams.get('locationId') ?? '' }))
+  // ?brandId= / ?categoryId= / ?supplierId= llegan desde las tarjetas de Marcas, Categorías y Proveedores
+  const [colFilters, setColFilters]     = useState(() => ({
+    ...EMPTY_COL_FILTERS,
+    locationId: searchParams.get('locationId') ?? '',
+    brandId:    searchParams.get('brandId') ?? '',
+    categoryId: searchParams.get('categoryId') ?? '',
+    supplierId: searchParams.get('supplierId') ?? '',
+  }))
   const [sort, setSort]                 = useState(DEFAULT_SORT)
   const [page, setPage]                 = useState(0)
   const debouncedSearch                 = useDebounce(search, 400)

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, FolderOpen, Edit, Trash2, Loader2, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, FolderOpen, Loader2, X } from 'lucide-react'
+import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
+import { useProducts } from '../hooks/useProducts'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -169,56 +171,24 @@ function CategoryModal({ category, onClose }) {
 
 function CategoryCard({ category, onEdit, onDelete }) {
   const t = useT()
-  const [expanded, setExpanded] = useState(false)
-  const initial  = category.name[0]?.toUpperCase() ?? '?'
-  const colorCls = catColor(category.name)
-  const attrs    = category.suggestedAttributes ?? []
-
+  const initial = category.name[0]?.toUpperCase() ?? '?'
+  const attrs   = category.suggestedAttributes ?? []
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all">
-      <div className="flex cursor-pointer items-center gap-4 p-4" onClick={() => onEdit(category)}>
-        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold ${colorCls}`}>
-          {initial}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-gray-900 truncate">{category.name}</p>
-          {category.description && (
-            <p className="mt-0.5 text-xs text-gray-400 truncate">{category.description}</p>
-          )}
-          {attrs.length > 0 && (
-            <p className="mt-0.5 text-xs text-gray-400">{attrs.length !== 1 ? t('{n} atributos', { n: attrs.length }) : t('1 atributo')}</p>
-          )}
-        </div>
-        <div className="flex gap-1 items-center">
-          {attrs.length > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v) }}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 transition-colors">
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-          )}
-          <button onClick={(e) => { e.stopPropagation(); onEdit(category) }} title={t('Editar')}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-            <Edit size={14} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(category) }} title={t('Eliminar')}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </div>
-      {expanded && attrs.length > 0 && (
-        <div className="border-t border-gray-50 px-4 pb-3 pt-2">
-          <div className="flex flex-wrap gap-1.5">
-            {attrs.map((attr) => (
-              <span key={attr}
-                className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                {attr}
-              </span>
-            ))}
-          </div>
+    <EntityCard
+      avatar={<div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold ${catColor(category.name)}`}>{initial}</div>}
+      title={category.name}
+      subtitle={category.description || (attrs.length ? (attrs.length !== 1 ? t('{n} atributos', { n: attrs.length }) : t('1 atributo')) : t('Sin atributos sugeridos'))}
+      onOpen={() => onEdit(category)} onEdit={() => onEdit(category)} onDelete={() => onDelete(category)}
+      link={{ to: `/products?categoryId=${category.id}`, label: t('Ver sus productos') }}
+    >
+      {attrs.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {attrs.map((attr) => (
+            <span key={attr} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">{attr}</span>
+          ))}
         </div>
       )}
-    </div>
+    </EntityCard>
   )
 }
 
@@ -238,6 +208,7 @@ export default function CategoriesPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const categories = data?.content ?? []
+  const { data: catalog } = useProducts({ page: 0, size: 1, active: true, ...adminBizParam(user) })
 
   const handleDelete = async (c) => {
     if (!window.confirm(t('¿Eliminar "{name}"?\nEsto fallará si tiene productos asociados.', { name: c.name }))) return
@@ -248,9 +219,9 @@ export default function CategoriesPage() {
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">{t('Categorías')}</h2>
+      <ReportHeader icon={FolderOpen} title={t('Categorías')}
+        subtitle={t('Cómo ordenas el catálogo')}
+        help={(
           <HelpDrawer title={t('Cómo usar Categorías')} autoOpenKey="eazystock_categories_help_v1">
             <p>{t('Las categorías ordenan tu catálogo y hacen que buscar y filtrar sea mucho más rápido.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -262,26 +233,19 @@ export default function CategoriesPage() {
               <p className="mt-1">{t('Click en una categoría para renombrarla o ajustar sus atributos. Los productos existentes no se pierden.')}</p>
             </div>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {data?.totalElements ?? 0}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setModal({ category: null })}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-          <Plus size={15} />
-          {t('Nueva categoría')}
-        </button>
-      </div>
+        )}
+        right={<NewButton onClick={() => setModal({ category: null })}><Plus size={15} />{t('Nueva categoría')}</NewButton>} />
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder={t('Buscar categoría...')} value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
-      </div>
+      <CatalogSwitcher />
+
+      <ReportHero icon={FolderOpen} label={t('Tus categorías')} loading={isLoading}
+        value={data?.totalElements ?? 0}
+        cells={[
+          [t('Productos en el catálogo'), catalog?.totalElements ?? '—'],
+          [t('Atributos sugeridos'), categories.reduce((n, c) => n + (c.suggestedAttributes?.length ?? 0), 0)],
+        ]} />
+
+      <BigSearch value={search} onChange={setSearch} placeholder={t('Buscar categoría...')} />
 
       {/* Grid */}
       {isLoading ? (
@@ -310,7 +274,7 @@ export default function CategoriesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((c) => (
             <CategoryCard key={c.id} category={c}
               onEdit={(cat) => setModal({ category: cat })}
