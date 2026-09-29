@@ -50,6 +50,19 @@ function StockBadge({ current, min }) {
   )
 }
 
+// Celular: barra stock / mínimo, igual que «Stock bajo» del Dashboard.
+function StockMeter({ current, min }) {
+  const cur = Number(current ?? 0), mn = Number(min ?? 0)
+  if (mn <= 0) return null
+  const pct = Math.max(3, Math.min(100, (cur / mn) * 100))
+  const color = cur <= 0 ? 'bg-red-500' : cur < mn ? (pct < 50 ? 'bg-orange-500' : 'bg-amber-400') : 'bg-emerald-500'
+  return (
+    <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
+      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+    </div>
+  )
+}
+
 function SkeletonRow() {
   return (
     <tr>
@@ -68,7 +81,7 @@ function SkeletonRow() {
  * barra superior (la tabla de Stock no tiene columna de categoría). Click en una
  * fila abre el detalle del producto con acciones de stock directas.
  */
-export default function InventoryTab() {
+export default function InventoryTab({ initialLowStock = false, initialStockMax = '' }) {
   const t = useT()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -79,9 +92,9 @@ export default function InventoryTab() {
   // Barra superior
   const [search, setSearch]         = useState('')
   const [categoryId, setCategoryId] = useState('')
-  const [lowStock, setLowStock]     = useState(false)
+  const [lowStock, setLowStock]     = useState(initialLowStock)
   // Filtros por columna
-  const [colFilters, setColFilters] = useState(EMPTY_COL_FILTERS)
+  const [colFilters, setColFilters] = useState(() => ({ ...EMPTY_COL_FILTERS, stockMax: initialStockMax }))
   const [sort, setSort]             = useState(DEFAULT_SORT)
   const [page, setPage]             = useState(0)
 
@@ -182,7 +195,7 @@ export default function InventoryTab() {
           </div>
 
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-            className={`${selectCls} min-w-44`}>
+            className={`${selectCls} w-full sm:w-auto sm:min-w-44`}>
             <option value="">{t('Todas las categorías')}</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -218,9 +231,46 @@ export default function InventoryTab() {
         </div>
       )}
 
-      {/* Tabla */}
+      {/* Tabla (PC) / tarjetas (celular) */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="space-y-3 p-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />)}</div>
+          ) : items.length === 0 ? (
+            <p className="px-5 py-14 text-center text-sm font-semibold text-gray-500">{t('No hay productos con estos filtros')}</p>
+          ) : (
+            <ul className={`divide-y divide-gray-100 ${isFetching ? 'opacity-60' : ''}`}>
+              {items.map((p) => (
+                <li key={p.id}>
+                  <button type="button" onClick={() => setDetail(p)}
+                    className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-blue-50/30">
+                    <ProductThumb product={p} size={44} />
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 break-words text-sm font-semibold leading-snug text-gray-900">{p.name}</p>
+                      <p className="mt-0.5 truncate text-xs text-gray-400">
+                        <span className="font-mono">{p.sku}</span>{p.supplierName && <> · {p.supplierName}</>}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <UnitBadge unit={p.unit} />
+                        {p.locationName && (
+                          <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-amber-700"><MapPin size={10} /> {p.locationName}</span>
+                        )}
+                        <ExpiryBadge product={p} />
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+                      <StockBadge current={p.currentStock} min={p.minStock} />
+                      <StockMeter current={p.currentStock} min={p.minStock} />
+                      <span className="text-[11px] text-gray-400">{t('Mín.')} {p.minStock}</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -354,7 +404,7 @@ export default function InventoryTab() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-3.5 sm:px-5">
             <p className="text-sm text-gray-400">
               <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
               <span className="font-semibold text-gray-700">{totalElements}</span> {t('productos')}

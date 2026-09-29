@@ -3,6 +3,17 @@
 // Cuentas por pagar. El español es la llave.
 export default {
   en: {
+    // ── 29-sep: página Stock rediseñada como el Dashboard
+    'entradas y salidas de mercadería': 'goods in and out',
+    'Ver el historial': 'See the history',
+    'Llegó mercadería del proveedor': 'Goods arrived from the supplier',
+    'Corrige lo que no cuadra con el conteo': 'Fix what does not match the count',
+    'Agotados': 'Out of stock',
+    'Sin una sola unidad': 'Not a single unit left',
+    'Recepciones este mes': 'Receipts this month',
+    'Compras a tus proveedores': 'Purchases from your suppliers',
+    'Por debajo de su mínimo': 'Below their minimum',
+    'c/u': 'each',
     // ── Devolución al proveedor desde el detalle de la recepción (pedido de William)
     'Devolver productos al proveedor': 'Return products to supplier',
     '¿Qué le regresas a {supplier}?': 'What are you sending back to {supplier}?',
@@ -375,6 +386,17 @@ export default {
   },
 
   it: {
+    // ── 29-sep: página Stock rediseñada como el Dashboard
+    'entradas y salidas de mercadería': 'entrate e uscite di merce',
+    'Ver el historial': 'Vedi lo storico',
+    'Llegó mercadería del proveedor': 'È arrivata merce dal fornitore',
+    'Corrige lo que no cuadra con el conteo': 'Correggi ciò che non torna con il conteggio',
+    'Agotados': 'Esauriti',
+    'Sin una sola unidad': 'Neanche un\'unità',
+    'Recepciones este mes': 'Ricevimenti questo mese',
+    'Compras a tus proveedores': 'Acquisti dai tuoi fornitori',
+    'Por debajo de su mínimo': 'Sotto il loro minimo',
+    'c/u': 'cad.',
     // ── Devolución al proveedor desde el detalle de la recepción (pedido de William)
     'Devolver productos al proveedor': 'Restituisci prodotti al fornitore',
     '¿Qué le regresas a {supplier}?': 'Cosa restituisci a {supplier}?',

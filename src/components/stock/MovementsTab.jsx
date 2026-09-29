@@ -390,7 +390,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
         <ProductFilterPicker product={product} onChange={onProductChange} className="w-full sm:w-80" />
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className={selectCls}>
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
           <option value="">{t('Todos los tipos')}</option>
           <option value="PURCHASE_ENTRY">{t('Entradas')}</option>
           <option value="SALE">{t('Ventas')}</option>
@@ -398,19 +398,21 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           <option value="RETURN">{t('Devoluciones')}</option>
           <option value="SUPPLIER_RETURN">{t('Devuelto a proveedor')}</option>
         </select>
-        <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} min-w-48`}>
+        <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} w-full sm:w-auto sm:min-w-48`}>
           <option value="">{t('Todos los proveedores')}</option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">{t('Desde')}</span>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={selectCls} />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={selectCls} />
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-3">
+          <label className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-gray-500 sm:text-sm">{t('Desde')}</span>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={`${selectCls} min-w-0`} />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-gray-500 sm:text-sm">{t('Hasta')}</span>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={`${selectCls} min-w-0`} />
+          </label>
         </div>
         {hasFilters && (
           <button onClick={() => { setTypeFilter(''); setSupplierId(''); setFrom(''); setTo(''); onProductChange(null) }}
@@ -461,7 +463,46 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           from={from} to={to} onRowClick={setDetailRow} />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="overflow-x-auto">
+          {/* Celular: una tarjeta por movimiento (la tabla de 8 columnas no se lee) */}
+          <div className="md:hidden">
+            {isLoading ? (
+              <div className="space-y-3 p-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />)}</div>
+            ) : movements.length === 0 ? (
+              <p className="px-5 py-14 text-center text-sm font-medium text-gray-400">
+                {productId && (from || to)
+                  ? t('Este producto no tuvo movimientos en este período — prueba con «Todo el historial».')
+                  : t('No hay movimientos en este período')}
+              </p>
+            ) : (
+              <ul className={`divide-y divide-gray-100 ${isFetching ? 'opacity-60' : ''}`}>
+                {movements.map((m) => {
+                  const cfg = TYPE_CONFIG[m.type] ?? { label: m.type, cls: 'bg-gray-100 text-gray-600' }
+                  return (
+                    <li key={m.id}>
+                      <button type="button" disabled={!!productId}
+                        onClick={() => onProductChange({ id: m.productId, name: m.productName, sku: m.productSku })}
+                        className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50/70 disabled:cursor-default">
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 break-words text-sm font-semibold leading-snug text-gray-900">{m.productName}</p>
+                          <p className="mt-0.5 truncate text-xs text-gray-400">
+                            {formatDate(m.createdAt)}{m.supplierName && <> · {m.supplierName}</>}
+                          </p>
+                          <span className={`mt-1.5 inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
+                        </div>
+                        <div className="flex flex-shrink-0 flex-col items-end gap-1 text-sm">
+                          <QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} />
+                          <span className="text-xs text-gray-400">{formatPrice(m.unitCost)} {t('c/u')}</span>
+                          <span className="font-bold text-gray-900">{formatAmount(m.subtotal)}</span>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -518,7 +559,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-3.5 sm:px-5">
               <p className="text-sm text-gray-400">
                 <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
                 <span className="font-semibold text-gray-700">{totalElements}</span> {t('movimientos')}

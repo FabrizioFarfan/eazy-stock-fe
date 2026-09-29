@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { PackagePlus, SlidersHorizontal, ArrowUpDown } from 'lucide-react'
+import { PackagePlus, SlidersHorizontal, ArrowUpDown, ArrowRight, AlertTriangle, PackageX, Truck } from 'lucide-react'
 import PageTitle from '../../components/common/PageTitle'
 import HelpDrawer from '../../components/common/HelpDrawer'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +10,94 @@ import SupplierReceiptModal from '../../components/stock/SupplierReceiptModal'
 import InventoryTab from '../../components/stock/InventoryTab'
 import ReceiptsTab from '../../components/stock/ReceiptsTab'
 import MovementsTab from '../../components/stock/MovementsTab'
+import { useMovements } from '../../hooks/useStock'
+import { useProducts } from '../../hooks/useProducts'
+import { useReceipts } from '../../hooks/useReceipts'
+import { localISODate } from '../../utils/formatDate'
+
+function firstOfMonthStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+// ── Piezas del diseño (mismo lenguaje que Dashboard y Productos) ─────────────
+
+// Franja azul: lo que se movió HOY en el almacén.
+function TodayMovesHero({ total, entries, sales, adjustments, loading, onSeeAll }) {
+  const t = useT()
+  const cells = [
+    [t('Entradas'), entries],
+    [t('Ventas'), sales],
+    [t('Ajustes'), adjustments],
+  ]
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-5 text-white shadow-md shadow-blue-600/30 sm:p-6" data-testid="stock-hero">
+      <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/10" />
+      <div className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/5" />
+      <ArrowUpDown className="pointer-events-none absolute right-5 top-5 h-10 w-10 text-white/25 sm:h-12 sm:w-12" />
+      <p className="relative text-xs font-semibold uppercase tracking-widest text-white/80">{t('Movimientos de hoy')}</p>
+      {loading ? (
+        <div className="relative mt-2 h-10 w-24 animate-pulse rounded-lg bg-white/20" />
+      ) : (
+        <p className="relative mt-1 flex items-baseline gap-2">
+          <span className="text-4xl font-extrabold tracking-tight sm:text-5xl">{total ?? 0}</span>
+          <span className="text-sm font-medium text-white/80">{t('entradas y salidas de mercadería')}</span>
+        </p>
+      )}
+      <div className="relative mt-5 grid grid-cols-3 gap-2 border-t border-white/20 pt-4">
+        {cells.map(([label, n]) => (
+          <div key={label} className="min-w-0">
+            <p className="truncate text-[11px] font-medium uppercase tracking-wide text-white/70">{label}</p>
+            <p className="text-lg font-bold">{loading || n == null ? '—' : n}</p>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={onSeeAll}
+        className="relative mt-3 inline-flex items-center gap-1 text-xs font-semibold text-white/90 hover:text-white">
+        {t('Ver el historial')} <ArrowRight size={13} />
+      </button>
+    </div>
+  )
+}
+
+function ActionTile({ icon: Icon, label, hint, onClick, primary, className = '' }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`group flex items-center gap-3 rounded-2xl p-4 text-left transition-all active:scale-[0.98] ${
+        primary
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 hover:bg-blue-700'
+          : 'border border-gray-100 bg-white shadow-sm hover:border-blue-200 hover:shadow-md'
+      } ${className}`}>
+      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+        primary ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+        <Icon size={19} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-bold ${primary ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+        <p className={`truncate text-xs ${primary ? 'text-white/80' : 'text-gray-400'}`}>{hint}</p>
+      </div>
+      <ArrowRight size={15} className={`hidden flex-shrink-0 transition-transform group-hover:translate-x-0.5 sm:block ${primary ? 'text-white/80' : 'text-gray-300'}`} />
+    </button>
+  )
+}
+
+// Tarjeta con cifra que lleva a su pestaña ya filtrada.
+function KpiCard({ icon: Icon, iconCls, label, n, hint, onClick }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 text-left shadow-sm transition-shadow hover:shadow-md sm:p-4">
+      <div className={`hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl sm:flex ${n ? iconCls : 'bg-gray-100 text-gray-400'}`}>
+        <Icon size={18} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-400 sm:truncate sm:text-[11px]">{label}</p>
+        <p className={`text-2xl font-extrabold ${n ? 'text-gray-900' : 'text-gray-300'}`}>{n ?? '—'}</p>
+        {hint && <p className="hidden truncate text-xs text-gray-400 sm:block">{hint}</p>}
+      </div>
+      <ArrowRight size={14} className="hidden flex-shrink-0 sm:block text-gray-300 transition-transform group-hover:translate-x-0.5" />
+    </button>
+  )
+}
 
 const TABS = [
   { id: 'movements',  label: 'Movimientos' },
@@ -31,7 +119,23 @@ export default function StockPage() {
   const productId = searchParams.get('product')
   const [pickedProduct, setPickedProduct] = useState(null)
 
-  const setActiveTab = (id) => setSearchParams(id === 'movements' ? {} : { tab: id }, { replace: true })
+  const setActiveTab = (id, extra = {}) => setSearchParams(id === 'movements' ? {} : { tab: id, ...extra }, { replace: true })
+  const goTo = (id, extra) => {
+    setActiveTab(id, extra)
+    document.getElementById('stock-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Cifras de la cabecera: consultas de una fila, solo importa totalElements.
+  const biz = user?.role === 'SUPER_ADMIN' && user?.businessId ? { businessId: user.businessId } : {}
+  const today = localISODate()
+  const day = { from: today, to: today, page: 0, size: 1, ...biz }
+  const { data: mAll, isLoading: mLoading } = useMovements(day)
+  const { data: mIn }  = useMovements({ ...day, type: 'PURCHASE_ENTRY' })
+  const { data: mOut } = useMovements({ ...day, type: 'SALE' })
+  const { data: mAdj } = useMovements({ ...day, type: 'ADJUSTMENT' })
+  const { data: pLow } = useProducts({ page: 0, size: 1, active: true, lowStock: true, ...biz })
+  const { data: pOut } = useProducts({ page: 0, size: 1, active: true, stockMax: 0, ...biz })
+  const { data: rMonth } = useReceipts({ page: 0, size: 1, from: firstOfMonthStr(), to: today, ...biz })
   const setProduct = (p) => {
     setPickedProduct(p)
     setSearchParams(p ? { tab: 'movements', product: p.id } : {}, { replace: true })
@@ -97,24 +201,36 @@ export default function StockPage() {
             </p>
           </HelpDrawer>
         </div>
+      </div>
+
+      {/* Franja del día + accesos grandes */}
+      <div className={`grid grid-cols-1 gap-4 ${isManager ? 'lg:grid-cols-3' : ''}`}>
+        <div className={isManager ? 'lg:col-span-2' : ''}>
+          <TodayMovesHero loading={mLoading} total={mAll?.totalElements} entries={mIn?.totalElements}
+            sales={mOut?.totalElements} adjustments={mAdj?.totalElements} onSeeAll={() => goTo('movements')} />
+        </div>
         {isManager && (
-          <div className="flex gap-2">
-            <button onClick={() => setShowReceiptModal(true)}
-              className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-500/30 hover:bg-emerald-600 transition-all active:scale-[0.98]">
-              <PackagePlus size={15} />
-              {t('Registrar recepción')}
-            </button>
-            <button onClick={() => setModal('ADJUSTMENT')}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              <SlidersHorizontal size={15} />
-              {t('Ajuste')}
-            </button>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:content-start">
+            <ActionTile icon={PackagePlus} primary label={t('Registrar recepción')} hint={t('Llegó mercadería del proveedor')}
+              onClick={() => setShowReceiptModal(true)} />
+            <ActionTile icon={SlidersHorizontal} label={t('Ajuste de stock')} hint={t('Corrige lo que no cuadra con el conteo')}
+              onClick={() => setModal('ADJUSTMENT')} />
           </div>
         )}
       </div>
 
+      {/* Lo que pide atención, cada tarjeta abre su pestaña ya filtrada */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <KpiCard icon={AlertTriangle} iconCls="bg-red-50 text-red-600" label={t('Stock bajo')} n={pLow?.totalElements}
+          hint={t('Por debajo de su mínimo')} onClick={() => goTo('inventory', { low: '1' })} />
+        <KpiCard icon={PackageX} iconCls="bg-orange-50 text-orange-600" label={t('Agotados')} n={pOut?.totalElements}
+          hint={t('Sin una sola unidad')} onClick={() => goTo('inventory', { out: '1' })} />
+        <KpiCard icon={Truck} iconCls="bg-emerald-50 text-emerald-600" label={t('Recepciones este mes')} n={rMonth?.totalElements}
+          hint={t('Compras a tus proveedores')} onClick={() => goTo('receipts')} />
+      </div>
+
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1">
+      <div id="stock-tabs" className="flex scroll-mt-4 gap-1 rounded-xl border border-gray-200 bg-gray-100 p-1">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -131,7 +247,11 @@ export default function StockPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'inventory' && <InventoryTab />}
+      {activeTab === 'inventory' && (
+        <InventoryTab key={searchParams.toString()}
+          initialLowStock={searchParams.get('low') === '1'}
+          initialStockMax={searchParams.get('out') === '1' ? '0' : ''} />
+      )}
       {activeTab === 'receipts'  && <ReceiptsTab />}
       {activeTab === 'movements' && (
         <MovementsTab productId={productId}

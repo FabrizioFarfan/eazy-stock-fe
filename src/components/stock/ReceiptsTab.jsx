@@ -76,38 +76,40 @@ export default function ReceiptsTab() {
           placeholder={t('Recepciones de un producto...')} className="w-full sm:w-72" />
 
         <select value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setPage(0) }}
-          className={`${selectCls} min-w-48`}>
+          className={`${selectCls} w-full sm:w-auto sm:min-w-48`}>
           <option value="">{t('Todos los proveedores')}</option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">{t('Desde')}</span>
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0) }}
-            className={selectCls} />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-500">{t('Hasta')}</span>
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0) }}
-            className={selectCls} />
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-3">
+          <label className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-gray-500 sm:text-sm">{t('Desde')}</span>
+            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0) }}
+              className={`${selectCls} min-w-0`} />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-gray-500 sm:text-sm">{t('Hasta')}</span>
+            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0) }}
+              className={`${selectCls} min-w-0`} />
+          </label>
         </div>
 
         {/* Nº de factura/guía: para eso se pide al registrar (pedido de William) */}
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={reference}
             onChange={(e) => { setReference(e.target.value); setPage(0) }}
             placeholder={t('Nº de factura / guía...')}
-            className={`${selectCls} pl-8 min-w-44`}
+            className={`${selectCls} w-full pl-8 sm:w-auto sm:min-w-44`}
           />
         </div>
 
         <select value={paymentMode} onChange={(e) => { setPaymentMode(e.target.value); setPage(0) }}
-          className={selectCls}>
+          className={`${selectCls} w-full sm:w-auto`}>
           <option value="">{t('Contado y crédito')}</option>
           <option value="CASH">{t('Al contado')}</option>
           <option value="CREDIT">{t('A crédito')}</option>
@@ -121,9 +123,58 @@ export default function ReceiptsTab() {
         )}
       </div>
 
-      {/* Table */}
+      {/* Tabla (PC) / tarjetas (celular) */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></div>
+          ) : isError ? (
+            <p className="px-5 py-14 text-center text-sm font-semibold text-gray-600">{t('No pudimos cargar las recepciones')}</p>
+          ) : items.length === 0 ? (
+            <p className="px-5 py-14 text-center text-sm font-semibold text-gray-500">
+              {hasFilters ? t('Sin recepciones con estos filtros') : t('Aún no registraste recepciones')}
+            </p>
+          ) : (
+            <ul className={`divide-y divide-gray-100 ${isFetching ? 'opacity-60' : ''}`}>
+              {items.map((r) => (
+                <li key={r.id}>
+                  <button type="button" onClick={() => setSelectedReceiptId(r.id)}
+                    className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-blue-50/30">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <PackagePlus size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-900">{r.supplierName}</p>
+                      <p className="mt-0.5 truncate text-xs text-gray-400">
+                        {formatDate(r.createdAt)} · <span className="font-mono">{r.referenceDocument ?? '—'}</span>
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                          r.paymentMode === 'CREDIT' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
+                        </span>
+                        <span className="text-[11px] text-gray-500">{t('{n} productos', { n: r.movements?.length ?? 0 })}</span>
+                        {isRepeated(r) && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">
+                            <AlertTriangle size={10} /> {t('repetida')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-base font-bold text-gray-900">{formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}</p>
+                      {r.returns?.length > 0 && (
+                        <p className="text-[11px] font-semibold text-purple-600">{t('con devolución')}</p>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -214,7 +265,7 @@ export default function ReceiptsTab() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-3.5 sm:px-5">
             <p className="text-sm text-gray-400">
               <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
               <span className="font-semibold text-gray-700">{totalElements}</span> {t('recepciones')}

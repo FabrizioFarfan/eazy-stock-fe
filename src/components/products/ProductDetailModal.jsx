@@ -31,13 +31,14 @@ function Section({ title, children }) {
   )
 }
 
-function Row({ label, value, mono }) {
+function Field({ label, value, mono, className = '' }) {
+  const empty = value == null || value === ''
   return (
-    <div className="flex items-start justify-between gap-4 py-1.5">
-      <span className="text-xs text-gray-500 shrink-0">{label}</span>
-      <span className={`text-xs font-medium text-right text-gray-800 ${mono ? 'font-mono' : ''}`}>
-        {value ?? '—'}
-      </span>
+    <div className={`min-w-0 rounded-xl bg-white px-3 py-2 ring-1 ring-gray-100 ${className}`}>
+      <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
+      <div className={`mt-0.5 break-all text-sm font-semibold ${empty ? 'text-gray-300' : 'text-gray-800'} ${mono ? 'font-mono text-[13px]' : ''}`}>
+        {empty ? '—' : value}
+      </div>
     </div>
   )
 }
@@ -90,298 +91,284 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
 
   const isLow = product.currentStock < product.minStock
   const photo = imageSrc(product.imageUrl)
-  const thumb = imageSrc(product.thumbUrl)
+  const margin = !hidesCost && !product.priceIsVariable && product.purchasePrice && product.salePrice
+    ? (((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)
+    : null
+  const minN = Number(product.minStock ?? 0)
+  const curN = Number(product.currentStock ?? 0)
+  const stockPct = minN > 0 ? Math.max(3, Math.min(100, (curN / minN) * 100)) : 100
+  const hasActions = !!(onEdit || onShowQr || onDeactivate || onReactivate || onRegisterEntry || onAdjust)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="flex w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4" onMouseDown={onClose}>
+      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl md:max-w-4xl lg:max-w-5xl"
+        onMouseDown={(e) => e.stopPropagation()} data-testid="product-detail">
 
-        {/* Header */}
-        <div className="flex flex-shrink-0 items-start justify-between border-b border-gray-100 px-6 py-5">
-          <div className="flex items-center gap-3">
-            {thumb ? (
-              <img src={thumb} alt="" className="h-11 w-11 flex-shrink-0 rounded-xl border border-gray-100 object-cover" />
-            ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
-                <Package size={22} className="text-blue-600" />
-              </div>
-            )}
-            <div>
-              <h3 className="font-bold text-gray-900 leading-tight">{product.name}</h3>
-              <p className="text-xs font-mono text-gray-400 mt-0.5">{product.sku}</p>
+        {/* Cabecera: nombre grande + etiquetas */}
+        <div className="flex flex-shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
+          <div className="min-w-0">
+            <p className="font-mono text-xs text-gray-400">{product.sku}</p>
+            <h3 className="mt-0.5 break-words text-xl font-extrabold leading-tight text-gray-900 sm:text-2xl">{product.name}</h3>
+            {product.presentation && <p className="mt-0.5 text-sm text-gray-500">{product.presentation}</p>}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
+                product.active ? 'bg-emerald-50 text-emerald-700 ring-emerald-100' : 'bg-gray-100 text-gray-500 ring-gray-200'}`}>
+                {product.active ? t('Activo') : t('Inactivo')}
+              </span>
+              {product.categoryName && (
+                <span className="flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                  <FolderOpen size={11} /> {product.categoryName}
+                </span>
+              )}
+              {product.brandName && (
+                <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                  <Tag size={11} /> {product.brandName}
+                </span>
+              )}
+              {product.supplierName && (
+                <span className="flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">
+                  <Truck size={11} /> {product.supplierName}
+                </span>
+              )}
               {product.locationName && (
-                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100">
+                <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100">
                   <MapPin size={11} /> {product.locationName}
-                </p>
+                </span>
               )}
             </div>
           </div>
-          <button onClick={onClose}
-            className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
-            <X size={18} />
+          <button onClick={onClose} aria-label={t('Cerrar')}
+            className="flex-shrink-0 rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
+            <X size={20} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto space-y-4 px-6 py-5">
+        {/* Cuerpo: en PC/tablet foto + cifras a la izquierda, datos a la derecha */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-5">
 
-          {/* Foto grande — solo acá se pide la versión grande (las listas usan la miniatura) */}
-          {photo && (
-            <a href={photo} target="_blank" rel="noreferrer" title={t('Ver foto en grande')}
-              className="group relative block overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-              <img src={photo} alt={product.name} className="mx-auto max-h-64 w-full object-contain" />
-              <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition group-hover:opacity-100">
-                <Maximize2 size={11} /> {t('Ver foto en grande')}
-              </span>
-            </a>
-          )}
-
-          {/* Low stock warning */}
-          {isLow && (
-            <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
-              <AlertTriangle size={15} />
-              {t('Stock bajo — {n} unidades (mínimo {min})', { n: product.currentStock, min: product.minStock })}
-            </div>
-          )}
-
-          {/* Expiration warning */}
-          {product.expired && (
-            <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
-              <CalendarClock size={15} />
-              {t('Producto vencido — venció el {date}', { date: formatShortDate(product.expirationDate) })}
-            </div>
-          )}
-          {!product.expired && product.expiringSoon && (
-            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-100">
-              <CalendarClock size={15} />
-              {t('Por vencer')} — {product.daysToExpire === 0 ? t('vence hoy') : t('en {n} días', { n: product.daysToExpire })} ({formatShortDate(product.expirationDate)})
-            </div>
-          )}
-
-          {/* Identificación */}
-          <Section title={t('Identificación')}>
-            <Row label={t('Código (SKU)')}     value={product.sku}          mono />
-            <Row label={t('Código de barras')} value={product.barcode}      mono />
-            <Row label={t('Código proveedor')} value={product.providerCode} mono />
-            <Row label={t('QR sistema')}       value={product.qrCodeSystem} mono />
-            <Row label={t('Unidad')}           value={product.unit} />
-            {product.presentation && (
-              <Row label={t('Presentación')}   value={product.presentation} />
-            )}
-            <Row label={t('Ubicación')}        value={product.locationName || t('Sin ubicación')} />
-          </Section>
-
-          {/* Notas de importación — si hubo issues durante el bulk import */}
-          {product.importNotes && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
-                {t('Notas de importación')}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                {product.importNotes}
-              </p>
-            </div>
-          )}
-
-          {/* Comercial */}
-          <Section title={t('Comercial')}>
-            {product.description && (
-              <div className="mb-2 pb-2 border-b border-gray-100">
-                <p className="text-xs text-gray-600">{product.description}</p>
-              </div>
-            )}
-            <div className="flex gap-2 mb-2">
-              {product.categoryName && (
-                <div className="flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
-                  <FolderOpen size={11} />
-                  {product.categoryName}
+            {/* Columna izquierda */}
+            <div className="flex flex-col gap-4 md:col-span-2">
+              {/* Foto grande — solo acá se pide la versión grande (las listas usan la miniatura) */}
+              {photo ? (
+                <a href={photo} target="_blank" rel="noreferrer" title={t('Ver foto en grande')}
+                  className="group relative block aspect-[4/3] overflow-hidden rounded-2xl md:aspect-square border border-gray-100 bg-gray-50">
+                  <img src={photo} alt={product.name} className="h-full w-full object-contain" />
+                  <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-black/55 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition group-hover:opacity-100">
+                    <Maximize2 size={11} /> {t('Ver foto en grande')}
+                  </span>
+                </a>
+              ) : (
+                <div className="hidden aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-300 md:flex">
+                  <Package size={64} strokeWidth={1.5} />
+                  <p className="text-xs font-medium text-gray-400">{t('Sin foto')}</p>
                 </div>
               )}
-              {product.brandName && (
-                <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                  <Tag size={11} />
-                  {product.brandName}
+
+              {/* Cifras que importan en el mostrador */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-blue-600 p-4 text-white shadow-md shadow-blue-600/25">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">{t('P. venta')}</p>
+                  {product.priceIsVariable ? (
+                    <p className="mt-1 text-lg font-extrabold">{t('Variable')}</p>
+                  ) : (
+                    <p className="mt-1 whitespace-nowrap text-2xl font-extrabold leading-tight md:text-xl lg:text-2xl">{formatPrice(product.salePrice)}</p>
+                  )}
+                  <p className="text-[11px] text-white/75">{t('por')} {product.unit || t('unidad')}</p>
                 </div>
-              )}
-              {product.supplierName && (
-                <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">
-                  <Truck size={11} />
-                  {product.supplierName}
-                </div>
-              )}
-            </div>
-            {!hidesCost && <Row label={t('P. compra')} value={formatPrice(product.purchasePrice)} />}
-            <Row label={t('P. venta')}  value={
-              product.priceIsVariable ? (
-                <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
-                  {t('Variable')}
-                </span>
-              ) : formatPrice(product.salePrice)
-            } />
-            {!hidesCost && <Row label={t('Margen')}    value={
-              !product.priceIsVariable && product.purchasePrice && product.salePrice
-                ? `${(((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)}%`
-                : null
-            } />}
-          </Section>
-
-          {/* Stock */}
-          <Section title={t('Stock')}>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-xs text-gray-500">{t('Stock actual')}</span>
-              <span className={`text-lg font-bold ${isLow ? 'text-red-500' : 'text-emerald-600'}`}>
-                {product.currentStock}
-              </span>
-            </div>
-            <Row label={t('Stock mínimo')} value={product.minStock} />
-            <Row label={t('Vencimiento')}
-              value={product.expirationDate ? <ExpiryBadge product={product} /> : t('Sin fecha')} />
-            <Row label={t('Estado')}
-              value={
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${
-                  product.active
-                    ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-                    : 'bg-gray-100 text-gray-500 ring-gray-200'
-                }`}>
-                  {product.active ? t('Activo') : t('Inactivo')}
-                </span>
-              }
-            />
-          </Section>
-
-          {/* Atributos */}
-          {hasAttrs && (
-            <Section title={t('Atributos')}>
-              {Object.entries(attrs).map(([key, val]) => (
-                <Row key={key} label={key} value={val} />
-              ))}
-            </Section>
-          )}
-
-          {/* Repetidos: mismo nombre con otro código. Hasta el 16-sep cada recepción
-              de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
-          {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
-
-          {/* Historial reciente */}
-          <div>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                {t('Historial reciente')}
-              </p>
-              {/* Pedido de William: acá solo se ven los últimos 5; el historial
-                  entero vive en Stock › Movimientos, ya filtrado por este producto */}
-              {!hideHistoryLink && <button type="button"
-                onClick={() => {
-                  onClose()
-                  navigate(`/stock?tab=movements&product=${product.id}`, { state: { product } })
-                }}
-                className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-                <History size={13} />
-                {t('Ver todo su historial')}
-              </button>}
-            </div>
-            {loadingMov ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-xl bg-gray-100" />
-                ))}
-              </div>
-            ) : movements.length === 0 ? (
-              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-5 text-center text-xs text-gray-400">
-                {t('Sin movimientos registrados')}
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-50 rounded-xl border border-gray-100 bg-white">
-                {movements.map((m) => (
-                  <div key={m.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <MovementTypeIcon type={m.type} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <MovementTypeBadge type={m.type} />
-                        <span className="text-xs text-gray-400 truncate">{m.notes}</span>
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(m.createdAt)}</p>
-                    </div>
-                    <span className={`text-sm font-bold shrink-0 ${
-                      (m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? 'text-red-500' : 'text-emerald-600'
-                    }`}>
-                      {(m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? '-' : '+'}{m.quantity}
-                    </span>
+                <div className={`rounded-2xl border p-4 ${isLow ? 'border-red-100 bg-red-50' : 'border-gray-100 bg-white'}`}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('Stock actual')}</p>
+                  <p className={`mt-1 text-2xl font-extrabold leading-tight ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{formatQty(product.currentStock)}</p>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                    <div className={`h-full rounded-full ${curN <= 0 ? 'bg-red-500' : isLow ? 'bg-orange-500' : 'bg-emerald-500'}`} style={{ width: `${stockPct}%` }} />
                   </div>
-                ))}
+                  <p className="mt-1 text-[11px] text-gray-400">{t('Mínimo')} {formatQty(product.minStock)}</p>
+                </div>
+                {!hidesCost && (
+                  <div className="col-span-2 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('P. compra')}</p>
+                      <p className="text-base font-bold text-gray-900">{formatPrice(product.purchasePrice)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('Margen')}</p>
+                      <p className={`text-base font-bold ${margin == null ? 'text-gray-300' : Number(margin) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {margin == null ? '—' : `${margin}%`}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Timestamps */}
-          <div className="flex gap-4 text-xs text-gray-400 pt-1">
-            <span>{t('Creado')}: {formatDate(product.createdAt)}</span>
-            <span>·</span>
-            <span>{t('Actualizado')}: {formatDate(product.updatedAt)}</span>
+            {/* Columna derecha */}
+            <div className="flex min-w-0 flex-col gap-4 md:col-span-3">
+              {isLow && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
+                  <AlertTriangle size={15} className="flex-shrink-0" />
+                  {t('Stock bajo — {n} unidades (mínimo {min})', { n: product.currentStock, min: product.minStock })}
+                </div>
+              )}
+              {product.expired && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
+                  <CalendarClock size={15} className="flex-shrink-0" />
+                  {t('Producto vencido — venció el {date}', { date: formatShortDate(product.expirationDate) })}
+                </div>
+              )}
+              {!product.expired && product.expiringSoon && (
+                <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 ring-1 ring-amber-100">
+                  <CalendarClock size={15} className="flex-shrink-0" />
+                  {t('Por vencer')} — {product.daysToExpire === 0 ? t('vence hoy') : t('en {n} días', { n: product.daysToExpire })} ({formatShortDate(product.expirationDate)})
+                </div>
+              )}
+
+              {/* Identificación en rejilla: al costado de la foto, no debajo */}
+              <Section title={t('Identificación')}>
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                  <Field label={t('Código (SKU)')}     value={product.sku}          mono />
+                  <Field label={t('Código de barras')} value={product.barcode}      mono />
+                  <Field label={t('Código proveedor')} value={product.providerCode} mono />
+                  <Field label={t('Unidad')}           value={product.unit} />
+                  <Field label={t('Ubicación')}        value={product.locationName || t('Sin ubicación')} />
+                  <Field label={t('Vencimiento')}      value={product.expirationDate ? <ExpiryBadge product={product} /> : t('Sin fecha')} />
+                  <Field label={t('QR sistema')}       value={product.qrCodeSystem} mono className="col-span-2 lg:col-span-3" />
+                </div>
+              </Section>
+
+              {(product.description || hasAttrs) && (
+                <Section title={hasAttrs ? t('Atributos') : t('Descripción')}>
+                  {product.description && <p className="text-sm text-gray-600">{product.description}</p>}
+                  {hasAttrs && (
+                    <div className={`flex flex-wrap gap-2 ${product.description ? 'mt-3' : ''}`}>
+                      {Object.entries(attrs).map(([key, val]) => (
+                        <span key={key} className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
+                          <span className="text-gray-400">{key}</span>{' '}
+                          <span className="font-semibold text-gray-800">{val}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              )}
+
+              {/* Notas de importación — si hubo issues durante el bulk import */}
+              {product.importNotes && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">{t('Notas de importación')}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">{product.importNotes}</p>
+                </div>
+              )}
+
+              {/* Repetidos: mismo nombre con otro código. Hasta el 16-sep cada recepción
+                  de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
+              {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
+
+              {/* Historial reciente */}
+              <div>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Historial reciente')}</p>
+                  {/* Pedido de William: acá solo se ven los últimos 5; el historial
+                      entero vive en Stock › Movimientos, ya filtrado por este producto */}
+                  {!hideHistoryLink && <button type="button"
+                    onClick={() => {
+                      onClose()
+                      navigate(`/stock?tab=movements&product=${product.id}`, { state: { product } })
+                    }}
+                    className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                    <History size={13} />
+                    {t('Ver todo su historial')}
+                  </button>}
+                </div>
+                {loadingMov ? (
+                  <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-10 animate-pulse rounded-xl bg-gray-100" />)}</div>
+                ) : movements.length === 0 ? (
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-5 text-center text-xs text-gray-400">
+                    {t('Sin movimientos registrados')}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50 rounded-xl border border-gray-100 bg-white">
+                    {movements.map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 px-3 py-2.5">
+                        <MovementTypeIcon type={m.type} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <MovementTypeBadge type={m.type} />
+                            <span className="truncate text-xs text-gray-400">{m.notes}</span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-gray-400">{formatDate(m.createdAt)}</p>
+                        </div>
+                        <span className={`shrink-0 text-sm font-bold ${
+                          (m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? 'text-red-500' : 'text-emerald-600'
+                        }`}>
+                          {(m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? '-' : '+'}{m.quantity}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
+                <span>{t('Creado')}: {formatDate(product.createdAt)}</span>
+                <span>{t('Actualizado')}: {formatDate(product.updatedAt)}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Acciones */}
-        {(onEdit || onShowQr || onDeactivate || onReactivate || onRegisterEntry || onAdjust) && (
-          <div className="flex flex-shrink-0 flex-wrap justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-6 py-4">
-            {onAdjust && (
-              <button
-                onClick={() => onAdjust(product)}
-                className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors"
-              >
-                <SlidersHorizontal size={14} />
-                {t('Ajustar stock')}
-              </button>
-            )}
-            {onRegisterEntry && (
-              <button
-                onClick={() => onRegisterEntry(product)}
-                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
-              >
-                <ArrowDownToLine size={14} />
-                {t('Registrar entrada')}
-              </button>
-            )}
-            {/* Camino de vuelta para lo que se ocultó por error: un producto con
-                ventas no se puede borrar, así que sin esto quedaba atrapado. */}
-            {onReactivate && !product.active && (
-              <button
-                onClick={() => onReactivate(product)}
-                className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors"
-              >
-                <Eye size={14} />
-                {t('Reactivar')}
-              </button>
-            )}
-            {/* También para productos ya ocultos: desde acá se los borra de
-                verdad y su código vuelve a quedar libre. */}
-            {onDeactivate && (
-              <button
-                onClick={() => onDeactivate(product)}
-                className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 size={14} />
-                {product.active ? t('Ocultar o borrar') : t('Borrar definitivamente')}
-              </button>
-            )}
-            {onShowQr && (
-              <button
-                onClick={() => onShowQr(product)}
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                <QrCode size={14} />
-                {t('Código QR')}
-              </button>
-            )}
-            {onEdit && (
-              <button
-                onClick={() => onEdit(product)}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
-              >
-                <Edit size={14} />
-                {t('Editar')}
-              </button>
-            )}
+        {/* Acciones: lo que borra a la izquierda, lo de todos los días a la derecha */}
+        {hasActions && (
+          <div className="flex flex-shrink-0 flex-col-reverse gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
+            <div className="flex flex-wrap gap-2">
+              {/* También para productos ya ocultos: desde acá se los borra de
+                  verdad y su código vuelve a quedar libre. */}
+              {onDeactivate && (
+                <button onClick={() => onDeactivate(product)}
+                  className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
+                  <Trash2 size={14} />
+                  {product.active ? t('Ocultar o borrar') : t('Borrar definitivamente')}
+                </button>
+              )}
+              {onShowQr && (
+                <button onClick={() => onShowQr(product)}
+                  className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                  <QrCode size={14} />
+                  {t('Código QR')}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 [&>button]:flex-1 [&>button]:justify-center sm:[&>button]:flex-none">
+              {onAdjust && (
+                <button onClick={() => onAdjust(product)}
+                  className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors">
+                  <SlidersHorizontal size={14} />
+                  {t('Ajustar stock')}
+                </button>
+              )}
+              {onRegisterEntry && (
+                <button onClick={() => onRegisterEntry(product)}
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors">
+                  <ArrowDownToLine size={14} />
+                  {t('Registrar entrada')}
+                </button>
+              )}
+              {/* Camino de vuelta para lo que se ocultó por error: un producto con
+                  ventas no se puede borrar, así que sin esto quedaba atrapado. */}
+              {onReactivate && !product.active && (
+                <button onClick={() => onReactivate(product)}
+                  className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors">
+                  <Eye size={14} />
+                  {t('Reactivar')}
+                </button>
+              )}
+              {onEdit && (
+                <button onClick={() => onEdit(product)}
+                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                  <Edit size={14} />
+                  {t('Editar')}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
