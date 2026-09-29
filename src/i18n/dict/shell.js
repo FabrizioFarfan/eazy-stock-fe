@@ -2,6 +2,18 @@
 // bienvenida, HelpDrawer, EntityPicker, errores de API y fechas.
 export default {
   en: {
+    // ── 29-sep: Notificaciones y Ajustes rediseñadas
+    'Tu nombre y tu correo para entrar': 'Your name and the email you log in with',
+    'Nombre, país, moneda y RUC': 'Name, country, currency and tax ID',
+    'Ábrela como una app, sin buscarla en el navegador': 'Open it like an app, without looking for it in the browser',
+    'Tu cuenta, tu negocio y cómo se ve la app': 'Your account, your business and how the app looks',
+    'Cámbiala si alguien más la conoce': 'Change it if someone else knows it',
+    'Claro u oscuro, como te canse menos la vista': 'Light or dark, whichever is easier on your eyes',
+    'Tutoriales y guías paso a paso': 'Tutorials and step-by-step guides',
+    'Salir de esta cuenta': 'Leave this account',
+    'Todo lo que pasó en tu negocio mientras no mirabas': 'Everything that happened in your business while you weren\'t looking',
+    'Tócalas para marcarlas como leídas': 'Tap them to mark them as read',
+    '{n} sin leer': '{n} unread',
     // ── Moneda por negocio + teléfonos con prefijo (2-sep) ──
     'Teléfono inválido': 'Invalid phone number',
     'Moneda': 'Currency',
@@ -249,6 +261,18 @@ export default {
   },
 
   it: {
+    // ── 29-sep: Notificaciones y Ajustes rediseñadas
+    'Tu nombre y tu correo para entrar': 'Il tuo nome e l\'email per entrare',
+    'Nombre, país, moneda y RUC': 'Nome, paese, valuta e partita IVA',
+    'Ábrela como una app, sin buscarla en el navegador': 'Aprila come un\'app, senza cercarla nel browser',
+    'Tu cuenta, tu negocio y cómo se ve la app': 'Il tuo account, la tua attività e l\'aspetto dell\'app',
+    'Cámbiala si alguien más la conoce': 'Cambiala se qualcun altro la conosce',
+    'Claro u oscuro, como te canse menos la vista': 'Chiaro o scuro, come ti stanca meno la vista',
+    'Tutoriales y guías paso a paso': 'Tutorial e guide passo passo',
+    'Salir de esta cuenta': 'Esci da questo account',
+    'Todo lo que pasó en tu negocio mientras no mirabas': 'Tutto quello che è successo nella tua attività mentre non guardavi',
+    'Tócalas para marcarlas como leídas': 'Toccale per segnarle come lette',
+    '{n} sin leer': '{n} non lette',
     // ── Moneda por negocio + teléfonos con prefijo (2-sep) ──
     'Teléfono inválido': 'Numero di telefono non valido',
     'Moneda': 'Valuta',

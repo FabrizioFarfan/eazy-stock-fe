@@ -1,4 +1,4 @@
-import { User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical } from 'lucide-react'
+import { User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -14,6 +14,7 @@ import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
 import TutorialModal from '../components/tutorial/TutorialModal'
+import { ReportHeader } from '../components/reports/ReportKit'
 import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 
@@ -24,12 +25,6 @@ const ROLE_LABEL = {
   EMPLOYEE: 'Empleado',
 }
 
-const ROLE_COLOR = {
-  BOSS:        'bg-amber-50 text-amber-700 ring-1 ring-amber-100',
-  SUPER_ADMIN: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100',
-  OWNER:       'bg-blue-50 text-blue-700 ring-1 ring-blue-100',
-  EMPLOYEE:    'bg-slate-100 text-slate-600',
-}
 
 const AVATAR_GRADIENT = {
   BOSS:        'from-amber-400 to-orange-600',
@@ -56,11 +51,19 @@ function InfoRow({ icon: Icon, label, value }) {
   )
 }
 
-function Section({ title, action, children }) {
+function Section({ title, icon: Icon, hint, action, children }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-50 px-5 py-3.5">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">{title}</h3>
+      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          {Icon && (
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Icon size={17} /></span>
+          )}
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+            {hint && <p className="truncate text-xs text-gray-400">{hint}</p>}
+          </div>
+        </div>
         {action}
       </div>
       <div className="px-5">{children}</div>
@@ -206,6 +209,7 @@ function ProfileSection() {
 
   return (
     <Section
+      icon={User} hint={t('Tu nombre y tu correo para entrar')}
       title={t('Mi perfil')}
       action={<EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} />}
     >
@@ -327,6 +331,7 @@ function BusinessSection() {
 
   return (
     <Section
+      icon={Building2} hint={t('Nombre, país, moneda y RUC')}
       title={t('Mi negocio')}
       action={isOwner ? <EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} /> : null}
     >
@@ -418,7 +423,7 @@ function InstallSection() {
   }
 
   return (
-    <Section title={t('Instalar la app')}>
+    <Section icon={MonitorDown} title={t('Instalar la app')} hint={t('Ábrela como una app, sin buscarla en el navegador')}>
       {installed ? (
         <div className="flex items-center gap-3.5 py-4">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50">
@@ -516,35 +521,54 @@ export default function SettingsPage() {
   const gradient = AVATAR_GRADIENT[displayRole(user)] ?? 'from-gray-400 to-gray-600'
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-4">
+    <div className="flex flex-col gap-5">
+      <ReportHeader icon={Settings} title={t('Ajustes')} subtitle={t('Tu cuenta, tu negocio y cómo se ve la app')} />
 
-      {/* Profile header card */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="h-16 bg-gradient-to-r from-[#111827] to-slate-700" />
-        <div className="px-6 pb-5">
-          <div className="-mt-7 flex items-end justify-between">
-            <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-xl font-extrabold text-white shadow-lg ring-4 ring-white`}>
+      {/* Perfil: quién eres, en qué negocio, y el modo oscuro a un toque */}
+      <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-5 text-white shadow-md shadow-blue-600/30 sm:p-6">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-20 right-40 h-40 w-40 rounded-full bg-white/5" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-2xl font-extrabold text-white shadow-lg ring-4 ring-white/30`}>
               {initials}
             </div>
-            <span className={`mb-1 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[displayRole(user)] ?? 'bg-gray-100 text-gray-600'}`}>
-              {t(ROLE_LABEL[displayRole(user)] ?? user?.role)}
-            </span>
+            <div className="min-w-0">
+              <p className="break-words text-2xl font-extrabold leading-tight">{user?.name}</p>
+              {user?.email && <p className="truncate text-sm text-white/80">{user.email}</p>}
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">{t(ROLE_LABEL[displayRole(user)] ?? user?.role)}</span>
+                {user?.businessName && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium"><Building2 size={12} /> {user.businessName}</span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="mt-3">
-            <p className="text-lg font-bold text-gray-900">{user?.name}</p>
-            {user?.email && <p className="text-sm text-gray-400">{user.email}</p>}
-          </div>
+          <button type="button" onClick={toggleTheme}
+            className="flex flex-shrink-0 items-center gap-2 self-start rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-50 sm:self-center">
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            {isDark ? t('Modo claro') : t('Modo oscuro')}
+          </button>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+      <div className="flex flex-col gap-5">
       {/* Profile info (editable) */}
       <ProfileSection />
 
       {/* Business info (editable por OWNER) */}
       <BusinessSection />
 
+      {/* Password */}
+      <Section icon={Shield} title={t('Cambiar contraseña')} hint={t('Cámbiala si alguien más la conoce')}>
+        <ChangePasswordForm />
+      </Section>
+      </div>
+
+      <div className="flex flex-col gap-5">
       {/* Appearance */}
-      <Section title={t('Apariencia')}>
+      <Section icon={isDark ? Moon : Sun} title={t('Apariencia')} hint={t('Claro u oscuro, como te canse menos la vista')}>
         <button
           onClick={toggleTheme}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors"
@@ -575,17 +599,8 @@ export default function SettingsPage() {
       </Section>
 
       {/* Language */}
-      <Section title={t('Idioma')}>
-        <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100">
-              <Globe size={15} className="text-slate-500" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{t('Idioma de la app')}</p>
-              <p className="text-xs text-gray-400">{t('Español, inglés o italiano')}</p>
-            </div>
-          </div>
+      <Section icon={Globe} title={t('Idioma')} hint={t('Español, inglés o italiano')}>
+        <div className="py-4">
           <LangSwitcher />
         </div>
       </Section>
@@ -593,13 +608,8 @@ export default function SettingsPage() {
       {/* Install PWA */}
       <InstallSection />
 
-      {/* Password */}
-      <Section title={t('Cambiar contraseña')}>
-        <ChangePasswordForm />
-      </Section>
-
       {/* Help */}
-      <Section title={t('Ayuda')}>
+      <Section icon={BookOpen} title={t('Ayuda')} hint={t('Tutoriales y guías paso a paso')}>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('eazystock:show-tutorial'))}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-gray-50 transition-colors border-b border-gray-50"
@@ -652,7 +662,7 @@ export default function SettingsPage() {
 
       {/* Session */}
       <LogoutConfirm open={confirmLogout} onClose={() => setConfirmLogout(false)} />
-      <Section title={t('Sesión')}>
+      <Section icon={LogOut} title={t('Sesión')} hint={t('Salir de esta cuenta')}>
         <button
           onClick={() => setConfirmLogout(true)}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
@@ -676,6 +686,9 @@ export default function SettingsPage() {
           </div>
         </button>
       </Section>
+
+      </div>
+      </div>
 
       <p className="text-center text-xs text-gray-300">Eazy Stock · v1.0</p>
     </div>
