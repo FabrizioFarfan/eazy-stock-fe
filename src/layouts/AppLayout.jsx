@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { ShoppingCart, Package } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import PageWatermark from '../components/common/PageWatermark'
 import TutorialModal from '../components/tutorial/TutorialModal'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
@@ -97,6 +98,7 @@ export default function AppLayout({ children }) {
           {children}
         </main>
       </div>
+      <PageWatermark />
       {showTutorial && <TutorialModal onClose={closeTutorial} />}
     </div>
   )

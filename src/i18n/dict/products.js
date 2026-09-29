@@ -3,6 +3,18 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    // ── 29-sep: Productos rediseñado como el Dashboard
+    'Tu catálogo': 'Your catalogue',
+    'productos a la venta': 'products for sale',
+    'Cárgalo en un minuto': 'Add it in a minute',
+    'Todo tu inventario desde Excel': 'Your whole inventory from Excel',
+    'Tu catálogo a Excel': 'Your catalogue to Excel',
+    'Productos ocultos': 'Hidden products',
+    'Listado': 'List',
+    'Toca un producto para ver su ficha': 'Tap a product to see its details',
+    'Ningún producto con estos filtros': 'No products match these filters',
+    'Quita un filtro para ver más': 'Remove a filter to see more',
+    'Compra': 'Cost',
     // ── Nombre completo al pasar el mouse + columna Atributos (pedido de William)
     'Click para ver detalles y opciones del producto': 'Click to see product details and options',
     'Click para ver el detalle del producto': 'Click to see the product detail',
@@ -669,6 +681,18 @@ export default {
   },
 
   it: {
+    // ── 29-sep: Productos rediseñado como el Dashboard
+    'Tu catálogo': 'Il tuo catalogo',
+    'productos a la venta': 'prodotti in vendita',
+    'Cárgalo en un minuto': 'Inseriscilo in un minuto',
+    'Todo tu inventario desde Excel': 'Tutto il tuo inventario da Excel',
+    'Tu catálogo a Excel': 'Il tuo catalogo in Excel',
+    'Productos ocultos': 'Prodotti nascosti',
+    'Listado': 'Elenco',
+    'Toca un producto para ver su ficha': 'Tocca un prodotto per vederne la scheda',
+    'Ningún producto con estos filtros': 'Nessun prodotto con questi filtri',
+    'Quita un filtro para ver más': 'Togli un filtro per vederne di più',
+    'Compra': 'Acquisto',
     // ── Nombre completo al pasar el mouse + columna Atributos (pedido de William)
     'Click para ver detalles y opciones del producto': 'Clicca per vedere dettagli e opzioni del prodotto',
     'Click para ver el detalle del producto': 'Clicca per vedere il dettaglio del prodotto',
