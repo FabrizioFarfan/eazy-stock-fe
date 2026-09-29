@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   ArrowLeft, Edit, DollarSign, Sliders, Loader2,
-  TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Mail, MapPin,
+  TrendingUp, TrendingDown, FileText, Phone, Mail, MapPin,
   MessageCircle, FilePlus2, CheckCircle2, History,
   ShoppingBag, Star, Clock, Repeat, Wallet, ShoppingCart,
 } from 'lucide-react'
@@ -25,6 +25,7 @@ import SaleDetailModal from '../components/reports/SaleDetailModal'
 import QuoteDetailModal from '../components/quotes/QuoteDetailModal'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { ProfileHero, ActionButton, InfoRow, SectionTitle } from '../components/accounts/AccountKit'
 import { useT, dateLocale } from '../i18n'
 
 function HelpBlock({ title, children }) {
@@ -148,7 +149,7 @@ function PurchasesSection({ customerId, onOpenSale }) {
       </div>
 
       {loadingSummary ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 animate-pulse rounded-2xl bg-gray-100" />)}
         </div>
       ) : !hasPurchases ? (
@@ -160,7 +161,7 @@ function PurchasesSection({ customerId, onOpenSale }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4">
             <PurchaseStat icon={Wallet} label={t('Total comprado')} value={formatPrice(summary.netSpent)}
               hint={Number(summary.returnedAmount) > 0 ? t('{amount} devueltos', { amount: formatPrice(summary.returnedAmount) }) : undefined}
               tone="bg-emerald-50 text-emerald-600" />
@@ -262,20 +263,6 @@ const TYPE_CONFIG = {
   ADJUSTMENT: { label: 'Ajuste',  cls: 'bg-amber-50 text-amber-700 ring-amber-100',   icon: Sliders,      sign: '±' },
 }
 
-function StatCard({ label, value, tone = 'default' }) {
-  const toneCls = tone === 'danger'
-    ? 'bg-red-50 text-red-700 ring-red-100'
-    : tone === 'positive'
-      ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-      : 'bg-gray-50 text-gray-700 ring-gray-100'
-  return (
-    <div className={`rounded-2xl px-4 py-3 ring-1 ${toneCls}`}>
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-70">{label}</p>
-      <p className="mt-1 text-xl font-bold">{value}</p>
-    </div>
-  )
-}
-
 export default function CustomerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -327,99 +314,80 @@ export default function CustomerDetailPage() {
   return (
     <div className="flex flex-col gap-5">
 
-      {/* Back + actions */}
+      {/* Volver + ayuda */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate(backTo)}
-          className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+          className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
           <ArrowLeft size={14} />{backLabel ? t('Volver a {page}', { page: t(backLabel) }) : t('Volver')}
         </button>
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={scrollToHistory}
-            title={t('Ir al historial completo de movimientos (al final de la ficha)')}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-            <History size={14} />{t('Ver movimientos')}
-          </button>
+        <HelpDrawer title={t('Cómo cobrarle a este cliente')} autoOpenKey="eazystock_customer_help_v1">
+          <CustomerHelp />
+        </HelpDrawer>
+      </div>
+
+      {/* Perfil: quién es y cuánto debe */}
+      <ProfileHero
+        name={customer.name}
+        chips={[
+          customer.documentId && { icon: FileText, text: customer.documentId },
+          customer.phone && { icon: Phone, text: formatPhoneDisplay(customer.phone) },
+          customer.email && { icon: Mail, text: customer.email },
+          customer.address && { icon: MapPin, text: customer.address },
+        ].filter(Boolean)}
+        debtLabel={t('Deuda actual')}
+        debt={formatPrice(debt)}
+        limitLabel={t('Límite de crédito')}
+        limit={limit != null ? formatPrice(limit) : '—'}
+        usage={usage}
+        exceeds={exceeds}
+        exceedsLabel={t('Excede límite')}
+        notes={customer.notes}
+      />
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Columna derecha (primero en el celular): lo que haces con este cliente */}
+        <div className="flex flex-col gap-3 lg:sticky lg:top-4 lg:order-2 lg:self-start">
+          {canManage && (
+            <ActionButton icon={DollarSign} tone="primary" label={t('Registrar pago')}
+              hint={debt > 0 ? t('Te paga una parte o todo') : t('No tiene deuda')}
+              onClick={() => setShowPayment(true)} disabled={debt <= 0} />
+          )}
+          {debt > 0 && reminderWhatsAppUrl(user?.businessName, customer) && (
+            <ActionButton icon={MessageCircle} label="WhatsApp" hint={t('Recordatorio de deuda ya escrito')}
+              href={reminderWhatsAppUrl(user?.businessName, customer)} />
+          )}
           {/* Estado de cuenta: siempre disponible (también con deuda 0, para que el
               cliente vea que está al día o revise su historial). */}
-          <StatementMenu customerId={id} />
-          {debt > 0 && (
-            <>
-              {reminderWhatsAppUrl(user?.businessName, customer) && (
-                <a href={reminderWhatsAppUrl(user?.businessName, customer)}
-                  target="_blank" rel="noopener noreferrer"
-                  title={t('Enviar recordatorio de deuda por WhatsApp')}
-                  className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600">
-                  <MessageCircle size={14} />WhatsApp
-                </a>
-              )}
-            </>
-          )}
-          {canManage && (
-            <>
-              <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
-                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
-                <DollarSign size={14} />{t('Registrar pago')}
-              </button>
-              <button onClick={() => setShowAdjustment(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-                <Sliders size={14} />{t('Ajustar deuda')}
-              </button>
+          <StatementMenu customerId={id} full />
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-1 shadow-sm">
+            <InfoRow label={t('Límite de crédito')} value={limit != null ? formatPrice(limit) : '—'} />
+            <div className="border-t border-gray-50" />
+            <InfoRow label={t('% del límite usado')} value={usage != null ? `${usage}%` : '—'} tone={exceeds ? 'text-red-600' : undefined} />
+            <div className="border-t border-gray-50" />
+            <InfoRow label={t('Última transacción')} value={lastTxn ? formatDate(lastTxn.createdAt) : '—'} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={scrollToHistory}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <History size={14} />{t('Movimientos')}
+            </button>
+            {canManage && (
               <button onClick={() => setShowEdit(true)}
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                 <Edit size={14} />{t('Editar')}
               </button>
-            </>
-          )}
-          <HelpDrawer title={t('Cómo cobrarle a este cliente')} autoOpenKey="eazystock_customer_help_v1">
-            <CustomerHelp />
-          </HelpDrawer>
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{customer.name}</h2>
-            <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
-              {customer.documentId && (
-                <span className="flex items-center gap-1.5"><FileText size={13} />{customer.documentId}</span>
-              )}
-              {customer.phone && (
-                <span className="flex items-center gap-1.5"><Phone size={13} />{formatPhoneDisplay(customer.phone)}</span>
-              )}
-              {customer.email && (
-                <span className="flex items-center gap-1.5"><Mail size={13} />{customer.email}</span>
-              )}
-              {customer.address && (
-                <span className="flex items-center gap-1.5"><MapPin size={13} />{customer.address}</span>
-              )}
-            </div>
+            )}
+            {canManage && (
+              <button onClick={() => setShowAdjustment(true)}
+                className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-100">
+                <Sliders size={14} />{t('Ajustar deuda')}
+              </button>
+            )}
           </div>
-          {exceeds && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100">
-              <AlertTriangle size={12} />{t('Excede límite')}
-            </span>
-          )}
         </div>
-        {customer.notes && (
-          <p className="mt-3 rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-600">{customer.notes}</p>
-        )}
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={t('Deuda actual')}
-          value={formatPrice(debt)}
-          tone={debt > 0 ? (exceeds ? 'danger' : 'default') : 'positive'} />
-        <StatCard label={t('Límite de crédito')}
-          value={limit != null ? formatPrice(limit) : '—'} />
-        <StatCard label={t('% del límite usado')}
-          value={usage != null ? `${usage}%` : '—'}
-          tone={exceeds ? 'danger' : 'default'} />
-        <StatCard label={t('Última transacción')}
-          value={lastTxn ? formatDate(lastTxn.createdAt) : '—'} />
-      </div>
+        {/* Columna principal */}
+        <div className="flex min-w-0 flex-col gap-5 lg:order-1 lg:col-span-2">
 
       {/* Compras del cliente (tarea 250) */}
       <PurchasesSection customerId={id} onOpenSale={setOpenSaleId} />
@@ -427,7 +395,7 @@ export default function CustomerDetailPage() {
       {/* Cotizaciones del cliente */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-gray-900">{t('Cotizaciones')}</h3>
+          <SectionTitle className="" icon={FileText} title={t('Cotizaciones')} count={quoteSearch.items.length || null} />
           {canSell && (
             <button onClick={() => navigate('/cotizaciones')}
               className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
@@ -477,10 +445,8 @@ export default function CustomerDetailPage() {
       {/* Timeline */}
       <div id="historial-movimientos" className="scroll-mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
-            <p className="mt-0.5 text-xs text-gray-400">{t('Cargos, pagos y ajustes con el saldo después de cada movimiento. Del más reciente al más antiguo.')}</p>
-          </div>
+          <SectionTitle className="" icon={History} title={t('Historial de transacciones')}
+            hint={t('Cargos, pagos y ajustes con el saldo después de cada movimiento. Del más reciente al más antiguo.')} />
           <StatementMenu customerId={id} variant="ghost" />
         </div>
         {loadingTxns ? (
@@ -528,6 +494,9 @@ export default function CustomerDetailPage() {
             })}
           </ul>
         )}
+      </div>
+
+        </div>
       </div>
 
       {showEdit && <CustomerFormModal customer={customer} onClose={() => setShowEdit(false)} />}

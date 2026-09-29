@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft, DollarSign, PackagePlus, Sliders, Loader2,
-  TrendingUp, TrendingDown, AlertTriangle, FileText, Phone, Truck,
+  TrendingUp, TrendingDown, FileText, Phone, User, Package, History,
 } from 'lucide-react'
 import { suppliersApi } from '../services/endpoints/suppliers'
 import {
@@ -16,6 +16,8 @@ import PaymentModal from '../components/accounts/PaymentModal'
 import AdjustmentModal from '../components/accounts/AdjustmentModal'
 import DebtAddModal from '../components/accounts/DebtAddModal'
 import { useT, dateLocale } from '../i18n'
+import { ProfileHero, ActionButton, InfoRow, SectionTitle } from '../components/accounts/AccountKit'
+import { formatPhoneDisplay } from '../utils/phone'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -29,20 +31,6 @@ const TYPE_CONFIG = {
   PAYMENT:    { label: 'Pago',   cls: 'bg-emerald-50 text-emerald-700 ring-emerald-100', icon: TrendingDown, sign: '−' },
   ADJUSTMENT: { label: 'Ajuste', cls: 'bg-amber-50 text-amber-700 ring-amber-100',   icon: Sliders,      sign: '±' },
   RETURN:     { label: 'Devolución de mercadería', cls: 'bg-purple-50 text-purple-700 ring-purple-100', icon: TrendingDown, sign: '−' },
-}
-
-function StatCard({ label, value, tone = 'default' }) {
-  const toneCls = tone === 'danger'
-    ? 'bg-red-50 text-red-700 ring-red-100'
-    : tone === 'positive'
-      ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-      : 'bg-gray-50 text-gray-700 ring-gray-100'
-  return (
-    <div className={`rounded-2xl px-4 py-3 ring-1 ${toneCls}`}>
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-70">{label}</p>
-      <p className="mt-1 text-xl font-bold">{value}</p>
-    </div>
-  )
 }
 
 export default function SupplierDetailPage() {
@@ -92,65 +80,64 @@ export default function SupplierDetailPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+          className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
           <ArrowLeft size={14} />{t('Volver')}
         </button>
-        {canManage && (
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => setShowDebt(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-              <PackagePlus size={14} />{t('Recepción a crédito')}
-            </button>
-            <button onClick={() => setShowPayment(true)} disabled={debt <= 0}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40">
-              <DollarSign size={14} />{t('Registrar pago')}
-            </button>
+      </div>
+
+      {/* Perfil: quién es y cuánto le debes */}
+      <ProfileHero
+        name={supplier.name}
+        chips={[
+          supplier.ruc && { icon: FileText, text: `RUC ${supplier.ruc}` },
+          supplier.phone && { icon: Phone, text: formatPhoneDisplay(supplier.phone) },
+          supplier.contact && { icon: User, text: supplier.contact },
+        ].filter(Boolean)}
+        debtLabel={t('Le debemos')}
+        debt={formatPrice(debt)}
+        limitLabel={t('Crédito que nos da')}
+        limit={limit != null ? formatPrice(limit) : '—'}
+        usage={usage}
+        exceeds={exceeds}
+        exceedsLabel={t('Excede crédito')}
+        notes={supplier.notes}
+      />
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Acciones (primero en el celular) */}
+        <div className="flex flex-col gap-3 lg:sticky lg:top-4 lg:order-2 lg:self-start">
+          {canManage && (
+            <>
+              <ActionButton icon={DollarSign} tone="primary" label={t('Registrar pago')}
+                hint={debt > 0 ? t('Le pagas una parte o todo') : t('No le debes nada')}
+                onClick={() => setShowPayment(true)} disabled={debt <= 0} />
+              <ActionButton icon={PackagePlus} label={t('Recepción a crédito')} hint={t('Suma una compra a su cuenta')}
+                onClick={() => setShowDebt(true)} />
+            </>
+          )}
+          <ActionButton icon={Package} label={t('Ver sus productos')} hint={t('Lo que le compras')}
+            onClick={() => navigate(`/products?supplierId=${supplier.id}`)} />
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-1 shadow-sm">
+            <InfoRow label={t('Crédito que nos da')} value={limit != null ? formatPrice(limit) : '—'} />
+            <div className="border-t border-gray-50" />
+            <InfoRow label={t('% usado')} value={usage != null ? `${usage}%` : '—'} tone={exceeds ? 'text-red-600' : undefined} />
+            <div className="border-t border-gray-50" />
+            <InfoRow label={t('Último pago')} value={lastPay ? formatDate(lastPay.createdAt) : '—'} />
+          </div>
+          {canManage && (
             <button onClick={() => setShowAdjustment(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-100">
               <Sliders size={14} />{t('Ajustar')}
             </button>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-              <Truck size={22} className="text-blue-600" />{supplier.name}
-            </h2>
-            <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
-              {supplier.ruc && <span className="flex items-center gap-1.5"><FileText size={13} />RUC {supplier.ruc}</span>}
-              {supplier.phone && <span className="flex items-center gap-1.5"><Phone size={13} />{supplier.phone}</span>}
-              {supplier.contact && <span>{t('Contacto:')} {supplier.contact}</span>}
-            </div>
-          </div>
-          {exceeds && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-red-100">
-              <AlertTriangle size={12} />{t('Excede crédito')}
-            </span>
           )}
         </div>
-        {supplier.notes && (
-          <p className="mt-3 rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-600">{supplier.notes}</p>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={t('Le debemos')}
-          value={formatPrice(debt)}
-          tone={debt > 0 ? (exceeds ? 'danger' : 'default') : 'positive'} />
-        <StatCard label={t('Crédito que nos da')}
-          value={limit != null ? formatPrice(limit) : '—'} />
-        <StatCard label={t('% usado')}
-          value={usage != null ? `${usage}%` : '—'}
-          tone={exceeds ? 'danger' : 'default'} />
-        <StatCard label={t('Último pago')}
-          value={lastPay ? formatDate(lastPay.createdAt) : '—'} />
-      </div>
+        {/* Columna principal */}
+        <div className="flex min-w-0 flex-col gap-5 lg:order-1 lg:col-span-2">
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-bold text-gray-900">{t('Historial de transacciones')}</h3>
+        <SectionTitle icon={History} title={t('Historial de transacciones')} count={txns.length || null}
+          hint={t('Cargos, pagos y ajustes con el saldo después de cada movimiento. Del más reciente al más antiguo.')} />
         {loadingTxns ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />)}
@@ -195,6 +182,9 @@ export default function SupplierDetailPage() {
             })}
           </ul>
         )}
+      </div>
+
+        </div>
       </div>
 
       {showDebt && (

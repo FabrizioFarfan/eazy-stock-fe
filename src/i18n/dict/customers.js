@@ -2,6 +2,15 @@
 // AdjustmentModal, PaymentModal, DebtAddModal. Llave = texto en español.
 export default {
   en: {
+    // ── 29-sep: fichas de cliente y proveedor rediseñadas
+    '{pct}% de {limit}': '{pct}% of {limit}',
+    'Te paga una parte o todo': 'They pay part or all of it',
+    'No tiene deuda': 'No debt',
+    'Recordatorio de deuda ya escrito': 'Debt reminder already written',
+    'Le pagas una parte o todo': 'You pay part or all of it',
+    'No le debes nada': 'You owe nothing',
+    'Suma una compra a su cuenta': 'Adds a purchase to their account',
+    'Lo que le compras': 'What you buy from them',
     // ── 29-sep: Clientes, Cuentas x cobrar / x pagar rediseñadas + confirmar cierre de sesión
     'A quién le vendes, quién te debe y cuánto': 'Who you sell to, who owes you and how much',
     'Tus clientes': 'Your customers',
@@ -178,6 +187,15 @@ export default {
     'te envío tu estado de cuenta de {business} del período {period}: al cierre no tienes saldo pendiente.': 'here is your account statement from {business} for the period {period}: at the close you have no outstanding balance.',
   },
   it: {
+    // ── 29-sep: fichas de cliente y proveedor rediseñadas
+    '{pct}% de {limit}': '{pct}% di {limit}',
+    'Te paga una parte o todo': 'Ti paga una parte o tutto',
+    'No tiene deuda': 'Nessun debito',
+    'Recordatorio de deuda ya escrito': 'Promemoria del debito già scritto',
+    'Le pagas una parte o todo': 'Gli paghi una parte o tutto',
+    'No le debes nada': 'Non gli devi nulla',
+    'Suma una compra a su cuenta': 'Aggiunge un acquisto al suo conto',
+    'Lo que le compras': 'Quello che gli compri',
     // ── 29-sep: Clientes, Cuentas x cobrar / x pagar rediseñadas + confirmar cierre de sesión
     'A quién le vendes, quién te debe y cuánto': 'A chi vendi, chi ti deve e quanto',
     'Tus clientes': 'I tuoi clienti',

@@ -51,7 +51,7 @@ function loadPeriod() {
   return { kind: 'all', from: '', to: '' }
 }
 
-export default function StatementMenu({ customerId, variant = 'primary', className = '' }) {
+export default function StatementMenu({ customerId, variant = 'primary', className = '', full = false }) {
   const t = useT()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(null)   // 'pdf' | 'whatsapp' | 'email' | 'print'
@@ -119,7 +119,7 @@ export default function StatementMenu({ customerId, variant = 'primary', classNa
       <button type="button" onClick={() => setOpen((o) => !o)} disabled={!!busy}
         aria-haspopup="menu" aria-expanded={open}
         title={t('Historial completo de compras y pagos del cliente, con el saldo después de cada movimiento, en PDF')}
-        className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60 ${triggerCls}`}>
+        className={`flex items-center gap-1.5 rounded-xl px-4 text-sm font-semibold disabled:opacity-60 ${full ? 'w-full justify-center py-3' : 'py-2'} ${triggerCls}`}>
         {busy ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
         {t('Estado de cuenta')}
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
