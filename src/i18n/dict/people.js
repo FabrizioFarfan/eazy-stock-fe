@@ -2,6 +2,24 @@
 // admin/BusinessesPage, EditUserModal. La llave es el español.
 export default {
   en: {
+    // ── 29-sep: modales de marca/categoría/ubicación + Empleados rediseñados
+    'Así se verá en tus productos y filtros': 'This is how it will look in your products and filters',
+    'Nombre de la marca': 'Brand name',
+    'Opcional · algo que convenga recordar de esta marca': 'Optional · anything worth remembering about this brand',
+    'Crear marca': 'Create brand',
+    'El vendedor la ve al buscar el producto': 'The seller sees it when searching for the product',
+    'Nombre de la ubicación': 'Location name',
+    'Cómo llegar: ayuda a quien recién empieza': 'How to get there: helps whoever is just starting',
+    'Nombre de la categoría': 'Category name',
+    'Aún sin atributos: escribe uno y toca Agregar': 'No attributes yet: type one and tap Add',
+    'Todavía sin productos': 'No products yet',
+    'Abre Productos ya filtrado': 'Opens Products already filtered',
+    'Tu equipo: quién entra, qué puede hacer y cuánto vende': 'Your team: who logs in, what they can do and how much they sell',
+    'Tu equipo': 'Your team',
+    'empleados activos que pueden entrar hoy': 'active employees who can log in today',
+    'Vendido este mes': 'Sold this month',
+    'Ventas este mes': 'Sales this month',
+    'Ver el ranking de vendedores': 'See the sellers ranking',
     // ── EditUserModal ──
     'Editar usuario': 'Edit user',
     'Email': 'Email',
@@ -209,6 +227,24 @@ export default {
   },
 
   it: {
+    // ── 29-sep: modales de marca/categoría/ubicación + Empleados rediseñados
+    'Así se verá en tus productos y filtros': 'Così apparirà nei tuoi prodotti e filtri',
+    'Nombre de la marca': 'Nome della marca',
+    'Opcional · algo que convenga recordar de esta marca': 'Facoltativo · qualcosa da ricordare su questa marca',
+    'Crear marca': 'Crea marca',
+    'El vendedor la ve al buscar el producto': 'Il venditore la vede cercando il prodotto',
+    'Nombre de la ubicación': 'Nome della posizione',
+    'Cómo llegar: ayuda a quien recién empieza': 'Come arrivarci: aiuta chi ha appena iniziato',
+    'Nombre de la categoría': 'Nome della categoria',
+    'Aún sin atributos: escribe uno y toca Agregar': 'Ancora nessun attributo: scrivine uno e tocca Aggiungi',
+    'Todavía sin productos': 'Ancora nessun prodotto',
+    'Abre Productos ya filtrado': 'Apre Prodotti già filtrato',
+    'Tu equipo: quién entra, qué puede hacer y cuánto vende': 'Il tuo team: chi entra, cosa può fare e quanto vende',
+    'Tu equipo': 'Il tuo team',
+    'empleados activos que pueden entrar hoy': 'dipendenti attivi che possono entrare oggi',
+    'Vendido este mes': 'Venduto questo mese',
+    'Ventas este mes': 'Vendite questo mese',
+    'Ver el ranking de vendedores': 'Vedi la classifica dei venditori',
     // ── EditUserModal ──
     'Editar usuario': 'Modifica utente',
     'Email': 'Email',

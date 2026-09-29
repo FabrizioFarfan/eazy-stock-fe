@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Plus, MapPin, Loader2, X, Package } from 'lucide-react'
+import { Plus, MapPin, Package } from 'lucide-react'
 import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
 import { useProducts } from '../hooks/useProducts'
+import EntityModal, { EntityField } from '../components/common/EntityModal'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -39,10 +40,11 @@ function LocationModal({ location, onClose }) {
   const mutation = isEdit ? update : create
   const schema   = useMemo(() => makeSchema(t), [t])
 
-  const { register, handleSubmit, setError, formState: { errors } } = useForm({
+  const { register, handleSubmit, setError, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit ? { name: location.name, notes: location.notes ?? '' } : {},
   })
+  const name = watch('name')
 
   const onSubmit = async (values) => {
     try {
@@ -58,50 +60,25 @@ function LocationModal({ location, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
-          <h3 className="text-base font-bold text-gray-900">
-            {isEdit ? t('Editar ubicación') : t('Nueva ubicación')}
-          </h3>
-          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
-            <X size={18} />
-          </button>
+    <EntityModal onClose={onClose} onSubmit={handleSubmit(onSubmit)} isEdit={isEdit}
+      title={isEdit ? t('Editar ubicación') : t('Nueva ubicación')}
+      subtitle={t('El vendedor la ve al buscar el producto')}
+      avatar={(
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/30">
+          <MapPin size={30} />
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="space-y-4 px-6 py-5">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')} *</label>
-              <input {...register('name')} placeholder={t('Ej. Almacén 1, Estante B3, Vitrina')} className={inputCls} autoFocus />
-              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Indicaciones (opcional)')}</label>
-              <textarea {...register('notes')} rows={2}
-                placeholder={t('Ej. Al fondo a la derecha, segundo piso')}
-                className={`${inputCls} resize-none`} />
-            </div>
-            {mutation.isError && (
-              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {getErrorMessage(mutation.error)}
-              </p>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
-            <button type="button" onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              {t('Cancelar')}
-            </button>
-            <button type="submit" disabled={mutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
-              {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
-              {mutation.isPending ? t('Guardando...') : t('Guardar')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      )}
+      previewName={name} placeholderName={t('Nombre de la ubicación')}
+      productFilter={isEdit ? { params: { locationId: location.id, ...adminBizParam(user) }, to: `/products?locationId=${location.id}` } : null}
+      submitting={mutation.isPending} submitLabel={isEdit ? t('Guardar cambios') : t('Crear ubicación')}
+      error={mutation.isError ? getErrorMessage(mutation.error) : null}>
+      <EntityField label={`${t('Nombre')} *`} error={errors.name?.message}>
+        <input {...register('name')} placeholder={t('Ej. Almacén 1, Estante B3, Vitrina')} className={`${inputCls} py-3 text-base font-semibold`} autoFocus />
+      </EntityField>
+      <EntityField label={t('Indicaciones (opcional)')} hint={t('Cómo llegar: ayuda a quien recién empieza')}>
+        <textarea {...register('notes')} rows={3} placeholder={t('Ej. Al fondo a la derecha, segundo piso')} className={`${inputCls} resize-none`} />
+      </EntityField>
+    </EntityModal>
   )
 }
 

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Plus, FolderOpen, Loader2, X } from 'lucide-react'
+import { Plus, FolderOpen, X } from 'lucide-react'
 import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
 import { useProducts } from '../hooks/useProducts'
+import EntityModal, { EntityField } from '../components/common/EntityModal'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -50,10 +51,11 @@ function CategoryModal({ category, onClose }) {
     category?.suggestedAttributes ?? [],
   )
 
-  const { register, handleSubmit, setError, formState: { errors } } = useForm({
+  const { register, handleSubmit, setError, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: isEdit ? { name: category.name, description: category.description ?? '' } : {},
   })
+  const name = watch('name')
 
   const addAttr = () => {
     const v = attrInput.trim()
@@ -81,89 +83,58 @@ function CategoryModal({ category, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
-          <h3 className="text-base font-bold text-gray-900">
-            {isEdit ? t('Editar categoría') : t('Nueva categoría')}
-          </h3>
-          <button onClick={onClose} className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 transition-colors">
-            <X size={18} />
+    <EntityModal onClose={onClose} onSubmit={handleSubmit(onSubmit)} isEdit={isEdit}
+      title={isEdit ? t('Editar categoría') : t('Nueva categoría')}
+      subtitle={suggestedAttrs.length ? (suggestedAttrs.length !== 1 ? t('{n} atributos', { n: suggestedAttrs.length }) : t('1 atributo')) : t('Sin atributos sugeridos')}
+      avatar={(
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl font-extrabold ring-1 ring-white/30">
+          {(name || '?').trim()[0]?.toUpperCase() ?? '?'}
+        </div>
+      )}
+      previewName={name} placeholderName={t('Nombre de la categoría')}
+      productFilter={isEdit ? { params: { categoryId: category.id, ...adminBizParam(user) }, to: `/products?categoryId=${category.id}` } : null}
+      submitting={mutation.isPending} submitLabel={isEdit ? t('Guardar cambios') : t('Crear categoría')}
+      error={mutation.isError ? getErrorMessage(mutation.error) : null}>
+      <EntityField label={`${t('Nombre')} *`} error={errors.name?.message}>
+        <input {...register('name')} placeholder={t('Ej. Herramientas manuales')} className={`${inputCls} py-3 text-base font-semibold`} autoFocus />
+      </EntityField>
+      <EntityField label={t('Descripción')}>
+        <textarea {...register('description')} rows={2} placeholder={t('Descripción opcional')} className={`${inputCls} resize-none`} />
+      </EntityField>
+      <EntityField label={t('Atributos sugeridos')} hint={t('Los atributos que aparecerán como chips al crear productos de esta categoría.')}>
+        <div className="flex gap-2">
+          <input
+            value={attrInput}
+            onChange={(e) => setAttrInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttr() } }}
+            placeholder={t('Ej. material, longitud...')}
+            className={`${inputCls} flex-1`}
+          />
+          <button type="button" onClick={addAttr} disabled={!attrInput.trim()}
+            className="flex items-center gap-1.5 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100 disabled:opacity-40">
+            <Plus size={15} />{t('Agregar')}
           </button>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="space-y-4 px-6 py-5">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre')} *</label>
-              <input {...register('name')} placeholder={t('Ej. Herramientas manuales')} className={inputCls} />
-              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Descripción')}</label>
-              <textarea {...register('description')} rows={2}
-                placeholder={t('Descripción opcional')}
-                className={`${inputCls} resize-none`} />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                {t('Atributos sugeridos')}
-              </label>
-              <p className="mb-2 text-xs text-gray-400">
-                {t('Los atributos que aparecerán como chips al crear productos de esta categoría.')}
-              </p>
-              <div className="flex gap-2">
-                <input
-                  value={attrInput}
-                  onChange={(e) => setAttrInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttr() } }}
-                  placeholder={t('Ej. material, longitud...')}
-                  className={`${inputCls} flex-1`}
-                />
-                <button type="button" onClick={addAttr}
-                  className="flex items-center rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                  <Plus size={14} />
+        {suggestedAttrs.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {suggestedAttrs.map((attr) => (
+              <span key={attr}
+                className="flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-3 pr-1.5 text-sm font-semibold text-blue-700 ring-1 ring-blue-100">
+                {attr}
+                <button type="button" onClick={() => removeAttr(attr)} aria-label={t('Quitar')}
+                  className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200">
+                  <X size={12} />
                 </button>
-              </div>
-              {suggestedAttrs.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {suggestedAttrs.map((attr) => (
-                    <span key={attr}
-                      className="flex items-center gap-1 rounded-full bg-blue-100 py-0.5 pl-2.5 pr-1.5 text-xs font-semibold text-blue-700">
-                      {attr}
-                      <button type="button" onClick={() => removeAttr(attr)}
-                        className="flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 transition-colors">
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {mutation.isError && (
-              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
-                {getErrorMessage(mutation.error)}
-              </p>
-            )}
+              </span>
+            ))}
           </div>
-
-          <div className="flex justify-end gap-2 border-t border-gray-100 px-6 py-4">
-            <button type="button" onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-              {t('Cancelar')}
-            </button>
-            <button type="submit" disabled={mutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-60">
-              {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
-              {mutation.isPending ? t('Guardando...') : t('Guardar')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        ) : (
+          <p className="mt-3 rounded-xl border-2 border-dashed border-gray-100 px-3 py-3 text-center text-xs text-gray-400">
+            {t('Aún sin atributos: escribe uno y toca Agregar')}
+          </p>
+        )}
+      </EntityField>
+    </EntityModal>
   )
 }
 

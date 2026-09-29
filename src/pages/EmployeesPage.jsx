@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight, Lightbulb, Trash2, RotateCcw, UserX, AlertTriangle, Pencil } from 'lucide-react'
+import { UserPlus, X, Loader2, Power, Shield, Search, ChevronLeft, ChevronRight, Lightbulb, Trash2, RotateCcw, UserX, AlertTriangle, Pencil, Users, Trophy } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -10,6 +10,11 @@ import { useEmployees, useCreateEmployee, useToggleEmployee, useDeleteEmployee }
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { ReportHero, ReportHeader, NewButton } from '../components/reports/ReportKit'
+import { useSellerPerformance } from '../hooks/useReports'
+import { formatPrice } from '../utils/formatMoney'
+import { localISODate } from '../utils/formatDate'
+import { Link } from 'react-router-dom'
 import EditUserModal from '../components/EditUserModal'
 import { useT, dateLocale } from '../i18n'
 
@@ -384,6 +389,16 @@ export default function EmployeesPage() {
   // contador de la pestaña «Dados de baja» (solo el total, una fila)
   const { data: inactiveMeta } = useEmployees({ page: 0, size: 1, active: false })
   const inactiveCount = inactiveMeta?.totalElements ?? 0
+  const { data: activeMeta } = useEmployees({ page: 0, size: 1, active: true })
+  // Lo vendido este mes por cada uno (solo si ve reportes).
+  const { can } = useAuth()
+  const canReports = can('canViewReports')
+  const monthStart = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01` })()
+  const { data: perf } = useSellerPerformance(
+    { from: monthStart, to: localISODate(), ...(currentUser?.businessId ? { businessId: currentUser.businessId } : {}) },
+    { enabled: canReports },
+  )
+  const perfById = Object.fromEntries((perf?.sellers ?? []).map((x) => [x.employeeId, x]))
   const toggleEmployee = useToggleEmployee()
 
   const employees     = data?.content       ?? []
@@ -418,10 +433,9 @@ export default function EmployeesPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">{t('Empleados')}</h2>
+      <ReportHeader icon={Users} title={t('Empleados')}
+        subtitle={t('Tu equipo: quién entra, qué puede hacer y cuánto vende')}
+        help={(
           <HelpDrawer title={t('Cómo usar Empleados')} autoOpenKey="eazystock_employees_help_v3">
             <p>{t('Crea cuentas para tu equipo: cada uno entra con su propio usuario y tú controlas qué puede hacer.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -457,24 +471,29 @@ export default function EmployeesPage() {
               <p className="mt-1">{t('Si al crear un empleado te dice que el correo ya existe, casi siempre es de alguien que diste de baja. No hace falta otro correo: ve a «Dados de baja» y reactívalo, o bórralo si nunca vendió.')}</p>
             </div>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {totalElements}
-            </span>
-          )}
-        </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-          <UserPlus size={15} />
-          {t('Nuevo empleado')}
-        </button>
-      </div>
+        )}
+        right={<NewButton onClick={() => setShowModal(true)}><UserPlus size={15} />{t('Nuevo empleado')}</NewButton>} />
+
+      {/* Franja del equipo */}
+      <ReportHero icon={Users} label={t('Tu equipo')} loading={activeMeta == null}
+        value={activeMeta?.totalElements ?? 0}
+        sub={<span>{t('empleados activos que pueden entrar hoy')}</span>}
+        cells={[
+          [t('Dados de baja'), inactiveCount],
+          ...(canReports ? [[t('Vendido este mes'), formatPrice(perf?.totalRevenue ?? 0)], [t('Ventas este mes'), perf?.totalSales ?? 0]] : []),
+        ]}>
+        {canReports && (
+          <Link to="/reports/sellers" className="relative mt-3 inline-flex items-center gap-1 text-xs font-semibold text-white/90 hover:text-white">
+            <Trophy size={13} /> {t('Ver el ranking de vendedores')} <ChevronRight size={13} />
+          </Link>
+        )}
+      </ReportHero>
 
       {currentUser?.role === 'OWNER' && !bannerDismissed && (
         <PermissionsBanner onDismiss={dismissBanner} />
       )}
 
-      {/* Tabs + Search */}
+      {/* Pestañas + buscador */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="tablist">
           <button type="button" role="tab" aria-selected={!showInactive} onClick={() => switchTab('active')}
@@ -492,10 +511,10 @@ export default function EmployeesPage() {
           </button>
         </div>
         <div className="relative w-full sm:w-80">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input type="text" placeholder={t('Buscar por nombre o email...')} value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder={t('Buscar por nombre o email...')} value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0) }}
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
         </div>
       </div>
 
@@ -509,216 +528,125 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Phone: cards, so «Permisos» is never hidden off to the right of a scrolling table
-          (William couldn't find where to allow a seller to sell on credit — it was there,
-          five columns to the right). */}
-      <div className="space-y-3 md:hidden">
-        {!isLoading && filtered.map((emp) => {
-          const isSelf     = emp.id === currentUser?.id
-          const isToggling = togglingId === emp.id
-          return (
-            <div key={emp.id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${avatarGradient(emp.name)} text-xs font-bold text-white shadow-sm`}>
-                  {initials(emp.name)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-gray-900">{emp.name}</p>
-                  <p className="truncate text-xs text-gray-500">{emp.email}</p>
-                </div>
-                <span className={`inline-flex flex-shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                  emp.active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {emp.active ? t('Activo') : t('Dado de baja')}
-                </span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {emp.active && (
-                  <button
-                    onClick={() => setPermTarget(emp)}
-                    className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 hover:bg-orange-600">
-                    <Shield size={14} />{t('Permisos')}
-                  </button>
-                )}
-                <button
-                  onClick={() => setEditTarget(emp)}
-                  className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
-                  <Pencil size={13} />{t('Editar')}
-                </button>
-                <button
-                  onClick={() => setToggleTarget(emp)}
-                  disabled={isSelf || isToggling}
-                  className={`ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
-                    emp.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  }`}>
-                  {isToggling ? <Loader2 size={12} className="animate-spin" /> : emp.active ? <Power size={12} /> : <RotateCcw size={12} />}
-                  {emp.active ? t('Dar de baja') : t('Reactivar')}
-                </button>
-                {!emp.active && (
-                  <button
-                    onClick={() => setDeleteTarget(emp)}
-                    disabled={emp.hasActivity}
-                    className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40">
-                    <Trash2 size={12} />{t('Borrar')}
-                  </button>
-                )}
-              </div>
-            </div>
-          )
-        })}
-        {!isLoading && filtered.length === 0 && (
-          <p className="rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-500 shadow-sm">
-            {search ? t('Sin resultados para "{q}"', { q: search }) : t('Aún no hay empleados')}
-          </p>
-        )}
-      </div>
-
-      {/* Table (tablet and up) */}
-      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/60">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Empleado')}</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Email')}</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Estado')}</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Registrado')}</th>
-                <th className="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Acciones')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <td key={j} className="px-5 py-3.5">
-                        <div className="h-4 animate-pulse rounded-lg bg-gray-100" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-14 text-center text-sm">
-                    {search ? (
-                      <span className="font-medium text-gray-400">
-                        {t('Sin resultados para "{q}"', { q: search })}
-                      </span>
-                    ) : (
-                      showInactive ? (
-                      <div className="mx-auto max-w-md space-y-2">
-                        <p className="font-semibold text-gray-700">{t('Nadie dado de baja')}</p>
-                        <p className="text-gray-500">{t('Cuando des de baja a alguien aparecerá aquí: podrás reactivarlo o borrarlo si nunca vendió.')}</p>
-                      </div>
-                      ) : (
-                      <div className="mx-auto max-w-md space-y-2">
-                        <p className="font-semibold text-gray-700">{t('Aún no tenés empleados')}</p>
-                        <p className="text-gray-500">
-                          {t('Creá empleados y asignales permisos individuales: vender, recibir mercadería, aplicar descuentos, ver reportes y más.')}
-                        </p>
-                      </div>
-                      )
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((emp) => {
-                  const isSelf     = emp.id === currentUser?.id
-                  const isToggling = togglingId === emp.id
-                  return (
-                    <tr key={emp.id}
-                      className={`border-b border-gray-50 transition-colors hover:bg-gray-50/70 ${isFetching ? 'opacity-60' : ''}`}>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${avatarGradient(emp.name)} text-xs font-bold text-white shadow-sm`}>
-                            {initials(emp.name)}
-                          </div>
-                          <span className="max-w-[140px] truncate font-semibold text-gray-900">{emp.name}</span>
-                        </div>
-                      </td>
-                      <td className="max-w-[180px] truncate px-5 py-3.5 text-gray-500">{emp.email}</td>
-                      <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          emp.active
-                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          {emp.active ? t('Activo') : t('Dado de baja')}
-                        </span>
-                        {!emp.active && emp.hasActivity && (
-                          <p className="mt-1 text-[10px] text-gray-400">{t('con historial de ventas')}</p>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-gray-400">{formatDate(emp.createdAt)}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => setEditTarget(emp)}
-                            title={t('Editar nombre, correo o contraseña')}
-                            className="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
-                            <Pencil size={13} />
-                          </button>
-                          {emp.active && (
-                          <button
-                            onClick={() => setPermTarget(emp)}
-                            title={t('Configurar permisos')}
-                            className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/40 active:scale-[0.97]">
-                            <Shield size={14} />{t('Permisos')}
-                          </button>
-                          )}
-                          <button
-                            onClick={() => setToggleTarget(emp)}
-                            disabled={isSelf || isToggling}
-                            title={isSelf ? t('No puedes darte de baja a ti mismo') : emp.active ? t('Dar de baja: pierde el acceso, se conserva su historial') : t('Reactivar: vuelve a entrar con su mismo correo')}
-                            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                              emp.active
-                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                : 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 hover:bg-emerald-700'
-                            }`}>
-                            {isToggling ? <Loader2 size={12} className="animate-spin" /> : emp.active ? <Power size={12} /> : <RotateCcw size={12} />}
-                            {emp.active ? t('Dar de baja') : t('Reactivar')}
-                          </button>
-                          {!emp.active && (
-                            <button
-                              onClick={() => setDeleteTarget(emp)}
-                              disabled={emp.hasActivity}
-                              title={emp.hasActivity
-                                ? t('Tiene ventas u operaciones: se conserva dado de baja para no perder el historial')
-                                : t('Borrar definitivamente (libera su correo)')}
-                              className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent disabled:hover:text-gray-600">
-                              <Trash2 size={12} />{t('Borrar')}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+      {/* Una tarjeta por persona (PC y celular): «Permisos» siempre a la vista
+          (William no lo encontraba cinco columnas a la derecha de la tabla). */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => <div key={i} className="h-48 animate-pulse rounded-2xl bg-gray-100" />)}
         </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
-            <p className="text-sm text-gray-400">
-              <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
-              <span className="font-semibold text-gray-700">{totalElements}</span> {t('empleados')}
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
-                className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                <ChevronLeft size={14} />{t('Anterior')}
-              </button>
-              <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
-                className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                {t('Siguiente')}<ChevronRight size={14} />
-              </button>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
+          {search ? (
+            <p className="text-sm font-medium text-gray-400">{t('Sin resultados para "{q}"', { q: search })}</p>
+          ) : showInactive ? (
+            <div className="mx-auto max-w-md space-y-2">
+              <p className="font-semibold text-gray-700">{t('Nadie dado de baja')}</p>
+              <p className="text-sm text-gray-500">{t('Cuando des de baja a alguien aparecerá aquí: podrás reactivarlo o borrarlo si nunca vendió.')}</p>
             </div>
+          ) : (
+            <div className="mx-auto max-w-md space-y-3">
+              <p className="font-semibold text-gray-700">{t('Aún no tenés empleados')}</p>
+              <p className="text-sm text-gray-500">{t('Creá empleados y asignales permisos individuales: vender, recibir mercadería, aplicar descuentos, ver reportes y más.')}</p>
+              <NewButton onClick={() => setShowModal(true)}><UserPlus size={15} />{t('Nuevo empleado')}</NewButton>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((emp) => {
+            const isSelf     = emp.id === currentUser?.id
+            const isToggling = togglingId === emp.id
+            const mine       = perfById[emp.id]
+            return (
+              <div key={emp.id} className={`flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md ${isFetching ? 'opacity-60' : ''}`}>
+                <div className="flex items-start gap-3.5 p-5">
+                  <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${avatarGradient(emp.name)} text-base font-extrabold text-white shadow-md`}>
+                    {initials(emp.name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words font-bold leading-snug text-gray-900">{emp.name}</p>
+                    <p className="truncate text-xs text-gray-400" title={emp.email}>{emp.email}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                        emp.active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {emp.active ? t('Activo') : t('Dado de baja')}
+                      </span>
+                      <span className="text-[11px] text-gray-400">{t('Desde')} {formatDate(emp.createdAt)}</span>
+                    </div>
+                    {!emp.active && emp.hasActivity && (
+                      <p className="mt-1 text-[11px] text-gray-400">{t('con historial de ventas')}</p>
+                    )}
+                  </div>
+                  <button onClick={() => setEditTarget(emp)} title={t('Editar nombre, correo o contraseña')}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
+                    <Pencil size={14} />
+                  </button>
+                </div>
+
+                {canReports && emp.active && (
+                  <div className="mx-5 mb-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t('Vendido este mes')}</p>
+                      <p className="text-base font-extrabold text-gray-900">{formatPrice(mine?.revenue ?? 0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t('Ventas')}</p>
+                      <p className="text-base font-extrabold text-gray-900">{mine?.sales ?? 0}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-gray-100 px-5 py-3.5">
+                  {emp.active && (
+                    <button onClick={() => setPermTarget(emp)} title={t('Configurar permisos')}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-3.5 py-2.5 text-sm font-bold text-white shadow-sm shadow-orange-500/30 transition-all hover:bg-orange-600 active:scale-[0.97]">
+                      <Shield size={15} />{t('Permisos')}
+                    </button>
+                  )}
+                  <button onClick={() => setToggleTarget(emp)} disabled={isSelf || isToggling}
+                    title={isSelf ? t('No puedes darte de baja a ti mismo') : emp.active ? t('Dar de baja: pierde el acceso, se conserva su historial') : t('Reactivar: vuelve a entrar con su mismo correo')}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      emp.active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'flex-1 bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 hover:bg-emerald-700'
+                    }`}>
+                    {isToggling ? <Loader2 size={13} className="animate-spin" /> : emp.active ? <Power size={13} /> : <RotateCcw size={13} />}
+                    {emp.active ? t('Dar de baja') : t('Reactivar')}
+                  </button>
+                  {!emp.active && (
+                    <button onClick={() => setDeleteTarget(emp)} disabled={emp.hasActivity}
+                      title={emp.hasActivity
+                        ? t('Tiene ventas u operaciones: se conserva dado de baja para no perder el historial')
+                        : t('Borrar definitivamente (libera su correo)')}
+                      className="flex items-center gap-1.5 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40">
+                      <Trash2 size={13} />{t('Borrar')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-100 bg-white px-5 py-3.5 shadow-sm">
+          <p className="text-sm text-gray-400">
+            <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
+            <span className="font-semibold text-gray-700">{totalElements}</span> {t('empleados')}
+          </p>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}
+              className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+              <ChevronLeft size={14} />{t('Anterior')}
+            </button>
+            <span className="px-3 text-sm font-medium text-gray-500">{page + 1} / {totalPages}</span>
+            <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+              className="flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+              {t('Siguiente')}<ChevronRight size={14} />
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {showModal && <CreateEmployeeModal businessName={currentUser?.businessName} onClose={() => setShowModal(false)} />}
       {permTarget && <PermissionsPanel targetUser={permTarget} onClose={() => setPermTarget(null)} />}
