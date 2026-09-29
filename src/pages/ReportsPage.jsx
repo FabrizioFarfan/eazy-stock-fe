@@ -2,9 +2,9 @@ import { formatPrice, currencySymbol } from '../utils/formatMoney'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  ShoppingCart, Package, TrendingUp, ArrowUpDown, AlertTriangle, Truck, Printer, BarChart2, CalendarClock,
+  Package, TrendingUp, AlertTriangle, Truck, Printer, BarChart2, CalendarClock,
 } from 'lucide-react'
-import PageTitle from '../components/common/PageTitle'
+import { ReportsSwitcher, ReportHeader, ReportHero } from '../components/reports/ReportKit'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -109,20 +109,6 @@ function formatDate(str) {
 }
 
 // ── shared sub-components ─────────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
-  return (
-    <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
-        <Icon size={20} className={iconColor} />
-      </div>
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p>
-        <p className="mt-0.5 text-2xl font-bold text-gray-900">{value}</p>
-      </div>
-    </div>
-  )
-}
 
 const TYPE_CONFIG = {
   PURCHASE_ENTRY: { label: 'Entrada',    cls: 'bg-green-100 text-green-700' },
@@ -246,27 +232,28 @@ function TabDaily({ businessId }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <label className="text-sm text-gray-600">{t('Fecha')}</label>
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+        <label className="text-sm font-semibold text-gray-600">{t('Fecha')}</label>
         <input
           type="date" value={date} onChange={(e) => setDate(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+          className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
         />
+        {date !== today() && (
+          <button type="button" onClick={() => setDate(today())}
+            className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            {t('Hoy')}
+          </button>
+        )}
       </div>
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100" />
-          ))}
-        </div>
-      ) : (
+      <ReportHero icon={TrendingUp} label={t('Ingresos')} loading={isLoading}
+        value={formatCurrency(data?.totalRevenue ?? 0)}
+        cells={[
+          [t('Ventas realizadas'), data?.totalSales ?? 0],
+          [t('Items vendidos'), data?.totalItemsSold ?? 0],
+          [t('Movimientos del día'), data?.movements?.length ?? 0],
+        ]} />
+      {!isLoading && (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard icon={ShoppingCart}  label={t('Ventas realizadas')}   value={data?.totalSales    ?? 0}                    iconBg="bg-blue-50"    iconColor="text-blue-500" />
-            <StatCard icon={Package}       label={t('Items vendidos')}      value={data?.totalItemsSold ?? 0}                   iconBg="bg-indigo-50"  iconColor="text-indigo-500" />
-            <StatCard icon={TrendingUp}    label={t('Ingresos')}            value={formatCurrency(data?.totalRevenue)}          iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-            <StatCard icon={ArrowUpDown}   label={t('Movimientos del día')} value={data?.movements?.length ?? 0}                iconBg="bg-amber-50"   iconColor="text-amber-500" />
-          </div>
           <MovementsTable movements={data?.movements} />
         </>
       )}
@@ -729,40 +716,43 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-3">
-        <PageTitle icon={BarChart2} tone="rose">{t('Reportes')}</PageTitle>
-        <HelpDrawer title={t('Cómo usar Reportes')} autoOpenKey="eazystock_reports_help_v2">
-          <p>{t('Cada pestaña responde una pregunta distinta sobre tu negocio:')}</p>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">📈 {t('Análisis de ventas')}</p>
-            <p className="mt-1">{t('Gráfico de ventas por día y tabla filtrable por fechas, empleado, proveedor o marca.')} <em>{t('"¿Cómo va el negocio?"')}</em></p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">☀️ {t('Resumen del día')}</p>
-            <p className="mt-1">{t('Lo vendido hoy: total en caja, por forma de pago y por vendedor.')} <em>{t('"¿Cómo cerró el día?"')}</em></p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">🏆 {t('Por producto / Por proveedor')}</p>
-            <p className="mt-1">{t('Qué productos y proveedores te generan más ventas.')} <strong>{t('Útil para decidir qué reponer y a quién comprarle más.')}</strong></p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">⚠️ {t('Stock bajo')}</p>
-            <p className="mt-1">{t('Productos bajo su mínimo con el déficit de cada uno.')} <strong>{t('Elige un proveedor y pulsa Generar PDF: verás una previsual editable del pedido.')}</strong> {t('Quita productos que no quieras pedir, cambia la cantidad (por defecto es el déficit) o agrega productos que no están en stock bajo. El PDF nunca muestra tu stock ni tus precios: solo lo que el proveedor necesita.')}</p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">📅 {t('Por vencer')}</p>
-            <p className="mt-1"><strong>{t('Productos que vencen dentro de 30 días o ya vencieron')}</strong> {t('(según la fecha de vencimiento que cargas en cada producto). Úsalo para hacer promociones antes de perder mercadería o para retirar lo vencido.')} <em>{t('"¿Qué tengo que mover ya?"')}</em></p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">🚚 {t('Resurtido')}</p>
-            <p className="mt-1">{t('Por proveedor: lo recibido, lo vendido en el período y una sugerencia de cuánto pedir (lo vendido o lo que falta para el mínimo, lo que sea mayor). Se puede imprimir como lista interna.')}</p>
-          </div>
-          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-            <p className="font-semibold text-gray-800">🔎 {t('Filtros y cabeceras fijas')}</p>
-            <p className="mt-1">{t('Las tablas tienen filtros embudo por columna (como en Excel) y la cabecera queda fija al hacer scroll. Usa Hoy / Esta semana / Este mes o «Elegir fechas» para cambiar el período.')}</p>
-          </div>
-        </HelpDrawer>
-      </div>
+      <ReportHeader icon={BarChart2} title={t('Reportes')}
+        subtitle={t('Cómo va el negocio: ventas, productos, proveedores y stock')}
+        help={(
+          <HelpDrawer title={t('Cómo usar Reportes')} autoOpenKey="eazystock_reports_help_v2">
+            <p>{t('Cada pestaña responde una pregunta distinta sobre tu negocio:')}</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📈 {t('Análisis de ventas')}</p>
+              <p className="mt-1">{t('Gráfico de ventas por día y tabla filtrable por fechas, empleado, proveedor o marca.')} <em>{t('"¿Cómo va el negocio?"')}</em></p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">☀️ {t('Resumen del día')}</p>
+              <p className="mt-1">{t('Lo vendido hoy: total en caja, por forma de pago y por vendedor.')} <em>{t('"¿Cómo cerró el día?"')}</em></p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🏆 {t('Por producto / Por proveedor')}</p>
+              <p className="mt-1">{t('Qué productos y proveedores te generan más ventas.')} <strong>{t('Útil para decidir qué reponer y a quién comprarle más.')}</strong></p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">⚠️ {t('Stock bajo')}</p>
+              <p className="mt-1">{t('Productos bajo su mínimo con el déficit de cada uno.')} <strong>{t('Elige un proveedor y pulsa Generar PDF: verás una previsual editable del pedido.')}</strong> {t('Quita productos que no quieras pedir, cambia la cantidad (por defecto es el déficit) o agrega productos que no están en stock bajo. El PDF nunca muestra tu stock ni tus precios: solo lo que el proveedor necesita.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📅 {t('Por vencer')}</p>
+              <p className="mt-1"><strong>{t('Productos que vencen dentro de 30 días o ya vencieron')}</strong> {t('(según la fecha de vencimiento que cargas en cada producto). Úsalo para hacer promociones antes de perder mercadería o para retirar lo vencido.')} <em>{t('"¿Qué tengo que mover ya?"')}</em></p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🚚 {t('Resurtido')}</p>
+              <p className="mt-1">{t('Por proveedor: lo recibido, lo vendido en el período y una sugerencia de cuánto pedir (lo vendido o lo que falta para el mínimo, lo que sea mayor). Se puede imprimir como lista interna.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🔎 {t('Filtros y cabeceras fijas')}</p>
+              <p className="mt-1">{t('Las tablas tienen filtros embudo por columna (como en Excel) y la cabecera queda fija al hacer scroll. Usa Hoy / Esta semana / Este mes o «Elegir fechas» para cambiar el período.')}</p>
+            </div>
+          </HelpDrawer>
+        )} />
+
+      <ReportsSwitcher />
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-100 bg-gray-50 p-1.5 shadow-sm">

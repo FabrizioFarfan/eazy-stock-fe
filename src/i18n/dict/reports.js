@@ -3,6 +3,15 @@
 // deuda, recordatorio de WhatsApp y DateRangeQuick. El español es la llave.
 export default {
   en: {
+    // ── 29-sep: reportes rediseñados (franja azul + páginas hermanas)
+    'Cómo va el negocio: ventas, productos, proveedores y stock': 'How the business is doing: sales, products, suppliers and stock',
+    'Ventas, productos y stock': 'Sales, products and stock',
+    'Ganancia y cierre de caja': 'Profit and cash closing',
+    'Quién vendió más': 'Who sold the most',
+    'Quién te compra más': 'Who buys the most from you',
+    'Primero': 'First',
+    'sin cliente': 'without a customer',
+    'de lo vendido': 'of what was sold',
     // ── 15-sep: fondo de caja del día (pedido de William) ──
     'Fondo de caja de hoy': 'Today\'s cash float',
     'El sencillo para dar vuelto': 'The small change for giving change',
@@ -429,6 +438,15 @@ export default {
   },
 
   it: {
+    // ── 29-sep: reportes rediseñados (franja azul + páginas hermanas)
+    'Cómo va el negocio: ventas, productos, proveedores y stock': 'Come va l\'attività: vendite, prodotti, fornitori e scorte',
+    'Ventas, productos y stock': 'Vendite, prodotti e scorte',
+    'Ganancia y cierre de caja': 'Guadagno e chiusura di cassa',
+    'Quién vendió más': 'Chi ha venduto di più',
+    'Quién te compra más': 'Chi ti compra di più',
+    'Primero': 'Primo',
+    'sin cliente': 'senza cliente',
+    'de lo vendido': 'del venduto',
     // ── 15-sep: fondo cassa del giorno (richiesta di William) ──
     'Fondo de caja de hoy': 'Fondo cassa di oggi',
     'El sencillo para dar vuelto': 'Gli spiccioli per dare il resto',

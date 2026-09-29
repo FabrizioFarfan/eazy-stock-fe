@@ -1,12 +1,13 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useMemo, useState } from 'react'
 import {
-  Trophy, TrendingUp, ShoppingCart, Package,
-  ChevronDown, ChevronRight, Users, Medal,
+  Trophy, Package, ChevronDown, ChevronRight, Medal,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSellerPerformance } from '../hooks/useReports'
 import HelpDrawer from '../components/common/HelpDrawer'
+import DateRangeQuick from '../components/common/DateRangeQuick'
+import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { localISODate } from '../utils/formatDate'
 import { useT, dateLocale } from '../i18n'
 
@@ -41,22 +42,6 @@ const RANK_STYLE = [
   'bg-orange-100 text-orange-700 ring-1 ring-orange-200', // 3°
 ]
 
-// ── stat card ───────────────────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
-  return (
-    <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
-        <Icon size={20} className={iconColor} />
-      </div>
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p>
-        <p className="mt-0.5 text-2xl font-bold text-gray-900">{value}</p>
-      </div>
-    </div>
-  )
-}
-
 // ── seller row (expandable) ────────────────────────────────────────────────
 
 function SellerCard({ seller, rank, maxRevenue }) {
@@ -66,23 +51,26 @@ function SellerCard({ seller, rank, maxRevenue }) {
   const rankCls = RANK_STYLE[rank] ?? 'bg-gray-100 text-gray-500 ring-1 ring-gray-200'
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${rank === 0 ? 'border-amber-200 ring-2 ring-amber-100' : 'border-gray-100'}`}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50/60"
       >
-        <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-sm font-extrabold ${rankCls}`}>
-          {rank < 3 ? <Medal size={16} /> : rank + 1}
+        <div className={`relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${rankCls}`}>
+          {rank < 3 ? <Medal size={20} /> : rank + 1}
+          {rank < 3 && (
+            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-extrabold text-gray-700 shadow ring-1 ring-gray-200">{rank + 1}</span>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3">
             <p className="truncate font-semibold text-gray-900">{seller.employeeName}</p>
-            <p className="flex-shrink-0 text-lg font-extrabold text-gray-900">{formatCurrency(seller.revenue)}</p>
+            <p className="flex-shrink-0 text-xl font-extrabold text-gray-900">{formatCurrency(seller.revenue)}</p>
           </div>
           {/* Barra proporcional al que más vendió */}
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-            <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" style={{ width: `${pct}%` }} />
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className={`h-full rounded-full ${rank === 0 ? 'bg-amber-400' : 'bg-blue-600'}`} style={{ width: `${pct}%` }} />
           </div>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
             <span><b className="text-gray-700">{seller.sales}</b> {t('ventas')}</span>
@@ -149,60 +137,50 @@ export default function SellerPerformancePage() {
 
   const sellers    = data?.sellers ?? []
   const maxRevenue = sellers.length ? Number(sellers[0].revenue) : 0
-  const inputCls   = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-              <Trophy size={22} className="text-amber-500" />
-              {t('Rendimiento de vendedores')}
-            </h2>
-            <HelpDrawer title={t('Cómo usar Rendimiento')} autoOpenKey="eazystock_sellerperf_help_v2">
-              <p>{t('Compara a tu equipo:')} <strong>{t('quién vendió más y cuánto exactamente')}</strong>, {t('día por día.')}</p>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">🏅 {t('Ranking de vendedores')}</p>
-                <p className="mt-1">{t('Los tres primeros llevan medalla. La barra azul muestra cuánto vendió cada uno respecto al primero. Toca una fila para desplegar sus ventas día por día con el total de ingresos de cada jornada.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">📊 {t('Qué significa cada número')}</p>
-                <p className="mt-1">{t('Ventas = cantidad de tickets cerrados. Unidades = productos vendidos (respeta la unidad de venta: paquete, gramo, metro…). Ticket promedio = ingresos ÷ ventas: cuánto gasta en promedio cada cliente que atiende ese vendedor.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">📅 {t('Filtra por fechas')}</p>
-                <p className="mt-1">{t('Elige el rango que quieras (hoy, la semana, el mes) y la tabla se recalcula al instante.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">💡 {t('¿Para qué sirve?')}</p>
-                <p className="mt-1">{t('Para premiar al que más vende, detectar días flojos y repartir mejor los turnos.')}</p>
-              </div>
-            </HelpDrawer>
-          </div>
-          <p className="mt-1 text-sm text-gray-400">
-            {t('Quién vendió más y cuánto exactamente cada día.')}
-          </p>
-        </div>
-        <div className="flex items-end gap-2">
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
-            {t('Desde')}
-            <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
-            {t('Hasta')}
-            <input type="date" value={to} min={from} max={today()} onChange={(e) => setTo(e.target.value)} className={inputCls} />
-          </label>
-        </div>
+    <div className="flex flex-col gap-5">
+      <ReportHeader icon={Trophy} title={t('Rendimiento de vendedores')}
+        subtitle={t('Quién vendió más y cuánto exactamente cada día.')}
+        help={(
+          <HelpDrawer title={t('Cómo usar Rendimiento')} autoOpenKey="eazystock_sellerperf_help_v2">
+            <p>{t('Compara a tu equipo:')} <strong>{t('quién vendió más y cuánto exactamente')}</strong>, {t('día por día.')}</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🏅 {t('Ranking de vendedores')}</p>
+              <p className="mt-1">{t('Los tres primeros llevan medalla. La barra azul muestra cuánto vendió cada uno respecto al primero. Toca una fila para desplegar sus ventas día por día con el total de ingresos de cada jornada.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📊 {t('Qué significa cada número')}</p>
+              <p className="mt-1">{t('Ventas = cantidad de tickets cerrados. Unidades = productos vendidos (respeta la unidad de venta: paquete, gramo, metro…). Ticket promedio = ingresos ÷ ventas: cuánto gasta en promedio cada cliente que atiende ese vendedor.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📅 {t('Filtra por fechas')}</p>
+              <p className="mt-1">{t('Elige el rango que quieras (hoy, la semana, el mes) y la tabla se recalcula al instante.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">💡 {t('¿Para qué sirve?')}</p>
+              <p className="mt-1">{t('Para premiar al que más vende, detectar días flojos y repartir mejor los turnos.')}</p>
+            </div>
+          </HelpDrawer>
+        )} />
+
+      <ReportsSwitcher />
+
+      {/* Período: atajos de un toque + fechas */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+        <DateRangeQuick from={from} to={to}
+          onChange={(r) => { setFrom(r.from || firstOfMonth()); setTo(r.to || today()) }} />
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={TrendingUp}  label={t('Ingresos del período')} value={isLoading ? '…' : formatCurrency(data?.totalRevenue)} iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-        <StatCard icon={ShoppingCart} label={t('Ventas del período')}  value={isLoading ? '…' : (data?.totalSales ?? 0)}             iconBg="bg-blue-50"    iconColor="text-blue-500" />
-        <StatCard icon={Users}        label={t('Vendedores activos')}   value={isLoading ? '…' : sellers.length}                       iconBg="bg-indigo-50"  iconColor="text-indigo-500" />
-      </div>
+      {/* Franja del período */}
+      <ReportHero icon={Trophy} label={t('Ingresos del período')} loading={isLoading}
+        value={formatCurrency(data?.totalRevenue ?? 0)}
+        sub={sellers[0] && <span className="inline-flex items-center gap-1.5"><Medal size={13} className="text-amber-300" /> {t('Primero')}: <b className="text-white">{sellers[0].employeeName}</b> · {formatCurrency(sellers[0].revenue)}</span>}
+        cells={[
+          [t('Ventas del período'), data?.totalSales ?? 0],
+          [t('Vendedores activos'), sellers.length],
+          [t('Ticket promedio'), formatCurrency(Number(data?.totalSales) > 0 ? Number(data?.totalRevenue) / Number(data?.totalSales) : 0)],
+        ]} />
 
       {/* Ranking */}
       {isError ? (

@@ -33,7 +33,7 @@ export default function TopProductsList({ topProducts, isLoading }) {
   const t = useT()
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
         <div className="divide-y divide-gray-100">
           {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
@@ -44,7 +44,7 @@ export default function TopProductsList({ topProducts, isLoading }) {
 
   if (!topProducts?.length) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
         <p className="py-4 text-center text-sm text-gray-400">{t('Sin datos')}</p>
       </div>
@@ -52,7 +52,7 @@ export default function TopProductsList({ topProducts, isLoading }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <h4 className="mb-3 text-sm font-semibold text-gray-700">{t('Top 10 productos')}</h4>
       <ul className="divide-y divide-gray-100">
         {topProducts.map((p, i) => (

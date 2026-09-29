@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Users, Medal, TrendingUp, ShoppingCart, UserRound, MessageCircle, Clock,
+  Users, Medal, MessageCircle, Clock,
   Star, Package, X, Search, ChevronRight, UserX, CircleHelp,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -10,6 +10,7 @@ import { useProductSearch } from '../hooks/useProducts'
 import { useDebounce } from '../hooks/useDebounce'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { formatPrice } from '../utils/formatMoney'
 import { formatQty } from '../utils/quantity'
 import { whatsappDigits } from '../utils/phone'
@@ -68,23 +69,6 @@ const PRESETS = [
 
 const inputCls = 'rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
-// ── stat card ─────────────────────────────────────────────────────────────────
-
-function StatCard({ icon: Icon, label, value, hint, iconBg, iconColor }) {
-  return (
-    <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
-        <Icon size={19} className={iconColor} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-        <p className="mt-0.5 truncate text-xl font-bold text-gray-900">{value}</p>
-        {hint && <p className="truncate text-xs text-gray-400">{hint}</p>}
-      </div>
-    </div>
-  )
-}
-
 // ── fila del ranking ──────────────────────────────────────────────────────────
 
 function CustomerRow({ row, rank, maxRevenue, sort, businessName, productName }) {
@@ -106,7 +90,7 @@ function CustomerRow({ row, rank, maxRevenue, sort, businessName, productName })
 
       <button type="button" onClick={() => navigate(`/customers/${row.customerId}`, { state: { from: '/reports/customers', fromLabel: 'Análisis de clientes' } })} className="min-w-0 flex-1 text-left">
         <div className="flex items-center justify-between gap-3">
-          <p className="truncate font-semibold text-gray-900 hover:text-blue-700">{row.customerName}</p>
+          <p className="line-clamp-2 min-w-0 break-words font-semibold text-gray-900 hover:text-blue-700">{row.customerName}</p>
           <p className="flex-shrink-0 text-base font-extrabold text-gray-900">
             {sort === 'count' ? t('{n} compras', { n: row.sales }) : formatPrice(row.revenue)}
           </p>
@@ -254,73 +238,72 @@ export default function CustomerRankingPage() {
     ? Math.round((data.salesWithCustomer / data.totalSales) * 100) : null
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-              <Users size={22} className="text-blue-600" />
-              {t('Análisis de clientes')}
-            </h2>
-            <HelpDrawer title={t('Cómo usar Análisis de clientes')} autoOpenKey="eazystock_customer_ranking_help_v1">
-              <p>{t('Responde')} <strong>{t('quién te compra más, qué le vendes y cada cuánto vuelve')}</strong>. {t('Se alimenta de las ventas que llevan cliente.')}</p>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">🧾 {t('De dónde salen los datos')}</p>
-                <p className="mt-1">{t('En Nueva venta hay un botón «Asociar cliente» (opcional, no frena la caja). El fiado ya lo lleva siempre. Las ventas viejas se asocian desde su detalle en Ventas. Arriba ves cuántas ventas del período quedaron sin cliente.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">🏅 {t('Por monto o por frecuencia')}</p>
-                <p className="mt-1">{t('«Por monto» ordena por lo que gastaron; «Por frecuencia» por cuántas veces vinieron. Cada fila muestra el ticket promedio, la última compra y el producto que más le vendes. Toca el nombre para abrir su ficha.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">📦 {t('Filtrar por producto')}</p>
-                <p className="mt-1">{t('Escribe un producto y el ranking queda solo con quienes lo compraron en el período: ideal para avisarles de una promoción por WhatsApp con un toque.')}</p>
-              </div>
-              <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-                <p className="font-semibold text-gray-800">😴 {t('Sin comprar hace X días')}</p>
-                <p className="mt-1">{t('Abajo, los clientes que ya te compraron y no vuelven hace 30, 60 o 90 días, con el botón de WhatsApp para traerlos de regreso.')}</p>
-              </div>
-            </HelpDrawer>
-          </div>
-          <p className="mt-1 text-sm text-gray-400">{t('Quién te compra más, qué le vendes y cada cuánto vuelve.')}</p>
+    <div className="flex flex-col gap-5">
+      <ReportHeader icon={Users} title={t('Análisis de clientes')}
+        subtitle={t('Quién te compra más, qué le vendes y cada cuánto vuelve.')}
+        help={(
+          <HelpDrawer title={t('Cómo usar Análisis de clientes')} autoOpenKey="eazystock_customer_ranking_help_v1">
+            <p>{t('Responde')} <strong>{t('quién te compra más, qué le vendes y cada cuánto vuelve')}</strong>. {t('Se alimenta de las ventas que llevan cliente.')}</p>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🧾 {t('De dónde salen los datos')}</p>
+              <p className="mt-1">{t('En Nueva venta hay un botón «Asociar cliente» (opcional, no frena la caja). El fiado ya lo lleva siempre. Las ventas viejas se asocian desde su detalle en Ventas. Arriba ves cuántas ventas del período quedaron sin cliente.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🏅 {t('Por monto o por frecuencia')}</p>
+              <p className="mt-1">{t('«Por monto» ordena por lo que gastaron; «Por frecuencia» por cuántas veces vinieron. Cada fila muestra el ticket promedio, la última compra y el producto que más le vendes. Toca el nombre para abrir su ficha.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📦 {t('Filtrar por producto')}</p>
+              <p className="mt-1">{t('Escribe un producto y el ranking queda solo con quienes lo compraron en el período: ideal para avisarles de una promoción por WhatsApp con un toque.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">😴 {t('Sin comprar hace X días')}</p>
+              <p className="mt-1">{t('Abajo, los clientes que ya te compraron y no vuelven hace 30, 60 o 90 días, con el botón de WhatsApp para traerlos de regreso.')}</p>
+            </div>
+          </HelpDrawer>
+        )} />
+
+      <ReportsSwitcher />
+
+      {/* Período */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
+          {PRESETS.map((p) => (
+            <button key={p.key} type="button" onClick={() => applyPreset(p.key)}
+              className={`flex-shrink-0 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all ${
+                preset === p.key ? 'border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-600/30' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              }`}>
+              {t(p.label)}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="flex gap-1">
-            {PRESETS.map((p) => (
-              <button key={p.key} type="button" onClick={() => applyPreset(p.key)}
-                className={`rounded-xl border px-2.5 py-2 text-xs font-semibold transition-colors ${
-                  preset === p.key ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                }`}>
-                {t(p.label)}
-              </button>
-            ))}
-          </div>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-gray-500">
             {t('Desde')}
-            <input type="date" value={from} max={to} onChange={(e) => { setFrom(e.target.value); setPreset('') }} className={inputCls} />
+            <input type="date" value={from} max={to} onChange={(e) => { setFrom(e.target.value); setPreset('') }} className={`${inputCls} min-w-0`} />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-gray-500">
             {t('Hasta')}
-            <input type="date" value={to} min={from} max={today()} onChange={(e) => { setTo(e.target.value); setPreset('') }} className={inputCls} />
+            <input type="date" value={to} min={from} max={today()} onChange={(e) => { setTo(e.target.value); setPreset('') }} className={`${inputCls} min-w-0`} />
           </label>
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={TrendingUp} label={t('Comprado con cliente')} value={isLoading ? '…' : formatPrice(data?.revenueWithCustomer ?? 0)}
-          hint={data ? t('de {total} en el período', { total: formatPrice(data.totalRevenue) }) : undefined}
-          iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-        <StatCard icon={ShoppingCart} label={t('Ventas con cliente')} value={isLoading ? '…' : (data?.salesWithCustomer ?? 0)}
-          hint={pctWithCustomer != null ? t('{pct}% de las ventas', { pct: pctWithCustomer }) : undefined}
-          iconBg="bg-blue-50" iconColor="text-blue-500" />
-        <StatCard icon={UserRound} label={t('Clientes que compraron')} value={isLoading ? '…' : rows.length}
-          iconBg="bg-indigo-50" iconColor="text-indigo-500" />
-        <StatCard icon={CircleHelp} label={t('Ventas sin cliente')} value={isLoading ? '…' : (data?.salesWithoutCustomer ?? 0)}
-          hint={data ? `${formatPrice(data.revenueWithoutCustomer)} · ${t('asócialas desde el detalle de la venta')}` : undefined}
-          iconBg="bg-gray-100" iconColor="text-gray-500" />
-      </div>
+      {/* Franja: lo que dejaron los clientes con nombre */}
+      <ReportHero icon={Medal} label={t('Comprado con cliente')} loading={isLoading}
+        value={formatPrice(data?.revenueWithCustomer ?? 0)}
+        sub={data && <span>{t('de {total} en el período', { total: formatPrice(data.totalRevenue) })}{pctWithCustomer != null && ` · ${t('{pct}% de las ventas', { pct: pctWithCustomer })}`}</span>}
+        cells={[
+          [t('Clientes que compraron'), rows.length],
+          [t('Ventas con cliente'), data?.salesWithCustomer ?? 0],
+          [t('Ventas sin cliente'), data?.salesWithoutCustomer ?? 0, Number(data?.salesWithoutCustomer) > 0 ? 'text-amber-200' : ''],
+        ]}>
+        {Number(data?.salesWithoutCustomer) > 0 && (
+          <p className="relative mt-3 flex items-center gap-1.5 text-xs text-white/80">
+            <CircleHelp size={13} /> {formatPrice(data.revenueWithoutCustomer)} {t('sin cliente')} · {t('asócialas desde el detalle de la venta')}
+          </p>
+        )}
+      </ReportHero>
 
       {/* Controls: orden + producto */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">

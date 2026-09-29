@@ -34,7 +34,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
 
   if (!byDay?.length) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-gray-200 bg-white">
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-gray-100 bg-white shadow-sm">
         <p className="text-sm text-gray-400">{t('Sin datos para el período seleccionado')}</p>
       </div>
     )
@@ -50,7 +50,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
   const useBar = data.length < 5
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <h4 className="mb-4 text-sm font-semibold text-gray-700">{t('Ingresos por día')}</h4>
       <ResponsiveContainer width="100%" height={240}>
         {useBar ? (
@@ -59,7 +59,7 @@ export default function SalesByDayChart({ byDay, isLoading }) {
             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => `${currencySymbol()} ${v}`} tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} name={t('Ingresos')} />
+            <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} name={t('Ingresos')} />
           </BarChart>
         ) : (
           <LineChart data={data} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
@@ -70,9 +70,9 @@ export default function SalesByDayChart({ byDay, isLoading }) {
             <Line
               type="monotone"
               dataKey="revenue"
-              stroke="#f97316"
+              stroke="#2563eb"
               strokeWidth={2}
-              dot={{ r: 3, fill: '#f97316' }}
+              dot={{ r: 3, fill: '#2563eb' }}
               activeDot={{ r: 5 }}
               name={t('Ingresos')}
             />

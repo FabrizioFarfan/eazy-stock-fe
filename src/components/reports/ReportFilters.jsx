@@ -93,7 +93,7 @@ export default function ReportFilters({ businessId }) {
     'rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white shadow-sm p-4">
       {/* Presets */}
       <div className="flex flex-wrap gap-2">
         {PRESETS.map((p) => (

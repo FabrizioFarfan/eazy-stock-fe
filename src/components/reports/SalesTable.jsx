@@ -68,7 +68,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
   const currentPage   = items?.number ?? 0
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

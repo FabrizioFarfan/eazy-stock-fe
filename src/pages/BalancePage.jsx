@@ -10,8 +10,8 @@ import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import { quickRange } from '../utils/dateRanges'
-import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
+import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { useT, dateLocale } from '../i18n'
 
 function S({ title, children }) {
@@ -354,14 +354,10 @@ export default function BalancePage() {
   return (
     <div className="flex flex-col gap-5">
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <PageTitle icon={Scale} tone="emerald">{fullReports ? t('Balance del negocio') : t('Cierre de caja')}</PageTitle>
-          {rangeComplete && (
-            <p className="mt-0.5 text-sm text-gray-400">{formatRangeLabel(range.from, range.to)}</p>
-          )}
-        </div>
-        {fullReports ? (
+      <ReportHeader icon={Scale}
+        title={fullReports ? t('Balance del negocio') : t('Cierre de caja')}
+        subtitle={rangeComplete ? formatRangeLabel(range.from, range.to) : null}
+        help={fullReports ? (
           <HelpDrawer title={t('Cómo leer el balance')} autoOpenKey="eazystock_balance_help_v2">
             <BalanceHelp />
           </HelpDrawer>
@@ -369,16 +365,32 @@ export default function BalancePage() {
           <HelpDrawer title={t('Cómo cerrar la caja')} autoOpenKey="eazystock_cash_closing_help_v1">
             <CashClosingHelp />
           </HelpDrawer>
-        )}
-      </div>
+        )} />
+
+      <ReportsSwitcher />
 
       {/* Selector de período */}
-      <div className="rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+      <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
         <DateRangeQuick from={range?.from} to={range?.to} onChange={setRange} />
         {!rangeComplete && (
           <p className="mt-2 text-xs text-gray-400">{t('Elige ambas fechas para ver el balance')}</p>
         )}
       </div>
+
+      {/* Franja: lo que quedó de ganancia en el período (solo con reportes completos) */}
+      {fullReports && periodParams && (
+        <ReportHero icon={Scale} label={t('Ganancia del período')} loading={salesBalance.isLoading}
+          value={<span className={sb && !profitPositive ? 'text-red-200' : ''}>{formatPrice(sb?.profit ?? 0)}</span>}
+          sub={sb && Number(sb.grossSales) > 0 && (
+            <span>{t('Margen')}: <b className="text-white">{Math.round((Number(sb.profit) / Number(sb.grossSales)) * 100)}%</b> {t('de lo vendido')}</span>
+          )}
+          cells={[
+            [t('Ventas brutas'), formatPrice(sb?.grossSales ?? 0)],
+            [t('Costo del producto'), formatPrice(sb?.productCost ?? 0)],
+            [t('Ventas'), sb?.salesCount ?? 0],
+            [t('Ingresos netos'), formatPrice(cb?.netIncome ?? 0)],
+          ]} />
+      )}
 
       {/* Cierre de caja: por medio de pago (pedido de William para cerrar el día) */}
       <CashClosingCard

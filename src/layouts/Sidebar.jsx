@@ -111,6 +111,17 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
   const [openGroups, setOpenGroups] = useState(() => {
     try { return JSON.parse(localStorage.getItem('eazystock_nav_groups') || '{}') } catch { return {} }
   })
+  // Al ENTRAR a una página de un grupo, el grupo se abre (aunque lo hubieras
+  // cerrado antes). Se ajusta durante el render al cambiar de ruta.
+  const [seenPath, setSeenPath] = useState(null)
+  if (seenPath !== pathname) {
+    setSeenPath(pathname)
+    const opened = items.filter((it) => it.children && inGroup(it)).map((it) => it.group)
+    if (opened.length && !opened.every((k) => openGroups[k])) {
+      setOpenGroups((g) => ({ ...g, ...Object.fromEntries(opened.map((k) => [k, true])) }))
+    }
+  }
+
   const toggleGroup = (key, current) => setOpenGroups((g) => {
     const next = { ...g, [key]: !current }
     try { localStorage.setItem('eazystock_nav_groups', JSON.stringify(next)) } catch { /* sin storage */ }
@@ -184,7 +195,8 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
               }
               const { icon: Icon, label, group, children } = item
               const here = inGroup(item)
-              const open = here || !!openGroups[group]
+              // Abierto por defecto si estás dentro, pero SIEMPRE se puede cerrar (Frank).
+              const open = openGroups[group] ?? here
               return (
                 <li key={group}>
                   <button type="button" onClick={() => toggleGroup(group, open)} aria-expanded={open}
@@ -195,7 +207,9 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
                     }`}>
                     <Icon size={16} strokeWidth={1.8} />
                     <span className="flex-1 text-left">{t(label)}</span>
-                    <span className={`rounded-full px-1.5 text-[10px] font-bold ${here ? 'bg-blue-100 text-blue-700' : 'bg-gray-200/80 text-gray-500'}`}>
+                    <span className={`rounded-full px-1.5 text-[10px] font-bold ${here
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/25 dark:text-blue-200'
+                      : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-200'}`}>
                       {children.length}
                     </span>
                     <ChevronDown size={15} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
