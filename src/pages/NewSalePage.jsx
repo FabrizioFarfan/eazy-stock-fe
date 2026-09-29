@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Banknote, Smartphone, Landmark } from 'lucide-react'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -99,7 +99,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
             dónde ir a buscarlo sin preguntar (pedido de William). */}
         <ProductThumb product={product} size={52} rounded="rounded-xl" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-900">{product.name}</p>
+          <p className="line-clamp-2 break-words text-sm font-bold leading-snug text-gray-900">{product.name}</p>
           {product.presentation && (
             <p className="truncate text-xs text-gray-400">{product.presentation}</p>
           )}
@@ -121,20 +121,18 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
         </div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-2">
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs text-gray-400">
-            {t('Stock')}:{' '}
-            <span className={`font-bold ${noStock ? 'text-red-500' : 'text-gray-700'}`}>
-              {formatQty(product.currentStock)} {product.unit || t('unidad')}
-            </span>
+          <p className={`mb-1 inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${
+            noStock ? 'bg-red-50 text-red-600 ring-red-100' : 'bg-emerald-50 text-emerald-700 ring-emerald-100'}`}>
+            {t('Stock')}: {formatQty(product.currentStock)} {product.unit || t('unidad')}
           </p>
           {isVariable ? (
             <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
               {t('Precio variable')}
             </span>
           ) : (
-            <p className="text-base font-bold text-gray-900">{formatCurrency(product.salePrice)}</p>
+            <p className="text-xl font-extrabold tracking-tight text-gray-900">{formatCurrency(product.salePrice)}</p>
           )}
           {/* Precio variable: se define para ESTA venta antes de agregar.
               Precio fijo: el botón cambia el precio del producto (ver arriba);
@@ -164,18 +162,18 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
             {t('Sin stock')}
           </button>
         ) : (
-          <div className="flex flex-shrink-0 items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-shrink-0">
             <QuantityInput
               value={qty}
               onChange={setQty}
               unit={product.unit || t('unidad')}
               max={product.currentStock}
               maxDecimals={3}
-              className="w-32"
+              className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             />
             <button onClick={handleAdd} disabled={qtyInvalid}
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-50">
-              <Plus size={12} />{t('Agregar')}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.95] disabled:cursor-not-allowed disabled:opacity-50">
+              <Plus size={14} />{t('Agregar')}
             </button>
           </div>
         )}
@@ -557,6 +555,9 @@ function CustomerSection({ customer, onSelectCustomer, creditEnabled, onToggleCr
 
 const saleDraftKey = (userId) => `eazystock_sale_draft_${userId || 'anon'}`
 
+// Íconos de los medios de pago de siempre (los guardados por el negocio van sin ícono).
+const METHOD_ICONS = { Efectivo: Banknote, Yape: Smartphone, Transferencia: Landmark }
+
 function loadSaleDraft(userId) {
   try {
     const d = JSON.parse(localStorage.getItem(saleDraftKey(userId)))
@@ -856,7 +857,15 @@ export default function NewSalePage() {
           <ArrowLeft size={14} />
           <span className="hidden sm:inline">{t('Volver')}</span>
         </button>
-        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{t('Nueva venta')}</h2>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
+            <ShoppingCart size={22} />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold leading-tight text-gray-900 sm:text-2xl">{t('Nueva venta')}</h2>
+            <p className="hidden text-xs text-gray-400 sm:block">{t('Busca, agrega y cobra.')}</p>
+          </div>
+        </div>
         {/* el formato del precio a la vista desde el primer producto (William, 16-sep:
             solo estaba dentro del carrito y con el carrito vacío no se veía) */}
         <div className="flex items-center gap-1.5" data-testid="price-mode-header">
@@ -909,21 +918,35 @@ export default function NewSalePage() {
             página entera se estiraba y había que atravesarlos todos). El
             buscador queda fijo arriba; el carrito siempre a la vista al lado. */}
         <div className="flex flex-col gap-3 lg:min-w-0 lg:flex-1 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
-          <ScannerInput
-            value={search}
-            onChange={setSearch}
-            onScan={scanCode}
-            placeholder={t('Buscar por nombre, código o escanear...')}
-          />
+          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+            <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <Search size={13} /> {t('¿Qué lleva el cliente?')}
+            </p>
+            <ScannerInput
+              value={search}
+              onChange={setSearch}
+              onScan={scanCode}
+              placeholder={t('Buscar por nombre, código o escanear...')}
+            />
+          </div>
 
          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {!debouncedSearch ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
-                <Search size={28} className="text-gray-400" />
-              </div>
-              <p className="text-sm font-medium text-gray-500">{t('Busca un producto o escanea su código')}</p>
-              <p className="text-xs text-gray-400">{t('Escribe el nombre, código o usa el lector de códigos')}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { n: 1, icon: ScanLine, title: t('Busca o escanea'), text: t('Escribe el nombre, código o usa el lector de códigos') },
+                { n: 2, icon: Plus, title: t('Agrega con su cantidad'), text: t('En la tarjeta dices cuánto lleva y entra listo al carrito') },
+                { n: 3, icon: Wallet, title: t('Cobra'), text: t('Elige cómo pagó y confirma: el stock se descuenta solo') },
+              ].map(({ n, icon: Icon, title, text }) => (
+                <div key={n} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">{n}</span>
+                    <Icon size={18} className="text-blue-600" />
+                  </div>
+                  <p className="mt-3 text-sm font-bold text-gray-900">{title}</p>
+                  <p className="mt-0.5 text-xs leading-snug text-gray-400">{text}</p>
+                </div>
+              ))}
             </div>
           ) : loadingProducts ? (
             <div className="space-y-3">
@@ -953,11 +976,14 @@ export default function NewSalePage() {
             confirmar) quedaba clavado fuera de la vista y no había forma de
             llegar (bug reportado por William). El total + confirmar viven
             FUERA del área scrolleable: siempre visibles. */}
-        <div ref={cartRef} className="flex flex-col gap-3 lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
+        <div ref={cartRef} className="flex flex-col gap-3 lg:w-96 lg:flex-shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-9.5rem)]">
          <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <ShoppingCart size={15} />
+              </div>
               <h3 className="text-sm font-bold text-gray-900">{t('Carrito')}</h3>
               {cart.length > 0 && (
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
@@ -967,7 +993,7 @@ export default function NewSalePage() {
             </div>
 
             {cart.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-8">
+              <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-100 py-8">
                 <ShoppingCart size={32} className="text-gray-200" />
                 <p className="text-center text-xs text-gray-400">
                   {t('Agrega productos para completar la venta')}
@@ -1018,17 +1044,23 @@ export default function NewSalePage() {
           {cart.length > 0 && !isFiado && (
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
               <h3 className="mb-2.5 text-sm font-bold text-gray-900">{t('¿Cómo pagó?')}</h3>
+              <div className="mb-2 grid grid-cols-3 gap-2">
+                {DEFAULT_METHODS.map((m) => {
+                  const Icon = METHOD_ICONS[m] ?? Wallet
+                  return (
+                    <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
+                      className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-bold transition-all active:scale-[0.97] ${
+                        payMethod === m
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
+                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      }`}>
+                      <Icon size={18} />
+                      {m === 'Yape' ? m : t(m)}
+                    </button>
+                  )
+                })}
+              </div>
               <div className="flex flex-wrap gap-1.5">
-                {DEFAULT_METHODS.map((m) => (
-                  <button key={m} type="button" onClick={() => setPayMethod(m)}
-                    className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      payMethod === m
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                    }`}>
-                    {t(m)}
-                  </button>
-                ))}
                 {/* Chips guardados del negocio: un click y listo, X para quitar */}
                 {customMethods.map((m) => (
                   <span key={m}
@@ -1084,32 +1116,36 @@ export default function NewSalePage() {
           />
          </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm lg:flex-shrink-0">
+          <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-4 text-white shadow-md shadow-blue-600/30 sm:p-5 lg:flex-shrink-0" data-testid="sale-total">
+            <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" />
             {discountAmount > 0 && (
-              <div className="mb-3 space-y-1 border-b border-gray-100 pb-3 text-sm">
-                <div className="flex items-center justify-between text-gray-500">
+              <div className="relative mb-3 space-y-1 border-b border-white/20 pb-3 text-sm">
+                <div className="flex items-center justify-between text-white/80">
                   <span>{t('Subtotal')}</span>
                   <span>{formatAmount(subtotal)}</span>
                 </div>
-                <div className="flex items-center justify-between text-orange-600">
+                <div className="flex items-center justify-between font-semibold text-amber-200">
                   <span>{t('Descuento')}</span>
                   <span>−{formatAmount(discountAmount)}</span>
                 </div>
               </div>
             )}
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">{t('Total a cobrar')}</span>
-              <span className="text-2xl font-extrabold text-gray-900">{formatAmount(total)}</span>
+            <div className="relative mb-3">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white/80">{t('Total a cobrar')}</span>
+              <p className="text-3xl font-extrabold tracking-tight xl:text-4xl">{formatAmount(total)}</p>
+              {cart.length > 0 && (
+                <p className="text-xs text-white/75">{t('{n} producto(s)', { n: cart.length })}{isFiado ? ` · ${t('al fiado')}` : payMethod && payMethod !== '__otro__' ? ` · ${payMethod === 'Yape' ? payMethod : t(payMethod)}` : ''}</p>
+              )}
             </div>
 
             {createSale.isError && (
-              <p className="mb-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600 ring-1 ring-red-100">
+              <p className="relative mb-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600 ring-1 ring-red-100">
                 {createSale.error?.response?.data?.message ?? t('Error al registrar la venta')}
               </p>
             )}
 
             {belowLines.length > 0 && (
-              <p className="mb-2 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100" data-testid="below-list-summary">
+              <p className="relative mb-2 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 ring-1 ring-red-100" data-testid="below-list-summary">
                 <TrendingDown size={13} />
                 {belowLines.length === 1
                   ? t('1 producto por debajo del precio de venta · −{amount}', { amount: formatAmount(belowAmount) })
@@ -1119,7 +1155,7 @@ export default function NewSalePage() {
             <button
               onClick={handleSubmit}
               disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
+              className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-base font-extrabold text-blue-700 shadow-sm transition-all hover:bg-blue-50 active:scale-[0.98] disabled:opacity-60"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
               {createSale.isPending
@@ -1133,21 +1169,21 @@ export default function NewSalePage() {
       {/* Barra de cobro rápido: solo móvil — en desktop el Total + Confirmar
           ya viven SIEMPRE visibles al pie de la columna del carrito. */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-xl lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-blue-600 px-4 py-3 text-white shadow-2xl lg:hidden">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-white/80">
                 {t('{n} producto(s)', { n: cart.length })}
                 {discountAmount > 0 && ` · −${formatAmount(discountAmount)} ${t('desc.')}`}
               </p>
-              <p className="text-lg font-extrabold text-gray-900 leading-none">
+              <p className="text-xl font-extrabold leading-none">
                 {formatAmount(total)}
               </p>
             </div>
             <button
               onClick={handleSubmit}
               disabled={createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-blue-700 shadow-sm transition-all hover:bg-blue-50 active:scale-[0.98] disabled:opacity-60"
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}
               {createSale.isPending

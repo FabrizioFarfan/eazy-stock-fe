@@ -3,6 +3,17 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    // ── 29-sep: Nueva venta y Cotización rediseñadas
+    'Busca, agrega y cobra.': 'Search, add and charge.',
+    '¿Qué lleva el cliente?': 'What is the customer taking?',
+    'Busca o escanea': 'Search or scan',
+    'Agrega con su cantidad': 'Add it with its quantity',
+    'En la tarjeta dices cuánto lleva y entra listo al carrito': 'On the card you say how much they take and it goes straight to the cart',
+    'Cobra': 'Charge',
+    'Elige cómo pagó y confirma: el stock se descuenta solo': 'Choose how they paid and confirm: stock is deducted automatically',
+    'al fiado': 'on store credit',
+    '¿Qué quieres cotizar?': 'What do you want to quote?',
+    'Productos cotizados': 'Quoted products',
     // ── 29-sep: página Ventas rediseñada como el Dashboard
     'Vendido hoy': 'Sold today',
     'Presupuesto sin tocar el stock': 'A quote that leaves stock untouched',
@@ -463,6 +474,17 @@ export default {
   },
 
   it: {
+    // ── 29-sep: Nueva venta y Cotización rediseñadas
+    'Busca, agrega y cobra.': 'Cerca, aggiungi e incassa.',
+    '¿Qué lleva el cliente?': 'Cosa prende il cliente?',
+    'Busca o escanea': 'Cerca o scansiona',
+    'Agrega con su cantidad': 'Aggiungi con la quantità',
+    'En la tarjeta dices cuánto lleva y entra listo al carrito': 'Sulla scheda indichi quanto prende ed entra pronto nel carrello',
+    'Cobra': 'Incassa',
+    'Elige cómo pagó y confirma: el stock se descuenta solo': 'Scegli come ha pagato e conferma: le scorte si scalano da sole',
+    'al fiado': 'a credito (fiado)',
+    '¿Qué quieres cotizar?': 'Cosa vuoi preventivare?',
+    'Productos cotizados': 'Prodotti nel preventivo',
     // ── 29-sep: página Ventas rediseñada como el Dashboard
     'Vendido hoy': 'Venduto oggi',
     'Presupuesto sin tocar el stock': 'Un preventivo senza toccare le scorte',

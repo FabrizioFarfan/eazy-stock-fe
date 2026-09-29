@@ -1,7 +1,7 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2, MapPin } from 'lucide-react'
+import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2, MapPin, Search } from 'lucide-react'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -257,15 +257,23 @@ export default function QuotePage() {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button onClick={requestLeave}
             className="flex flex-shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">{t('Volver')}</span>
           </button>
-          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
-            {editId ? <>{t('Editar')} {quoteNumberLabel(editing.data?.number)}</> : t('Cotizaciones')}
-          </h2>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
+              <FileText size={21} />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-extrabold leading-tight text-gray-900 sm:text-2xl">
+                {editId ? <>{t('Editar')} {quoteNumberLabel(editing.data?.number)}</> : t('Cotizaciones')}
+              </h2>
+              <p className="hidden text-xs text-gray-400 sm:block">{t('Presupuesto sin tocar el stock')}</p>
+            </div>
+          </div>
           <HelpDrawer title={t('Qué es una cotización')} autoOpenKey="eazystock_quote_help_v3">
             <p><strong>{t('Un presupuesto para tu cliente')}</strong>: {t('mismos productos y precios que una venta, pero')} <strong>{t('sin descontar stock ni registrar dinero')}</strong>.</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -313,7 +321,10 @@ export default function QuotePage() {
         {/* Left: products */}
         <div className="space-y-4 lg:col-span-2">
           {/* Search */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+            <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <Search size={13} /> {t('¿Qué quieres cotizar?')}
+            </p>
             <div className="relative">
               <ScannerInput
                 value={query}
@@ -359,13 +370,60 @@ export default function QuotePage() {
 
           {/* Items */}
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-3 sm:px-5">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Package size={15} />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900">{t('Productos cotizados')}</h3>
+              {items.length > 0 && (
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">{items.length}</span>
+              )}
+            </div>
             {items.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-16">
+              <div className="m-4 flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-100 py-14">
                 <Package size={36} className="text-gray-200" />
                 <p className="text-sm text-gray-400">{t('Busca y agrega productos para cotizar')}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Celular: una tarjeta por línea */}
+              <ul className="divide-y divide-gray-100 md:hidden">
+                {items.map((it) => (
+                  <li key={it.productId} className="px-4 py-3.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-bold text-gray-900">{it.name}</p>
+                        {it.sku && <p className="font-mono text-xs text-gray-400">{it.sku}</p>}
+                      </div>
+                      <button onClick={() => removeItem(it.productId)} title={t('Quitar')}
+                        className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                    <div className="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] items-end gap-2">
+                      <label className="flex flex-col gap-1">
+                        <span className="text-[11px] font-medium text-gray-400">{t('Cantidad')}</span>
+                        <input
+                          type="number" min="0" step="any"
+                          value={it.qty}
+                          onChange={(e) => updateItem(it.productId, { qty: e.target.value === '' ? '' : Number(e.target.value) })}
+                          className="w-full rounded-lg border border-gray-200 px-2 py-2 text-center text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                        />
+                      </label>
+                      <PriceInput
+                        label={t('Precio unit.')}
+                        value={it.unitPrice === '' ? null : it.unitPrice}
+                        onChange={(v) => updateItem(it.productId, { unitPrice: v ?? 0 })}
+                        maxDecimals={6}
+                      />
+                    </div>
+                    <p className="mt-2 text-right text-sm text-gray-500">
+                      {t('Subtotal')}: <span className="font-bold text-gray-900">{formatAmount((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/60 text-xs uppercase tracking-widest text-gray-400">
@@ -414,12 +472,13 @@ export default function QuotePage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* Right: customer + meta + total */}
-        <div className="space-y-4">
+        {/* Right: customer + meta + total (pegado arriba al bajar, el total siempre cerca) */}
+        <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <QuoteCustomerSection key={custResetKey} value={cust} onChange={setCust} />
 
           <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -431,29 +490,31 @@ export default function QuotePage() {
                   onChange={(e) => setValidityDays(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20" />
               </label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
                 placeholder={t('Notas (condiciones, entrega, etc.)')} className={`${inputCls} resize-none`} />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-sm font-semibold text-gray-600">{t('Total')}</span>
-              <span className="text-2xl font-extrabold text-gray-900">{formatPrice(total)}</span>
+          <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-4 text-white shadow-md shadow-blue-600/30 sm:p-5" data-testid="quote-total">
+            <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" />
+            <div className="relative">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white/80">{t('Total')}</span>
+              <p className="text-4xl font-extrabold tracking-tight">{formatPrice(total)}</p>
+              {items.length > 0 && <p className="text-xs text-white/75">{t('{n} producto(s)', { n: items.length })}</p>}
             </div>
             <button
               onClick={handleGenerate}
               disabled={items.length === 0 || saving}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+              className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-base font-extrabold text-blue-700 shadow-sm hover:bg-blue-50 disabled:opacity-60"
             >
               {editId ? <PencilLine size={16} /> : <FileText size={16} />}
               {editId ? t('Guardar cambios') : t('Generar cotización')}
             </button>
-            <p className="mt-2 text-center text-[11px] text-gray-400">
+            <p className="relative mt-2 text-center text-[11px] text-white/75">
               {t('Primero ves un resumen para confirmar; después descargas el PDF, lo mandas por WhatsApp o correo, o lo imprimes.')}
             </p>
             {!editId && (
-              <p className="mt-1 text-center text-[11px] text-gray-400">
+              <p className="relative mt-1 text-center text-[11px] text-white/75">
                 {t('Queda guardada en el historial: si el cliente vuelve, la encuentras y vendes esos productos de una.')}
               </p>
             )}
