@@ -268,7 +268,8 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
               </span>
             </div>
             <button
-              onClick={() => setConfirmLogout(true)}
+              // En móvil el cajón se cierra: el modal queda solo, sin el menú detrás.
+              onClick={() => { setConfirmLogout(true); onClose?.() }}
               title={t('Cerrar sesión')}
               className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-red-500"
             >
