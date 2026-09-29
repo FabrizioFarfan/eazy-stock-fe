@@ -7,6 +7,7 @@ import {
   Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import LogoutConfirm from '../components/common/LogoutConfirm'
 import { useT } from '../i18n'
 
 const BOSS_ITEM = { icon: Crown, label: 'Panel Boss', path: '/boss' }
@@ -83,7 +84,7 @@ function navItemsForRole(role) {
 }
 
 export default function Sidebar({ open = false, onClose = () => {} }) {
-  const { user, can, logout } = useAuth()
+  const { user, can } = useAuth()
   const { pathname }          = useLocation()
   const t                     = useT()
 
@@ -107,7 +108,12 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
   })
 
   // Grupos abiertos: el de la página actual siempre; los demás, como los dejó.
-  const inGroup = (item) => item.children?.some((c) => pathname === c.path || pathname.startsWith(c.path + '/'))
+  // /reports y /sales son padres de rutas que NO son del grupo (/reports/receivables,
+  // /reports/payables): para ellos solo cuenta la ruta exacta.
+  const EXACT_ONLY = ['/reports', '/sales']
+  const inGroup = (item) => item.children?.some((c) => pathname === c.path
+    || (!EXACT_ONLY.includes(c.path) && pathname.startsWith(c.path + '/')))
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [openGroups, setOpenGroups] = useState(() => {
     try { return JSON.parse(localStorage.getItem('eazystock_nav_groups') || '{}') } catch { return {} }
   })
@@ -255,7 +261,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
               </span>
             </div>
             <button
-              onClick={logout}
+              onClick={() => setConfirmLogout(true)}
               title={t('Cerrar sesión')}
               className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-200/70 hover:text-red-500"
             >
@@ -264,6 +270,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
           </div>
         </div>
       </aside>
+      <LogoutConfirm open={confirmLogout} onClose={() => setConfirmLogout(false)} />
     </>
   )
 }

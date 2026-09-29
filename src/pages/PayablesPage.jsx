@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Truck, AlertTriangle, Loader2, HandCoins } from 'lucide-react'
-import PageTitle from '../components/common/PageTitle'
+import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { usePayables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
@@ -23,13 +23,17 @@ export default function PayablesPage() {
   const { data, isLoading, isError } = usePayables(params)
   const rows  = data?.rows  ?? []
   const total = data?.totalPayable ?? 0
+  const exceedsOf = (r) => r.creditLimitFromSupplier != null && Number(r.creditLimitFromSupplier) > 0 && Number(r.currentDebt) > Number(r.creditLimitFromSupplier)
+  const overLimit = rows.filter(exceedsOf).length
+  const oldest = rows.reduce((m, r) => Math.max(m, r.daysSinceLastPayment ?? 0), 0)
+  const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
   return (
     <div className="flex flex-col gap-5">
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <PageTitle icon={HandCoins} tone="amber">{t('Cuentas por pagar')}</PageTitle>
+      <ReportHeader icon={HandCoins} title={t('Cuentas por pagar')}
+        subtitle={t('Lo que le debes a tus proveedores por compras a crédito')}
+        help={(
           <HelpDrawer title={t('Cómo usar Cuentas por pagar')} autoOpenKey="eazystock_payables_help_v2">
             <p>{t('Lo que le debes a tus proveedores, todo junto en un solo lugar.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -49,15 +53,55 @@ export default function PayablesPage() {
               <p className="mt-1">{t('En el detalle ves cada cargo (recepción a crédito), pago y ajuste con el saldo que quedó después, para cuadrar con la factura del proveedor.')}</p>
             </div>
           </HelpDrawer>
-        </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-widest text-gray-400">{t('Total por pagar')}</p>
-          <p className="text-2xl font-extrabold text-red-600">{formatPrice(total)}</p>
-        </div>
-      </div>
+        )} />
+
+      <AccountsSwitcher />
+
+      <ReportHero icon={HandCoins} label={t('Total por pagar')} loading={isLoading}
+        value={formatPrice(total)}
+        sub={<span>{t('Toca un proveedor para ver su cuenta y registrar el pago.')}</span>}
+        cells={[
+          [t('Proveedores a los que debes'), rows.length],
+          [t('Exceden su crédito'), overLimit, overLimit > 0 ? 'text-amber-200' : ''],
+          [t('Días de la más antigua'), oldest ? `${oldest}${t('d')}` : '—'],
+        ]} />
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></div>
+          ) : rows.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-14">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50"><Truck size={24} className="text-emerald-500" /></div>
+              <p className="text-sm font-semibold text-gray-700">{t('No tenés deudas pendientes con proveedores')}</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {rows.map((r) => (
+                <li key={r.supplierId}>
+                  <button type="button" onClick={() => navigate(`/suppliers/${r.supplierId}`)}
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-blue-50/40">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Truck size={17} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-sm font-semibold text-gray-900">{r.name}</span>
+                      <span className="block text-xs text-gray-400">
+                        {r.daysSinceLastPayment != null ? t('{n} días sin pagar', { n: r.daysSinceLastPayment }) : t('Aún sin pagos')}
+                        {exceedsOf(r) && <span className="ml-1.5 font-semibold text-red-600">· {t('Excede crédito')}</span>}
+                      </span>
+                      <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-gray-100">
+                        <span className={`block h-full rounded-full ${exceedsOf(r) ? 'bg-red-500' : 'bg-blue-600'}`}
+                          style={{ width: `${maxDebt > 0 ? Math.max(4, (Number(r.currentDebt) / maxDebt) * 100) : 0}%` }} />
+                      </span>
+                    </span>
+                    <span className="flex-shrink-0 text-base font-bold text-gray-900">{formatPrice(r.currentDebt)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -96,7 +140,13 @@ export default function PayablesPage() {
                       <td className="px-5 py-3.5 font-semibold text-gray-900">{r.name}</td>
                       <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{r.ruc || '—'}</td>
                       <td className="px-5 py-3.5 text-gray-600">{r.phone || '—'}</td>
-                      <td className="px-5 py-3.5 text-right font-bold text-gray-900">{formatPrice(r.currentDebt)}</td>
+                      <td className="px-5 py-3.5 text-right">
+                        <span className="font-bold text-gray-900">{formatPrice(r.currentDebt)}</span>
+                        <div className="ml-auto mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-gray-100">
+                          <div className={`h-full rounded-full ${exceeds ? 'bg-red-500' : 'bg-blue-600'}`}
+                            style={{ width: `${maxDebt > 0 ? Math.max(4, (Number(r.currentDebt) / maxDebt) * 100) : 0}%` }} />
+                        </div>
+                      </td>
                       <td className={`px-5 py-3.5 text-right font-semibold ${exceeds ? 'text-red-600' : 'text-gray-700'}`}>
                         {r.limitUsagePercent != null ? `${Number(r.limitUsagePercent).toFixed(0)}%` : '—'}
                         {exceeds && <AlertTriangle size={11} className="ml-1 inline" />}

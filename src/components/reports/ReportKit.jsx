@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart2, Scale, Trophy, Award } from 'lucide-react'
+import { BarChart2, Scale, Trophy, Award, Users, Wallet, HandCoins } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
 
@@ -17,14 +17,14 @@ const SIBLINGS = [
   { to: '/reports/customers', icon: Award,     label: 'Análisis de clientes', hint: 'Quién te compra más' },
 ]
 
-// Las cuatro páginas hermanas, a un toque desde cualquiera de ellas.
-export function ReportsSwitcher() {
+// Fila de tarjetas para saltar entre páginas hermanas (la activa en azul).
+export function SiblingSwitcher({ items, label }) {
   const t = useT()
-  const { can } = useAuth()
-  if (!can('canViewReports')) return null
+  if (items.length < 2) return null
+  const cols = items.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
   return (
-    <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 sm:pb-0" aria-label={t('Reportes')}>
-      {SIBLINGS.map(({ to, icon: Icon, label, hint }) => (
+    <nav className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid ${cols} sm:overflow-visible sm:px-0 sm:pb-0`} aria-label={label}>
+      {items.map(({ to, icon: Icon, label: itemLabel, hint }) => (
         <NavLink key={to} to={to} end
           className={({ isActive }) => `group flex min-w-[10.5rem] flex-shrink-0 items-center gap-3 rounded-2xl p-3 transition-all sm:min-w-0 ${
             isActive
@@ -38,7 +38,7 @@ export function ReportsSwitcher() {
                 <Icon size={17} />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">{t(label)}</span>
+                <span className="block truncate text-sm font-bold">{t(itemLabel)}</span>
                 <span className={`block truncate text-[11px] ${isActive ? 'text-white/80' : 'text-gray-400'}`}>{t(hint)}</span>
               </span>
             </>
@@ -47,6 +47,27 @@ export function ReportsSwitcher() {
       ))}
     </nav>
   )
+}
+
+// Las cuatro páginas de reportes, a un toque desde cualquiera de ellas.
+export function ReportsSwitcher() {
+  const t = useT()
+  const { can } = useAuth()
+  if (!can('canViewReports')) return null
+  return <SiblingSwitcher items={SIBLINGS} label={t('Reportes')} />
+}
+
+// Clientes ↔ Cuentas por cobrar ↔ Cuentas por pagar: la plata que entra y sale.
+export function AccountsSwitcher() {
+  const t = useT()
+  const { user, can } = useAuth()
+  const owner = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  const items = [
+    (owner || can('canManageCustomers')) && { to: '/customers', icon: Users, label: 'Clientes', hint: 'A quién le vendes' },
+    can('canViewReports') && { to: '/reports/receivables', icon: Wallet, label: 'Cuentas x cobrar', hint: 'Lo que te deben' },
+    owner && { to: '/reports/payables', icon: HandCoins, label: 'Cuentas x pagar', hint: 'Lo que debes a proveedores' },
+  ].filter(Boolean)
+  return <SiblingSwitcher items={items} label={t('Cuentas')} />
 }
 
 // Franja azul con la cifra principal del reporte y hasta 4 cifras de apoyo.

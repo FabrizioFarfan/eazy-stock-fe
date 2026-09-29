@@ -1,8 +1,9 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
-import PageTitle from '../components/common/PageTitle'
+import { Plus, Search, Users, ChevronLeft, ChevronRight, AlertTriangle, ArrowRight, Wallet, Award, X } from 'lucide-react'
+import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
+import { useReceivables } from '../hooks/useReports'
 import { useDebounce } from '../hooks/useDebounce'
 import { useCustomers } from '../hooks/useCustomers'
 import { useAuth } from '../context/AuthContext'
@@ -12,6 +13,28 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 
 const PAGE_SIZE = 20
+
+// Acceso grande (mismo que Dashboard / Productos / Ventas).
+function Tile({ icon: Icon, label, hint, onClick, primary, className = '' }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`group flex items-center gap-3 rounded-2xl p-4 text-left transition-all active:scale-[0.98] ${
+        primary
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 hover:bg-blue-700'
+          : 'border border-gray-100 bg-white shadow-sm hover:border-blue-200 hover:shadow-md'
+      } ${className}`}>
+      <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${
+        primary ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
+        <Icon size={19} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-bold ${primary ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+        <p className={`truncate text-xs ${primary ? 'text-white/80' : 'text-gray-400'}`}>{hint}</p>
+      </div>
+      <ArrowRight size={15} className={`hidden flex-shrink-0 transition-transform group-hover:translate-x-0.5 sm:block ${primary ? 'text-white/80' : 'text-gray-300'}`} />
+    </button>
+  )
+}
 
 function DebtBadge({ debt, limit }) {
   const t = useT()
@@ -61,6 +84,14 @@ export default function CustomersPage() {
   }
   const { data, isLoading, isFetching } = useCustomers(params)
 
+  // Cifras de la franja: todos los clientes, cuántos deben y cuánto (el total
+  // por cobrar solo lo ve quien ve reportes).
+  const scope = user?.role === 'SUPER_ADMIN' && user?.businessId ? { businessId: user.businessId } : {}
+  const { data: allC }  = useCustomers({ page: 0, size: 1, ...scope })
+  const { data: debtC } = useCustomers({ page: 0, size: 1, withDebt: true, ...scope })
+  const canReports = can('canViewReports')
+  const { data: recv }  = useReceivables(Object.keys(scope).length ? scope : undefined, { enabled: canReports })
+
   const items         = data?.content       ?? []
   const totalElements = data?.totalElements ?? 0
   const totalPages    = data?.totalPages    ?? 0
@@ -69,10 +100,9 @@ export default function CustomersPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <PageTitle icon={Users} tone="purple">{t('Clientes')}</PageTitle>
+      <ReportHeader icon={Users} title={t('Clientes')}
+        subtitle={t('A quién le vendes, quién te debe y cuánto')}
+        help={(
           <HelpDrawer title={t('Cómo usar Clientes')} autoOpenKey="eazystock_customers_help_v2">
             <p>{t('Registra a tus clientes para poder venderles al fiado y llevar su cuenta al día.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -97,41 +127,100 @@ export default function CustomersPage() {
             </div>
             <p className="text-xs text-gray-400">{t('Tip: el total que te deben todos tus clientes lo ves junto en Cuentas → Por cobrar. Marca "Solo con deuda" para ver únicamente a quienes te deben.')}</p>
           </HelpDrawer>
-          {!isLoading && (
-            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
-              {totalElements}
-            </span>
-          )}
+        )} />
+
+      <AccountsSwitcher />
+
+      {/* Franja + accesos grandes */}
+      <div className={`grid grid-cols-1 gap-4 ${canManage || canReports ? 'lg:grid-cols-3' : ''}`}>
+        <div className={canManage || canReports ? 'lg:col-span-2' : ''}>
+          <ReportHero icon={Users} label={t('Tus clientes')} loading={allC == null}
+            value={allC?.totalElements ?? 0}
+            cells={[
+              [t('Con deuda'), debtC?.totalElements ?? 0, Number(debtC?.totalElements) > 0 ? 'text-amber-200' : ''],
+              ...(canReports ? [[t('Te deben'), formatPrice(recv?.totalReceivable ?? 0)]] : []),
+              [t('Al día'), Math.max(0, (allC?.totalElements ?? 0) - (debtC?.totalElements ?? 0))],
+            ]} />
         </div>
-        {canManage && (
-          <button onClick={() => setEditing('new')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]">
-            <Plus size={15} />{t('Nuevo cliente')}
-          </button>
-        )}
+        {(canManage || canReports) && <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:content-start">
+          {canManage && (
+            <Tile primary icon={Plus} label={t('Nuevo cliente')} hint={t('Para venderle al fiado y saber qué compra')}
+              onClick={() => setEditing('new')} className="col-span-2 lg:col-span-1" />
+          )}
+          {canReports && (
+            <Tile icon={Wallet} label={t('Cuentas x cobrar')} hint={t('Lo que te deben')} onClick={() => navigate('/reports/receivables')} />
+          )}
+          {canReports && (
+            <Tile icon={Award} label={t('Análisis de clientes')} hint={t('Quién te compra más')} onClick={() => navigate('/reports/customers')} />
+          )}
+        </div>}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* Buscador grande + atajos */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+        <div className="relative">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text" placeholder={t('Buscar por nombre, documento o teléfono...')}
             value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/60 py-3 pl-11 pr-10 text-base text-gray-900 outline-none transition-colors focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-600/20"
           />
+          {search && (
+            <button type="button" onClick={() => { setSearch(''); setPage(0) }} title={t('Limpiar')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700">
+              <X size={15} />
+            </button>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-600">
-          <input type="checkbox" checked={withDebt}
-            onChange={(e) => { setWithDebt(e.target.checked); setPage(0) }}
-            className="accent-blue-600" />
-          {t('Solo con deuda')}
-        </label>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[[false, t('Todos'), allC?.totalElements], [true, t('Con deuda'), debtC?.totalElements]].map(([val, label, n]) => (
+            <button key={String(val)} type="button" onClick={() => { setWithDebt(val); setPage(0) }} aria-pressed={withDebt === val}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all ${
+                withDebt === val
+                  ? 'border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}>
+              {label}
+              {n != null && <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${withDebt === val ? 'bg-white/20' : 'bg-gray-100 text-gray-600'}`}>{n}</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="space-y-3 p-4">{[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-100" />)}</div>
+          ) : items.length === 0 ? (
+            <p className="px-5 py-14 text-center text-sm font-semibold text-gray-500">
+              {search || withDebt ? t('No hay clientes con estos filtros') : t('Aún no tenés clientes')}
+            </p>
+          ) : (
+            <ul className={`divide-y divide-gray-100 ${isFetching ? 'opacity-60' : ''}`}>
+              {items.map((c) => (
+                <li key={c.id}>
+                  <button type="button" onClick={() => navigate(`/customers/${c.id}`)}
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-blue-50/40">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-700">
+                      {c.name?.trim()?.[0]?.toUpperCase() ?? '?'}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-sm font-semibold text-gray-900">{c.name}</span>
+                      <span className="block truncate text-xs text-gray-400">{formatPhoneDisplay(c.phone) || c.documentId || '—'}</span>
+                    </span>
+                    <span className="flex flex-shrink-0 flex-col items-end gap-1">
+                      <span className="text-sm font-bold text-gray-900">{formatPrice(c.currentDebt)}</span>
+                      <DebtBadge debt={c.currentDebt} limit={c.creditLimit} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -182,7 +271,7 @@ export default function CustomersPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-3.5 sm:px-5">
             <p className="text-sm text-gray-400">
               <span className="font-semibold text-gray-700">{fromRow}–{toRow}</span> {t('de')}{' '}
               <span className="font-semibold text-gray-700">{totalElements}</span> {t('clientes')}

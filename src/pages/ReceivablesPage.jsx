@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, AlertTriangle, Loader2, MessageCircle, Wallet } from 'lucide-react'
-import PageTitle from '../components/common/PageTitle'
+import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useReceivables } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
@@ -66,30 +66,73 @@ export default function ReceivablesPage() {
   const { data, isLoading, isError } = useReceivables(params)
   const rows  = data?.rows  ?? []
   const total = data?.totalReceivable ?? 0
+  const exceedsOf = (r) => r.creditLimit != null && Number(r.creditLimit) > 0 && Number(r.currentDebt) > Number(r.creditLimit)
+  const overLimit = rows.filter(exceedsOf).length
+  const stale = rows.filter((r) => r.daysSinceLastPayment == null || r.daysSinceLastPayment > 30).length
+  const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
   return (
     <div className="flex flex-col gap-5">
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageTitle icon={Wallet} tone="emerald">{t('Cuentas por cobrar')}</PageTitle>
-        <div className="flex items-end gap-4">
+      <ReportHeader icon={Wallet} title={t('Cuentas por cobrar')}
+        subtitle={t('Lo que tus clientes te deben por ventas al fiado')}
+        help={(
           <HelpDrawer title={t('Cómo cobrar a tus clientes')} autoOpenKey="eazystock_receivables_help_v2">
             <ReceivablesHelp />
           </HelpDrawer>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-widest text-gray-400">{t('Total por cobrar')}</p>
-            <p className="text-2xl font-extrabold text-blue-700">{formatPrice(total)}</p>
-          </div>
-        </div>
-      </div>
+        )} />
 
-      <p className="text-sm text-gray-500">
-        {t('Toca un cliente para ver su ficha, registrar pagos y descargar el')}{' '}
-        <span className="font-semibold text-gray-700">{t('PDF con el detalle de su deuda')}</span> {t('para enviárselo.')}
-      </p>
+      <AccountsSwitcher />
+
+      <ReportHero icon={Wallet} label={t('Total por cobrar')} loading={isLoading}
+        value={formatPrice(total)}
+        sub={<span>{t('Toca un cliente para ver su ficha, registrar pagos y descargar el')} <b className="text-white">{t('PDF con el detalle de su deuda')}</b> {t('para enviárselo.')}</span>}
+        cells={[
+          [t('Clientes que deben'), rows.length],
+          [t('Exceden su límite'), overLimit, overLimit > 0 ? 'text-amber-200' : ''],
+          [t('Sin pagar hace +30 días'), stale, stale > 0 ? 'text-amber-200' : ''],
+        ]} />
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></div>
+          ) : rows.length === 0 ? (
+            <p className="px-5 py-14 text-center text-sm font-semibold text-gray-600">{t('Ningún cliente tiene deuda pendiente')}</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {rows.map((r) => {
+                const phone = waPhone(r.phone)
+                return (
+                  <li key={r.customerId} className="flex items-center gap-3 px-4 py-3.5">
+                    <button type="button" onClick={() => navigate(`/customers/${r.customerId}`)} className="min-w-0 flex-1 text-left">
+                      <p className="break-words text-sm font-semibold text-gray-900">{r.name}</p>
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        {r.daysSinceLastPayment != null ? t('{n} días sin pagar', { n: r.daysSinceLastPayment }) : t('Aún no paga')}
+                        {exceedsOf(r) && <span className="ml-1.5 font-semibold text-red-600">· {t('Excede límite')}</span>}
+                      </p>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                        <div className={`h-full rounded-full ${exceedsOf(r) ? 'bg-red-500' : 'bg-blue-600'}`}
+                          style={{ width: `${maxDebt > 0 ? Math.max(4, (Number(r.currentDebt) / maxDebt) * 100) : 0}%` }} />
+                      </div>
+                    </button>
+                    <span className="flex-shrink-0 text-base font-bold text-gray-900">{formatPrice(r.currentDebt)}</span>
+                    {phone && (
+                      <a href={`https://wa.me/${phone}?text=${encodeURIComponent(reminderMessage(user?.businessName, r.name, r.currentDebt))}`}
+                        target="_blank" rel="noopener noreferrer"
+                        title={t('Enviar recordatorio de deuda por WhatsApp a {name}', { name: r.name })}
+                        className="flex-shrink-0 rounded-xl bg-emerald-50 p-2.5 text-emerald-600 hover:bg-emerald-100">
+                        <MessageCircle size={17} />
+                      </a>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -130,7 +173,13 @@ export default function ReceivablesPage() {
                       <td className="px-5 py-3.5 font-semibold text-gray-900">{r.name}</td>
                       <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{r.documentId || '—'}</td>
                       <td className="px-5 py-3.5 text-gray-600">{r.phone || '—'}</td>
-                      <td className="px-5 py-3.5 text-right font-bold text-gray-900">{formatPrice(r.currentDebt)}</td>
+                      <td className="px-5 py-3.5 text-right">
+                        <span className="font-bold text-gray-900">{formatPrice(r.currentDebt)}</span>
+                        <div className="ml-auto mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-gray-100">
+                          <div className={`h-full rounded-full ${exceeds ? 'bg-red-500' : 'bg-blue-600'}`}
+                            style={{ width: `${maxDebt > 0 ? Math.max(4, (Number(r.currentDebt) / maxDebt) * 100) : 0}%` }} />
+                        </div>
+                      </td>
                       <td className={`px-5 py-3.5 text-right font-semibold ${exceeds ? 'text-red-600' : 'text-gray-700'}`}>
                         {r.limitUsagePercent != null ? `${Number(r.limitUsagePercent).toFixed(0)}%` : '—'}
                         {exceeds && <AlertTriangle size={11} className="ml-1 inline" />}

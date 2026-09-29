@@ -14,6 +14,7 @@ import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
 import TutorialModal from '../components/tutorial/TutorialModal'
+import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 
 const ROLE_LABEL = {
@@ -487,9 +488,10 @@ function InstallSection() {
 
 export default function SettingsPage() {
   const t = useT()
-  const { user, logout, logoutAll } = useAuth()
+  const { user, logoutAll } = useAuth()
   const { isDark, toggle: toggleTheme } = useTheme()
   const [loggingOutAll, setLoggingOutAll] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const navigate = useNavigate()
 
   // Lanzar el tutorial del modal de producto: seteamos bandera en
@@ -649,9 +651,10 @@ export default function SettingsPage() {
       {guide && <TutorialModal steps={GUIDES[guide].steps} heading={GUIDES[guide].title} onClose={() => setGuide(null)} />}
 
       {/* Session */}
+      <LogoutConfirm open={confirmLogout} onClose={() => setConfirmLogout(false)} />
       <Section title={t('Sesión')}>
         <button
-          onClick={logout}
+          onClick={() => setConfirmLogout(true)}
           className="flex w-full items-center gap-3.5 -mx-5 px-5 py-4 rounded-xl text-left hover:bg-red-50 transition-colors group border-b border-gray-50"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-red-50 transition-colors group-hover:bg-red-100">
