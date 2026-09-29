@@ -3,6 +3,17 @@
 // La llave es el español tal como aparece en el código.
 export default {
   en: {
+    // ── 29-sep: formulario de producto a dos columnas
+    'Lo marcado con * es obligatorio; lo demás lo puedes completar después.': 'Fields marked * are required; you can fill in the rest later.',
+    'Qué es': 'What it is',
+    'Nombre, unidad y código': 'Name, unit and code',
+    'De dónde viene y dónde está': 'Where it comes from and where it is',
+    'Proveedor, marca, categoría y ubicación': 'Supplier, brand, category and location',
+    'Códigos y detalles': 'Codes and details',
+    'Opcional · para el escáner y para distinguirlo': 'Optional · for the scanner and to tell it apart',
+    'Lo que cuesta, lo que cobras y cuánto tienes': 'What it costs, what you charge and how much you have',
+    'Toca para subir una foto': 'Tap to upload a photo',
+    'Crear producto': 'Create product',
     // ── 29-sep: Productos rediseñado como el Dashboard
     'Tu catálogo': 'Your catalogue',
     'productos a la venta': 'products for sale',
@@ -681,6 +692,17 @@ export default {
   },
 
   it: {
+    // ── 29-sep: formulario de producto a dos columnas
+    'Lo marcado con * es obligatorio; lo demás lo puedes completar después.': 'I campi con * sono obbligatori; il resto puoi completarlo dopo.',
+    'Qué es': 'Cos\'è',
+    'Nombre, unidad y código': 'Nome, unità e codice',
+    'De dónde viene y dónde está': 'Da dove arriva e dove si trova',
+    'Proveedor, marca, categoría y ubicación': 'Fornitore, marca, categoria e posizione',
+    'Códigos y detalles': 'Codici e dettagli',
+    'Opcional · para el escáner y para distinguirlo': 'Facoltativo · per lo scanner e per distinguerlo',
+    'Lo que cuesta, lo que cobras y cuánto tienes': 'Quanto costa, quanto incassi e quanto ne hai',
+    'Toca para subir una foto': 'Tocca per caricare una foto',
+    'Crear producto': 'Crea prodotto',
     // ── 29-sep: Productos rediseñado como el Dashboard
     'Tu catálogo': 'Il tuo catalogo',
     'productos a la venta': 'prodotti in vendita',

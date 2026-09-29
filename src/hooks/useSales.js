@@ -4,11 +4,12 @@ import { PRODUCTS_KEY } from './useProducts'
 
 export const SALES_KEY = 'sales'
 
-export function useSales(params) {
+export function useSales(params, options = {}) {
   return useQuery({
     queryKey: [SALES_KEY, params],
     queryFn: () => salesApi.getAll(params).then((r) => r.data.data),
     placeholderData: (prev) => prev,
+    ...options,
   })
 }
 

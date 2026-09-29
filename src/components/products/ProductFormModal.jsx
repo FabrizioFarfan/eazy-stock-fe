@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage, useProductNameCheck } from '../../hooks/useProducts'
 import { productsApi } from '../../services/endpoints/products'
@@ -72,8 +72,25 @@ function Field({ label, required, error, children }) {
   )
 }
 
+// Tarjeta de sección del formulario: número + título + para qué sirve.
+function FormSection({ n, title, hint, accent = false, children }) {
+  return (
+    <section className={`rounded-2xl border bg-white p-4 shadow-sm sm:p-5 ${accent ? 'border-blue-100' : 'border-gray-100'}`}>
+      <div className="mb-4 flex items-center gap-3">
+        <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+          accent ? 'bg-blue-600 text-white' : 'bg-gray-900 text-white'}`}>{n}</span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-900">{title}</p>
+          {hint && <p className="truncate text-xs text-gray-400">{hint}</p>}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4">{children}</div>
+    </section>
+  )
+}
+
 const inputCls =
-  'rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
+  'rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
 
 /**
  * Sugerencia de códigos libres: huecos que dejó el borrado de productos que
@@ -691,477 +708,516 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-      <div className="flex w-full max-w-xl flex-col rounded-2xl bg-white shadow-xl max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
+      <div className="flex max-h-[94dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl md:max-w-5xl">
 
-        {/* Header */}
-        <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4">
-          <h3 className="text-base font-semibold text-gray-900">
-            {isEdit ? t('Editar producto') : t('Nuevo producto')}
-          </h3>
+        {/* Cabecera */}
+        <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/30">
+              {isEdit ? <Pencil size={20} /> : <Package size={22} />}
+            </div>
+            <div className="min-w-0">
+              <h3 className="truncate text-lg font-extrabold text-gray-900 sm:text-xl">
+                {isEdit ? t('Editar producto') : t('Nuevo producto')}
+              </h3>
+              <p className="truncate text-xs text-gray-400">
+                {t('Lo marcado con * es obligatorio; lo demás lo puedes completar después.')}
+              </p>
+            </div>
+          </div>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setShowTutorial(true)}
               title={t('Ver tutorial: cómo agregar un producto')}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+              className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium text-gray-500 hover:bg-blue-50 hover:text-blue-600"
             >
-              <HelpCircle size={18} />
+              <HelpCircle size={17} /><span className="hidden sm:inline">{t('Tutorial')}</span>
             </button>
-            <button
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X size={18} />
+            <button onClick={onClose} aria-label={t('Cerrar')}
+              className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+              <X size={20} />
             </button>
           </div>
         </div>
 
-        {/* Body — scrollable */}
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-col">
-          <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        {/* Cuerpo — en PC/tablet: foto y precios a la izquierda, datos a la derecha */}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto bg-gray-50/60">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-5 md:grid-rows-[auto_1fr] md:gap-5">
 
-            {/* Foto del producto: para que el vendedor sepa cómo es (William).
-                Se reduce en el navegador y se sube aparte al guardar. */}
-            <div data-tutorial-target="photo" className="flex items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-3">
+              {/* Foto del producto: para que el vendedor sepa cómo es (William).
+                  Se reduce en el navegador y se sube aparte al guardar. */}
+              <div data-tutorial-target="photo" className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:col-start-1 md:row-start-1">
               <input ref={cameraInputRef}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoPick} />
               <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoPick} />
-              {photoPreview ? (
-                <img src={photoPreview} alt="" className="h-20 w-20 flex-shrink-0 rounded-xl border border-gray-200 bg-white object-cover" />
-              ) : (
-                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-300">
-                  {photoBusy ? <Loader2 size={22} className="animate-spin" /> : <Package size={28} />}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-700">{t('Foto del producto')}</p>
-                <p className="mt-0.5 text-[11px] leading-snug text-gray-400">
-                  {t('Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.')}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={photoBusy}
-                    className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:hidden">
-                    <Camera size={13} /> {t('Tomar foto')}
-                  </button>
-                  <button type="button" onClick={() => galleryInputRef.current?.click()} disabled={photoBusy}
-                    className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-                    <ImagePlus size={13} /> {photoPreview ? t('Cambiar foto') : t('Elegir imagen')}
-                  </button>
-                  {photoPreview && (
-                    <button type="button" onClick={handlePhotoRemove} disabled={photoBusy}
-                      className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">
-                      <Trash2 size={13} /> {t('Quitar foto')}
+                <div className="flex items-center gap-4 md:flex-col md:items-stretch">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="" className="h-24 w-24 flex-shrink-0 rounded-xl border border-gray-100 bg-gray-50 object-contain md:aspect-[4/3] md:h-auto md:w-full" />
+                  ) : (
+                    <button type="button" onClick={() => galleryInputRef.current?.click()} disabled={photoBusy}
+                      className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-gray-300 transition-colors hover:border-blue-300 hover:text-blue-400 md:aspect-[4/3] md:h-auto md:w-full">
+                      {photoBusy ? <Loader2 size={26} className="animate-spin" /> : <ImagePlus size={32} strokeWidth={1.6} />}
+                      <span className="hidden text-xs font-medium md:block">{t('Toca para subir una foto')}</span>
                     </button>
                   )}
-                </div>
-                {photoBusy && <p className="mt-1 text-[11px] text-gray-400">{t('Procesando foto...')}</p>}
-                {photoError && <p className="mt-1 text-xs text-red-500">{photoError}</p>}
-              </div>
-            </div>
-
-            {/* Nombre + Unidad + Presentación */}
-            <div data-tutorial-target="name-unit" className="grid grid-cols-2 gap-3">
-              <Field label={t('Nombre')} required error={errors.name?.message}>
-                <input {...register('name')} placeholder={t('Ej. Aceite 5W30')} className={inputCls} />
-              </Field>
-              <Field label={t('Unidad')} error={errors.unit?.message}>
-                <select {...register('unit')} className={inputCls}>
-                  <option value="unidad">{t('unidad')}</option>
-                  <option value="metro">{t('metro')}</option>
-                  <option value="kilo">{t('kilo')}</option>
-                  <option value="litro">{t('litro')}</option>
-                  <option value="otro">{t('otro...')}</option>
-                </select>
-                {unitValue === 'otro' && (
-                  <input
-                    {...register('unitCustom')}
-                    placeholder={t('Especificá la unidad (ej. galón, par)')}
-                    className={`${inputCls} mt-1.5`}
-                  />
-                )}
-              </Field>
-            </div>
-            <DuplicateNameHint
-              result={nameCheck.result}
-              checking={nameCheck.checking}
-              onEditExisting={onEditExisting ? openExisting : null}
-              onShowHidden={showHidden}
-              inReceipt={!!receiptContext}
-              supplierChosen={!!supplierId}
-            />
-
-            {/* Código del producto (SKU) */}
-            <Field label={t('Código del producto')} error={errors.sku?.message}>
-              <input
-                {...register('sku')}
-                placeholder={isEdit ? t('Código del producto') : t('Se genera automáticamente si lo dejas vacío')}
-                className={`${inputCls} font-mono ${
-                  errors.sku ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
-                }`}
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <p className="text-xs text-gray-400 mt-0.5">
-                {isEdit
-                  ? t('Código interno único. Cámbialo solo si necesitas corregirlo.')
-                  : t('Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.')}
-              </p>
-              <FreeCodesHint codes={freeCodes} onPick={(code) => setValue('sku', code)} />
-            </Field>
-
-            <Field label={t('Presentación')} error={errors.presentation?.message}>
-              <input
-                {...register('presentation')}
-                placeholder={t('Ej: Saco de 25kg, Caja de 100, Rollo de 50m')}
-                className={inputCls}
-              />
-              <p className="text-xs text-gray-400 mt-0.5">
-                {t('Opcional · Cómo viene presentado el producto. No afecta cómo se vende.')}
-              </p>
-            </Field>
-
-            {/* Brand picker */}
-            <div data-tutorial-target="brand-picker">
-              <EntityPicker
-                label={t('Marca')}
-                items={brands}
-                value={brandId}
-                onChange={setBrandId}
-                onCreate={handleCreateBrand}
-                placeholder={t('Buscar marca...')}
-                createLabel={t('Nueva marca')}
-                isCreating={createBrand.isPending}
-              />
-            </div>
-
-            {/* Supplier picker — obligatorio */}
-            <div data-tutorial-target="supplier-picker">
-              {receiptContext ? (
-                // Desde la recepción el proveedor YA está elegido: fijo, sin picker.
-                <div>
-                  <p className="mb-1.5 text-sm font-medium text-gray-700">{t('Proveedor')}</p>
-                  <div className="flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
-                    <span className="text-sm font-semibold text-blue-900">{receiptContext.supplier.name}</span>
-                    <span className="text-xs text-blue-700">· {t('el de la recepción en curso')}</span>
-                  </div>
-                </div>
-              ) : (
-              <EntityPicker
-                label={<>{t('Proveedor')} <span className="text-red-500">*</span></>}
-                items={suppliers}
-                value={supplierId}
-                onChange={(v) => { setSupplierId(v); setSupplierError(null) }}
-                onCreate={handleCreateSupplier}
-                extraFields={[
-                  { name: 'contact', placeholder: t('Contacto (opcional)') },
-                  { name: 'phone',   placeholder: t('Teléfono (opcional)')  },
-                ]}
-                placeholder={t('Buscar proveedor...')}
-                createLabel={t('Nuevo proveedor')}
-                isCreating={createSupplier.isPending}
-              />
-              )}
-              {supplierError && (
-                <p className="mt-1 text-xs text-red-500">{supplierError}</p>
-              )}
-              {/* Pista cuando el producto está vinculado al placeholder */}
-              {isEdit && suppliers.find((s) => s.id === supplierId)?.placeholderForUnassigned && (
-                <p className="mt-1 text-xs text-amber-700">
-                  {t('Este producto está sin proveedor real asignado. Cambialo al proveedor correspondiente.')}
-                </p>
-              )}
-            </div>
-
-            {/* Category picker */}
-            <div data-tutorial-target="category-picker">
-              <EntityPicker
-                label={t('Categoría del producto')}
-                helperText={t('Ej: Clavos, Tornillos, Cemento, Pinturas')}
-                items={categories}
-                value={categoryId}
-                onChange={setCategoryId}
-                onCreate={handleCreateCategory}
-                placeholder={t('Buscar categoría...')}
-                createLabel={t('Nueva categoría')}
-                createButtonLabel={t('Crear categoría')}
-                newNamePlaceholder={t('Nombre de la nueva categoría (ej: Líquidos, Pinturas)')}
-                warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands, t)}
-                isCreating={createCategory.isPending}
-              />
-            </div>
-
-            {/* Ubicación física: en qué almacén / estante está (pedido de William) */}
-            <div data-tutorial-target="location-picker">
-              <EntityPicker
-                label={t('Ubicación en el negocio')}
-                helperText={t('Ej: Almacén 1, Estante B3, Vitrina')}
-                items={locations}
-                value={locationId}
-                onChange={setLocationId}
-                onCreate={handleCreateLocation}
-                placeholder={t('Buscar ubicación...')}
-                createLabel={t('Nueva ubicación')}
-                createButtonLabel={t('Crear ubicación')}
-                newNamePlaceholder={t('Nombre de la nueva ubicación (ej: Almacén 2)')}
-                isCreating={createLocation.isPending}
-              />
-            </div>
-
-            {/* Código de barras de fábrica: el EAN impreso en el empaque por el
-                fabricante (Sony pone el código; el distribuidor no lo cambia).
-                Acá vive el escáner — es lo que la pistola/cámara lee. */}
-            <Field label={t('Código de barras')} error={errors.barcode?.message}>
-              <div className="flex gap-1.5">
-                <input
-                  {...register('barcode')}
-                  placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
-                  inputMode="numeric"
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
-                    errors.barcode
-                      ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                      : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-                  }`}
-                />
-                {hasCameraSupport && (
-                  <button
-                    type="button"
-                    onClick={cameraOpen ? stopCamera : openCamera}
-                    title={cameraOpen ? t('Cerrar cámara') : t('Escanear código de barras')}
-                    className={`flex items-center rounded-lg px-2.5 transition ${
-                      cameraOpen
-                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                        : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
-                  </button>
-                )}
-              </div>
-              {hasCameraSupport && (
-                <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
-                  <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-black">
-                    <video ref={videoRef} className="w-full" style={{ maxHeight: 140 }} playsInline muted />
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <div className="h-14 w-32 rounded border-2 border-blue-500 opacity-80" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-gray-900">{t('Foto del producto')}</p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-gray-400">
+                      {t('Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.')}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={photoBusy}
+                        className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 sm:hidden">
+                        <Camera size={13} /> {t('Tomar foto')}
+                      </button>
+                      <button type="button" onClick={() => galleryInputRef.current?.click()} disabled={photoBusy}
+                        className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                        <ImagePlus size={13} /> {photoPreview ? t('Cambiar foto') : t('Elegir imagen')}
+                      </button>
+                      {photoPreview && (
+                        <button type="button" onClick={handlePhotoRemove} disabled={photoBusy}
+                          className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">
+                          <Trash2 size={13} /> {t('Quitar foto')}
+                        </button>
+                      )}
                     </div>
+                    {photoBusy && <p className="mt-1 text-[11px] text-gray-400">{t('Procesando foto...')}</p>}
+                    {photoError && <p className="mt-1 text-xs text-red-500">{photoError}</p>}
                   </div>
                 </div>
-              )}
-            </Field>
+              </div>
 
-            {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
-            <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
-              <input
-                {...register('providerCode')}
-                placeholder={t('Código interno del proveedor (opcional)')}
-                className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
-                  errors.providerCode
-                    ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                    : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-                }`}
-              />
-            </Field>
+              {/* Datos: columna derecha */}
+              <div className="flex min-w-0 flex-col gap-4 md:col-span-3 md:col-start-3 md:row-span-2 md:row-start-1">
+                <FormSection n={1} title={t('Qué es')} hint={t('Nombre, unidad y código')}>
+                  {/* Nombre + Unidad + Presentación */}
+                  <div data-tutorial-target="name-unit" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="sm:col-span-2">
+                      <Field label={t('Nombre')} required error={errors.name?.message}>
+                        <input {...register('name')} placeholder={t('Ej. Aceite 5W30')} className={`${inputCls} w-full text-base font-semibold`} />
+                      </Field>
+                    </div>
+                    <Field label={t('Unidad')} error={errors.unit?.message}>
+                      <select {...register('unit')} className={inputCls}>
+                        <option value="unidad">{t('unidad')}</option>
+                        <option value="metro">{t('metro')}</option>
+                        <option value="kilo">{t('kilo')}</option>
+                        <option value="litro">{t('litro')}</option>
+                        <option value="otro">{t('otro...')}</option>
+                      </select>
+                      {unitValue === 'otro' && (
+                        <input
+                          {...register('unitCustom')}
+                          placeholder={t('Especificá la unidad (ej. galón, par)')}
+                          className={`${inputCls} mt-1.5`}
+                        />
+                      )}
+                    </Field>
+                  </div>
+                  <DuplicateNameHint
+                    result={nameCheck.result}
+                    checking={nameCheck.checking}
+                    onEditExisting={onEditExisting ? openExisting : null}
+                    onShowHidden={showHidden}
+                    inReceipt={!!receiptContext}
+                    supplierChosen={!!supplierId}
+                  />
 
-            {/* Descripción */}
-            <Field label={t('Descripción')} error={errors.description?.message}>
-              <textarea
-                {...register('description')}
-                rows={2}
-                placeholder={t('Descripción opcional')}
-                className={`${inputCls} resize-none`}
-              />
-            </Field>
-
-            {/* Atributos */}
-            <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-700">{t('Atributos')}</label>
-
-              {/* Suggested attribute chips */}
-              {suggestedAttrs.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {suggestedAttrs.map((attr) => (
-                    <button
-                      key={attr}
-                      type="button"
-                      onClick={() => applySuggestedAttr(attr)}
-                      disabled={attr in attributes}
-                      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-                        attr in attributes
-                          ? 'bg-blue-100 text-blue-700 cursor-default'
-                          : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                  {/* Código del producto (SKU) */}
+                  <Field label={t('Código del producto')} error={errors.sku?.message}>
+                    <input
+                      {...register('sku')}
+                      placeholder={isEdit ? t('Código del producto') : t('Se genera automáticamente si lo dejas vacío')}
+                      className={`${inputCls} font-mono ${
+                        errors.sku ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''
                       }`}
-                    >
-                      {!(attr in attributes) && <Plus size={10} />}
-                      {attr}
-                    </button>
-                  ))}
-                </div>
-              )}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {isEdit
+                        ? t('Código interno único. Cámbialo solo si necesitas corregirlo.')
+                        : t('Opcional · Si lo dejas vacío, seguimos tu numeración automáticamente.')}
+                    </p>
+                    <FreeCodesHint codes={freeCodes} onPick={(code) => setValue('sku', code)} />
+                  </Field>
 
-              {/* Existing attributes */}
-              {Object.keys(attributes).length > 0 && (
-                <div className="space-y-1.5">
-                  {Object.entries(attributes).map(([key, val]) => (
-                    <div key={key} className="flex items-center gap-1.5">
-                      <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
+                  <Field label={t('Presentación')} error={errors.presentation?.message}>
+                    <input
+                      {...register('presentation')}
+                      placeholder={t('Ej: Saco de 25kg, Caja de 100, Rollo de 50m')}
+                      className={inputCls}
+                    />
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {t('Opcional · Cómo viene presentado el producto. No afecta cómo se vende.')}
+                    </p>
+                  </Field>
+
+                </FormSection>
+
+                <FormSection n={2} title={t('De dónde viene y dónde está')} hint={t('Proveedor, marca, categoría y ubicación')}>
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {/* Supplier picker — obligatorio */}
+                    <div data-tutorial-target="supplier-picker">
+                      {receiptContext ? (
+                        // Desde la recepción el proveedor YA está elegido: fijo, sin picker.
+                        <div>
+                          <p className="mb-1.5 text-sm font-medium text-gray-700">{t('Proveedor')}</p>
+                          <div className="flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2">
+                            <span className="text-sm font-semibold text-blue-900">{receiptContext.supplier.name}</span>
+                            <span className="text-xs text-blue-700">· {t('el de la recepción en curso')}</span>
+                          </div>
+                        </div>
+                      ) : (
+                      <EntityPicker
+                        label={<>{t('Proveedor')} <span className="text-red-500">*</span></>}
+                        items={suppliers}
+                        value={supplierId}
+                        onChange={(v) => { setSupplierId(v); setSupplierError(null) }}
+                        onCreate={handleCreateSupplier}
+                        extraFields={[
+                          { name: 'contact', placeholder: t('Contacto (opcional)') },
+                          { name: 'phone',   placeholder: t('Teléfono (opcional)')  },
+                        ]}
+                        placeholder={t('Buscar proveedor...')}
+                        createLabel={t('Nuevo proveedor')}
+                        isCreating={createSupplier.isPending}
+                      />
+                      )}
+                      {supplierError && (
+                        <p className="mt-1 text-xs text-red-500">{supplierError}</p>
+                      )}
+                      {/* Pista cuando el producto está vinculado al placeholder */}
+                      {isEdit && suppliers.find((s) => s.id === supplierId)?.placeholderForUnassigned && (
+                        <p className="mt-1 text-xs text-amber-700">
+                          {t('Este producto está sin proveedor real asignado. Cambialo al proveedor correspondiente.')}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Brand picker */}
+                    <div data-tutorial-target="brand-picker">
+                      <EntityPicker
+                        label={t('Marca')}
+                        items={brands}
+                        value={brandId}
+                        onChange={setBrandId}
+                        onCreate={handleCreateBrand}
+                        placeholder={t('Buscar marca...')}
+                        createLabel={t('Nueva marca')}
+                        isCreating={createBrand.isPending}
+                      />
+                    </div>
+
+                    {/* Category picker */}
+                    <div data-tutorial-target="category-picker">
+                      <EntityPicker
+                        label={t('Categoría del producto')}
+                        helperText={t('Ej: Clavos, Tornillos, Cemento, Pinturas')}
+                        items={categories}
+                        value={categoryId}
+                        onChange={setCategoryId}
+                        onCreate={handleCreateCategory}
+                        placeholder={t('Buscar categoría...')}
+                        createLabel={t('Nueva categoría')}
+                        createButtonLabel={t('Crear categoría')}
+                        newNamePlaceholder={t('Nombre de la nueva categoría (ej: Líquidos, Pinturas)')}
+                        warnIfLikely={warnIfLooksLikeSupplierOrBrand(suppliers, brands, t)}
+                        isCreating={createCategory.isPending}
+                      />
+                    </div>
+
+                    {/* Ubicación física: en qué almacén / estante está (pedido de William) */}
+                    <div data-tutorial-target="location-picker">
+                      <EntityPicker
+                        label={t('Ubicación en el negocio')}
+                        helperText={t('Ej: Almacén 1, Estante B3, Vitrina')}
+                        items={locations}
+                        value={locationId}
+                        onChange={setLocationId}
+                        onCreate={handleCreateLocation}
+                        placeholder={t('Buscar ubicación...')}
+                        createLabel={t('Nueva ubicación')}
+                        createButtonLabel={t('Crear ubicación')}
+                        newNamePlaceholder={t('Nombre de la nueva ubicación (ej: Almacén 2)')}
+                        isCreating={createLocation.isPending}
+                      />
+                    </div>
+
+                  </div>
+                </FormSection>
+
+                <FormSection n={3} title={t('Códigos y detalles')} hint={t('Opcional · para el escáner y para distinguirlo')}>
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {/* Código de barras de fábrica: el EAN impreso en el empaque por el
+                        fabricante (Sony pone el código; el distribuidor no lo cambia).
+                        Acá vive el escáner — es lo que la pistola/cámara lee. */}
+                    <Field label={t('Código de barras')} error={errors.barcode?.message}>
+                      <div className="flex gap-1.5">
+                        <input
+                          {...register('barcode')}
+                          placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
+                          inputMode="numeric"
+                          className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                            errors.barcode
+                              ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                              : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                          }`}
+                        />
+                        {hasCameraSupport && (
+                          <button
+                            type="button"
+                            onClick={cameraOpen ? stopCamera : openCamera}
+                            title={cameraOpen ? t('Cerrar cámara') : t('Escanear código de barras')}
+                            className={`flex items-center rounded-lg px-2.5 transition ${
+                              cameraOpen
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
+                          </button>
+                        )}
+                      </div>
+                      {hasCameraSupport && (
+                        <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
+                          <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-black">
+                            <video ref={videoRef} className="w-full" style={{ maxHeight: 140 }} playsInline muted />
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                              <div className="h-14 w-32 rounded border-2 border-blue-500 opacity-80" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </Field>
+
+                    {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
+                    <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
+                      <input
+                        {...register('providerCode')}
+                        placeholder={t('Código interno del proveedor (opcional)')}
+                        className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                          errors.providerCode
+                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                            : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                        }`}
+                      />
+                    </Field>
+
+                  </div>
+                  {/* Descripción */}
+                  <Field label={t('Descripción')} error={errors.description?.message}>
+                    <textarea
+                      {...register('description')}
+                      rows={2}
+                      placeholder={t('Descripción opcional')}
+                      className={`${inputCls} resize-none`}
+                    />
+                  </Field>
+
+                  {/* Atributos */}
+                  <div data-tutorial-target="attributes" className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700">{t('Atributos')}</label>
+
+                    {/* Suggested attribute chips */}
+                    {suggestedAttrs.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {suggestedAttrs.map((attr) => (
+                          <button
+                            key={attr}
+                            type="button"
+                            onClick={() => applySuggestedAttr(attr)}
+                            disabled={attr in attributes}
+                            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                              attr in attributes
+                                ? 'bg-blue-100 text-blue-700 cursor-default'
+                                : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                            }`}
+                          >
+                            {!(attr in attributes) && <Plus size={10} />}
+                            {attr}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Existing attributes */}
+                    {Object.keys(attributes).length > 0 && (
+                      <div className="space-y-1.5">
+                        {Object.entries(attributes).map(([key, val]) => (
+                          <div key={key} className="flex items-center gap-1.5">
+                            <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
+                            <input
+                              type="text"
+                              value={val}
+                              onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
+                              placeholder={t('Valor...')}
+                              className={`${inputCls} flex-1 py-1.5 text-xs`}
+                            />
+                            <button type="button" onClick={() => removeAttribute(key)}
+                              className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add custom attribute */}
+                    <div className="flex gap-1.5">
                       <input
                         type="text"
-                        value={val}
-                        onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
+                        value={attrKey}
+                        onChange={(e) => setAttrKey(e.target.value)}
+                        placeholder={t('Atributo...')}
+                        className={`${inputCls} w-28 py-1.5 text-xs`}
+                      />
+                      <input
+                        type="text"
+                        value={attrVal}
+                        onChange={(e) => setAttrVal(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
                         placeholder={t('Valor...')}
                         className={`${inputCls} flex-1 py-1.5 text-xs`}
                       />
-                      <button type="button" onClick={() => removeAttribute(key)}
-                        className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                        <X size={12} />
+                      <button type="button" onClick={() => addAttribute()}
+                        disabled={!attrKey.trim()}
+                        className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                        <Plus size={14} />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
 
-              {/* Add custom attribute */}
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={attrKey}
-                  onChange={(e) => setAttrKey(e.target.value)}
-                  placeholder={t('Atributo...')}
-                  className={`${inputCls} w-28 py-1.5 text-xs`}
-                />
-                <input
-                  type="text"
-                  value={attrVal}
-                  onChange={(e) => setAttrVal(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
-                  placeholder={t('Valor...')}
-                  className={`${inputCls} flex-1 py-1.5 text-xs`}
-                />
-                <button type="button" onClick={() => addAttribute()}
-                  disabled={!attrKey.trim()}
-                  className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                  <Plus size={14} />
-                </button>
+                </FormSection>
+              </div>
+
+              {/* Precios y stock: bajo la foto en PC, al final en el celular */}
+              <div className="md:col-span-2 md:col-start-1 md:row-start-2 md:self-start">
+                <FormSection n={4} title={t('Precios y stock')} hint={t('Lo que cuesta, lo que cobras y cuánto tienes')} accent>
+                  {/* Checkbox precio variable */}
+                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      {...register('priceIsVariable')}
+                      className="mt-0.5 accent-blue-600"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{t('Precio variable')}</p>
+                      <p className="text-xs text-gray-500">
+                        {t('El precio se define al momento de vender (se negocia con el cliente). En el POS pedirá un precio obligatorio antes de cobrar.')}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Precios + Stock mínimo */}
+                  <div data-tutorial-target="prices">
+                    <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
+                        <PriceInputModeToggle />
+                      </div>
+                    </div>
+                    {/* 1 columna en móvil, 2 en adelante: el modo "6 decimales" del
+                        PriceInput (dos casillas + punto) necesita ancho — con 3
+                        columnas fijas se rompía el layout. Con 2 columnas los
+                        precios quedan en una fila y los stocks en la siguiente. */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
+                    <Controller
+                      control={control}
+                      name="purchasePrice"
+                      render={({ field }) => (
+                        <PriceInput
+                          label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
+                          value={field.value === '' ? null : field.value}
+                          onChange={(v) => field.onChange(v ?? '')}
+                          error={errors.purchasePrice?.message}
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="salePrice"
+                      render={({ field }) => (
+                        <PriceInput
+                          label={priceIsVariable
+                            ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
+                            : <>{t('P. venta')} <span className="text-red-500">*</span></>}
+                          value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
+                          onChange={(v) => field.onChange(v ?? '')}
+                          error={errors.salePrice?.message}
+                          disabled={priceIsVariable}
+                        />
+                      )}
+                    />
+                    <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
+                      <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
+                    </Field>
+                    {!isEdit && !receiptContext && (
+                      <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
+                        <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
+                      </Field>
+                    )}
+                    </div>
+
+                    {/* Fecha de vencimiento (opcional) */}
+                    <div className="mt-3">
+                      <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
+                        <input {...register('expirationDate')} type="date" className={inputCls} />
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
+                        </p>
+                      </Field>
+                    </div>
+                  </div>
+
+                </FormSection>
               </div>
             </div>
 
-            {/* Checkbox precio variable */}
-            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
-              <input
-                type="checkbox"
-                {...register('priceIsVariable')}
-                className="mt-0.5 accent-blue-600"
-              />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('Precio variable')}</p>
-                <p className="text-xs text-gray-500">
-                  {t('El precio se define al momento de vender (se negocia con el cliente). En el POS pedirá un precio obligatorio antes de cobrar.')}
-                </p>
-              </div>
-            </label>
-
-            {/* Precios + Stock mínimo */}
-            <div data-tutorial-target="prices">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-700">{t('Precios y stock')}</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
-                  <PriceInputModeToggle />
-                </div>
-              </div>
-              {/* 1 columna en móvil, 2 en adelante: el modo "6 decimales" del
-                  PriceInput (dos casillas + punto) necesita ancho — con 3
-                  columnas fijas se rompía el layout. Con 2 columnas los
-                  precios quedan en una fila y los stocks en la siguiente. */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Controller
-                control={control}
-                name="purchasePrice"
-                render={({ field }) => (
-                  <PriceInput
-                    label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
-                    value={field.value === '' ? null : field.value}
-                    onChange={(v) => field.onChange(v ?? '')}
-                    error={errors.purchasePrice?.message}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="salePrice"
-                render={({ field }) => (
-                  <PriceInput
-                    label={priceIsVariable
-                      ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
-                      : <>{t('P. venta')} <span className="text-red-500">*</span></>}
-                    value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
-                    onChange={(v) => field.onChange(v ?? '')}
-                    error={errors.salePrice?.message}
-                    disabled={priceIsVariable}
-                  />
-                )}
-              />
-              <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
-                <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
-              </Field>
-              {!isEdit && !receiptContext && (
-                <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
-                  <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
-                </Field>
-              )}
-              </div>
-
-              {/* Fecha de vencimiento (opcional) */}
-              <div className="mt-3">
-                <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
-                  <input {...register('expirationDate')} type="date" className={inputCls} />
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
+            <div className="px-4 pb-4 sm:px-6">
+              {dupPending ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                    <span>{dupPending.message}</span>
                   </p>
-                </Field>
-              </div>
-            </div>
-
-            {dupPending ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
-                  <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
-                  <span>{dupPending.message}</span>
-                </p>
-                <p className="mt-1 text-xs text-amber-800">
-                  {t('No se guardó. Si es el mismo producto, edita el que ya tienes; si es otro distinto, puedes guardarlo igual.')}
-                </p>
-                <div className="mt-2 flex flex-wrap justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDupPending(null)}
-                    className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
-                  >
-                    {t('Revisar el nombre')}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isBusy}
-                    onClick={() => onSubmit({ ...dupPending.values, allowDuplicateName: true })}
-                    className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
-                  >
-                    {isEdit ? t('Guardar de todos modos') : t('Crear de todos modos')}
-                  </button>
+                  <p className="mt-1 text-xs text-amber-800">
+                    {t('No se guardó. Si es el mismo producto, edita el que ya tienes; si es otro distinto, puedes guardarlo igual.')}
+                  </p>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDupPending(null)}
+                      className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                    >
+                      {t('Revisar el nombre')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => onSubmit({ ...dupPending.values, allowDuplicateName: true })}
+                      className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+                    >
+                      {isEdit ? t('Guardar de todos modos') : t('Crear de todos modos')}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : mutation.isError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {getErrorMessage(mutation.error)}
-              </p>
-            )}
+              ) : mutation.isError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {getErrorMessage(mutation.error)}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex flex-shrink-0 justify-end gap-2 border-t border-gray-200 px-5 py-4">
+          {/* Pie */}
+          <div className="flex flex-shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100"
             >
               {t('Cancelar')}
             </button>
@@ -1169,10 +1225,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               type="submit"
               disabled={isBusy || photoSyncing}
               data-tutorial-target="save-button"
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-60"
             >
-              {(isBusy || photoSyncing) && <Loader2 size={14} className="animate-spin" />}
-              {isBusy || photoSyncing ? t('Guardando...') : t('Guardar')}
+              {(isBusy || photoSyncing) ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+              {isBusy || photoSyncing ? t('Guardando...') : isEdit ? t('Guardar cambios') : t('Crear producto')}
             </button>
           </div>
         </form>

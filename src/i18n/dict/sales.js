@@ -3,6 +3,11 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    // ── 29-sep: página Ventas rediseñada como el Dashboard
+    'Vendido hoy': 'Sold today',
+    'Presupuesto sin tocar el stock': 'A quote that leaves stock untouched',
+    'Las que ya enviaste': 'The ones you already sent',
+    'Historial de ventas': 'Sales history',
     // ── Vender por debajo del precio de venta: se avisa y queda marcado, nunca se impide (William, 15-sep) ──
     'Por debajo del precio de venta ({list}): −{diff} por {unit}': 'Below the sale price ({list}): −{diff} per {unit}',
     '−{total} en la línea': '−{total} on this line',
@@ -458,6 +463,11 @@ export default {
   },
 
   it: {
+    // ── 29-sep: página Ventas rediseñada como el Dashboard
+    'Vendido hoy': 'Venduto oggi',
+    'Presupuesto sin tocar el stock': 'Un preventivo senza toccare le scorte',
+    'Las que ya enviaste': 'Quelli che hai già inviato',
+    'Historial de ventas': 'Storico delle vendite',
     // ── Vendere sotto il prezzo di vendita: si avvisa e resta segnato, mai bloccato (William, 15-sep) ──
     'Por debajo del precio de venta ({list}): −{diff} por {unit}': 'Sotto il prezzo di vendita ({list}): −{diff} per {unit}',
     '−{total} en la línea': '−{total} sulla riga',
