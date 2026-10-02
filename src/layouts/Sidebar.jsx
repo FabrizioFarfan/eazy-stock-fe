@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import LogoutConfirm from '../components/common/LogoutConfirm'
 import { useT } from '../i18n'
+import { APP_VERSION } from '../utils/version'
 
 const BOSS_ITEM = { icon: Crown, label: 'Panel Boss', path: '/boss' }
 
@@ -179,6 +180,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         <div className="flex items-center gap-3 px-5 py-5">
           <img src="/logo.png" alt="Eazy Stock" className="h-10 w-10 rounded-xl object-contain shadow-sm" />
           <span className="text-[17px] font-bold tracking-tight text-gray-900">Eazy Stock</span>
+          <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-500" title={t('Versión de la app')}>v{APP_VERSION}</span>
         </div>
 
         {/* Nav */}

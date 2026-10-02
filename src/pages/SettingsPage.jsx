@@ -10,6 +10,7 @@ import { useTheme } from '../hooks/useTheme'
 import { usersApi } from '../services/endpoints/users'
 import { businessesApi } from '../services/endpoints/businesses'
 import { useInstallApp, promptInstall } from '../utils/installApp'
+import { APP_VERSION } from '../utils/version'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
@@ -690,7 +691,7 @@ export default function SettingsPage() {
       </div>
       </div>
 
-      <p className="text-center text-xs text-gray-300">Eazy Stock · v1.0</p>
+      <p className="text-center text-xs text-gray-300">Eazy Stock · v{APP_VERSION}</p>
     </div>
   )
 }

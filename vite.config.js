@@ -1,5 +1,10 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+
+// Versión de la app = la de package.json (Frank, 3-oct-2026: «subamos siempre las versiones»).
+// Llega al código como __APP_VERSION__ (ver src/utils/version.js); nunca un string a mano.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 /**
  * Search Console (SEO, 2-sep-2026): si VITE_GOOGLE_SITE_VERIFICATION está en
@@ -21,6 +26,7 @@ export default defineConfig({
   plugins: [react(), siteVerification()],
   define: {
     global: 'globalThis',
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   server: {
     proxy: {

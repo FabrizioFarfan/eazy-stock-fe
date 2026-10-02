@@ -1,8 +1,8 @@
 import { formatPrice } from '../utils/formatMoney'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import {
   ShoppingCart, TrendingUp, ArrowUpDown,
-  AlertTriangle, Building2, Users, CheckCircle2,
+  AlertTriangle, CheckCircle2,
   FileText, ArrowRight, CalendarClock, UserX, UserRound, TrendingDown,
   CalendarDays, PackagePlus, BarChart3, ArrowDownToLine, SlidersHorizontal, Undo2,
 } from 'lucide-react'
@@ -10,8 +10,6 @@ import { useAuth } from '../context/AuthContext'
 import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers, useSalesBalance } from '../hooks/useReports'
 import { formatQty } from '../utils/quantity'
 import ExpiryBadge from '../components/common/ExpiryBadge'
-import { useBusinesses } from '../hooks/useBusinesses'
-import { useUsers } from '../hooks/useUsers'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -31,13 +29,6 @@ function todayLabel() {
 
 function formatCurrency(amount) {
   return formatPrice(amount) // moneda del negocio
-}
-
-function formatDate(str) {
-  if (!str) return '—'
-  return new Intl.DateTimeFormat(dateLocale(), {
-    day: 'numeric', month: 'short', year: 'numeric',
-  }).format(new Date(str))
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -97,119 +88,6 @@ function PageHeader({ name }) {
           <p className="mt-1">{t('Todo lo que ves acá tiene su página completa en el menú: Ventas, Stock, Reportes… Este es solo el resumen. Con los accesos grandes creas una venta, un presupuesto o una entrada de mercadería en un toque.')}</p>
         </div>
       </HelpDrawer>
-    </div>
-  )
-}
-
-// ── Super Admin ───────────────────────────────────────────────────────────────
-
-function SuperAdminDashboard({ name }) {
-  const t = useT()
-  const navigate = useNavigate()
-
-  const { data: bizPage, isLoading: loadingBiz } = useBusinesses({ page: 0, size: 5, sort: 'createdAt,desc' })
-  const { data: usersPage, isLoading: loadingUsers } = useUsers({ page: 0, size: 1 })
-
-  const businesses  = bizPage?.content       ?? []
-  const totalBiz    = bizPage?.totalElements ?? 0
-  const activeBiz   = businesses.filter((b) => b.active).length
-  const totalUsers  = usersPage?.totalElements ?? 0
-  const isLoading   = loadingBiz || loadingUsers
-
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader name={name} />
-
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-        ) : (
-          <>
-            <StatCard icon={Building2}    label={t('Total negocios')}   value={totalBiz}         iconBg="bg-blue-50"   iconColor="text-blue-500" />
-            <StatCard icon={CheckCircle2} label={t('Negocios activos')} value={activeBiz}         iconBg="bg-emerald-50" iconColor="text-emerald-500" />
-            <StatCard icon={Users}        label={t('Total usuarios')}   value={totalUsers}        iconBg="bg-indigo-50" iconColor="text-indigo-500" />
-            <StatCard icon={TrendingUp}   label={t('Nuevos este mes')}  value={businesses.length} iconBg="bg-amber-50"  iconColor="text-amber-500" />
-          </>
-        )}
-      </div>
-
-      {/* Quick actions */}
-      <div className="rounded-2xl border border-gray-100 bg-white px-6 py-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-gray-700">{t('Acciones rápidas')}</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => navigate('/admin/businesses')}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700 transition-all active:scale-[0.98]"
-          >
-            <Building2 size={15} />
-            {t('Nuevo negocio')}
-          </button>
-          <button
-            onClick={() => navigate('/admin/owners')}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Users size={15} />
-            {t('Nuevo owner')}
-          </button>
-        </div>
-      </div>
-
-      {/* Recent businesses */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <h3 className="text-sm font-semibold text-gray-900">{t('Negocios recientes')}</h3>
-        </div>
-        {loadingBiz ? (
-          <div className="space-y-3 p-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-4 animate-pulse rounded-lg bg-gray-100" />
-            ))}
-          </div>
-        ) : businesses.length === 0 ? (
-          <p className="py-12 text-center text-sm text-gray-400">{t('No hay negocios registrados aún')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-50 bg-gray-50/60 text-left">
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Nombre')}</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('País')}</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">RUC</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400 text-center">{t('Estado')}</th>
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Registrado')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {businesses.map((b) => (
-                  <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-                    <td className="max-w-[180px] truncate px-6 py-3.5 font-medium text-gray-900">{b.name}</td>
-                    <td className="px-6 py-3.5 font-mono text-xs text-gray-500">{b.countryCode}</td>
-                    <td className="px-6 py-3.5 font-mono text-xs text-gray-500">{b.taxId}</td>
-                    <td className="px-6 py-3.5 text-center">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        b.active
-                          ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {b.active ? t('Activo') : t('Inactivo')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-xs text-gray-400">{formatDate(b.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <div className="border-t border-gray-50 px-6 py-3.5">
-          <button
-            onClick={() => navigate('/admin/businesses')}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            {t('Ver todos los negocios')} →
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -706,7 +584,9 @@ function EmployeeDashboard({ name }) {
 export default function DashboardPage() {
   const { user } = useAuth()
 
-  if (user?.role === 'SUPER_ADMIN') return <SuperAdminDashboard name={user.name} />
+  // El admin de plataforma no tiene dashboard propio: su casa es el Panel Boss
+  // (o Negocios si no lleva corona). Rediseño 3-oct-2026.
+  if (user?.role === 'SUPER_ADMIN') return <Navigate to={user.isBoss ? '/boss' : '/admin/businesses'} replace />
   if (user?.role === 'EMPLOYEE')    return <EmployeeDashboard   name={user.name} />
   return <OwnerDashboard name={user?.name} businessId={user?.businessId} />
 }
