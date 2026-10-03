@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { Check, ArrowLeft } from 'lucide-react'
+import { Check, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
@@ -17,6 +17,8 @@ export default function LoginPage() {
   const { login, token, isLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  // El ojito para ver la contraseña (feedback de un socio, 3-oct-2026): regla para TODOS los logins.
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -126,16 +128,24 @@ export default function LoginPage() {
                 <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
                   {t('Contraseña')}
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  autoComplete="current-password"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                  />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} tabIndex={-1}
+                    aria-label={showPassword ? t('Ocultar contraseña') : t('Mostrar contraseña')}
+                    title={showPassword ? t('Ocultar contraseña') : t('Mostrar contraseña')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               {error && (

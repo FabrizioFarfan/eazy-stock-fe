@@ -8,6 +8,9 @@ export const customersApi = {
   remove:   (id, params)  => api.delete(`/customers/${id}`, { params }),
 
   getTransactions: (id, params) => api.get(`/customers/${id}/transactions`, { params }),
+  // Cobros de TODO el negocio por período (William, 3-oct): params { from?, to?, type?, page?, size?, businessId? }
+  getAllTransactions:     (params) => api.get('/customers/transactions', { params }),
+  getTransactionsSummary: (params) => api.get('/customers/transactions/summary', { params }),
   // Estado de cuenta: cargos con productos, abonos y saldo — fuente del PDF para el deudor
   // params opcionales { from, to } (YYYY-MM-DD): acotan el período y traen el saldo anterior
   getStatement:    (id, params) => api.get(`/customers/${id}/statement`, { params }),

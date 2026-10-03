@@ -1,3 +1,4 @@
+import { createElement } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Plus, ArrowUpDown, BarChart2, Users,
@@ -20,6 +21,7 @@ const ROUTE_ICONS = [
   ['/reports/balance',      Scale],
   ['/reports/sellers',      Trophy],
   ['/reports/customers',    Award],
+  ['/reports/suppliers',    Truck],
   ['/reports/receivables',  Wallet],
   ['/reports/payables',     HandCoins],
   ['/reports',              BarChart2],
@@ -61,7 +63,7 @@ export default function PageWatermark() {
       aria-hidden="true"
       className="pointer-events-none fixed -bottom-10 -right-10 z-0 rotate-[-8deg] text-gray-900 opacity-[0.04] sm:-bottom-14 sm:-right-14"
     >
-      <Icon className="h-64 w-64 sm:h-96 sm:w-96 lg:h-[32rem] lg:w-[32rem]" strokeWidth={1.5} />
+      {createElement(Icon, { className: 'h-64 w-64 sm:h-96 sm:w-96 lg:h-[32rem] lg:w-[32rem]', strokeWidth: 1.5 })}
     </div>
   )
 }

@@ -2,6 +2,13 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.2.0 — 2026-10-03 (pedidos de William)
+- Stock › Movimientos muestra también la PLATA que no mueve stock: franja «Cobros de fiado» / «Pagos a proveedor» del período con su total, y filtros propios con la lista (fecha y hora, cliente o proveedor, monto, saldo que quedó, quién lo registró). La franja del día suma «Cobros de fiado» con atajo.
+- Cuentas por cobrar y Cuentas por pagar: pestaña «Historial de cobros» / «Historial de pagos» por período (los que ya terminaron de pagar ya no se pierden).
+- Login: ojito para ver la contraseña mientras la escribes.
+- Proveedores: cada tarjeta con dos acciones claras, «Cuenta y pagos» y «Sus productos»; hover arreglado en modo oscuro.
+- Nueva página «Análisis de proveedores» (solo dueño): quién te vende más, de quién tienes más stock (unidades y valor al costo), cuánto vendes de lo suyo y cuánto le debes, con ranking ordenable, período y tutorial.
+
 ## 1.1.0 — 2026-10-03
 - La versión vive en `package.json` y se muestra en Ajustes, en el pie del menú y en el Panel Boss (junto a la del API).
 - Lado Boss con el diseño nuevo: Panel Boss (franja azul con la plataforma entera, actividad por negocio en tarjetas), Negocios y Owners (cabecera, selector entre las tres, franja con cifras, buscador grande y tarjetas con acciones visibles); modales de negocio, owner y usuario sobre `EntityModal`.

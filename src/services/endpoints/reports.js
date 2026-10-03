@@ -37,6 +37,9 @@ export const reportsApi = {
   // Clientes que no compran hace N días: params = { days, businessId? }
   getInactiveCustomers: (params) => api.get('/reports/customers/inactive', { params }),
 
+  // Análisis de proveedores (solo dueño): params = { from?, to?, businessId? }
+  getSupplierAnalysis: (params) => api.get('/reports/suppliers', { params }),
+
   // Información total del negocio (valorización del inventario actual)
   getBusinessOverview: (params) => api.get('/reports/business-overview', { params }),
 }

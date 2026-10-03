@@ -1,15 +1,38 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Truck, AlertTriangle, Loader2, HandCoins } from 'lucide-react'
+import { Truck, AlertTriangle, Loader2, HandCoins, History } from 'lucide-react'
 import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
+import { MoneyMovementsTable } from '../components/stock/MoneyMovements'
+import DateRangeQuick from '../components/common/DateRangeQuick'
 import { usePayables } from '../hooks/useReports'
+import { useSupplierPaymentsSummary } from '../hooks/useMoneyMovements'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
+import { quickRange } from '../utils/dateRanges'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
   if (!str) return '—'
   return new Intl.DateTimeFormat(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(str))
+}
+
+// Con deuda | Historial de pagos (William, 3-oct-2026: «las cuentas que ya pagué ya no salen»)
+function ViewSwitch({ view, onChange, debtCount }) {
+  const t = useT()
+  const btn = (key, Icon, label) => (
+    <button type="button" onClick={() => onChange(key)} aria-pressed={view === key}
+      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
+        view === key ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-600 hover:bg-gray-100'}`}>
+      <Icon size={16} /> {label}
+    </button>
+  )
+  return (
+    <div className="flex gap-1 rounded-2xl border border-gray-100 bg-white p-1.5 shadow-sm">
+      {btn('debt', HandCoins, `${t('Con deuda')}${debtCount != null ? ` (${debtCount})` : ''}`)}
+      {btn('history', History, t('Historial de pagos'))}
+    </div>
+  )
 }
 
 export default function PayablesPage() {
@@ -19,6 +42,8 @@ export default function PayablesPage() {
   const params = user?.role === 'SUPER_ADMIN' && user?.businessId
     ? { businessId: user.businessId }
     : undefined
+  const [view, setView] = useState('debt')
+  const [range, setRange] = useState(() => quickRange('month'))
 
   const { data, isLoading, isError } = usePayables(params)
   const rows  = data?.rows  ?? []
@@ -28,13 +53,16 @@ export default function PayablesPage() {
   const oldest = rows.reduce((m, r) => Math.max(m, r.daysSinceLastPayment ?? 0), 0)
   const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
+  const { data: pagos, isLoading: pagosLoading } = useSupplierPaymentsSummary(
+    { from: range.from, to: range.to, ...(params ?? {}) }, { enabled: view === 'history' })
+
   return (
     <div className="flex flex-col gap-5">
 
       <ReportHeader icon={HandCoins} title={t('Cuentas por pagar')}
         subtitle={t('Lo que le debes a tus proveedores por compras a crédito')}
         help={(
-          <HelpDrawer title={t('Cómo usar Cuentas por pagar')} autoOpenKey="eazystock_payables_help_v2">
+          <HelpDrawer title={t('Cómo usar Cuentas por pagar')} autoOpenKey="eazystock_payables_help_v3">
             <p>{t('Lo que le debes a tus proveedores, todo junto en un solo lugar.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">📥 {t('¿De dónde salen estas deudas?')}</p>
@@ -43,6 +71,10 @@ export default function PayablesPage() {
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">💵 {t('Registrar un pago')}</p>
               <p className="mt-1">{t('Haz click en el proveedor para ir a su detalle y registrar el pago (total o parcial, con su medio de pago). La deuda se actualiza al instante.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">🕘 {t('Historial de pagos (pestaña de arriba)')}</p>
+              <p className="mt-1">{t('Cuando terminas de pagarle a un proveedor sale de «Con deuda», pero nada se pierde: en «Historial de pagos» ves cada pago que hiciste, con fecha y hora, quién lo registró y el saldo que quedó, por período. Los mismos pagos también aparecen en Stock › Movimientos.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">⚖️ {t('Saldo y crédito')}</p>
@@ -57,6 +89,25 @@ export default function PayablesPage() {
 
       <AccountsSwitcher />
 
+      <ViewSwitch view={view} onChange={setView} debtCount={isLoading ? null : rows.length} />
+
+      {view === 'history' ? (
+        <>
+          <ReportHero icon={HandCoins} label={t('Pagado a proveedores en el período')} loading={pagosLoading}
+            value={formatPrice(pagos?.total ?? 0)}
+            sub={<span>{t('Cada pago que hiciste, con quién lo registró y el saldo que quedó. Toca el proveedor para ver toda su cuenta.')}</span>}
+            cells={[
+              [t('Pagos'), pagos?.count ?? 0],
+              [t('Proveedores pagados'), pagos?.counterparties ?? 0],
+              [t('Promedio por pago'), pagos?.count ? formatPrice(Number(pagos.total) / pagos.count) : '—'],
+            ]} />
+          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+            <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+          </div>
+          <MoneyMovementsTable kind="PAGO" from={range.from} to={range.to} />
+        </>
+      ) : (
+        <>
       <ReportHero icon={HandCoins} label={t('Total por pagar')} loading={isLoading}
         value={formatPrice(total)}
         sub={<span>{t('Toca un proveedor para ver su cuenta y registrar el pago.')}</span>}
@@ -74,6 +125,7 @@ export default function PayablesPage() {
             <div className="flex flex-col items-center gap-3 py-14">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50"><Truck size={24} className="text-emerald-500" /></div>
               <p className="text-sm font-semibold text-gray-700">{t('No tenés deudas pendientes con proveedores')}</p>
+              <button type="button" onClick={() => setView('history')} className="text-xs font-semibold text-blue-600 hover:underline">{t('Ver el historial de pagos')}</button>
             </div>
           ) : (
             <ul className="divide-y divide-gray-100">
@@ -127,6 +179,7 @@ export default function PayablesPage() {
                         <Truck size={28} className="text-emerald-500" />
                       </div>
                       <p className="text-sm font-semibold text-gray-700">{t('No tenés deudas pendientes con proveedores')}</p>
+                      <button type="button" onClick={() => setView('history')} className="text-xs font-semibold text-blue-600 hover:underline">{t('Ver el historial de pagos')}</button>
                     </div>
                   </td>
                 </tr>
@@ -161,6 +214,8 @@ export default function PayablesPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

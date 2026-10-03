@@ -37,6 +37,7 @@ const OWNER_NAV = [
     { icon: Scale,         label: 'Balance',           path: '/reports/balance',     permission: 'canViewReports' },
     { icon: Trophy,        label: 'Vendedores',        path: '/reports/sellers',     permission: 'canViewReports' },
     { icon: Award,         label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
+    { icon: Truck,         label: 'Análisis de proveedores', path: '/reports/suppliers', permission: 'canViewReports' },
   ] },
   { icon: Wallet,          label: 'Clientes y proveedores', group: 'accounts', children: [
     { icon: Users,         label: 'Clientes',          path: '/customers',           permission: null },

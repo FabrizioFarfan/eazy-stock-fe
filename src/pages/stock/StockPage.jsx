@@ -5,6 +5,7 @@ import PageTitle from '../../components/common/PageTitle'
 import HelpDrawer from '../../components/common/HelpDrawer'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
+import { useCustomerPaymentsSummary } from '../../hooks/useMoneyMovements'
 import MovementModal from './MovementModal'
 import SupplierReceiptModal from '../../components/stock/SupplierReceiptModal'
 import InventoryTab from '../../components/stock/InventoryTab'
@@ -23,12 +24,14 @@ function firstOfMonthStr() {
 // ── Piezas del diseño (mismo lenguaje que Dashboard y Productos) ─────────────
 
 // Franja azul: lo que se movió HOY en el almacén.
-function TodayMovesHero({ total, entries, sales, adjustments, loading, onSeeAll }) {
+function TodayMovesHero({ total, entries, sales, adjustments, cobros, loading, onSeeAll, onSeeCobros }) {
   const t = useT()
+  // Cobros de fiado de hoy (William, 3-oct): la plata que entró sin mover stock, con su atajo
   const cells = [
     [t('Entradas'), entries],
     [t('Ventas'), sales],
     [t('Ajustes'), adjustments],
+    [t('Cobros de fiado'), cobros, onSeeCobros],
   ]
   return (
     <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-5 text-white shadow-md shadow-blue-600/30 sm:p-6" data-testid="stock-hero">
@@ -44,8 +47,13 @@ function TodayMovesHero({ total, entries, sales, adjustments, loading, onSeeAll 
           <span className="text-sm font-medium text-white/80">{t('entradas y salidas de mercadería')}</span>
         </p>
       )}
-      <div className="relative mt-5 grid grid-cols-3 gap-2 border-t border-white/20 pt-4">
-        {cells.map(([label, n]) => (
+      <div className="relative mt-5 grid grid-cols-2 gap-2 border-t border-white/20 pt-4 sm:grid-cols-4">
+        {cells.map(([label, n, onClick]) => onClick ? (
+          <button key={label} type="button" onClick={onClick} className="min-w-0 rounded-lg text-left transition-colors hover:bg-white/10" title={t('Ver los cobros de hoy')}>
+            <p className="truncate text-[11px] font-medium uppercase tracking-wide text-white/70">{label} →</p>
+            <p className="text-lg font-bold">{loading || n == null ? '—' : n}</p>
+          </button>
+        ) : (
           <div key={label} className="min-w-0">
             <p className="truncate text-[11px] font-medium uppercase tracking-wide text-white/70">{label}</p>
             <p className="text-lg font-bold">{loading || n == null ? '—' : n}</p>
@@ -117,9 +125,10 @@ export default function StockPage() {
   const tabParam  = searchParams.get('tab')
   const activeTab = TABS.some((tab) => tab.id === tabParam) ? tabParam : 'movements'
   const productId = searchParams.get('product')
+  const typeParam = searchParams.get('type') ?? ''   // ?type=COBRO abre Movimientos ya filtrado
   const [pickedProduct, setPickedProduct] = useState(null)
 
-  const setActiveTab = (id, extra = {}) => setSearchParams(id === 'movements' ? {} : { tab: id, ...extra }, { replace: true })
+  const setActiveTab = (id, extra = {}) => setSearchParams(id === 'movements' && Object.keys(extra).length === 0 ? {} : { tab: id, ...extra }, { replace: true })
   const goTo = (id, extra) => {
     setActiveTab(id, extra)
     document.getElementById('stock-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -133,6 +142,7 @@ export default function StockPage() {
   const { data: mIn }  = useMovements({ ...day, type: 'PURCHASE_ENTRY' })
   const { data: mOut } = useMovements({ ...day, type: 'SALE' })
   const { data: mAdj } = useMovements({ ...day, type: 'ADJUSTMENT' })
+  const { data: cobrosToday } = useCustomerPaymentsSummary({ from: today, to: today, ...biz })
   const { data: pLow } = useProducts({ page: 0, size: 1, active: true, lowStock: true, ...biz })
   const { data: pOut } = useProducts({ page: 0, size: 1, active: true, stockMax: 0, ...biz })
   const { data: rMonth } = useReceipts({ page: 0, size: 1, from: firstOfMonthStr(), to: today, ...biz })
@@ -207,7 +217,8 @@ export default function StockPage() {
       <div className={`grid grid-cols-1 gap-4 ${isManager ? 'lg:grid-cols-3' : ''}`}>
         <div className={isManager ? 'lg:col-span-2' : ''}>
           <TodayMovesHero loading={mLoading} total={mAll?.totalElements} entries={mIn?.totalElements}
-            sales={mOut?.totalElements} adjustments={mAdj?.totalElements} onSeeAll={() => goTo('movements')} />
+            sales={mOut?.totalElements} adjustments={mAdj?.totalElements} cobros={cobrosToday?.count}
+            onSeeAll={() => goTo('movements')} onSeeCobros={() => goTo('movements', { type: 'COBRO' })} />
         </div>
         {isManager && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:content-start">
@@ -254,7 +265,7 @@ export default function StockPage() {
       )}
       {activeTab === 'receipts'  && <ReceiptsTab />}
       {activeTab === 'movements' && (
-        <MovementsTab productId={productId}
+        <MovementsTab key={typeParam} initialType={typeParam} productId={productId}
           productHint={pickedProduct ?? location.state?.product ?? null}
           onProductChange={setProduct} />
       )}

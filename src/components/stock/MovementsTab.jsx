@@ -10,6 +10,7 @@ import ProductDetailModal from '../products/ProductDetailModal'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
+import { MoneyMovementsTable, MoneyStrip } from './MoneyMovements'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -315,10 +316,12 @@ function ProductHistoryHeader({ product, from, to, onShowDetail }) {
  * traer hasta acá con el filtro puesto; `productHint` es el producto ya cargado
  * (viene de la ficha o del buscador) y evita pedirlo de nuevo.
  */
-export default function MovementsTab({ productId = null, productHint = null, onProductChange = () => {} }) {
+export default function MovementsTab({ productId = null, productHint = null, onProductChange = () => {}, initialType = '' }) {
   const t = useT()
   const { user } = useAuth()
-  const [typeFilter, setTypeFilter]   = useState('')
+  // El dueño ve también los pagos a proveedores (son costos); el vendedor solo los cobros.
+  const isOwner = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  const [typeFilter, setTypeFilter]   = useState(initialType)
   const [supplierId, setSupplierId]   = useState('')
   const [from, setFrom]               = useState('')
   const [to, setTo]                   = useState('')
@@ -343,6 +346,8 @@ export default function MovementsTab({ productId = null, productHint = null, onP
   // Con un producto elegido siempre se ve SU historial, también si filtra Ventas:
   // el resumen de reposición es la vista de TODOS los productos.
   const isSalesFilter = typeFilter === 'SALE' && !productId
+  // Plata que no mueve stock (William, 3-oct): cobros de fiado y pagos a proveedor, en el mismo historial.
+  const isMoneyFilter = typeFilter === 'COBRO' || typeFilter === 'PAGO'
 
   const params = {
     page, size: PAGE_SIZE,
@@ -354,7 +359,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
   // Con el filtro Ventas la tabla visible es el resumen — el historial no se pide.
-  const { data, isLoading, isFetching } = useMovements(params, { enabled: !isSalesFilter })
+  const { data, isLoading, isFetching } = useMovements(params, { enabled: !isSalesFilter && !isMoneyFilter })
 
   const summaryParams = {
     ...(supplierId && { supplierId }),
@@ -397,6 +402,8 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           <option value="ADJUSTMENT">{t('Ajustes')}</option>
           <option value="RETURN">{t('Devoluciones')}</option>
           <option value="SUPPLIER_RETURN">{t('Devuelto a proveedor')}</option>
+          <option value="COBRO">{t('Cobros de fiado')}</option>
+          {isOwner && <option value="PAGO">{t('Pagos a proveedor')}</option>}
         </select>
         <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={`${selectCls} w-full sm:w-auto sm:min-w-48`}>
           <option value="">{t('Todos los proveedores')}</option>
@@ -446,8 +453,13 @@ export default function MovementsTab({ productId = null, productHint = null, onP
         <ProductDetailModal product={fetchedProduct} hideHistoryLink onClose={() => setShowProductDetail(false)} />
       )}
 
+      {/* La plata del mismo período, a un toque (William, 3-oct): cobros de fiado y pagos a proveedor */}
+      {!isSalesFilter && !isMoneyFilter && !productId && (
+        <MoneyStrip from={from} to={to} showPago={isOwner} onPick={setTypeFilter} />
+      )}
+
       {/* Guía fija (pedido de Frank): la feature no es banal, que se descubra sola */}
-      {!isSalesFilter && !productId && (
+      {!isSalesFilter && !isMoneyFilter && !productId && (
         <p className="flex items-start gap-2 px-1 text-[13px] leading-snug text-gray-500">
           <Lightbulb size={15} className="mt-0.5 flex-shrink-0 text-amber-500" />
           <span>
@@ -457,8 +469,10 @@ export default function MovementsTab({ productId = null, productHint = null, onP
         </p>
       )}
 
-      {/* Una sola tabla a la vez: resumen si filtras Ventas, historial si no */}
-      {isSalesFilter ? (
+      {/* Una sola tabla a la vez: resumen si filtras Ventas, plata si filtras cobros/pagos, historial si no */}
+      {isMoneyFilter ? (
+        <MoneyMovementsTable kind={typeFilter} from={from} to={to} />
+      ) : isSalesFilter ? (
         <ReplenishmentSummary rows={summaryRows} isLoading={summaryLoading}
           from={from} to={to} onRowClick={setDetailRow} />
       ) : (

@@ -35,6 +35,7 @@ import ReportsPage    from '../pages/ReportsPage'
 import BalancePage    from '../pages/BalancePage'
 import SellerPerformancePage from '../pages/SellerPerformancePage'
 import CustomerRankingPage from '../pages/CustomerRankingPage'
+import SupplierAnalysisPage from '../pages/SupplierAnalysisPage'
 import EmployeesPage       from '../pages/EmployeesPage'
 import SuppliersPage       from '../pages/SuppliersPage'
 import SupplierDetailPage  from '../pages/SupplierDetailPage'
@@ -112,6 +113,9 @@ export default function AppRouter() {
       {/* Análisis de clientes (tarea 250): OWNER y EMPLOYEE con canViewReports */}
       <Route path="/reports/customers" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><CustomerRankingPage /></ProtectedRoute>
+      } />
+      <Route path="/reports/suppliers" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><SupplierAnalysisPage /></ProtectedRoute>
       } />
       <Route path="/empleados" element={
         <ProtectedRoute allowedRoles={['OWNER']}><EmployeesPage /></ProtectedRoute>

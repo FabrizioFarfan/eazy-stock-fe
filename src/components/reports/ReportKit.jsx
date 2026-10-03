@@ -15,13 +15,15 @@ const SIBLINGS = [
   { to: '/reports/balance',   icon: Scale,     label: 'Balance',             hint: 'Ganancia y cierre de caja' },
   { to: '/reports/sellers',   icon: Trophy,    label: 'Vendedores',          hint: 'Quién vendió más' },
   { to: '/reports/customers', icon: Award,     label: 'Análisis de clientes', hint: 'Quién te compra más' },
+  // Solo dueño: lleva costos de compra (3-oct-2026)
+  { to: '/reports/suppliers', icon: Truck,     label: 'Análisis de proveedores', hint: 'Quién te vende más', ownerOnly: true },
 ]
 
 // Fila de tarjetas para saltar entre páginas hermanas (la activa en azul).
 export function SiblingSwitcher({ items, label }) {
   const t = useT()
   if (items.length < 2) return null
-  const cols = items.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
+  const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
   return (
     <nav className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid ${cols} sm:overflow-visible sm:px-0 sm:pb-0`} aria-label={label}>
       {items.map(({ to, icon: Icon, label: itemLabel, hint }) => (
@@ -52,9 +54,10 @@ export function SiblingSwitcher({ items, label }) {
 // Las cuatro páginas de reportes, a un toque desde cualquiera de ellas.
 export function ReportsSwitcher() {
   const t = useT()
-  const { can } = useAuth()
+  const { user, can } = useAuth()
   if (!can('canViewReports')) return null
-  return <SiblingSwitcher items={SIBLINGS} label={t('Reportes')} />
+  const owner = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  return <SiblingSwitcher items={SIBLINGS.filter((s) => !s.ownerOnly || owner)} label={t('Reportes')} />
 }
 
 // Clientes ↔ Cuentas por cobrar ↔ Cuentas por pagar: la plata que entra y sale.
@@ -168,7 +171,7 @@ export function NewButton({ onClick, children }) {
  * nombre en dos líneas, datos, y acciones SIEMPRE visibles (regla de Frank:
  * nada escondido tras un hover). Toda la tarjeta abre `onOpen`.
  */
-export function EntityCard({ avatar, title, subtitle, onOpen, onEdit, onDelete, link, children }) {
+export function EntityCard({ avatar, title, subtitle, onOpen, onEdit, onDelete, link, actions, children }) {
   const t = useT()
   return (
     <div className="group flex h-full flex-col rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
@@ -196,10 +199,22 @@ export function EntityCard({ avatar, title, subtitle, onOpen, onEdit, onDelete, 
       </div>
       {link && (
         <Link to={link.to} onClick={(e) => e.stopPropagation()}
-          className="flex items-center justify-between gap-2 border-t border-gray-100 px-4 py-2.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50/60 sm:px-5">
+          className="flex items-center justify-between gap-2 border-t border-gray-100 px-4 py-2.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 sm:px-5">
           {link.label}
           <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
         </Link>
+      )}
+      {/* Acciones explícitas, del mismo peso (Frank, 3-oct: «que sea más obvio»): una columna por acción */}
+      {actions?.length > 0 && (
+        <div className={`grid border-t border-gray-100 ${actions.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          {actions.map(({ to, icon: Icon, label }, i) => (
+            <Link key={to} to={to} onClick={(e) => e.stopPropagation()}
+              className={`flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-bold transition-colors ${
+                i === 0 ? 'text-blue-700 hover:bg-blue-50' : 'border-l border-gray-100 text-gray-700 hover:bg-gray-100'}`}>
+              {Icon && <Icon size={14} />}{label}
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   )

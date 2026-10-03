@@ -1,11 +1,16 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, AlertTriangle, Loader2, MessageCircle, Wallet } from 'lucide-react'
+import { Users, AlertTriangle, Loader2, MessageCircle, Wallet, HandCoins, History } from 'lucide-react'
 import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
+import { MoneyMovementsTable } from '../components/stock/MoneyMovements'
+import DateRangeQuick from '../components/common/DateRangeQuick'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useReceivables } from '../hooks/useReports'
+import { useCustomerPaymentsSummary } from '../hooks/useMoneyMovements'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
 import { waPhone, reminderMessage } from '../utils/debtReminder'
+import { quickRange } from '../utils/dateRanges'
 import { useT, dateLocale } from '../i18n'
 
 function formatDate(str) {
@@ -36,6 +41,11 @@ function ReceivablesHelp() {
           {t('Deuda es el saldo pendiente. «% Límite» compara la deuda con el límite de fiado que le pusiste al cliente: si pasa del 100% se pinta en rojo con una alerta. «Días» cuenta cuántos días lleva sin pagar desde su último abono.')}
         </p>
       </HelpBlock>
+      <HelpBlock title={t('Historial de cobros (pestaña de arriba)')}>
+        <p>
+          {t('Cuando un cliente termina de pagar sale de la lista «Con deuda», pero nada se pierde: en «Historial de cobros» ves cada pago que recibiste, con fecha y hora, quién lo registró y el saldo que quedó. Elige el período (hoy, esta semana, este mes…) y arriba tienes el total cobrado. Los mismos cobros también aparecen en Stock › Movimientos.')}
+        </p>
+      </HelpBlock>
       <HelpBlock title={t('Cobrar por WhatsApp (botón verde)')}>
         <p>
           {t('En la columna «Recordar», toca el botón verde del cliente: se abre WhatsApp con un recordatorio cordial ya escrito con su nombre y su deuda. Solo revisas y envías. Si en vez del botón ves un guion, es porque ese cliente no tiene teléfono guardado — agrégaselo desde la página Clientes.')}
@@ -55,6 +65,24 @@ function ReceivablesHelp() {
   )
 }
 
+// Con deuda | Historial de cobros (William, 3-oct-2026: «¿dónde veo lo que ya me pagaron?»)
+function ViewSwitch({ view, onChange, debtCount }) {
+  const t = useT()
+  const btn = (key, Icon, label) => (
+    <button type="button" onClick={() => onChange(key)} aria-pressed={view === key}
+      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
+        view === key ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-gray-600 hover:bg-gray-100'}`}>
+      <Icon size={16} /> {label}
+    </button>
+  )
+  return (
+    <div className="flex gap-1 rounded-2xl border border-gray-100 bg-white p-1.5 shadow-sm">
+      {btn('debt', Wallet, `${t('Con deuda')}${debtCount != null ? ` (${debtCount})` : ''}`)}
+      {btn('history', History, t('Historial de cobros'))}
+    </div>
+  )
+}
+
 export default function ReceivablesPage() {
   const t = useT()
   const navigate = useNavigate()
@@ -62,6 +90,8 @@ export default function ReceivablesPage() {
   const params = user?.role === 'SUPER_ADMIN' && user?.businessId
     ? { businessId: user.businessId }
     : undefined
+  const [view, setView] = useState('debt')
+  const [range, setRange] = useState(() => quickRange('month'))
 
   const { data, isLoading, isError } = useReceivables(params)
   const rows  = data?.rows  ?? []
@@ -71,19 +101,41 @@ export default function ReceivablesPage() {
   const stale = rows.filter((r) => r.daysSinceLastPayment == null || r.daysSinceLastPayment > 30).length
   const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
+  const { data: cobros, isLoading: cobrosLoading } = useCustomerPaymentsSummary(
+    { from: range.from, to: range.to, ...(params ?? {}) }, { enabled: view === 'history' })
+
   return (
     <div className="flex flex-col gap-5">
 
       <ReportHeader icon={Wallet} title={t('Cuentas por cobrar')}
         subtitle={t('Lo que tus clientes te deben por ventas al fiado')}
         help={(
-          <HelpDrawer title={t('Cómo cobrar a tus clientes')} autoOpenKey="eazystock_receivables_help_v2">
+          <HelpDrawer title={t('Cómo cobrar a tus clientes')} autoOpenKey="eazystock_receivables_help_v3">
             <ReceivablesHelp />
           </HelpDrawer>
         )} />
 
       <AccountsSwitcher />
 
+      <ViewSwitch view={view} onChange={setView} debtCount={isLoading ? null : rows.length} />
+
+      {view === 'history' ? (
+        <>
+          <ReportHero icon={HandCoins} label={t('Cobrado en el período')} loading={cobrosLoading}
+            value={formatPrice(cobros?.total ?? 0)}
+            sub={<span>{t('Cada pago de fiado que recibiste, con quién lo registró y el saldo que quedó. Toca el cliente para ver toda su cuenta.')}</span>}
+            cells={[
+              [t('Cobros'), cobros?.count ?? 0],
+              [t('Clientes que pagaron'), cobros?.counterparties ?? 0],
+              [t('Promedio por cobro'), cobros?.count ? formatPrice(Number(cobros.total) / cobros.count) : '—'],
+            ]} />
+          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+            <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+          </div>
+          <MoneyMovementsTable kind="COBRO" from={range.from} to={range.to} />
+        </>
+      ) : (
+        <>
       <ReportHero icon={Wallet} label={t('Total por cobrar')} loading={isLoading}
         value={formatPrice(total)}
         sub={<span>{t('Toca un cliente para ver su ficha, registrar pagos y descargar el')} <b className="text-white">{t('PDF con el detalle de su deuda')}</b> {t('para enviárselo.')}</span>}
@@ -159,6 +211,7 @@ export default function ReceivablesPage() {
                         <Users size={28} className="text-emerald-500" />
                       </div>
                       <p className="text-sm font-semibold text-gray-700">{t('Ningún cliente tiene deuda pendiente')}</p>
+                      <button type="button" onClick={() => setView('history')} className="text-xs font-semibold text-blue-600 hover:underline">{t('Ver el historial de cobros')}</button>
                     </div>
                   </td>
                 </tr>
@@ -210,6 +263,8 @@ export default function ReceivablesPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

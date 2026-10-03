@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Truck, Loader2, X, Phone, User, FileText } from 'lucide-react'
+import { Plus, Truck, Loader2, X, Phone, User, FileText, HandCoins, Package } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -150,7 +150,10 @@ function SupplierCard({ supplier, debt, onOpen, onEdit, onDelete }) {
       title={supplier.name}
       subtitle={supplier.ruc ? <span className="font-mono">RUC {supplier.ruc}</span> : null}
       onOpen={onOpen} onEdit={onEdit} onDelete={onDelete}
-      link={{ to: `/products?supplierId=${supplier.id}`, label: t('Ver sus productos') }}
+      actions={[
+        { to: `/suppliers/${supplier.id}`, icon: HandCoins, label: t('Cuenta y pagos') },
+        { to: `/products?supplierId=${supplier.id}`, icon: Package, label: t('Sus productos') },
+      ]}
     >
       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${
         owes ? 'bg-amber-50 text-amber-700 ring-amber-100' : 'bg-emerald-50 text-emerald-700 ring-emerald-100'}`}>

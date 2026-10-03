@@ -145,3 +145,13 @@ export function useInactiveCustomers(params, options = {}) {
     ...options,
   })
 }
+
+// Análisis de proveedores (Frank, 3-oct-2026): comprado, stock, vendido y deuda por proveedor.
+export function useSupplierAnalysis(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'suppliers', params],
+    queryFn: () => reportsApi.getSupplierAnalysis(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}
