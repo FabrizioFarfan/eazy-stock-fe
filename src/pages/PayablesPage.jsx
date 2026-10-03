@@ -5,6 +5,7 @@ import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/report
 import { MoneyMovementsTable } from '../components/stock/MoneyMovements'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import { usePayables } from '../hooks/useReports'
+import { useSuppliers } from '../hooks/useSuppliers'
 import { useSupplierPaymentsSummary } from '../hooks/useMoneyMovements'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
@@ -44,6 +45,9 @@ export default function PayablesPage() {
     : undefined
   const [view, setView] = useState('debt')
   const [range, setRange] = useState(() => quickRange('month'))
+  const [supplierId, setSupplierId] = useState('')   // filtro del historial (Frank, 3-oct)
+  const { data: suppliersData } = useSuppliers({ size: 200 }, { enabled: view === 'history' })
+  const suppliers = suppliersData?.content ?? []
 
   const { data, isLoading, isError } = usePayables(params)
   const rows  = data?.rows  ?? []
@@ -54,7 +58,7 @@ export default function PayablesPage() {
   const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
   const { data: pagos, isLoading: pagosLoading } = useSupplierPaymentsSummary(
-    { from: range.from, to: range.to, ...(params ?? {}) }, { enabled: view === 'history' })
+    { from: range.from, to: range.to, ...(supplierId && { supplierId }), ...(params ?? {}) }, { enabled: view === 'history' })
 
   return (
     <div className="flex flex-col gap-5">
@@ -101,10 +105,18 @@ export default function PayablesPage() {
               [t('Proveedores pagados'), pagos?.counterparties ?? 0],
               [t('Promedio por pago'), pagos?.count ? formatPrice(Number(pagos.total) / pagos.count) : '—'],
             ]} />
-          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+          <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
             <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{t('Filtrar por proveedor')}</p>
+              <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 sm:w-80">
+                <option value="">{t('Todos los proveedores')}</option>
+                {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
           </div>
-          <MoneyMovementsTable kind="PAGO" from={range.from} to={range.to} />
+          <MoneyMovementsTable kind="PAGO" from={range.from} to={range.to} counterpartyId={supplierId || null} />
         </>
       ) : (
         <>

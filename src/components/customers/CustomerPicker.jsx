@@ -48,6 +48,7 @@ export default function CustomerPicker({ value, onSelect, onRequestCreate, showD
         placeholder={t('Buscar cliente por nombre, documento o teléfono...')}
         className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
       />
+      {onRequestCreate && (
       <button
         type="button"
         onClick={() => onRequestCreate(query.trim())}
@@ -56,17 +57,23 @@ export default function CustomerPicker({ value, onSelect, onRequestCreate, showD
         <UserPlus size={13} />
         {t('Registrar nuevo cliente')}
       </button>
+      )}
       {open && debounced && (
         <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
           {isLoading ? (
             <p className="px-4 py-3 text-sm text-gray-400">{t('Buscando...')}</p>
           ) : results.length === 0 ? (
+            onRequestCreate ? (
             <button type="button"
               onClick={() => onRequestCreate(query.trim())}
               className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm text-blue-700 hover:bg-blue-50">
               <UserPlus size={14} />
               <span>{t('Sin resultados — registrar')} <strong>{debounced}</strong> {t('como nuevo cliente')}</span>
             </button>
+            ) : (
+            // Como filtro (historial de cobros) no se registra nada: solo se avisa
+            <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
+            )
           ) : (
             <>
               {results.map((c) => (

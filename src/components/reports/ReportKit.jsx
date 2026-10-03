@@ -175,7 +175,7 @@ export function EntityCard({ avatar, title, subtitle, onOpen, onEdit, onDelete, 
   const t = useT()
   return (
     <div className="group flex h-full flex-col rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-      <div className="flex flex-1 cursor-pointer items-start gap-3.5 p-4 sm:p-5" onClick={onOpen}>
+      <div className={`flex flex-1 items-start gap-3.5 p-4 sm:p-5 ${onOpen ? 'cursor-pointer' : ''}`} onClick={onOpen}>
         {avatar}
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 break-words font-bold leading-snug text-gray-900">{title}</p>

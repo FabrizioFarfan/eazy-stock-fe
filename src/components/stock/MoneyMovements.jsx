@@ -42,8 +42,8 @@ function useScope(from, to) {
   }
 }
 
-function useSummary(kind, from, to, options) {
-  const scope = useScope(from, to)
+function useSummary(kind, from, to, options, counterpartyId) {
+  const scope = { ...useScope(from, to), ...(counterpartyId && { [kind === 'COBRO' ? 'customerId' : 'supplierId']: counterpartyId }) }
   const cobros = useCustomerPaymentsSummary(scope, { ...options, enabled: kind === 'COBRO' && (options?.enabled ?? true) })
   const pagos  = useSupplierPaymentsSummary(scope, { ...options, enabled: kind === 'PAGO' && (options?.enabled ?? true) })
   return kind === 'COBRO' ? cobros : pagos
@@ -53,20 +53,21 @@ const thCls = 'px-4 py-3.5 text-xs font-semibold uppercase tracking-widest text-
 const PAGE_SIZE = 20
 
 /** Tabla (PC) / tarjetas (celular) de cobros o pagos en un rango, con paginación y total del período. */
-export function MoneyMovementsTable({ kind, from, to }) {
+export function MoneyMovementsTable({ kind, from, to, counterpartyId = null }) {
   const t = useT()
   const cfg = MONEY_KINDS[kind]
   const Icon = cfg.icon
   const [page, setPage] = useState(0)
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(0) }, [kind, from, to])
+  useEffect(() => { setPage(0) }, [kind, from, to, counterpartyId])
 
-  const scope = useScope(from, to)
+  // Filtro por cliente / proveedor (Frank, 3-oct: «ponle filtro, es por comodidad»)
+  const scope = { ...useScope(from, to), ...(counterpartyId && { [kind === 'COBRO' ? 'customerId' : 'supplierId']: counterpartyId }) }
   const params = { ...scope, page, size: PAGE_SIZE }
   const cobros = useCustomerPayments(params, { enabled: kind === 'COBRO' })
   const pagos  = useSupplierPayments(params, { enabled: kind === 'PAGO' })
   const { data, isLoading, isFetching } = kind === 'COBRO' ? cobros : pagos
-  const { data: summary } = useSummary(kind, from, to)
+  const { data: summary } = useSummary(kind, from, to, undefined, counterpartyId)
 
   const rows          = data?.content       ?? []
   const totalElements = data?.totalElements ?? 0

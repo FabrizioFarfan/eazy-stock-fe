@@ -4,6 +4,7 @@ import { Users, AlertTriangle, Loader2, MessageCircle, Wallet, HandCoins, Histor
 import { AccountsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { MoneyMovementsTable } from '../components/stock/MoneyMovements'
 import DateRangeQuick from '../components/common/DateRangeQuick'
+import CustomerPicker from '../components/customers/CustomerPicker'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useReceivables } from '../hooks/useReports'
 import { useCustomerPaymentsSummary } from '../hooks/useMoneyMovements'
@@ -92,6 +93,7 @@ export default function ReceivablesPage() {
     : undefined
   const [view, setView] = useState('debt')
   const [range, setRange] = useState(() => quickRange('month'))
+  const [customer, setCustomer] = useState(null)   // filtro del historial (Frank, 3-oct)
 
   const { data, isLoading, isError } = useReceivables(params)
   const rows  = data?.rows  ?? []
@@ -102,7 +104,7 @@ export default function ReceivablesPage() {
   const maxDebt = rows.reduce((m, r) => Math.max(m, Number(r.currentDebt)), 0)
 
   const { data: cobros, isLoading: cobrosLoading } = useCustomerPaymentsSummary(
-    { from: range.from, to: range.to, ...(params ?? {}) }, { enabled: view === 'history' })
+    { from: range.from, to: range.to, ...(customer && { customerId: customer.id }), ...(params ?? {}) }, { enabled: view === 'history' })
 
   return (
     <div className="flex flex-col gap-5">
@@ -129,10 +131,14 @@ export default function ReceivablesPage() {
               [t('Clientes que pagaron'), cobros?.counterparties ?? 0],
               [t('Promedio por cobro'), cobros?.count ? formatPrice(Number(cobros.total) / cobros.count) : '—'],
             ]} />
-          <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+          <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
             <DateRangeQuick from={range.from} to={range.to} onChange={setRange} />
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">{t('Filtrar por cliente')}</p>
+              <CustomerPicker value={customer} onSelect={setCustomer} showDebt />
+            </div>
           </div>
-          <MoneyMovementsTable kind="COBRO" from={range.from} to={range.to} />
+          <MoneyMovementsTable kind="COBRO" from={range.from} to={range.to} counterpartyId={customer?.id ?? null} />
         </>
       ) : (
         <>

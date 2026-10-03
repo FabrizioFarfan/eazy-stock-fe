@@ -2,6 +2,10 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.3.0 — 2026-10-03
+- Proveedores: la tarjeta ya no abre nada al tocar el nombre u otra parte; solo «Cuenta y pagos» y «Sus productos» llevan a su página.
+- Historial de cobros: filtro por cliente (buscador). Historial de pagos: filtro por proveedor. En Stock › Movimientos, «Pagos a proveedor» respeta el filtro de proveedor de la barra.
+
 ## 1.2.0 — 2026-10-03 (pedidos de William)
 - Stock › Movimientos muestra también la PLATA que no mueve stock: franja «Cobros de fiado» / «Pagos a proveedor» del período con su total, y filtros propios con la lista (fecha y hora, cliente o proveedor, monto, saldo que quedó, quién lo registró). La franja del día suma «Cobros de fiado» con atajo.
 - Cuentas por cobrar y Cuentas por pagar: pestaña «Historial de cobros» / «Historial de pagos» por período (los que ya terminaron de pagar ya no se pierden).

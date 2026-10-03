@@ -3,6 +3,8 @@
 // Llave = texto en español.
 export default {
   en: {
+    'Filtrar por cliente': 'Filter by customer',
+    'Filtrar por proveedor': 'Filter by supplier',
     'Abrir su ficha': 'Open their profile',
     'Análisis de proveedores': 'Supplier analysis',
     'Cada pago de fiado que recibiste, con quién lo registró y el saldo que quedó. Toca el cliente para ver toda su cuenta.': 'Every credit payment you received, who recorded it and the balance left. Tap the customer to see their whole account.',
@@ -74,6 +76,8 @@ export default {
     'Última recepción': 'Last receipt',
   },
   it: {
+    'Filtrar por cliente': 'Filtra per cliente',
+    'Filtrar por proveedor': 'Filtra per fornitore',
     'Abrir su ficha': 'Apri la sua scheda',
     'Análisis de proveedores': 'Analisi dei fornitori',
     'Cada pago de fiado que recibiste, con quién lo registró y el saldo que quedó. Toca el cliente para ver toda su cuenta.': 'Ogni pagamento del fido che hai ricevuto, chi lo ha registrato e il saldo rimasto. Tocca il cliente per vedere tutto il suo conto.',

@@ -471,7 +471,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
 
       {/* Una sola tabla a la vez: resumen si filtras Ventas, plata si filtras cobros/pagos, historial si no */}
       {isMoneyFilter ? (
-        <MoneyMovementsTable kind={typeFilter} from={from} to={to} />
+        <MoneyMovementsTable kind={typeFilter} from={from} to={to} counterpartyId={typeFilter === 'PAGO' && supplierId ? supplierId : null} />
       ) : isSalesFilter ? (
         <ReplenishmentSummary rows={summaryRows} isLoading={summaryLoading}
           from={from} to={to} onRowClick={setDetailRow} />

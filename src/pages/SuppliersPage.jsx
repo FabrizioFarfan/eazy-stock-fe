@@ -10,7 +10,6 @@ import { useDebounce } from '../hooks/useDebounce'
 import { AccountsSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
 import { usePayables } from '../hooks/useReports'
 import { formatPrice } from '../utils/formatMoney'
-import { useNavigate } from 'react-router-dom'
 import { getErrorMessage, getErrorField } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
@@ -131,7 +130,7 @@ function SupplierModal({ supplier, onClose }) {
 
 // ── Supplier card ─────────────────────────────────────────────────────────────
 
-function SupplierCard({ supplier, debt, onOpen, onEdit, onDelete }) {
+function SupplierCard({ supplier, debt, onEdit, onDelete }) {
   const t = useT()
   const initials = supplier.name
     .split(' ')
@@ -149,7 +148,7 @@ function SupplierCard({ supplier, debt, onOpen, onEdit, onDelete }) {
       )}
       title={supplier.name}
       subtitle={supplier.ruc ? <span className="font-mono">RUC {supplier.ruc}</span> : null}
-      onOpen={onOpen} onEdit={onEdit} onDelete={onDelete}
+      onEdit={onEdit} onDelete={onDelete}
       actions={[
         { to: `/suppliers/${supplier.id}`, icon: HandCoins, label: t('Cuenta y pagos') },
         { to: `/products?supplierId=${supplier.id}`, icon: Package, label: t('Sus productos') },
@@ -188,8 +187,6 @@ export default function SuppliersPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
   })
   const suppliers = data?.content ?? []
-  const navigate  = useNavigate()
-
   // Deuda por proveedor (Cuentas por pagar) para pintarla en cada tarjeta.
   const { data: payables } = usePayables(adminBizParam(user)?.businessId ? adminBizParam(user) : undefined)
   const debtById = Object.fromEntries((payables?.rows ?? []).map((r) => [r.supplierId, r.currentDebt]))
@@ -263,7 +260,6 @@ export default function SuppliersPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {suppliers.map((s) => (
             <SupplierCard key={s.id} supplier={s} debt={debtById[s.id]}
-              onOpen={() => navigate(`/suppliers/${s.id}`)}
               onEdit={() => setModal({ supplier: s })}
               onDelete={() => handleDelete(s)} />
           ))}
