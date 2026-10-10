@@ -36,6 +36,7 @@ import BalancePage    from '../pages/BalancePage'
 import SellerPerformancePage from '../pages/SellerPerformancePage'
 import CustomerRankingPage from '../pages/CustomerRankingPage'
 import SupplierAnalysisPage from '../pages/SupplierAnalysisPage'
+import PurchasesPage from '../pages/PurchasesPage'
 import EmployeesPage       from '../pages/EmployeesPage'
 import SuppliersPage       from '../pages/SuppliersPage'
 import SupplierDetailPage  from '../pages/SupplierDetailPage'
@@ -116,6 +117,10 @@ export default function AppRouter() {
       } />
       <Route path="/reports/suppliers" element={
         <ProtectedRoute allowedRoles={['OWNER']}><SupplierAnalysisPage /></ProtectedRoute>
+      } />
+      {/* Compras y gastos (William, 10-oct): solo dueño, lleva costos */}
+      <Route path="/reports/purchases" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><PurchasesPage /></ProtectedRoute>
       } />
       <Route path="/empleados" element={
         <ProtectedRoute allowedRoles={['OWNER']}><EmployeesPage /></ProtectedRoute>

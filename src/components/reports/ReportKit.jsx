@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
-import { BarChart2, Scale, Trophy, Award, Users, Wallet, HandCoins, Truck, Tag, FolderOpen, MapPin, Search, X, Edit, Trash2, ArrowRight } from 'lucide-react'
+import { BarChart2, Scale, Trophy, Award, Users, Wallet, HandCoins, Truck, Tag, FolderOpen, MapPin, Search, X, Edit, Trash2, ArrowRight, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
 
@@ -17,13 +17,14 @@ const SIBLINGS = [
   { to: '/reports/customers', icon: Award,     label: 'Análisis de clientes', hint: 'Quién te compra más' },
   // Solo dueño: lleva costos de compra (3-oct-2026)
   { to: '/reports/suppliers', icon: Truck,     label: 'Análisis de proveedores', hint: 'Quién te vende más', ownerOnly: true },
+  { to: '/reports/purchases', icon: ShoppingBag, label: 'Compras y gastos',   hint: 'Cuánto se fue y en qué', ownerOnly: true },
 ]
 
 // Fila de tarjetas para saltar entre páginas hermanas (la activa en azul).
 export function SiblingSwitcher({ items, label }) {
   const t = useT()
   if (items.length < 2) return null
-  const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
+  const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 6 ? 'sm:grid-cols-3 lg:grid-cols-6' : items.length === 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
   return (
     <nav className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid ${cols} sm:overflow-visible sm:px-0 sm:pb-0`} aria-label={label}>
       {items.map(({ to, icon: Icon, label: itemLabel, hint }) => (

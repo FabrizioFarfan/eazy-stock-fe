@@ -2,6 +2,10 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.4.0 — 2026-10-10 (pedido de William)
+- Nueva página **Compras y gastos** (Reportes, solo dueño): cuánto se fue en el período —mercadería recibida de proveedores (las recepciones de Stock, al costo) + otros gastos— por día, semana, mes o año (partición automática o a elección), con comparación contra el período anterior, gráfica apilada, tabla tramo a tramo, ranking «A quién le compraste» y «Otros gastos, por tipo». Arriba también lo pagado de verdad a proveedores y lo que entró al crédito.
+- **Registrar gasto**: alquiler, luz/agua/internet, transporte y flete, sueldos, impuestos, mantenimiento, publicidad, útiles y bolsas u otro; cuánto, qué fue, qué día, proveedor y medio de pago opcionales, nota. Se corrigen y se borran desde la misma página. Tutorial propio. es/en/it.
+
 ## 1.3.0 — 2026-10-03
 - Proveedores: la tarjeta ya no abre nada al tocar el nombre u otra parte; solo «Cuenta y pagos» y «Sus productos» llevan a su página.
 - Historial de cobros: filtro por cliente (buscador). Historial de pagos: filtro por proveedor. En Stock › Movimientos, «Pagos a proveedor» respeta el filtro de proveedor de la barra.

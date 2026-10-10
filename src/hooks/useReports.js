@@ -155,3 +155,13 @@ export function useSupplierAnalysis(params, options = {}) {
     ...options,
   })
 }
+
+/** Compras y gastos (William, 10-oct-2026): recepciones + otros gastos por día/semana/mes/año. */
+export function usePurchasesReport(params, options = {}) {
+  return useQuery({
+    queryKey: ['reports', 'purchases', params],
+    queryFn: () => reportsApi.getPurchases(params).then((r) => r.data.data),
+    placeholderData: (prev) => prev,
+    ...options,
+  })
+}

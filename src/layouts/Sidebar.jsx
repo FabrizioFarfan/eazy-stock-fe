@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings, Bell, ChevronDown,
-  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin,
+  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin, ShoppingBag,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import LogoutConfirm from '../components/common/LogoutConfirm'
@@ -38,6 +38,7 @@ const OWNER_NAV = [
     { icon: Trophy,        label: 'Vendedores',        path: '/reports/sellers',     permission: 'canViewReports' },
     { icon: Award,         label: 'Análisis de clientes', path: '/reports/customers',   permission: 'canViewReports' },
     { icon: Truck,         label: 'Análisis de proveedores', path: '/reports/suppliers', permission: 'canViewReports' },
+    { icon: ShoppingBag,   label: 'Compras y gastos',  path: '/reports/purchases',   permission: 'canViewReports' },
   ] },
   { icon: Wallet,          label: 'Clientes y proveedores', group: 'accounts', children: [
     { icon: Users,         label: 'Clientes',          path: '/customers',           permission: null },

@@ -40,6 +40,9 @@ export const reportsApi = {
   // Análisis de proveedores (solo dueño): params = { from?, to?, businessId? }
   getSupplierAnalysis: (params) => api.get('/reports/suppliers', { params }),
 
+  // Compras y gastos (solo dueño): params = { from?, to?, groupBy?: DAY|WEEK|MONTH|YEAR, businessId? }
+  getPurchases: (params) => api.get('/reports/purchases', { params }),
+
   // Información total del negocio (valorización del inventario actual)
   getBusinessOverview: (params) => api.get('/reports/business-overview', { params }),
 }
