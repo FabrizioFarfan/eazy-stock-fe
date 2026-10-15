@@ -50,6 +50,7 @@ import CustomerDetailPage  from '../pages/CustomerDetailPage'
 import ReceivablesPage     from '../pages/ReceivablesPage'
 import PayablesPage        from '../pages/PayablesPage'
 import SettingsPage        from '../pages/SettingsPage'
+import MyBusinessesPage    from '../pages/MyBusinessesPage'
 import BusinessesPage      from '../pages/admin/BusinessesPage'
 import OwnersPage          from '../pages/admin/OwnersPage'
 import BossPage            from '../pages/BossPage'
@@ -166,6 +167,10 @@ export default function AppRouter() {
       } />
       <Route path="/reports/payables" element={
         <ProtectedRoute allowedRoles={['OWNER']}><PayablesPage /></ProtectedRoute>
+      } />
+      {/* Varios negocios por dueño (15-oct-2026): panel con la suma total y cambio de negocio */}
+      <Route path="/negocios" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><MyBusinessesPage /></ProtectedRoute>
       } />
       {/* Settings — todos los roles autenticados */}
       <Route path="/settings" element={

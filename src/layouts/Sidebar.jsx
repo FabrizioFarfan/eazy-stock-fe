@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings, Bell, ChevronDown,
-  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin, ShoppingBag,
+  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin, ShoppingBag, Store,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import LogoutConfirm from '../components/common/LogoutConfirm'
@@ -25,6 +25,8 @@ const SUPER_ADMIN_NAV = [
 // El grupo se abre solo cuando estás en una de sus páginas.
 const OWNER_NAV = [
   { icon: LayoutDashboard, label: 'Dashboard',         path: '/dashboard',           permission: null },
+  // Varios negocios por dueño (15-oct-2026): los números de cada tienda y la suma total
+  { icon: Store,           label: 'Mis negocios',      path: '/negocios',            permission: null },
   { icon: Package,         label: 'Productos',         path: '/products',            permission: null },
   { icon: ArrowUpDown,     label: 'Stock',             path: '/stock',               permission: null },
   { icon: ShoppingCart,    label: 'Ventas', group: 'sales', children: [

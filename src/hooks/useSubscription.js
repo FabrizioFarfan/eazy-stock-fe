@@ -9,7 +9,7 @@ export const BOSS_SUBSCRIPTIONS_KEY = 'boss-subscriptions'
 
 const unwrap = (r) => r.data?.data ?? r.data
 
-/** La suscripción del negocio del usuario logueado (OWNER y EMPLOYEE). */
+/** La suscripción de la cuenta del dueño (la ve el OWNER y, para el banner de solo lectura, el EMPLOYEE). */
 export function useSubscription(options = {}) {
   const { user } = useAuth()
   const enabled = !!user && (user.role === 'OWNER' || user.role === 'EMPLOYEE')
@@ -54,11 +54,11 @@ function useBossMutation(fn) {
 }
 
 export function useUpdateSubscription() {
-  return useBossMutation(({ businessId, data }) => bossApi.updateSubscription(businessId, data).then(unwrap))
+  return useBossMutation(({ ownerId, data }) => bossApi.updateSubscription(ownerId, data).then(unwrap))
 }
 export function useMarkPaid() {
-  return useBossMutation(({ businessId, months }) => bossApi.markPaid(businessId, months).then(unwrap))
+  return useBossMutation(({ ownerId, months }) => bossApi.markPaid(ownerId, months).then(unwrap))
 }
 export function useExtendTrial() {
-  return useBossMutation(({ businessId, days }) => bossApi.extendTrial(businessId, days).then(unwrap))
+  return useBossMutation(({ ownerId, days }) => bossApi.extendTrial(ownerId, days).then(unwrap))
 }

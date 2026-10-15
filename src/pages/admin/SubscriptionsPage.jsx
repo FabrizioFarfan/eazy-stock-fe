@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { CreditCard, Search, MessageCircle, Mail, CalendarPlus, Clock, Pencil, Loader2, RefreshCw, Filter } from 'lucide-react'
+import { CreditCard, Search, MessageCircle, Mail, CalendarPlus, Clock, Pencil, Loader2, RefreshCw, Filter, Store } from 'lucide-react'
 import { toast } from 'sonner'
 import { useBossSubscriptions, useUpdateSubscription, useMarkPaid, useExtendTrial } from '../../hooks/useSubscription'
 import EntityModal, { EntityField } from '../../components/common/EntityModal'
@@ -13,8 +13,9 @@ import { formatDay, STATUS_TONE, STATUS_LABEL } from '../../components/subscript
 import { useT } from '../../i18n'
 
 /**
- * Boss › Suscripciones (M1 «Planes en serio», 15-oct-2026): una fila por negocio con
- * su prueba, plan, estado y precio; acciones rápidas «Marcar pagado +1 mes» y
+ * Boss › Suscripciones (M1 «Planes en serio», 15-oct-2026): una fila por DUEÑO (la
+ * suscripción es de la cuenta; sus negocios se listan en la fila) con su prueba,
+ * plan, estado y precio; acciones rápidas «Marcar pagado +1 mes» y
  * «Extender prueba +7 días» (hasta que llegue la pasarela, el cobro es manual) y
  * un modal para tocar plan, estado, fechas, descuento, precio especial y nota.
  */
@@ -57,8 +58,8 @@ function EditSubscriptionModal({ row, onClose }) {
       note: v.note?.trim() || null,
     }
     try {
-      await update.mutateAsync({ businessId: row.businessId, data })
-      toast.success(t('Suscripción de {name} actualizada', { name: row.businessName }))
+      await update.mutateAsync({ ownerId: row.ownerId, data })
+      toast.success(t('Suscripción de {name} actualizada', { name: row.ownerName ?? row.businessName }))
       onClose()
     } catch (err) {
       toast.error(getErrorMessage(err))
@@ -67,8 +68,8 @@ function EditSubscriptionModal({ row, onClose }) {
 
   return (
     <EntityModal onClose={onClose} onSubmit={handleSubmit(onSubmit)} isEdit
-      title={t('Suscripción')} previewName={row.businessName} placeholderName={t('Negocio')}
-      subtitle={row.ownerEmail}
+      title={t('Suscripción')} previewName={row.ownerName || row.businessName} placeholderName={t('Dueño')}
+      subtitle={`${row.ownerEmail ?? ''}${row.businessName ? ` · ${row.businessName}` : ''}`}
       avatar={<FlagAvatar code={row.countryCode} light />}
       submitting={update.isPending} submitLabel={t('Guardar cambios')}>
       <div className="grid grid-cols-2 gap-3">
@@ -141,13 +142,18 @@ function Row({ row, onEdit }) {
         <FlagAvatar code={row.countryCode} className="!h-11 !w-11" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-bold leading-tight text-gray-900">{row.businessName}</p>
+            <p className="truncate font-bold leading-tight text-gray-900">{row.ownerName || row.businessName}</p>
             <Chip tone={STATUS_TONE[row.status] ?? 'gray'}>{t(STATUS_LABEL[row.status] ?? row.status)}</Chip>
             <Chip tone="blue">{planName(row.plan)}</Chip>
             {row.launchPriceLocked && <Chip tone="amber">{t('Precio bloqueado')}</Chip>}
           </div>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500">
+            <Store size={12} className="text-gray-400" />
+            <span className="font-semibold text-gray-700">{row.businessName || t('Sin negocio')}</span>
+            {row.businesses?.length > 1 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500">{row.businesses.length}</span>}
+          </p>
           <p className="mt-0.5 truncate text-xs text-gray-500">
-            {row.ownerName}{row.ownerEmail ? ` · ${row.ownerEmail}` : ''} · {t('desde')} {formatDay(row.createdAt)}
+            {row.ownerEmail ?? ''}{row.ownerEmail ? ' · ' : ''}{t('desde')} {formatDay(row.createdAt)}
           </p>
           <p className="mt-0.5 text-xs text-gray-500">
             {when}{days ? ` (${days})` : ''}
@@ -173,13 +179,13 @@ function Row({ row, onEdit }) {
           </a>
         )}
         <button type="button" disabled={markPaid.isPending}
-          onClick={() => run(markPaid, { businessId: row.businessId, months: 1 }, t('{name}: pagado un mes más', { name: row.businessName }))}
+          onClick={() => run(markPaid, { ownerId: row.ownerId, months: 1 }, t('{name}: pagado un mes más', { name: row.ownerName ?? row.businessName }))}
           className="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60">
           {markPaid.isPending ? <Loader2 size={13} className="animate-spin" /> : <CalendarPlus size={13} />} {t('Pagado +1 mes')}
         </button>
         {['TRIAL', 'EXPIRED'].includes(row.status) && (
           <button type="button" disabled={extendTrial.isPending}
-            onClick={() => run(extendTrial, { businessId: row.businessId, days: 7 }, t('{name}: prueba extendida 7 días', { name: row.businessName }))}
+            onClick={() => run(extendTrial, { ownerId: row.ownerId, days: 7 }, t('{name}: prueba extendida 7 días', { name: row.ownerName ?? row.businessName }))}
             className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
             {extendTrial.isPending ? <Loader2 size={13} className="animate-spin" /> : <Clock size={13} />} {t('Prueba +7 días')}
           </button>
@@ -200,7 +206,17 @@ export default function SubscriptionsPage() {
   const [status, setStatus] = useState('ALL')
   const [editTarget, setEditTarget] = useState(null)
 
-  const all = useMemo(() => (Array.isArray(data) ? data : data?.content ?? []), [data])
+  // Fila del BE = { ownerId, ownerName, ownerEmail, phone, countryCode, businesses:[{id,name}], createdAt, subscription }.
+  // Se aplana para que la fila y el modal lean los campos de la suscripción directo.
+  const all = useMemo(() => {
+    const raw = Array.isArray(data) ? data : data?.content ?? []
+    return raw.map((r) => ({
+      ...(r.subscription ?? {}),
+      ...r,
+      businesses: r.businesses ?? [],
+      businessName: (r.businesses ?? []).map((b) => b.name).join(' · '),
+    }))
+  }, [data])
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
     return all.filter((r) => (status === 'ALL' || r.status === status)
@@ -209,6 +225,7 @@ export default function SubscriptionsPage() {
 
   const count = (st) => all.filter((r) => r.status === st).length
   const mrr = all.filter((r) => r.status === 'ACTIVE' || r.status === 'PAST_DUE').reduce((acc, r) => acc + (Number(r.priceMonthly) || 0), 0)
+  const totalBusinesses = all.reduce((acc, r) => acc + (r.businesses?.length ?? 0), 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -224,7 +241,7 @@ export default function SubscriptionsPage() {
 
       <ReportHero icon={CreditCard} label={t('Ingreso mensual comprometido')} loading={isLoading}
         value={`${CURRENCY} ${fmt(mrr)}`}
-        sub={<span>{t('Suma del precio efectivo de los negocios activos (y con pago vencido en gracia)')}</span>}
+        sub={<span>{t('Suma del precio efectivo de las cuentas activas (y con pago vencido en gracia)')} · {t('{n} cuentas, {m} negocios', { n: all.length, m: totalBusinesses })}</span>}
         cells={[
           [t('En prueba'), count('TRIAL')],
           [t('Activos'), count('ACTIVE')],
@@ -234,7 +251,7 @@ export default function SubscriptionsPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex-1">
-          <BigSearch value={q} onChange={setQ} placeholder={t('Buscar negocio, dueño o correo')} />
+          <BigSearch value={q} onChange={setQ} placeholder={t('Buscar dueño, negocio o correo')} />
         </div>
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-gray-400" />
@@ -258,12 +275,12 @@ export default function SubscriptionsPage() {
       {!isLoading && !isError && list.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center text-sm text-gray-400 shadow-sm">
           <Search size={18} />
-          {all.length === 0 ? t('Aún no hay negocios registrados.') : t('Nada coincide con el filtro.')}
+          {all.length === 0 ? t('Aún no hay cuentas registradas.') : t('Nada coincide con el filtro.')}
         </div>
       )}
       {!isLoading && !isError && list.length > 0 && (
         <div className="flex flex-col gap-3">
-          {list.map((r) => <Row key={r.businessId} row={r} onEdit={setEditTarget} />)}
+          {list.map((r) => <Row key={r.ownerId} row={r} onEdit={setEditTarget} />)}
         </div>
       )}
 

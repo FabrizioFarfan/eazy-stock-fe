@@ -2,6 +2,12 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.7.0 — 2026-10-15 (varios negocios por dueño + pago con tarjeta · frontend)
+- **Mis negocios** (`/negocios`, solo dueño): la **suma total** de todas tus tiendas por moneda (ventas del período y cuántas, por cobrar, por pagar, stock al costo) con el selector de período de Reportes, y una tarjeta por negocio con sus números, «Estás aquí», **Entrar** (cambia de negocio sin cerrar sesión: tokens nuevos) y **Nuevo negocio** (país → moneda propuesta, WhatsApp); si el plan no admite más (Basic = 1) avisa y lleva a Tu plan. Entrada «Mis negocios» en el menú.
+- **Cambiador de negocio** en la barra de arriba: con varios negocios, el nombre se vuelve un botón que lista las tiendas de la cuenta y «+ Nuevo negocio».
+- La suscripción pasa a ser **de la cuenta del dueño** (no del negocio): Ajustes › Tu plan muestra «Negocios: n de m (plan)»; Boss › Suscripciones lista una fila por dueño con sus negocios, total de cuentas y de negocios.
+- **Pagar con tarjeta (Stripe)** en Ajustes › Tu plan cuando el servidor lo tiene configurado: mensual o anual (10 meses) por plan → Stripe Checkout; con suscripción activa, «Gestionar pago y facturas» (portal). Aviso verde al volver con el pago hecho, gris si se canceló. Sin Stripe, sigue el camino manual por WhatsApp.
+
 ## 1.6.0 — 2026-10-15 (planes en serio · frontend)
 - **Registro propio** en `/registro` (nombre, correo, contraseña con ojito, negocio, país con moneda propuesta, WhatsApp opcional, aceptación de la privacidad): la cuenta nace con **14 días gratis sin tarjeta** y **50 % de descuento los primeros 6 meses** (lo aplica el BE) y entra directo al panel. Todos los «Probar gratis» de la web pública llevan ahí; «Iniciar sesión» y «Ya tengo cuenta» siguen al login, que ahora dice «¿Aún no tienes cuenta? Crear cuenta gratis».
 - Ofertas de /planes y de la landing actualizadas: «14 días gratis, sin tarjeta», «50 % de descuento los primeros 6 meses» y la anual; FAQ de precios y de cómo se paga (manual por WhatsApp hasta la pasarela).

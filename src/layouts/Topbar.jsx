@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from '../components/NotificationBell'
 import LangSwitcher from '../i18n/LangSwitcher'
+import BusinessSwitcher from '../components/BusinessSwitcher'
 import { useT } from '../i18n'
 
 const PAGE_TITLES = {
@@ -23,6 +24,8 @@ const PAGE_TITLES = {
   '/admin/owners':       'Owners',
   '/notificaciones':     'Notificaciones',
   '/settings':           'Ajustes',
+  '/negocios':           'Mis negocios',
+  '/boss/suscripciones': 'Suscripciones',
 }
 
 const ROLE_BADGE = {
@@ -61,9 +64,8 @@ export default function Topbar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
-        {user?.businessName && (
-          <span className="hidden text-sm font-medium text-gray-400 sm:block">{user.businessName}</span>
-        )}
+        {/* Varios negocios por dueño (15-oct-2026): con uno solo es el nombre; con varios, el cambiador */}
+        <BusinessSwitcher />
         {user?.role && (
           <span className={`hidden rounded-full px-2.5 py-1 text-xs font-semibold sm:inline-block ${badgeClass}`}>
             {t(ROLE_LABEL[user.role] ?? user.role)}

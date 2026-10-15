@@ -2,9 +2,11 @@ import { setCurrentCurrency } from "../utils/formatMoney";
 import { setDefaultCountry } from "../utils/phone";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
 import { getMyPermissions } from "../services/endpoints/permissions";
 import { tutorialsApi } from "../services/endpoints/tutorials";
+import { myBusinessesApi } from "../services/endpoints/myBusinesses";
 
 const AuthContext = createContext(null);
 
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
   // null = aún no cargado del BE; Set<string> = claves de tutoriales ya vistos
   const [seenTutorials, setSeenTutorials] = useState(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const loadPermissions = useCallback(async () => {
     try {
@@ -143,6 +146,15 @@ export function AuthProvider({ children }) {
     await _startSession(res.data);
   };
 
+  // Varios negocios por dueño (15-oct-2026): el token lleva el businessId, así que
+  // cambiar de negocio = tokens nuevos + sesión de cero (sin cerrar sesión). Se
+  // vacía la caché de react-query porque casi nada va keyed por negocio.
+  const switchBusiness = async (businessId) => {
+    const res = await myBusinessesApi.switchTo(businessId);
+    queryClient.clear();
+    await _startSession(res.data);
+  };
+
   const logout = async () => {
     const refreshToken = localStorage.getItem("eazystock_refresh_token");
     try {
@@ -187,7 +199,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

@@ -8,7 +8,8 @@ import api from '../api'
 export const subscriptionApi = {
   getPlans: () => api.get('/plans'),
   getMine:  () => api.get('/me/subscription'),
-  // { businessId, plan: 'BASIC'|'PRO'|'AI', status: 'TRIAL'|'ACTIVE'|'PAST_DUE'|'EXPIRED'|'CANCELED',
+  // { ownerId, plan: 'BASIC'|'PRO'|'AI', status: 'TRIAL'|'ACTIVE'|'PAST_DUE'|'EXPIRED'|'CANCELED',
   //   trialEndsAt, paidUntil, daysLeft, listPriceMonthly, discountPercent, discountUntil,
-  //   customPriceMonthly, priceMonthly, currency, launchPriceLocked, readOnly, maxEmployees, note }
+  //   customPriceMonthly, priceMonthly, currency, launchPriceLocked, readOnly, maxEmployees, note,
+  //   maxBusinesses, businessesCount, stripeEnabled, stripeSubscriptionId, interval: 'MONTHLY'|'YEARLY'|null }
 }
