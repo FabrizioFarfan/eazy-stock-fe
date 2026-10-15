@@ -2,6 +2,12 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.6.0 — 2026-10-15 (planes en serio · frontend)
+- **Registro propio** en `/registro` (nombre, correo, contraseña con ojito, negocio, país con moneda propuesta, WhatsApp opcional, aceptación de la privacidad): la cuenta nace con **14 días gratis sin tarjeta** y **50 % de descuento los primeros 6 meses** (lo aplica el BE) y entra directo al panel. Todos los «Probar gratis» de la web pública llevan ahí; «Iniciar sesión» y «Ya tengo cuenta» siguen al login, que ahora dice «¿Aún no tienes cuenta? Crear cuenta gratis».
+- Ofertas de /planes y de la landing actualizadas: «14 días gratis, sin tarjeta», «50 % de descuento los primeros 6 meses» y la anual; FAQ de precios y de cómo se paga (manual por WhatsApp hasta la pasarela).
+- En la app: **franja de suscripción** bajo la barra (prueba y días que quedan, pago vencido en gracia, vencido = solo lectura; el empleado ve «el dueño debe activar el plan»); **Ajustes › Tu plan** (estado, fechas, precio efectivo con el descuento, las tres tarjetas con la actual marcada y cómo activar por WhatsApp o correo); aviso de **límite del plan** al crear empleados; el 402 del BE (plan no activo) muestra un toast con atajo al plan sin cerrar sesión.
+- **Boss › Suscripciones**: todos los negocios con su prueba, plan, estado, precio y nota; «Pagado +1 mes», «Prueba +7 días», WhatsApp al dueño y edición completa (plan, estado, fechas, descuento, precio especial, precio bloqueado, nota). Ingreso mensual comprometido arriba.
+
 ## 1.5.0 — 2026-10-15 (legales DE)
 - Fabrizio tiene ya su Partita IVA en Berlín: la web cumple la ley alemana antes de meter la pasarela de pagos. Nueva página **/impressum** (§ 5 DDG: Fabrizio Farfan · Eazy Life, Sprengelstraße 7, 13353 Berlin; § 19 UStG sin IVA; § 18 Abs. 2 MStV; sin arbitraje de consumo), en alemán tal cual la dictó el asesor.
 - Nueva página **/datenschutz** (DSGVO): responsable, hosting en Contabo (UE), logs, localStorage solo técnico (sin banner de cookies), registro y cuenta, datos del negocio como encargo de tratamiento (art. 28), enlaces de WhatsApp y PDF, sin analítica, pagos (se completará con la pasarela), derechos y autoridad de Berlín. Versión alemana vinculante + español e inglés con pestañas; alias /privacidad, /privacy y /legal.

@@ -118,9 +118,9 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-    const { accessToken, refreshToken, user: userData } = res.data;
+  // Login y registro devuelven el mismo shape: { accessToken, refreshToken, user }.
+  const _startSession = async (data) => {
+    const { accessToken, refreshToken, user: userData } = data;
 
     localStorage.setItem("eazystock_token", accessToken);
     localStorage.setItem("eazystock_refresh_token", refreshToken);
@@ -129,6 +129,18 @@ export function AuthProvider({ children }) {
     await Promise.all([loadPermissions(), loadTutorials(userData)]);
 
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
+  };
+
+  const login = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+    await _startSession(res.data);
+  };
+
+  // Registro propio (M1 «Planes en serio», 15-oct-2026): crea negocio + OWNER con
+  // prueba gratis de 14 días y entra directo al panel (ahí salta el tutorial de bienvenida).
+  const register = async (payload) => {
+    const res = await api.post("/auth/register", payload);
+    await _startSession(res.data);
   };
 
   const logout = async () => {
@@ -175,7 +187,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

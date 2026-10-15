@@ -1,0 +1,266 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Link } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Check, ArrowLeft, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { useT } from '../i18n'
+import LangSwitcher from '../i18n/LangSwitcher'
+import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
+import { usePageSeo } from './landing/site'
+import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
+import { COUNTRIES } from '../utils/countries'
+import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
+import { TRIAL_DAYS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
+
+/**
+ * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
+ * Frank: William traerá usuarios y cada cuenta nueva nace con 14 días gratis y
+ * 50 % de descuento los primeros 6 meses; el BE lo aplica en POST /auth/register.
+ * Mismo chrome oscuro que el login: panel izquierdo (escritorio) + formulario.
+ */
+
+const PERKS = [
+  [Clock,       '{days} días gratis con tu negocio real, sin tarjeta'],
+  [Sparkles,    '{pct} % de descuento los primeros {months} meses si te registras ahora'],
+  [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
+]
+
+const inputCls = 'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+
+const makeSchema = (t) => z.object({
+  name:         z.string().trim().min(2, t('Mínimo 2 caracteres')),
+  email:        z.string().trim().email(t('Email inválido')),
+  password:     z.string().min(6, t('Mínimo 6 caracteres')),
+  businessName: z.string().trim().min(2, t('Mínimo 2 caracteres')),
+  countryCode:  z.string().min(2, t('Requerido')).max(3),
+  currency:     z.string().length(3, t('Requerido')),
+  phone:        z.string().trim().optional(),
+  accept:       z.boolean().refine((v) => v === true, { message: t('Necesitamos que aceptes la política de privacidad') }),
+})
+
+export default function RegisterPage() {
+  const t = useT()
+  const { register: registerAccount, token, isLoading } = useAuth()
+  const schema = useMemo(() => makeSchema(t), [t])
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  useNoAppDarkMode()
+  usePageSeo({
+    title: t('Crear cuenta — Eazy Stock'),
+    description: t('Crea tu cuenta de Eazy Stock en un minuto: {days} días gratis, sin tarjeta, con tu negocio real.', { days: TRIAL_DAYS }),
+    path: '/registro',
+  })
+
+  const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: { name: '', email: '', password: '', businessName: '', countryCode: 'PE', currency: 'PEN', phone: '', accept: false },
+  })
+
+  // Al cambiar el país se propone su moneda (se puede corregir).
+  const watchedCountry = watch('countryCode')
+  useEffect(() => {
+    const suggested = CURRENCY_BY_COUNTRY[watchedCountry]
+    if (suggested) setValue('currency', suggested)
+  }, [watchedCountry, setValue])
+
+  if (!isLoading && token) return <Navigate to="/dashboard" replace />
+
+  const onSubmit = async ({ accept, phone, ...values }) => {
+    void accept
+    setError('')
+    setSubmitting(true)
+    try {
+      await registerAccount({ ...values, email: values.email.toLowerCase(), phone: phone?.trim() || undefined })
+    } catch (err) {
+      const field = getErrorField(err)
+      if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
+        setFieldError('email', { type: 'server', message: 'DUPLICATE_EMAIL' })
+      } else if (field && ['password', 'name', 'businessName', 'countryCode', 'currency', 'phone'].includes(field)) {
+        setFieldError(field, { type: 'server', message: getErrorMessage(err) })
+      } else {
+        setError(getErrorMessage(err))
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const vars = { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Panel de marca — solo escritorio */}
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-[#0a0e1a] px-14 py-12 lg:flex lg:w-[48%] xl:px-20">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-600/30 blur-[120px]" />
+          <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-amber-400/10 blur-[140px]" />
+        </div>
+        <Link to="/" className="relative flex items-center gap-3 transition-opacity hover:opacity-80">
+          <img src="/logo.png" alt="Eazy Stock" className="h-9 w-9 rounded-xl object-contain" />
+          <span className="text-lg font-bold text-white">Eazy Stock</span>
+        </Link>
+
+        <div className="relative">
+          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-semibold text-slate-200">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            {t('{days} días gratis, sin tarjeta', vars)}
+          </span>
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white">
+            {t('Tu tienda, ordenada')}<br />
+            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('desde esta tarde.')}</span>
+          </h1>
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
+            {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró.')}
+          </p>
+          <ul className="mt-10 space-y-4">
+            {PERKS.map(([Icon, text]) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-600/20">
+                  <Icon size={13} className="text-blue-400" />
+                </span>
+                <span className="text-sm text-slate-300">{t(text, vars)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-slate-500">
+          © {new Date().getFullYear()} Eazy Stock · {t('una app de Eazy Life Company')}
+          <span className="mx-2 text-slate-700">·</span>
+          <Link to="/impressum" className="hover:text-slate-300">Impressum</Link>
+          <span className="mx-2 text-slate-700">·</span>
+          <Link to="/datenschutz" className="hover:text-slate-300">{t('Privacidad')}</Link>
+        </p>
+      </div>
+
+      {/* Formulario */}
+      <div className="relative flex flex-1 items-center justify-center bg-gray-50 px-6 py-12">
+        <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
+          <Link to="/" className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900">
+            <ArrowLeft size={13} /> {t('Volver')}
+          </Link>
+          <LangSwitcher compact />
+        </div>
+
+        <div className="w-full max-w-md">
+          <div className="mb-8 mt-8 flex flex-col items-center gap-3 lg:hidden">
+            <Link to="/" className="transition-opacity hover:opacity-80">
+              <img src="/logo.png" alt="Eazy Stock" className="h-16 w-16 rounded-2xl object-contain" />
+            </Link>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900">{t('Crea tu cuenta')}</h2>
+              <p className="mt-1 text-sm text-gray-500">{t('{days} días gratis, sin tarjeta', vars)}</p>
+            </div>
+          </div>
+
+          <div className="mb-8 hidden lg:block">
+            <h2 className="text-3xl font-bold text-gray-900">{t('Crea tu cuenta')}</h2>
+            <p className="mt-2 text-sm text-gray-500">{t('Un minuto y ya estás vendiendo. Sin tarjeta.')}</p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+              <div>
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Tu nombre')}</label>
+                <input id="name" {...register('name')} type="text" autoComplete="name" placeholder={t('María García')} className={inputCls} />
+                {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Correo electrónico')}</label>
+                <input id="email" {...register('email')} type="email" autoComplete="email" placeholder={t('usuario@empresa.com')} className={inputCls} />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.email.message === 'DUPLICATE_EMAIL'
+                      ? <>{t('Ese correo ya tiene cuenta.')} <Link to="/login" className="font-semibold underline">{t('Inicia sesión')}</Link></>
+                      : errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Contraseña')}</label>
+                <div className="relative">
+                  <input id="password" {...register('password')} type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder={t('Mínimo 6 caracteres')} className={`${inputCls} pr-12`} />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} tabIndex={-1}
+                    aria-label={showPassword ? t('Ocultar contraseña') : t('Mostrar contraseña')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <label htmlFor="businessName" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre de tu negocio')}</label>
+                <input id="businessName" {...register('businessName')} type="text" autoComplete="organization" placeholder={t('Bodega Doña María')} className={inputCls} />
+                {errors.businessName && <p className="mt-1 text-xs text-red-500">{errors.businessName.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="countryCode" className="mb-1.5 block text-sm font-medium text-gray-700">{t('País')}</label>
+                  <select id="countryCode" {...register('countryCode')} className={inputCls}>
+                    {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{t(label)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="currency" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Moneda')}</label>
+                  <select id="currency" {...register('currency')} className={inputCls}>
+                    {CURRENCY_OPTIONS.map((code) => <option key={code} value={code}>{code} · {CURRENCIES[code].symbol}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  {t('WhatsApp')} <span className="font-normal text-gray-400">({t('opcional')})</span>
+                </label>
+                <input id="phone" {...register('phone')} type="tel" autoComplete="tel" placeholder="+51 999 999 999" className={inputCls} />
+                <p className="mt-1 text-xs text-gray-400">{t('Solo para ayudarte a arrancar y avisarte cuando termine la prueba.')}</p>
+                {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
+              </div>
+
+              <label className="flex items-start gap-3 rounded-xl bg-gray-50 px-3.5 py-3 text-xs text-gray-600">
+                <input type="checkbox" {...register('accept')} className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
+                <span>
+                  {t('Acepto la')}{' '}
+                  <Link to="/datenschutz" target="_blank" className="font-semibold text-blue-600 hover:underline">{t('política de privacidad')}</Link>
+                  {' '}{t('y que Eazy Stock guarde los datos de mi negocio para prestarme el servicio.')}
+                </span>
+              </label>
+              {errors.accept && <p className="-mt-2 text-xs text-red-500">{errors.accept.message}</p>}
+
+              {error && (
+                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{error}</div>
+              )}
+
+              <button type="submit" disabled={submitting}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60">
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                {submitting ? t('Creando tu cuenta...') : t('Crear mi cuenta gratis')}
+              </button>
+              <p className="text-center text-[11px] text-gray-400">{t('{days} días sin tarjeta · cancelas cuando quieras', vars)}</p>
+            </form>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-gray-500">
+            {t('¿Ya tienes cuenta?')}{' '}
+            <Link to="/login" className="font-semibold text-blue-600 hover:underline">{t('Iniciar sesión')}</Link>
+          </p>
+          <p className="mt-3 text-center text-xs text-gray-400 lg:hidden">
+            <Link to="/impressum" className="hover:text-gray-600">Impressum</Link>
+            <span className="mx-2">·</span>
+            <Link to="/datenschutz" className="hover:text-gray-600">{t('Privacidad')}</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

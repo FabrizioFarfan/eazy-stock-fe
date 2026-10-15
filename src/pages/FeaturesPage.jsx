@@ -4,7 +4,7 @@ import { useT } from '../i18n'
 import { Navbar, Footer, CtaBanner, ProductShowcases, CatalogBento, FiadoSection, ImportSection, Features } from './LandingPage'
 import { PageHero, SectionTabs, usePublicPage } from './landing/site'
 
-const CTA = '/login'
+const CTA = '/registro'
 
 /** /funciones — qué hace Eazy Stock, con las maquetas y la lista completa por áreas. */
 export default function FeaturesPage() {

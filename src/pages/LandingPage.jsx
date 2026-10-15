@@ -17,9 +17,11 @@ import {
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { PUBLIC_PAGES, usePageSeo } from './landing/site'
-import { PLANS } from './landing/plans'
+import { PLANS, TRIAL_DAYS, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
 
-const CTA = '/login'
+// «Probar gratis» → registro propio (15-oct-2026); entrar → login.
+const CTA = '/registro'
+const LOGIN = '/login'
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Navbar
@@ -59,7 +61,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <LangSwitcher compact className="!border-white/15 !bg-white/5 !text-slate-200 [&_select]:text-slate-200 [&_option]:text-gray-900" />
-          <Link to={CTA} className="hidden px-2 text-sm font-semibold text-slate-300 transition-colors hover:text-white lg:block">
+          <Link to={LOGIN} className="hidden px-2 text-sm font-semibold text-slate-300 transition-colors hover:text-white lg:block">
             {t('Iniciar sesión')}
           </Link>
           <Link
@@ -95,7 +97,7 @@ export function Navbar() {
             <Link to={CTA} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#0a0e1a]">
               {t('Probar gratis')} <ArrowRight size={14} />
             </Link>
-            <Link to={CTA} className="flex items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-200">
+            <Link to={LOGIN} className="flex items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-200">
               {t('Iniciar sesión')}
             </Link>
           </div>
@@ -344,7 +346,7 @@ export function Benefits({ teaser = false }) {
           <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
             <p className="text-base font-semibold text-white sm:text-lg">
               {t('Menos cuaderno, menos plata perdida, más tiempo para vender.')}
-              <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde. Gratis durante el lanzamiento, sin tarjeta.')}</span>
+              <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde. {days} días gratis, sin tarjeta.', { days: TRIAL_DAYS })}</span>
             </p>
             <Link to={CTA} className="group inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-gray-100">
               {t('Probar gratis')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
@@ -896,7 +898,7 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Empiezas con 14 días gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Quien se registra ahora paga la mitad los primeros 6 meses.'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -999,7 +1001,7 @@ export function CtaBanner() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            {t('Gratis durante el lanzamiento')}
+            {t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })}
           </span>
           <h2 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {t('Tu tienda, ordenada')}<br />
@@ -1012,7 +1014,7 @@ export function CtaBanner() {
             <Link to={CTA} className="group relative inline-flex items-center gap-2 rounded-2xl bg-white px-9 py-4 text-base font-bold text-[#0a0e1a] shadow-[0_0_60px_-10px_rgba(96,165,250,.8)] transition-all hover:scale-[1.03] hover:shadow-[0_0_80px_-10px_rgba(96,165,250,1)]">
               {t('Probar gratis')} <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to={CTA} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
+            <Link to={LOGIN} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
               {t('Ya tengo cuenta')}
             </Link>
           </div>
@@ -1059,7 +1061,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Probar gratis')}</Link></li>
               <li><Link to="/planes" className="text-slate-500 transition-colors hover:text-white">{t('Planes y precios')}</Link></li>
-              <li><Link to={CTA} className="text-slate-500 transition-colors hover:text-white">{t('Iniciar sesión')}</Link></li>
+              <li><Link to={LOGIN} className="text-slate-500 transition-colors hover:text-white">{t('Iniciar sesión')}</Link></li>
             </ul>
           </div>
           <div>
@@ -1150,8 +1152,8 @@ function PricingTeaser() {
             <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{t('Gratis durante el lanzamiento')}</h2>
-                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Quien entra ahora conserva el precio de lanzamiento.')}</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })}</h2>
+                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Quien se registra ahora paga la mitad los primeros {months} meses.', { months: LAUNCH_DISCOUNT_MONTHS })}</p>
               </div>
               <div className="grid flex-shrink-0 grid-cols-3 gap-2 sm:gap-3">
                 {PLANS.map((p) => (

@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users } from 'lucide-react'
 import { useT } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, CURRENCY, TRIAL_DAYS, YEARLY_FREE_MONTHS, yearlyPrice } from './plans'
+import { PLANS, OFFERS, COMPARE, CURRENCY, TRIAL_DAYS, YEARLY_FREE_MONTHS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS, yearlyPrice } from './plans'
 
-const CTA = '/login'
+// Registro propio desde el 15-oct-2026 (antes todo iba al login).
+const CTA = '/registro'
+const OFFER_VARS = { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }
 const OFFER_ICONS = { Sparkles, Lock, CalendarClock }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41,7 +43,7 @@ function BillingToggle({ yearly, onChange, dark }) {
 }
 
 /** Tarjeta de un plan. En fondo oscuro, el plan destacado es la tarjeta blanca. */
-function PlanCard({ plan, yearly, dark }) {
+function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = false }) {
   const t = useT()
   const hi = plan.highlight
   const price = yearly ? Math.round(yearlyPrice(plan.monthly) / 12) : plan.monthly
@@ -53,7 +55,12 @@ function PlanCard({ plan, yearly, dark }) {
   const muted = hi ? 'text-gray-500' : dark ? 'text-slate-400' : 'text-gray-500'
   const line = hi ? 'border-gray-100' : dark ? 'border-white/10' : 'border-gray-100'
   return (
-    <div className={`relative flex h-full flex-col rounded-3xl p-7 transition-transform hover:-translate-y-1 sm:p-8 ${shell}`}>
+    <div className={`relative flex h-full flex-col rounded-3xl transition-transform hover:-translate-y-1 ${compact ? 'p-5' : 'p-7 sm:p-8'} ${shell} ${current ? 'ring-2 ring-emerald-500' : ''}`}>
+      {current && (
+        <span className="absolute -top-3 right-7 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+          {t('Tu plan actual')}
+        </span>
+      )}
       {plan.badge && (
         <span className={`absolute -top-3 left-7 rounded-full bg-gradient-to-r px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg ${plan.tone}`}>
           {t(plan.badge)}
@@ -102,8 +109,13 @@ function PlanCard({ plan, yearly, dark }) {
         ))}
       </ul>
 
+      {current ? (
+        <span className={`mt-8 inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3.5 text-sm font-bold ${hi ? 'border-gray-200 text-gray-500' : dark ? 'border-white/15 text-slate-300' : 'border-gray-200 text-gray-500'}`}>
+          <Check size={15} /> {t('Es tu plan')}
+        </span>
+      ) : (
       <Link
-        to={CTA}
+        to={ctaTo}
         className={`group mt-8 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition-all ${
           hi
             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 hover:scale-[1.02]'
@@ -114,21 +126,27 @@ function PlanCard({ plan, yearly, dark }) {
       >
         {t(plan.cta)} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
       </Link>
-      <p className={`mt-3 text-center text-[11px] ${muted}`}>{t('{days} días gratis · sin tarjeta · cancelas cuando quieras', { days: TRIAL_DAYS })}</p>
+      )}
+      {!compact && <p className={`mt-3 text-center text-[11px] ${muted}`}>{t('{days} días gratis · sin tarjeta · cancelas cuando quieras', { days: TRIAL_DAYS })}</p>}
     </div>
   )
 }
 
 /** Interruptor + las tres tarjetas. Reutilizado por la landing y por /planes. */
-export function PlanCards({ dark = false }) {
+/**
+ * `current` = key del plan actual (lo marca y desactiva su botón); `ctaTo` = a dónde
+ * lleva el botón (en la app, el WhatsApp/plan); `compact` = sin interruptor anual ni
+ * letra chica (Ajustes › Tu plan).
+ */
+export function PlanCards({ dark = false, current = null, ctaTo = CTA, compact = false }) {
   const [yearly, setYearly] = useState(false)
   return (
     <>
-      <Reveal className="mb-10 flex justify-center"><BillingToggle yearly={yearly} onChange={setYearly} dark={dark} /></Reveal>
-      <div className="grid gap-6 pt-3 lg:grid-cols-3 lg:gap-5">
+      {!compact && <Reveal className="mb-10 flex justify-center"><BillingToggle yearly={yearly} onChange={setYearly} dark={dark} /></Reveal>}
+      <div className={`grid gap-6 pt-3 lg:grid-cols-3 ${compact ? 'lg:gap-4' : 'lg:gap-5'}`}>
         {PLANS.map((p, i) => (
           <Reveal key={p.key} delay={i * 110} className="h-full">
-            <PlanCard plan={p} yearly={yearly} dark={dark} />
+            <PlanCard plan={p} yearly={yearly} dark={dark} current={current === p.key} ctaTo={ctaTo} compact={compact} />
           </Reveal>
         ))}
       </div>
@@ -152,8 +170,8 @@ export function OffersGrid({ dark = false }) {
               <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg ${tone}`}>
                 <Icon size={22} />
               </div>
-              <h3 className={`text-lg font-extrabold tracking-tight ${dark ? 'text-white' : 'text-gray-900'}`}>{t(title)}</h3>
-              <p className={`mt-2 text-sm leading-relaxed ${dark ? 'text-slate-400' : 'text-gray-600'}`}>{t(desc, { days: TRIAL_DAYS })}</p>
+              <h3 className={`text-lg font-extrabold tracking-tight ${dark ? 'text-white' : 'text-gray-900'}`}>{t(title, OFFER_VARS)}</h3>
+              <p className={`mt-2 text-sm leading-relaxed ${dark ? 'text-slate-400' : 'text-gray-600'}`}>{t(desc, OFFER_VARS)}</p>
             </div>
           </Reveal>
         )
@@ -213,7 +231,7 @@ export function PricingSection() {
             dark
             kicker={t('Precios y ofertas')}
             title={t('Un plan para cada tamaño de negocio')}
-            sub={t('Hoy, durante el lanzamiento, todo es gratis. Estos son los planes que vienen: entra ahora y conserva el precio de lanzamiento.')}
+            sub={t('{days} días gratis sin tarjeta y, si te registras ahora, {pct} % de descuento los primeros {months} meses. Pagas por el tamaño de tu negocio, no por funciones escondidas.', OFFER_VARS)}
           />
         </Reveal>
         <PlanCards dark />

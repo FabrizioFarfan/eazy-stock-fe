@@ -9,9 +9,13 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const CURRENCY = 'S/'
-export const TRIAL_DAYS = 30
+/** Prueba gratis sin tarjeta (Frank, 15-oct-2026: «2 semanas free»). El BE la aplica en /auth/register. */
+export const TRIAL_DAYS = 14
 /** Meses que se regalan al pagar el año entero (10 × mensual = 12 meses). */
 export const YEARLY_FREE_MONTHS = 2
+/** Oferta de lanzamiento (Frank, 15-oct-2026, «50 % los primeros 6 meses, vemos»): la aplica el BE al registrarse. */
+export const LAUNCH_DISCOUNT_PERCENT = 50
+export const LAUNCH_DISCOUNT_MONTHS = 6
 
 export const PLANS = [
   {
@@ -99,18 +103,18 @@ export const COMPARE = [
 /** Ofertas vigentes: se muestran en la landing y en /planes. */
 export const OFFERS = [
   {
-    key: 'launch',
+    key: 'trial',
     icon: 'Sparkles',
     tone: 'from-amber-400 to-orange-500',
-    title: 'Gratis durante el lanzamiento',
-    desc: 'Hoy usas todo Eazy Stock sin pagar y sin tarjeta. Cuando salgan los planes te avisamos con tiempo: nadie se queda sin su tienda de un día para otro.',
+    title: '{days} días gratis, sin tarjeta',
+    desc: 'Creas tu cuenta en un minuto y usas todo Eazy Stock con tu negocio real durante {days} días. Si no te ordena la tienda, no nos debes nada.',
   },
   {
-    key: 'lock',
+    key: 'launch',
     icon: 'Lock',
     tone: 'from-blue-500 to-indigo-600',
-    title: 'Precio de lanzamiento para siempre',
-    desc: 'Los negocios que entren antes de que salgan los planes conservan estos precios mientras no cancelen. Los que lleguen después pagarán el precio de lista.',
+    title: '{pct} % de descuento los primeros {months} meses',
+    desc: 'Precio de lanzamiento para quien se registra ahora: al terminar la prueba pagas la mitad durante {months} meses, en cualquier plan. Después, el precio de lista.',
   },
   {
     key: 'yearly',
@@ -127,7 +131,7 @@ export const PLAN_FAQS = [
   ['Tengo dos tiendas, ¿necesito dos cuentas?', 'No. Con Pro o AI manejas todos tus negocios desde una sola cuenta y un solo panel; cada tienda tiene su stock, su caja y su gente por separado.'],
   ['¿Qué cuenta como trabajador?', 'Cada persona con su propio usuario: vendedores, almacenero, contador. El dueño no cuenta. Un trabajador dado de baja libera su lugar.'],
   ['¿La IA registra ventas sola?', 'Nunca. La IA prepara el borrador de la venta o de la oferta y una persona lo confirma. Si un producto no existe o no hay stock, te lo dice antes de registrar nada.'],
-  ['¿Cómo se paga?', 'Con tarjeta o billetera digital, mensual o anual. Cada cobro genera su recibo. Los precios están en soles; en otros países se cobra el equivalente.'],
+  ['¿Cómo se paga?', 'Por ahora, por transferencia o billetera digital: al terminar la prueba nos escribes por WhatsApp desde Ajustes › Tu plan y activamos tu plan el mismo día. El pago con tarjeta en línea llega pronto. Los precios están en soles; en otros países se cobra el equivalente.'],
 ]
 
 export function yearlyPrice(monthly) {

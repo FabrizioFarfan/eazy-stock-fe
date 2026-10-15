@@ -14,10 +14,12 @@ import { APP_VERSION } from '../utils/version'
 import { useT } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
+import { COUNTRIES, COUNTRY_NAME } from '../utils/countries'
 import TutorialModal from '../components/tutorial/TutorialModal'
 import { ReportHeader } from '../components/reports/ReportKit'
 import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
+import PlanSection from '../components/subscription/PlanSection'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -254,22 +256,15 @@ function ProfileSection() {
 
 // ── Mi negocio (OWNER edita los datos de su negocio) ───────────────────────
 
-const COUNTRIES = [
-  ['PE', 'Perú'], ['AR', 'Argentina'], ['BO', 'Bolivia'], ['BR', 'Brasil'],
-  ['CL', 'Chile'], ['CO', 'Colombia'], ['EC', 'Ecuador'], ['MX', 'México'],
-  ['PY', 'Paraguay'], ['UY', 'Uruguay'], ['VE', 'Venezuela'], ['US', 'Estados Unidos'],
-  // Europa (Frank, sep-2026): los mercados donde ya hay clientes o contactos
-  ['ES', 'España'], ['IT', 'Italia'], ['PL', 'Polonia'], ['DE', 'Alemania'], ['FR', 'Francia'], ['PT', 'Portugal'],
-]
-
-const COUNTRY_NAME = Object.fromEntries(COUNTRIES)
+// COUNTRIES / COUNTRY_NAME viven en utils/countries.js (compartidos con /registro).
 
 const makeBusinessSchema = (t) => z.object({
   name:        z.string().min(1, t('Requerido')),
   countryCode: z.string().min(2, t('Requerido')).max(3),
   currency:    z.string().length(3, t('Requerido')),
-  taxIdType:   z.string().min(1, t('Requerido')),
-  taxId:       z.string().min(1, t('Requerido')),
+  // Opcionales desde el registro propio (15-oct-2026): nadie tiene el RUC a mano al crear la cuenta
+  taxIdType:   z.string().trim().optional(),
+  taxId:       z.string().trim().optional(),
 })
 
 function BusinessSection() {
@@ -393,7 +388,7 @@ function BusinessSection() {
           <InfoRow icon={Building2} label={t('Nombre')} value={business.name} />
           <InfoRow icon={Globe}     label={t('País')}   value={countryLabel} />
           <InfoRow icon={Coins}     label={t('Moneda')} value={`${business.currency ?? 'PEN'} · ${CURRENCIES[business.currency ?? 'PEN']?.symbol ?? ''}`} />
-          <InfoRow icon={FileDigit} label={business.taxIdType || t('Documento')} value={business.taxId} />
+          <InfoRow icon={FileDigit} label={business.taxIdType || t('Documento')} value={business.taxId || '—'} />
         </>
       ) : (
         <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
@@ -552,6 +547,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {/* Tu plan (M1 «Planes en serio», 15-oct-2026): solo el dueño; a ancho completo, arriba del todo */}
+      {user?.role === 'OWNER' && <PlanSection />}
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
       <div className="flex flex-col gap-5">

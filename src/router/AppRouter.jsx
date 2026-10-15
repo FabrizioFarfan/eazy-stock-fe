@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
+import RegisterPage   from '../pages/RegisterPage'
 import PlansPage      from '../pages/PlansPage'
 import FeaturesPage   from '../pages/FeaturesPage'
 import AudiencePage   from '../pages/AudiencePage'
@@ -52,6 +53,7 @@ import SettingsPage        from '../pages/SettingsPage'
 import BusinessesPage      from '../pages/admin/BusinessesPage'
 import OwnersPage          from '../pages/admin/OwnersPage'
 import BossPage            from '../pages/BossPage'
+import SubscriptionsPage   from '../pages/admin/SubscriptionsPage'
 
 export default function AppRouter() {
   return (
@@ -59,6 +61,10 @@ export default function AppRouter() {
       {/* Public */}
       <Route path="/" element={<LandingRoute />} />
       <Route path="/login" element={<LoginPage />} />
+      {/* Registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026) */}
+      <Route path="/registro" element={<RegisterPage />} />
+      <Route path="/register" element={<Navigate to="/registro" replace />} />
+      <Route path="/signup" element={<Navigate to="/registro" replace />} />
       <Route path="/planes" element={<PlansPage />} />
       <Route path="/funciones" element={<FeaturesPage />} />
       <Route path="/para-quien" element={<AudiencePage />} />
@@ -171,6 +177,9 @@ export default function AppRouter() {
       {/* BOSS only (el role llega normalizado a SUPER_ADMIN + isBoss) */}
       <Route path="/boss" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><BossPage /></ProtectedRoute>
+      } />
+      <Route path="/boss/suscripciones" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SubscriptionsPage /></ProtectedRoute>
       } />
 
       {/* SUPER_ADMIN only */}

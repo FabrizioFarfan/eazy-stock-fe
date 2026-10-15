@@ -1,4 +1,4 @@
-import { Crown, Building2, Users } from 'lucide-react'
+import { Crown, Building2, Users, CreditCard } from 'lucide-react'
 import { SiblingSwitcher } from '../reports/ReportKit'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
@@ -17,6 +17,7 @@ export function BossSwitcher() {
   const { user } = useAuth()
   const items = [
     user?.isBoss && { to: '/boss', icon: Crown, label: 'Panel Boss', hint: 'Quién usa la app y la ruta' },
+    user?.isBoss && { to: '/boss/suscripciones', icon: CreditCard, label: 'Suscripciones', hint: 'Pruebas, planes y pagos' },
     { to: '/admin/businesses', icon: Building2, label: 'Negocios', hint: 'Cada negocio registrado' },
     { to: '/admin/owners', icon: Users, label: 'Owners', hint: 'Los dueños y cómo entran' },
   ].filter(Boolean)

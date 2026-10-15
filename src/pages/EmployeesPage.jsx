@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useEmployees, useCreateEmployee, useToggleEmployee, useDeleteEmployee } from '../hooks/useEmployees'
 import { getUserPermissions, patchUserPermissions } from '../services/endpoints/permissions'
-import { getErrorMessage, getErrorField } from '../utils/handleApiError'
+import { getErrorMessage, getErrorField, getErrorCode } from '../utils/handleApiError'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { ReportHero, ReportHeader, NewButton } from '../components/reports/ReportKit'
 import { useSellerPerformance } from '../hooks/useReports'
@@ -210,7 +210,17 @@ function CreateEmployeeModal({ businessName, onClose }) {
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
-            {createEmployee.isError && !errors.email && !errors.password && (
+            {/* Límite del plan (M1, 15-oct-2026): Basic admite hasta 5 trabajadores */}
+            {createEmployee.isError && getErrorCode(createEmployee.error) === 'PLAN_LIMIT' && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p className="font-bold">{t('Llegaste al límite de tu plan')}</p>
+                <p className="mt-0.5 text-xs">{getErrorMessage(createEmployee.error)}</p>
+                <Link to="/settings#plan" onClick={onClose} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline">
+                  {t('Ver planes y subir de plan')} →
+                </Link>
+              </div>
+            )}
+            {createEmployee.isError && !errors.email && !errors.password && getErrorCode(createEmployee.error) !== 'PLAN_LIMIT' && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
                 {getErrorMessage(createEmployee.error)}
               </p>

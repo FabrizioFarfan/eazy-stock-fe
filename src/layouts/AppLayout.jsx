@@ -7,6 +7,7 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import PageWatermark from '../components/common/PageWatermark'
 import TutorialModal from '../components/tutorial/TutorialModal'
+import SubscriptionBanner from '../components/subscription/SubscriptionBanner'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
 import { useT } from '../i18n'
@@ -94,6 +95,7 @@ export default function AppLayout({ children }) {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
+        <SubscriptionBanner />
         <main className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
           {children}
         </main>

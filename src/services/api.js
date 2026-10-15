@@ -33,7 +33,7 @@ api.interceptors.response.use(
     const data   = error.response?.data
 
     // Never intercept auth/login 401s — wrong credentials should surface to the caller, not trigger a token refresh or redirect
-    const isLoginRequest = originalRequest.url?.includes('/auth/login')
+    const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/register')
     if (status === 401 && !originalRequest._retry && !isLoginRequest) {
       const refreshToken = localStorage.getItem('eazystock_refresh_token')
 
@@ -83,6 +83,29 @@ api.interceptors.response.use(
     // Granular permission denial — show friendly toast, don't redirect
     if (status === 403 && data?.code === 'FORBIDDEN_BY_PERMISSION') {
       toast.error(data.message ?? t('No tienes permiso para realizar esta acción'))
+      return Promise.reject(error)
+    }
+
+    // Planes (M1, 15-oct-2026): el plan no está activo (prueba vencida) → el BE
+    // responde 402 a las escrituras; los GET siguen. No se cierra sesión: se
+    // manda a Ajustes › Tu plan. Un solo toast aunque fallen varias llamadas.
+    if (status === 402 && data?.code === 'PLAN_REQUIRED') {
+      toast.error(t('Tu plan no está activo'), {
+        id: 'plan-required',
+        description: data.message ?? t('Tu prueba terminó: la tienda está en solo lectura hasta que actives un plan.'),
+        action: { label: t('Ver mi plan'), onClick: () => { window.location.href = '/settings#plan' } },
+        duration: 8000,
+      })
+      return Promise.reject(error)
+    }
+    // Límite del plan (p. ej. 5 trabajadores en Basic): la pantalla lo muestra
+    // en su sitio; aquí solo el aviso general con el atajo a los planes.
+    if (status === 403 && data?.code === 'PLAN_LIMIT') {
+      toast.error(data.message ?? t('Llegaste al límite de tu plan'), {
+        id: 'plan-limit',
+        action: { label: t('Ver planes'), onClick: () => { window.location.href = '/settings#plan' } },
+        duration: 8000,
+      })
       return Promise.reject(error)
     }
 

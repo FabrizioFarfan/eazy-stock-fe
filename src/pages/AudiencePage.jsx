@@ -4,7 +4,7 @@ import { useT } from '../i18n'
 import { Navbar, Footer, CtaBanner, Benefits, Industries, HowItWorks, Testimonial } from './LandingPage'
 import { PageHero, usePublicPage } from './landing/site'
 
-const CTA = '/login'
+const CTA = '/registro'
 
 /** /para-quien — ¿me sirve? Los beneficios con su antes y ahora, y los rubros. */
 export default function AudiencePage() {

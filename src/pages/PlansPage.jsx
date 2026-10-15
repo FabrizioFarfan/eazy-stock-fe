@@ -4,11 +4,11 @@ import { ArrowRight, ChevronDown, Check, Store, Users, Sparkles } from 'lucide-r
 import { useT } from '../i18n'
 import { Reveal, SectionHead, GridPattern, GlowOrbs, LandingStyles } from './landing/shared'
 import { PlanCards, OffersGrid, CompareTable } from './landing/Pricing'
-import { PLAN_FAQS, TRIAL_DAYS } from './landing/plans'
+import { PLAN_FAQS, TRIAL_DAYS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
 import { Navbar, Footer, CtaBanner } from './LandingPage'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 
-const CTA = '/login'
+const CTA = '/registro'
 
 /**
  * /planes — página pública de PLANES Y OFERTAS (17-sep-2026, plan M1).
@@ -25,7 +25,7 @@ function useSeo() {
     const prevDesc = desc?.getAttribute('content')
     const prevCanon = canon?.getAttribute('href')
     document.title = t('Planes y precios — Eazy Stock')
-    desc?.setAttribute('content', t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis durante el lanzamiento, {days} días de prueba sin tarjeta.', { days: TRIAL_DAYS }))
+    desc?.setAttribute('content', t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {days} días de prueba sin tarjeta y {pct} % de descuento los primeros {months} meses.', { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }))
     canon?.setAttribute('href', 'https://eazy-stock.com/planes')
     return () => {
       document.title = prevTitle
@@ -78,7 +78,7 @@ export default function PlansPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              {t('Gratis durante el lanzamiento')}
+              {t('{days} días gratis · {pct} % de descuento {months} meses', { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS })}
             </span>
             <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t('Planes y precios')}<br />
