@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.5.0 — 2026-10-15 (legales DE)
+- Fabrizio tiene ya su Partita IVA en Berlín: la web cumple la ley alemana antes de meter la pasarela de pagos. Nueva página **/impressum** (§ 5 DDG: Fabrizio Farfan · Eazy Life, Sprengelstraße 7, 13353 Berlin; § 19 UStG sin IVA; § 18 Abs. 2 MStV; sin arbitraje de consumo), en alemán tal cual la dictó el asesor.
+- Nueva página **/datenschutz** (DSGVO): responsable, hosting en Contabo (UE), logs, localStorage solo técnico (sin banner de cookies), registro y cuenta, datos del negocio como encargo de tratamiento (art. 28), enlaces de WhatsApp y PDF, sin analítica, pagos (se completará con la pasarela), derechos y autoridad de Berlín. Versión alemana vinculante + español e inglés con pestañas; alias /privacidad, /privacy y /legal.
+- Enlaces «Impressum · Privacidad» en el pie de la web pública, en el login y al pie de Ajustes. Prerender y sitemap de las dos páginas.
+
 ## 1.4.0 — 2026-10-10 (pedido de William)
 - Nueva página **Compras y gastos** (Reportes, solo dueño): cuánto se fue en el período —mercadería recibida de proveedores (las recepciones de Stock, al costo) + otros gastos— por día, semana, mes o año (partición automática o a elección), con comparación contra el período anterior, gráfica apilada, tabla tramo a tramo, ranking «A quién le compraste» y «Otros gastos, por tipo». Arriba también lo pagado de verdad a proveedores y lo que entró al crédito.
 - **Registrar gasto**: alquiler, luz/agua/internet, transporte y flete, sueldos, impuestos, mantenimiento, publicidad, útiles y bolsas u otro; cuánto, qué fue, qué día, proveedor y medio de pago opcionales, nota. Se corrigen y se borran desde la misma página. Tutorial propio. es/en/it.

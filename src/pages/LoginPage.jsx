@@ -77,6 +77,10 @@ export default function LoginPage() {
 
         <p className="relative text-xs text-slate-500">
           © {new Date().getFullYear()} Eazy Stock · {t('una app de Eazy Life Company')}
+          <span className="mx-2 text-slate-700">·</span>
+          <Link to="/impressum" className="hover:text-slate-300">Impressum</Link>
+          <span className="mx-2 text-slate-700">·</span>
+          <Link to="/datenschutz" className="hover:text-slate-300">{t('Privacidad')}</Link>
         </p>
       </div>
 
@@ -167,6 +171,12 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-xs text-gray-500">
             {t('¿Aún no tienes cuenta? Escríbenos y te la activamos gratis:')}{' '}
             <a href="mailto:kontakt.eazylife@gmail.com" className="font-semibold text-blue-600 hover:underline">kontakt.eazylife@gmail.com</a>
+          </p>
+          {/* Legales DE: en móvil el panel izquierdo (con sus enlaces) no se ve */}
+          <p className="mt-3 text-center text-xs text-gray-400 lg:hidden">
+            <Link to="/impressum" className="hover:text-gray-600">Impressum</Link>
+            <span className="mx-2">·</span>
+            <Link to="/datenschutz" className="hover:text-gray-600">{t('Privacidad')}</Link>
           </p>
         </div>
       </div>

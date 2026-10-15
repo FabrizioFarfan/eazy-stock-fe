@@ -1076,9 +1076,14 @@ export function Footer() {
             © {new Date().getFullYear()} Eazy Stock · {t('una app de')}{' '}
             <a href="https://eazylifecompany.com" target="_blank" rel="noreferrer" className="font-semibold text-slate-300 transition-colors hover:text-white">Eazy Life Company</a>
           </p>
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            {t('Todos los sistemas operativos')}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
+            {/* Legales DE (15-oct-2026): obligatorios por § 5 DDG y DSGVO */}
+            <Link to="/impressum" className="transition-colors hover:text-white">Impressum</Link>
+            <Link to="/datenschutz" className="transition-colors hover:text-white">{t('Privacidad')}</Link>
+            <span className="flex items-center gap-2 text-slate-600">
+              <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              {t('Todos los sistemas operativos')}
+            </span>
           </div>
         </div>
       </div>

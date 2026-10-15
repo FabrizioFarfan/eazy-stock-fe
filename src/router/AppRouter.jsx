@@ -7,6 +7,7 @@ import LoginPage      from '../pages/LoginPage'
 import PlansPage      from '../pages/PlansPage'
 import FeaturesPage   from '../pages/FeaturesPage'
 import AudiencePage   from '../pages/AudiencePage'
+import { ImpressumPage, PrivacyPage } from '../pages/LegalPage'
 import FaqPage        from '../pages/FaqPage'
 
 const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/sales/new' }
@@ -63,6 +64,12 @@ export default function AppRouter() {
       <Route path="/para-quien" element={<AudiencePage />} />
       <Route path="/preguntas" element={<FaqPage />} />
       <Route path="/precios" element={<Navigate to="/planes" replace />} />
+      {/* Legales DE (15-oct-2026): Impressum § 5 DDG + Datenschutz DSGVO; alias en es/en */}
+      <Route path="/impressum" element={<ImpressumPage />} />
+      <Route path="/datenschutz" element={<PrivacyPage />} />
+      <Route path="/privacidad" element={<Navigate to="/datenschutz" replace />} />
+      <Route path="/privacy" element={<Navigate to="/datenschutz" replace />} />
+      <Route path="/legal" element={<Navigate to="/impressum" replace />} />
 
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={

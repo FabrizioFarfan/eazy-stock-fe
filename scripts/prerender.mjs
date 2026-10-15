@@ -18,7 +18,7 @@ import { extname, join, dirname } from 'node:path'
 const DIST = new URL('../dist/', import.meta.url).pathname
 const PORT = 4179
 // Web pública multipágina (25-sep-2026): un HTML por página
-const ROUTES = ['/', '/funciones', '/para-quien', '/planes', '/preguntas']
+const ROUTES = ['/', '/funciones', '/para-quien', '/planes', '/preguntas', '/impressum', '/datenschutz']
 const CHROME = process.env.PRERENDER_CHROME
   || ['/root/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome'].find((p) => existsSync(p))
 

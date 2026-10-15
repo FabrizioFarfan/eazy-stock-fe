@@ -1,5 +1,5 @@
 import { User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical, Settings } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -691,7 +691,13 @@ export default function SettingsPage() {
       </div>
       </div>
 
-      <p className="text-center text-xs text-gray-300">Eazy Stock · v{APP_VERSION}</p>
+      <p className="text-center text-xs text-gray-300">
+        Eazy Stock · v{APP_VERSION}
+        <span className="mx-2">·</span>
+        <Link to="/impressum" className="hover:text-gray-500 dark:hover:text-gray-100">Impressum</Link>
+        <span className="mx-2">·</span>
+        <Link to="/datenschutz" className="hover:text-gray-500 dark:hover:text-gray-100">{t('Privacidad')}</Link>
+      </p>
     </div>
   )
 }

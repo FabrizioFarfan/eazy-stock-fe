@@ -31,6 +31,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://eazy-stock.com/impressum</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://eazy-stock.com/datenschutz</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://eazy-stock.com/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
