@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Upload, FileSpreadsheet, AlertTriangle, Loader2, CheckCircle2,
-  ChevronRight, ChevronDown, Download, RotateCcw, History,
+  ChevronRight, ChevronDown, Download, RotateCcw, History, MessageCircle, Mail,
+  FileDown, Lightbulb,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { importsApi } from '../services/endpoints/imports'
@@ -152,6 +153,132 @@ function UploadStep({ onUploaded }) {
           {uploading ? t('Subiendo...') : t('Seleccionar archivo')}
         </button>
       </div>
+
+      <FirstImportHelp />
+    </div>
+  )
+}
+
+// ── Ayuda para el primer import ─────────────────────────────────────────────
+// El primer pain point colosal es pasar miles de productos la primera vez (task 937):
+// o nos lo mandan como lo tengan y lo cargamos nosotros, o arrancan con una plantilla.
+
+const SUPPORT_WHATSAPP = '4915511384643'
+const SUPPORT_EMAIL = 'kontakt.eazylife@gmail.com'
+
+// Encabezados de la plantilla: el BE los reconoce en español, inglés e italiano.
+const TEMPLATE_HEADERS = [
+  'Nombre', 'Código (SKU)', 'Código de barras', 'Precio de venta', 'Costo',
+  'Stock', 'Unidad', 'Proveedor', 'Fecha de vencimiento',
+]
+const TEMPLATE_ROWS = [
+  ['Clavo 2 pulgadas', 'F-001', '7750001000011', '0.50', '0.30', '500', 'unidad', 'Ferretería Central', ''],
+  ['Pintura látex blanca 1 gal', 'P-014', '', '45.90', '32.00', '12', 'galón', 'Pinturas del Sur', '2027-06-30'],
+]
+
+function csvCell(value) {
+  const v = String(value ?? '')
+  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+}
+
+function FirstImportHelp() {
+  const t = useT()
+  const { user } = useAuth()
+
+  const waMessage = t('Hola, soy {nombre} de {negocio}. Quiero que me ayuden a cargar mi inventario en Eazy Stock. Les mando lo que tengo:', {
+    nombre: user?.name || '—',
+    negocio: user?.businessName || '—',
+  })
+  const waHref = `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(waMessage)}`
+  const mailHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(t('Ayuda para cargar mi inventario en Eazy Stock'))}&body=${encodeURIComponent(waMessage)}`
+
+  const downloadTemplate = () => {
+    // UTF-8 con BOM para que Excel abra las tildes bien; coma + comillas (RFC 4180).
+    const lines = [
+      TEMPLATE_HEADERS.map((h) => csvCell(t(h))).join(','),
+      ...TEMPLATE_ROWS.map((r) => r.map(csvCell).join(',')),
+    ]
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'plantilla-eazy-stock.csv'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const tips = [
+    'Con solo Nombre y Precio ya puedes vender; el resto se completa solo.',
+    'Puedes importar por partes: hoy el pasillo 1, mañana el 2.',
+    'Después del primer conteo ajustas el stock desde Stock › Movimientos.',
+  ]
+
+  return (
+    <div className="mt-6 grid gap-4 md:grid-cols-2">
+      {/* Lo cargamos nosotros */}
+      <div className="flex flex-col rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+            <MessageCircle size={18} className="text-emerald-700" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">
+              {t('¿No tienes el inventario en Excel? Lo cargamos nosotros.')}
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+              {t('Mándanos lo que tengas: fotos del cuaderno, el PDF del proveedor, una lista en WhatsApp o el Excel de tu sistema anterior. Lo dejamos cargado en tu cuenta en 24–48 h, sin costo durante la prueba.')}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+          >
+            <MessageCircle size={14} /> {t('Enviar por WhatsApp')}
+          </a>
+          <a
+            href={mailHref}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900"
+          >
+            <Mail size={13} /> {t('o por correo a')} {SUPPORT_EMAIL}
+          </a>
+        </div>
+      </div>
+
+      {/* Plantilla */}
+      <div className="flex flex-col rounded-2xl border border-gray-100 bg-gray-50/60 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100">
+            <FileDown size={18} className="text-blue-700" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">{t('Plantilla para empezar')}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+              {t('Ábrela en Excel, completa tus productos y súbela aquí.')}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="mt-4 inline-flex w-fit items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
+        >
+          <Download size={14} /> {t('Descargar plantilla (.csv)')}
+        </button>
+        <ul className="mt-4 space-y-1.5">
+          {tips.map((tip) => (
+            <li key={tip} className="flex items-start gap-2 text-xs text-gray-600">
+              <Lightbulb size={13} className="mt-0.5 shrink-0 text-amber-500" />
+              <span>{t(tip)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }
@@ -216,6 +343,12 @@ function MappingStep({ upload, onSaved, onBack }) {
             : t('Detectamos {n} columna.', { n: upload.headers.length })}{' '}
           {t('Asocia cada una con un campo del producto (o elige "No importar esta columna" si no aplica). Solo el Nombre es obligatorio — si falta el código, proveedor, stock o precio, el sistema los completa automáticamente.')}
         </p>
+        {upload.sheetName && upload.headerRowIndex && (
+          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs text-blue-800">
+            <FileSpreadsheet size={12} />
+            {t('Leímos la hoja "{sheet}"; encabezados en la fila {n}.', { sheet: upload.sheetName, n: upload.headerRowIndex })}
+          </p>
+        )}
 
         <div className="mt-4 overflow-hidden rounded-xl border border-gray-100">
           <table className="w-full text-sm">

@@ -4,12 +4,12 @@ import { Mail, Phone } from 'lucide-react'
 import { useLang, useT } from '../i18n'
 import { Navbar, Footer } from './LandingPage'
 import { PageHero, usePublicPage } from './landing/site'
-import { IMPRESSUM, PRIVACY, PRIVACY_LANGS, PRIVACY_UPDATED, LEGAL_ENTITY } from './legal/legalContent'
+import { IMPRESSUM, IMPRESSUM_LANGS, PRIVACY, PRIVACY_LANGS, PRIVACY_UPDATED, LEGAL_ENTITY } from './legal/legalContent'
 
 /**
  * Páginas legales (15-oct-2026): Fabrizio sacó su Partita IVA en Berlín y por ley
- * alemana la web necesita /impressum (§ 5 DDG, solo en alemán) y /datenschutz
- * (DSGVO; alemán vinculante + es/en). Van enlazadas en el footer de la web pública,
+ * alemana la web necesita /impressum (§ 5 DDG) y /datenschutz (DSGVO); las dos en
+ * alemán vinculante + es/en de cortesía con pestañas (16-oct-2026). Van enlazadas en el footer de la web pública,
  * en el login y al pie de Ajustes. Paso previo a la pasarela de pagos.
  */
 
@@ -21,9 +21,41 @@ function Prose({ children }) {
   )
 }
 
-/** /impressum — texto legal tal cual lo dictó el asesor; no se traduce. */
+/** Pestañas de idioma de las páginas legales (misma pieza en /impressum y /datenschutz). */
+function LangTabs({ langs, code, onChange }) {
+  return (
+    <div className="inline-flex rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Sprache / Idioma">
+      {langs.map((l) => (
+        <button
+          key={l.code}
+          type="button"
+          role="tab"
+          aria-selected={l.code === code}
+          onClick={() => onChange(l.code)}
+          className={`rounded-xl px-4 py-1.5 text-sm font-semibold transition-colors ${l.code === code ? 'bg-white text-gray-900 shadow' : 'text-slate-300 hover:text-white'}`}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Idioma inicial de una página legal: navegador en alemán → alemán (vinculante); si no, el de la web si tiene versión. */
+function useLegalLang(docs, lang) {
+  return useState(() => {
+    const nav = (typeof navigator !== 'undefined' && navigator.language || '').slice(0, 2).toLowerCase()
+    if (nav === 'de') return 'de'
+    return docs[lang] ? lang : 'de'
+  })
+}
+
+/** /impressum — § 5 DDG. Alemán vinculante (texto del asesor) + es/en de cortesía, con pestañas como la Datenschutz. */
 export function ImpressumPage() {
   const t = useT()
+  const { lang } = useLang()
+  const [code, setCode] = useLegalLang(IMPRESSUM, lang)
+  const doc = IMPRESSUM[code]
   usePublicPage({
     title: 'Impressum — Eazy Stock',
     description: t('Impressum de Eazy Stock: datos del responsable según § 5 DDG.'),
@@ -32,10 +64,13 @@ export function ImpressumPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
-      <PageHero kicker={t('Aviso legal')} title="Impressum" sub={t('Datos del responsable de eazy-stock.com, según la ley alemana (§ 5 DDG).')} />
+      <PageHero kicker={doc.kicker} title={doc.title} sub={doc.sub}>
+        <LangTabs langs={IMPRESSUM_LANGS} code={code} onChange={setCode} />
+      </PageHero>
       <Prose>
+        {doc.note && <p className="mb-10 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{doc.note}</p>}
         <div className="space-y-8">
-          {IMPRESSUM.map((b, i) => (
+          {doc.blocks.map((b, i) => (
             <div key={i}>
               {b.h && <h2 className="mb-2 text-base font-bold text-gray-900">{b.h}</h2>}
               {b.lines && (
@@ -64,12 +99,7 @@ export function ImpressumPage() {
 export function PrivacyPage() {
   const t = useT()
   const { lang } = useLang()
-  // Navegador en alemán → alemán (es la versión vinculante); si no, el idioma de la web.
-  const [code, setCode] = useState(() => {
-    const nav = (typeof navigator !== 'undefined' && navigator.language || '').slice(0, 2).toLowerCase()
-    if (nav === 'de') return 'de'
-    return PRIVACY[lang] ? lang : 'de'
-  })
+  const [code, setCode] = useLegalLang(PRIVACY, lang)
   const doc = PRIVACY[code]
   usePublicPage({
     title: `${doc.title} — Eazy Stock`,
@@ -80,20 +110,7 @@ export function PrivacyPage() {
     <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
       <PageHero kicker="Datenschutz" title={doc.title} sub={PRIVACY_UPDATED[code]}>
-        <div className="inline-flex rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Sprache / Idioma">
-          {PRIVACY_LANGS.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              role="tab"
-              aria-selected={l.code === code}
-              onClick={() => setCode(l.code)}
-              className={`rounded-xl px-4 py-1.5 text-sm font-semibold transition-colors ${l.code === code ? 'bg-white text-gray-900 shadow' : 'text-slate-300 hover:text-white'}`}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
+        <LangTabs langs={PRIVACY_LANGS} code={code} onChange={setCode} />
       </PageHero>
       <Prose>
         <p className="mb-10 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{doc.note}</p>

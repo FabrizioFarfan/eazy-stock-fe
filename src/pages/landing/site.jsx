@@ -67,7 +67,7 @@ export function PageHero({ kicker, title, highlight, sub, children }) {
           {kicker && (
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{kicker}</p>
           )}
-          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="lp-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {title}
             {highlight && (
               <>

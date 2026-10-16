@@ -2,8 +2,8 @@ import { Link, NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
-  MessageCircle, Smartphone, Check, Star, Users, Truck, Receipt,
-  CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight, Quote, Wrench,
+  MessageCircle, Smartphone, Check, Users, Truck, Receipt,
+  CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight, Wrench,
   Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
   Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
   Menu, X, Landmark, Bot, Coffee, Apple,
@@ -127,7 +127,7 @@ export function Hero() {
               <ArrowRight size={12} />
             </Link>
 
-            <h1 className="mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.6rem]">
+            <h1 className="lp-display mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.6rem]">
               {t('Tu negocio, ordenado.')}<br />
               <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">
                 {t('Vende, cobra y controla el stock sin cuaderno.')}
@@ -159,7 +159,7 @@ export function Hero() {
                 'Sin tarjeta, sin instalar nada',
                 'Desde el celular o la PC',
                 'Español · English · Italiano',
-                'Hecho con una ferretería real',
+                'Nacido en una ferretería de barrio',
               ].map((k) => (
                 <div key={k} className="flex items-center gap-1.5">
                   <Check size={12} className="text-emerald-400" />
@@ -589,12 +589,12 @@ export function ImportSection() {
           kickerIcon={FileSpreadsheet}
           tone="emerald"
           title="Ya tienes tu inventario en Excel. Súbelo tal cual."
-          desc="El importador detecta tus columnas, corrige las tildes rotas, separa códigos de proveedor pegados al nombre y te muestra fila por fila qué va a entrar antes de tocar nada. Miles de productos en minutos, con historial de cada importación."
+          desc="El importador detecta tus columnas, corrige las tildes rotas, separa códigos de proveedor pegados al nombre y te muestra fila por fila qué va a entrar antes de tocar nada. Miles de productos en minutos. Y si lo que tienes es un cuaderno, nos lo mandas por WhatsApp y lo dejamos cargado en 24–48 h."
           bullets={[
-            'Acepta .xlsx y .csv; mapeo automático de columnas',
+            'Acepta .xlsx y .csv; detecta la hoja, la fila de encabezados y tus columnas',
             'Importa también fecha de vencimiento, código de barras y unidad',
             'Historial de importaciones con reporte descargable por fila',
-            'Exporta tu catálogo y tus ventas a Excel cuando quieras',
+            '¿No tienes Excel? Mándanos fotos del cuaderno o el PDF del proveedor y lo cargamos nosotros',
           ]}
           mockup={<ImportMockup />}
           cta="Importar mi Excel"
@@ -808,39 +808,70 @@ export function HowItWorks() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Testimonio (genérico, sin nombres reales)
+//  De dónde sale — la historia real en vez de un testimonio inventado
+//  (Frank, 16-oct-2026: «el feedback mockeado no me gusta, ni sé si tiene hijos»;
+//  «la landing sabe a IA, le falta realismo y personalidad»). Nada de citas
+//  ficticias: quiénes somos, dónde se construyó y qué pidió el mostrador.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function Testimonial() {
+const COUNTER_REQUESTS = [
+  [Banknote,  'Fondo de caja para el vuelto',      'El dueño deja sencillo cada mañana y el cierre no cuadraba. Ahora se registra y el cierre lo suma.'],
+  [Hash,      'Precios con 6 decimales',           'Un tornillo cuesta $ 0.0357 y se vende de a 300. Redondear era regalar plata.'],
+  [Undo2,     'Devolver mercadería al proveedor',  'Llegó una caja fallada. La devolución baja el stock y queda en la cuenta del proveedor.'],
+  [Boxes,     'Un producto es un producto',        'La misma lija aparecía cuatro veces por cuatro recepciones. Ahora se fusionan sin perder el historial.'],
+  [MessageCircle, 'Estado de cuenta por WhatsApp', 'Para cobrar el fiado sin discutir: el cliente recibe su detalle con fechas y pagos.'],
+  [Tag,       'Corregir el precio al vender',      'Si al cobrar el precio ya cambió, se corrige ahí mismo y queda guardado para siempre.'],
+]
+
+export function OriginStory() {
   const t = useT()
+  const wa = `https://wa.me/4915511384643?text=${encodeURIComponent(t('Hola, vi la web de Eazy Stock y tengo una pregunta:'))}`
   return (
-    <section className="bg-gray-50 py-24">
-      <div className="mx-auto max-w-4xl px-5 sm:px-8">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-amber-50 p-8 sm:p-12">
-            <Quote size={56} className="absolute right-8 top-8 text-blue-100" />
-            <div className="relative">
-              <p className="text-xl font-medium leading-relaxed text-gray-800 sm:text-2xl">
-                {t('«Antes anotaba el fiado en un cuaderno y se me perdían ventas. Ahora subí todo el catálogo desde mi Excel en una tarde, mis hijos cobran desde el celular y al cierre sé cuánto entró por cada medio y cuánto en efectivo.»')}
-              </p>
-              <div className="mt-8 flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-                  <Wrench size={22} />
-                </div>
-                <div>
-                  <p className="text-base font-bold text-gray-900">{t('Dueño de ferretería')}</p>
-                  <p className="text-sm text-gray-500">{t('Cliente desde el piloto')}</p>
-                </div>
-                <div className="ml-auto hidden flex-col items-end sm:flex">
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={16} className="fill-amber-400 text-amber-400" />)}
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">{t('Más de 1,000 productos migrados')}</p>
-                </div>
-              </div>
+    <section id="de-donde-sale" className="scroll-mt-28 bg-gray-50 py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+          <Reveal>
+            <SectionHead align="left" kicker={t('De dónde sale')} title={t('Nació en un mostrador, no en una oficina')} />
+            <div className="space-y-5 text-base leading-relaxed text-gray-700 sm:text-lg">
+              <p>{t('Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.')}</p>
+              <p>{t('No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.')}</p>
+              <p className="font-semibold text-gray-900">{t('Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.')}</p>
             </div>
-          </div>
-        </Reveal>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0a0e1a] px-6 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:scale-[1.02]">
+                <MessageCircle size={16} /> {t('Escribir por WhatsApp')}
+              </a>
+              <a href="mailto:kontakt.eazylife@gmail.com" className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-100">
+                kontakt.eazylife@gmail.com
+              </a>
+            </div>
+            <p className="mt-6 text-sm text-gray-500">{t('Frank y Fabrizio Farfan · Eazy Life Company, Berlín')}</p>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500">{t('Lo que pidió el mostrador')}</p>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">{t('Hoy en la app')}</span>
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {COUNTER_REQUESTS.map(([Icon, title, desc], i) => (
+                  <li key={title} className="flex gap-4 px-6 py-4">
+                    <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700">
+                      <Icon size={17} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900">
+                        <span className="mr-2 font-mono text-xs text-gray-400">{String(i + 1).padStart(2, '0')}</span>{t(title)}
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-gray-500">{t(desc)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
       </div>
     </section>
   )
@@ -1003,7 +1034,7 @@ export function CtaBanner() {
             </span>
             {t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })}
           </span>
-          <h2 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h2 className="lp-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {t('Tu tienda, ordenada')}<br />
             <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('desde esta tarde.')}</span>
           </h2>
@@ -1199,7 +1230,7 @@ export default function LandingPage() {
       <Benefits teaser />
       <Highlights />
       <HowItWorks />
-      <Testimonial />
+      <OriginStory />
       <PricingTeaser />
       <CtaBanner />
       <Footer />

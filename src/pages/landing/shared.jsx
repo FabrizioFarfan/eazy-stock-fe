@@ -107,7 +107,7 @@ export function SectionHead({ kicker, title, sub, dark = false, align = 'center'
           {kicker}
         </p>
       )}
-      <h2 className={`text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem] ${dark ? 'text-white' : 'text-gray-900'}`}>
+      <h2 className={`lp-display text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.75rem] ${dark ? 'text-white' : 'text-gray-900'}`}>
         {title}
       </h2>
       {sub && (
@@ -124,6 +124,7 @@ export function LandingStyles() {
   return (
     <style>{`
       html { scroll-behavior: smooth; }
+      .lp-display { font-family: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif; font-variation-settings: 'opsz' 96; letter-spacing: -0.025em; font-weight: 700; }
       @keyframes lp-floaty { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
       @keyframes lp-grow   { from { transform: scaleX(0) } to { transform: scaleX(1) } }
       @keyframes lp-row    { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: none } }

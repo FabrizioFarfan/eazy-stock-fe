@@ -26,6 +26,7 @@ const PAGE_TITLES = {
   '/settings':           'Ajustes',
   '/negocios':           'Mis negocios',
   '/boss/suscripciones': 'Suscripciones',
+  '/boss/feedback':      'Feedback',
 }
 
 const ROLE_BADGE = {

@@ -1,4 +1,6 @@
-import { Crown, Building2, Users, CreditCard } from 'lucide-react'
+import { Crown, Building2, Users, CreditCard, MessageSquareHeart } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { feedbackApi } from '../../services/endpoints/feedback'
 import { SiblingSwitcher } from '../reports/ReportKit'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
@@ -11,13 +13,23 @@ import { flagEmoji, initials, avatarColor } from './bossUtils'
  * Los helpers sin JSX viven en bossUtils.js.
  */
 
-// Panel Boss ↔ Negocios ↔ Owners. Un SUPER_ADMIN sin corona no ve el panel.
+export const BOSS_FEEDBACK_SUMMARY_KEY = 'boss-feedback-summary'
+
+// Panel Boss ↔ Suscripciones ↔ Feedback ↔ Negocios ↔ Owners. Un SUPER_ADMIN sin corona no ve el panel.
 export function BossSwitcher() {
   const t = useT()
   const { user } = useAuth()
+  // Globito rojo con los comentarios NEW (16-oct-2026); solo el boss lo pide.
+  const { data: summary } = useQuery({
+    queryKey: [BOSS_FEEDBACK_SUMMARY_KEY],
+    queryFn: () => feedbackApi.bossFeedbackSummary().then((r) => r.data?.data ?? r.data),
+    enabled: !!user?.isBoss,
+    staleTime: 60 * 1000,
+  })
   const items = [
     user?.isBoss && { to: '/boss', icon: Crown, label: 'Panel Boss', hint: 'Quién usa la app y la ruta' },
     user?.isBoss && { to: '/boss/suscripciones', icon: CreditCard, label: 'Suscripciones', hint: 'Pruebas, planes y pagos' },
+    user?.isBoss && { to: '/boss/feedback', icon: MessageSquareHeart, label: 'Feedback', hint: 'Lo que nos cuentan', badge: summary?.newCount ?? 0 },
     { to: '/admin/businesses', icon: Building2, label: 'Negocios', hint: 'Cada negocio registrado' },
     { to: '/admin/owners', icon: Users, label: 'Owners', hint: 'Los dueños y cómo entran' },
   ].filter(Boolean)

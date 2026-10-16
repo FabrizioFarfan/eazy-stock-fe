@@ -1,0 +1,66 @@
+// Landing (3ª tanda, 16-oct-2026): sección «De dónde sale» en lugar del testimonio
+// inventado, chip del hero. El español es la llave.
+export default {
+  en: {
+    'Acepta .xlsx y .csv; detecta la hoja, la fila de encabezados y tus columnas': 'Accepts .xlsx and .csv; detects the sheet, the header row and your columns',
+    '¿No tienes Excel? Mándanos fotos del cuaderno o el PDF del proveedor y lo cargamos nosotros': 'No Excel? Send us photos of the notebook or the supplier\'s PDF and we load it for you',
+    'El importador detecta tus columnas, corrige las tildes rotas, separa códigos de proveedor pegados al nombre y te muestra fila por fila qué va a entrar antes de tocar nada. Miles de productos en minutos. Y si lo que tienes es un cuaderno, nos lo mandas por WhatsApp y lo dejamos cargado en 24–48 h.':
+      'The importer detects your columns, fixes broken accents, splits supplier codes glued to the name and shows you row by row what will go in before touching anything. Thousands of products in minutes. And if what you have is a notebook, send it to us on WhatsApp and we\'ll have it loaded in 24–48 h.',
+    'Nacido en una ferretería de barrio': 'Born in a neighborhood hardware store',
+    'De dónde sale': 'Where it comes from',
+    'Nació en un mostrador, no en una oficina': 'It was born at a counter, not in an office',
+    'Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
+      'Eazy Stock is made by two brothers in Berlin. We built it inside a neighborhood hardware store in Peru that uses it every day to sell, get paid and close the till.',
+    'No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.':
+      'We didn\'t start from a pitch deck. We started from a store-credit notebook, an Excel with thousands of rows and an owner who told us, every week, what got in his way. Every feature on the right started as a complaint at that counter.',
+    'Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.': 'If something doesn\'t add up, write to us on WhatsApp. We answer ourselves, not a bot.',
+    'Hola, vi la web de Eazy Stock y tengo una pregunta:': 'Hi, I saw the Eazy Stock website and I have a question:',
+    'Escribir por WhatsApp': 'Write on WhatsApp',
+    'Frank y Fabrizio Farfan · Eazy Life Company, Berlín': 'Frank and Fabrizio Farfan · Eazy Life Company, Berlin',
+    'Lo que pidió el mostrador': 'What the counter asked for',
+    'Hoy en la app': 'In the app today',
+    'Fondo de caja para el vuelto': 'Change float for the till',
+    'El dueño deja sencillo cada mañana y el cierre no cuadraba. Ahora se registra y el cierre lo suma.': 'The owner leaves small change every morning and the closing never balanced. Now it\'s recorded and the closing adds it in.',
+    'Precios con 6 decimales': 'Prices with 6 decimals',
+    'Un tornillo cuesta $ 0.0357 y se vende de a 300. Redondear era regalar plata.': 'A screw costs $0.0357 and sells 300 at a time. Rounding was giving money away.',
+    'Devolver mercadería al proveedor': 'Return goods to the supplier',
+    'Llegó una caja fallada. La devolución baja el stock y queda en la cuenta del proveedor.': 'A faulty box arrived. The return lowers stock and lands on the supplier\'s account.',
+    'Un producto es un producto': 'One product is one product',
+    'La misma lija aparecía cuatro veces por cuatro recepciones. Ahora se fusionan sin perder el historial.': 'The same sandpaper showed up four times from four deliveries. Now they merge without losing history.',
+    'Estado de cuenta por WhatsApp': 'Account statement on WhatsApp',
+    'Para cobrar el fiado sin discutir: el cliente recibe su detalle con fechas y pagos.': 'To collect store credit without arguing: the customer gets the detail with dates and payments.',
+    'Corregir el precio al vender': 'Fix the price while selling',
+    'Si al cobrar el precio ya cambió, se corrige ahí mismo y queda guardado para siempre.': 'If the price already changed at checkout, you fix it right there and it\'s saved for good.',
+  },
+  it: {
+    'Acepta .xlsx y .csv; detecta la hoja, la fila de encabezados y tus columnas': 'Accetta .xlsx e .csv; riconosce il foglio, la riga delle intestazioni e le tue colonne',
+    '¿No tienes Excel? Mándanos fotos del cuaderno o el PDF del proveedor y lo cargamos nosotros': 'Non hai un Excel? Mandaci le foto del quaderno o il PDF del fornitore e lo carichiamo noi',
+    'El importador detecta tus columnas, corrige las tildes rotas, separa códigos de proveedor pegados al nombre y te muestra fila por fila qué va a entrar antes de tocar nada. Miles de productos en minutos. Y si lo que tienes es un cuaderno, nos lo mandas por WhatsApp y lo dejamos cargado en 24–48 h.':
+      'L\'importatore riconosce le colonne, corregge gli accenti rotti, separa i codici fornitore attaccati al nome e ti mostra riga per riga cosa entrerà prima di toccare nulla. Migliaia di prodotti in pochi minuti. E se quello che hai è un quaderno, ce lo mandi su WhatsApp e te lo carichiamo in 24–48 ore.',
+    'Nacido en una ferretería de barrio': 'Nato in una ferramenta di quartiere',
+    'De dónde sale': 'Da dove nasce',
+    'Nació en un mostrador, no en una oficina': 'È nato dietro un bancone, non in un ufficio',
+    'Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
+      'Eazy Stock lo facciamo noi due fratelli da Berlino. L\'abbiamo costruito dentro una ferramenta di quartiere in Perù che lo usa ogni giorno per vendere, incassare e chiudere la cassa.',
+    'No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.':
+      'Non siamo partiti da una presentazione. Siamo partiti da un quaderno dei crediti, un Excel con migliaia di righe e un titolare che ogni settimana ci diceva cosa gli dava fastidio. Ogni funzione qui a destra è nata come una lamentela a quel bancone.',
+    'Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.': 'Se qualcosa non ti torna, scrivici su WhatsApp. Rispondiamo noi, non un bot.',
+    'Hola, vi la web de Eazy Stock y tengo una pregunta:': 'Ciao, ho visto il sito di Eazy Stock e ho una domanda:',
+    'Escribir por WhatsApp': 'Scrivici su WhatsApp',
+    'Frank y Fabrizio Farfan · Eazy Life Company, Berlín': 'Frank e Fabrizio Farfan · Eazy Life Company, Berlino',
+    'Lo que pidió el mostrador': 'Cosa ha chiesto il bancone',
+    'Hoy en la app': 'Oggi nell\'app',
+    'Fondo de caja para el vuelto': 'Fondo cassa per il resto',
+    'El dueño deja sencillo cada mañana y el cierre no cuadraba. Ahora se registra y el cierre lo suma.': 'Il titolare lascia gli spiccioli ogni mattina e la chiusura non tornava. Ora si registra e la chiusura lo somma.',
+    'Precios con 6 decimales': 'Prezzi con 6 decimali',
+    'Un tornillo cuesta $ 0.0357 y se vende de a 300. Redondear era regalar plata.': 'Una vite costa $ 0,0357 e si vende a 300 alla volta. Arrotondare era regalare soldi.',
+    'Devolver mercadería al proveedor': 'Rendere la merce al fornitore',
+    'Llegó una caja fallada. La devolución baja el stock y queda en la cuenta del proveedor.': 'È arrivata una scatola difettosa. Il reso scala lo stock e finisce sul conto del fornitore.',
+    'Un producto es un producto': 'Un prodotto è un prodotto',
+    'La misma lija aparecía cuatro veces por cuatro recepciones. Ahora se fusionan sin perder el historial.': 'La stessa carta vetrata compariva quattro volte per quattro consegne. Ora si uniscono senza perdere lo storico.',
+    'Estado de cuenta por WhatsApp': 'Estratto conto su WhatsApp',
+    'Para cobrar el fiado sin discutir: el cliente recibe su detalle con fechas y pagos.': 'Per incassare il credito senza discutere: il cliente riceve il dettaglio con date e pagamenti.',
+    'Corregir el precio al vender': 'Correggere il prezzo mentre vendi',
+    'Si al cobrar el precio ya cambió, se corrige ahí mismo y queda guardado para siempre.': 'Se alla cassa il prezzo è già cambiato, lo correggi lì e resta salvato per sempre.',
+  },
+}

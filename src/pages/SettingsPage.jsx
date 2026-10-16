@@ -20,6 +20,7 @@ import { ReportHeader } from '../components/reports/ReportKit'
 import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 import PlanSection from '../components/subscription/PlanSection'
+import FeedbackSection from '../components/feedback/FeedbackSection'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -558,6 +559,9 @@ export default function SettingsPage() {
 
       {/* Business info (editable por OWNER) */}
       <BusinessSection />
+
+      {/* Tu opinión (16-oct-2026): feedback real, lo ven TODOS los roles; /settings#feedback */}
+      <FeedbackSection />
 
       {/* Password */}
       <Section icon={Shield} title={t('Cambiar contraseña')} hint={t('Cámbiala si alguien más la conoce')}>

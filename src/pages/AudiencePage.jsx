@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useT } from '../i18n'
-import { Navbar, Footer, CtaBanner, Benefits, Industries, HowItWorks, Testimonial } from './LandingPage'
+import { Navbar, Footer, CtaBanner, Benefits, Industries, HowItWorks, OriginStory } from './LandingPage'
 import { PageHero, usePublicPage } from './landing/site'
 
 const CTA = '/registro'
@@ -29,7 +29,7 @@ export default function AudiencePage() {
       </PageHero>
       <Benefits />
       <Industries />
-      <Testimonial />
+      <OriginStory />
       <HowItWorks />
       <CtaBanner />
       <Footer />

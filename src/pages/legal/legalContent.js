@@ -1,8 +1,8 @@
 // Textos legales de Eazy Stock (15-oct-2026). Fabrizio Farfan sacó su Partita IVA
 // (Einzelunternehmer, Kleinunternehmer § 19 UStG) en Berlín y la web necesita, por ley
-// alemana, un Impressum (§ 5 DDG) y una Datenschutzerklärung (DSGVO). El Impressum va
-// SOLO en alemán (es el texto legal que dictó el asesor, no se traduce). La Datenschutz
-// tiene versión alemana (vinculante) + español e inglés para nuestros usuarios.
+// alemana, un Impressum (§ 5 DDG) y una Datenschutzerklärung (DSGVO). Las dos tienen
+// versión alemana (vinculante: el Impressum es el texto que dictó el asesor) + español
+// e inglés como traducción de cortesía para nuestros usuarios (16-oct-2026).
 // Datos: Contabo GmbH es el hoster (servidor en la UE); no hay analítica ni rastreo;
 // localStorage solo técnico (sesión, idioma, menú) → sin banner de cookies.
 
@@ -16,29 +16,82 @@ export const LEGAL_ENTITY = {
   email: 'kontakt.eazylife@gmail.com',
 }
 
-export const IMPRESSUM = [
-  { h: 'Angaben gemäß § 5 DDG', lines: [
-    LEGAL_ENTITY.name,
-    `${LEGAL_ENTITY.brand} (Geschäftsbezeichnung)`,
-    LEGAL_ENTITY.street,
-    LEGAL_ENTITY.city,
-    LEGAL_ENTITY.country,
-  ] },
-  { h: 'Kontakt', lines: [
-    `Telefon: ${LEGAL_ENTITY.phone}`,
-    `E-Mail: ${LEGAL_ENTITY.email}`,
-  ] },
-  { p: [
-    'Eazy Life ist eine Geschäftsbezeichnung von Fabrizio Farfan, Einzelunternehmer.',
-    'Umsatzsteuer: Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
-  ] },
-  { h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV', lines: [
-    `${LEGAL_ENTITY.name}, Anschrift wie oben`,
-  ] },
-  { h: 'Verbraucherstreitbeilegung', p: [
-    'Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
-  ] },
+/**
+ * Impressum (§ 5 DDG). El alemán es el texto que dictó el asesor y el único con
+ * valor legal; las versiones en español e inglés son una traducción de cortesía
+ * para nuestros usuarios (Frank, 16-oct-2026: «¿por qué el Impressum solo en
+ * alemán si la privacidad cambia de idioma?»). Misma pestaña que la Datenschutz.
+ */
+export const IMPRESSUM_LANGS = [
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'en', label: 'English' },
 ]
+
+const IMPRESSUM_IDENTITY = [
+  LEGAL_ENTITY.name,
+  `${LEGAL_ENTITY.brand} (Geschäftsbezeichnung)`,
+  LEGAL_ENTITY.street,
+  LEGAL_ENTITY.city,
+  LEGAL_ENTITY.country,
+]
+
+export const IMPRESSUM = {
+  de: {
+    title: 'Impressum',
+    kicker: 'Rechtliche Hinweise',
+    sub: 'Angaben zum Anbieter von eazy-stock.com nach deutschem Recht (§ 5 DDG).',
+    note: null,
+    blocks: [
+      { h: 'Angaben gemäß § 5 DDG', lines: IMPRESSUM_IDENTITY },
+      { h: 'Kontakt', lines: [`Telefon: ${LEGAL_ENTITY.phone}`, `E-Mail: ${LEGAL_ENTITY.email}`] },
+      { p: [
+        'Eazy Life ist eine Geschäftsbezeichnung von Fabrizio Farfan, Einzelunternehmer.',
+        'Umsatzsteuer: Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+      ] },
+      { h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV', lines: [`${LEGAL_ENTITY.name}, Anschrift wie oben`] },
+      { h: 'Verbraucherstreitbeilegung', p: [
+        'Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+      ] },
+    ],
+  },
+  es: {
+    title: 'Aviso legal (Impressum)',
+    kicker: 'Aviso legal',
+    sub: 'Datos del responsable de eazy-stock.com según la ley alemana (§ 5 DDG).',
+    note: 'Traducción de cortesía. La versión alemana («Deutsch») es la única con valor legal.',
+    blocks: [
+      { h: 'Datos según el § 5 de la DDG (ley alemana de servicios digitales)', lines: IMPRESSUM_IDENTITY },
+      { h: 'Contacto', lines: [`Teléfono: ${LEGAL_ENTITY.phone}`, `Correo: ${LEGAL_ENTITY.email}`] },
+      { p: [
+        'Eazy Life es el nombre comercial de Fabrizio Farfan, empresario individual.',
+        'IVA: según el § 19 de la UStG (régimen de pequeño empresario) no se cobra IVA.',
+      ] },
+      { h: 'Responsable del contenido según el § 18 (2) del MStV', lines: [`${LEGAL_ENTITY.name}, dirección indicada arriba`] },
+      { h: 'Resolución de litigios de consumo', p: [
+        'No estamos dispuestos ni obligados a participar en procedimientos de resolución de litigios ante una junta arbitral de consumo.',
+      ] },
+    ],
+  },
+  en: {
+    title: 'Legal notice (Impressum)',
+    kicker: 'Legal notice',
+    sub: 'Details of the provider of eazy-stock.com under German law (§ 5 DDG).',
+    note: 'Courtesy translation. Only the German version ("Deutsch") is legally binding.',
+    blocks: [
+      { h: 'Information pursuant to § 5 DDG (German Digital Services Act)', lines: IMPRESSUM_IDENTITY },
+      { h: 'Contact', lines: [`Phone: ${LEGAL_ENTITY.phone}`, `Email: ${LEGAL_ENTITY.email}`] },
+      { p: [
+        'Eazy Life is the trade name of Fabrizio Farfan, sole proprietor.',
+        'VAT: in accordance with § 19 UStG (small business scheme) no VAT is charged.',
+      ] },
+      { h: 'Responsible for content pursuant to § 18 (2) MStV', lines: [`${LEGAL_ENTITY.name}, address as above`] },
+      { h: 'Consumer dispute resolution', p: [
+        'We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.',
+      ] },
+    ],
+  },
+}
 
 /** Fecha de la Datenschutz; se muestra en cada idioma. */
 export const PRIVACY_UPDATED = { de: 'Stand: 15. Oktober 2026', es: 'Última actualización: 15 de octubre de 2026', en: 'Last updated: October 15, 2026' }

@@ -27,7 +27,7 @@ export function SiblingSwitcher({ items, label }) {
   const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 6 ? 'sm:grid-cols-3 lg:grid-cols-6' : items.length === 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
   return (
     <nav className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid ${cols} sm:overflow-visible sm:px-0 sm:pb-0`} aria-label={label}>
-      {items.map(({ to, icon: Icon, label: itemLabel, hint }) => (
+      {items.map(({ to, icon: Icon, label: itemLabel, hint, badge }) => (
         <NavLink key={to} to={to} end
           className={({ isActive }) => `group flex min-w-[10.5rem] flex-shrink-0 items-center gap-3 rounded-2xl p-3 transition-all sm:min-w-0 ${
             isActive
@@ -40,10 +40,14 @@ export function SiblingSwitcher({ items, label }) {
                 isActive ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}`}>
                 <Icon size={17} />
               </span>
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{t(itemLabel)}</span>
                 <span className={`block truncate text-[11px] ${isActive ? 'text-white/80' : 'text-gray-400'}`}>{t(hint)}</span>
               </span>
+              {badge > 0 && (
+                <span className={`ml-auto flex-shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  isActive ? 'bg-white text-blue-700' : 'bg-red-500 text-white'}`}>{badge > 99 ? '99+' : badge}</span>
+              )}
             </>
           )}
         </NavLink>
