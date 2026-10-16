@@ -3,7 +3,7 @@ export default {
   en: {
     // ── Ajustes › Tu opinión
     'Tu opinión': 'Your opinion',
-    'Lo lee Frank en persona': 'Frank reads it personally',
+    'Lo lee el equipo de Eazy Life Company': 'The Eazy Life Company team reads it',
     '¿Cómo te va con Eazy Stock?': 'How is Eazy Stock working for you?',
     '{n} de 5 estrellas': '{n} of 5 stars',
     'Idea': 'Idea',
@@ -22,7 +22,7 @@ export default {
     'Enviado': 'Sent',
     'Leído': 'Read',
     'Respondido': 'Replied',
-    'Respuesta de Frank': 'Frank\'s reply',
+    'Respuesta de Eazy Life Company': 'Reply from Eazy Life Company',
     // ── Boss › Feedback
     'Feedback': 'Feedback',
     'Lo que nos cuentan': 'What people tell us',
@@ -62,7 +62,7 @@ export default {
   it: {
     // ── Ajustes › Tu opinión
     'Tu opinión': 'La tua opinione',
-    'Lo lee Frank en persona': 'Lo legge Frank di persona',
+    'Lo lee el equipo de Eazy Life Company': 'Lo legge il team di Eazy Life Company',
     '¿Cómo te va con Eazy Stock?': 'Come ti trovi con Eazy Stock?',
     '{n} de 5 estrellas': '{n} su 5 stelle',
     'Idea': 'Idea',
@@ -81,7 +81,7 @@ export default {
     'Enviado': 'Inviato',
     'Leído': 'Letto',
     'Respondido': 'Risposto',
-    'Respuesta de Frank': 'Risposta di Frank',
+    'Respuesta de Eazy Life Company': 'Risposta di Eazy Life Company',
     // ── Boss › Feedback
     'Feedback': 'Feedback',
     'Lo que nos cuentan': 'Quello che ci raccontano',

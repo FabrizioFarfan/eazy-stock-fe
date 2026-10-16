@@ -18,7 +18,7 @@ const MAX = 2000
 /**
  * Ajustes › Tu opinión (Frank, 16-oct-2026): la ve CUALQUIER rol (dueño y vendedores).
  * Estrellas + tema + mensaje + «pueden escribirme por WhatsApp»; abajo, lo que ya
- * contó con su estado y la respuesta de Frank cuando la hay. Se llega con
+ * contó con su estado y la respuesta de Eazy Life Company cuando la hay. Se llega con
  * /settings#feedback. Mismo chrome que las demás secciones de Ajustes.
  */
 export default function FeedbackSection() {
@@ -69,7 +69,7 @@ export default function FeedbackSection() {
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><MessageSquareHeart size={17} /></span>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-gray-900">{t('Tu opinión')}</h3>
-            <p className="truncate text-xs text-gray-400">{t('Lo lee Frank en persona')}</p>
+            <p className="truncate text-xs text-gray-400">{t('Lo lee el equipo de Eazy Life Company')}</p>
           </div>
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function FeedbackSection() {
                 {f.bossReply && (
                   <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700">
-                      {t('Respuesta de Frank')}{f.repliedAt ? <span className="ml-1.5 font-medium normal-case tracking-normal text-blue-500">· {formatWhen(f.repliedAt)}</span> : null}
+                      {t('Respuesta de Eazy Life Company')}{f.repliedAt ? <span className="ml-1.5 font-medium normal-case tracking-normal text-blue-500">· {formatWhen(f.repliedAt)}</span> : null}
                     </p>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-blue-900">{f.bossReply}</p>
                   </div>

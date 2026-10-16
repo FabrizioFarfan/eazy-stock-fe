@@ -9,14 +9,13 @@ export default {
     'Nacido en una ferretería de barrio': 'Born in a neighborhood hardware store',
     'De dónde sale': 'Where it comes from',
     'Nació en un mostrador, no en una oficina': 'It was born at a counter, not in an office',
-    'Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
-      'Eazy Stock is made by two brothers in Berlin. We built it inside a neighborhood hardware store in Peru that uses it every day to sell, get paid and close the till.',
+    'Eazy Stock lo hace Eazy Life Company. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
+      'Eazy Stock is made by Eazy Life Company. We built it inside a neighborhood hardware store in Peru that uses it every day to sell, get paid and close the till.',
     'No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.':
       'We didn\'t start from a pitch deck. We started from a store-credit notebook, an Excel with thousands of rows and an owner who told us, every week, what got in his way. Every feature on the right started as a complaint at that counter.',
     'Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.': 'If something doesn\'t add up, write to us on WhatsApp. We answer ourselves, not a bot.',
     'Hola, vi la web de Eazy Stock y tengo una pregunta:': 'Hi, I saw the Eazy Stock website and I have a question:',
     'Escribir por WhatsApp': 'Write on WhatsApp',
-    'Frank y Fabrizio Farfan · Eazy Life Company, Berlín': 'Frank and Fabrizio Farfan · Eazy Life Company, Berlin',
     'Lo que pidió el mostrador': 'What the counter asked for',
     'Hoy en la app': 'In the app today',
     'Fondo de caja para el vuelto': 'Change float for the till',
@@ -40,14 +39,13 @@ export default {
     'Nacido en una ferretería de barrio': 'Nato in una ferramenta di quartiere',
     'De dónde sale': 'Da dove nasce',
     'Nació en un mostrador, no en una oficina': 'È nato dietro un bancone, non in un ufficio',
-    'Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
-      'Eazy Stock lo facciamo noi due fratelli da Berlino. L\'abbiamo costruito dentro una ferramenta di quartiere in Perù che lo usa ogni giorno per vendere, incassare e chiudere la cassa.',
+    'Eazy Stock lo hace Eazy Life Company. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.':
+      'Eazy Stock lo fa Eazy Life Company. L\'abbiamo costruito dentro una ferramenta di quartiere in Perù che lo usa ogni giorno per vendere, incassare e chiudere la cassa.',
     'No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.':
       'Non siamo partiti da una presentazione. Siamo partiti da un quaderno dei crediti, un Excel con migliaia di righe e un titolare che ogni settimana ci diceva cosa gli dava fastidio. Ogni funzione qui a destra è nata come una lamentela a quel bancone.',
     'Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.': 'Se qualcosa non ti torna, scrivici su WhatsApp. Rispondiamo noi, non un bot.',
     'Hola, vi la web de Eazy Stock y tengo una pregunta:': 'Ciao, ho visto il sito di Eazy Stock e ho una domanda:',
     'Escribir por WhatsApp': 'Scrivici su WhatsApp',
-    'Frank y Fabrizio Farfan · Eazy Life Company, Berlín': 'Frank e Fabrizio Farfan · Eazy Life Company, Berlino',
     'Lo que pidió el mostrador': 'Cosa ha chiesto il bancone',
     'Hoy en la app': 'Oggi nell\'app',
     'Fondo de caja para el vuelto': 'Fondo cassa per il resto',

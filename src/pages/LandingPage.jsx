@@ -833,7 +833,7 @@ export function OriginStory() {
           <Reveal>
             <SectionHead align="left" kicker={t('De dónde sale')} title={t('Nació en un mostrador, no en una oficina')} />
             <div className="space-y-5 text-base leading-relaxed text-gray-700 sm:text-lg">
-              <p>{t('Eazy Stock lo hacemos dos hermanos desde Berlín. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.')}</p>
+              <p>{t('Eazy Stock lo hace Eazy Life Company. Lo construimos dentro de una ferretería de barrio en Perú que lo usa todos los días para vender, cobrar y cerrar la caja.')}</p>
               <p>{t('No partimos de una presentación. Partimos de un cuaderno de fiados, un Excel con miles de filas y un dueño que nos decía, cada semana, qué le estorbaba. Cada función de la derecha empezó como una queja en ese mostrador.')}</p>
               <p className="font-semibold text-gray-900">{t('Si algo no te cuadra, escríbenos por WhatsApp. Te contestamos nosotros, no un bot.')}</p>
             </div>
@@ -845,7 +845,7 @@ export function OriginStory() {
                 kontakt.eazylife@gmail.com
               </a>
             </div>
-            <p className="mt-6 text-sm text-gray-500">{t('Frank y Fabrizio Farfan · Eazy Life Company, Berlín')}</p>
+            <p className="mt-6 text-sm text-gray-500">{t('Eazy Life Company')}</p>
           </Reveal>
 
           <Reveal delay={120}>
