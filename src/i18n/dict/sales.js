@@ -3,6 +3,17 @@
 // la cotización impresa. El español es la llave.
 export default {
   en: {
+    // ── 19-oct: Nota de pedido desde el detalle de una venta (William: el cliente que no quiere factura)
+    'Nota de pedido': 'Order note',
+    'NOTA DE PEDIDO': 'ORDER NOTE',
+    'nota-de-pedido': 'order-note',
+    'Para el cliente que no quiere factura: todo lo que compró, con el total.': 'For the customer who does not want an invoice: everything they bought, with the total.',
+    'Esta nota de pedido detalla los productos entregados y no constituye comprobante de pago ni factura.': 'This order note lists the products delivered and is neither a proof of payment nor an invoice.',
+    'te envío la nota de pedido {number} de {business} por un total de {total}.': 'here is order note {number} from {business} for a total of {total}.',
+    'Adjunto el PDF con el detalle de tu compra. ¡Gracias!': 'The PDF with the details of your purchase is attached. Thank you!',
+    'Al fiado · pendiente de pago': 'On store credit · payment pending',
+    'Al fiado · pagado': 'On store credit · paid',
+    'Ocultar': 'Hide',
     // ── 29-sep: Nueva venta y Cotización rediseñadas
     'Busca, agrega y cobra.': 'Search, add and charge.',
     '¿Qué lleva el cliente?': 'What is the customer taking?',
@@ -474,6 +485,17 @@ export default {
   },
 
   it: {
+    // ── 19-oct: Nota de pedido desde el detalle de una venta
+    'Nota de pedido': 'Nota d\'ordine',
+    'NOTA DE PEDIDO': 'NOTA D\'ORDINE',
+    'nota-de-pedido': 'nota-d-ordine',
+    'Para el cliente que no quiere factura: todo lo que compró, con el total.': 'Per il cliente che non vuole la fattura: tutto ciò che ha comprato, con il totale.',
+    'Esta nota de pedido detalla los productos entregados y no constituye comprobante de pago ni factura.': 'Questa nota d\'ordine elenca i prodotti consegnati e non costituisce ricevuta di pagamento né fattura.',
+    'te envío la nota de pedido {number} de {business} por un total de {total}.': 'ti invio la nota d\'ordine {number} di {business} per un totale di {total}.',
+    'Adjunto el PDF con el detalle de tu compra. ¡Gracias!': 'In allegato il PDF con il dettaglio del tuo acquisto. Grazie!',
+    'Al fiado · pendiente de pago': 'A credito · pagamento in sospeso',
+    'Al fiado · pagado': 'A credito · pagato',
+    'Ocultar': 'Nascondi',
     // ── 29-sep: Nueva venta y Cotización rediseñadas
     'Busca, agrega y cobra.': 'Cerca, aggiungi e incassa.',
     '¿Qué lleva el cliente?': 'Cosa prende il cliente?',

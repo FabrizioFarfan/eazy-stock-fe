@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
-import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2, UserPlus, TrendingDown } from 'lucide-react'
+import { X, Tag, Undo2, Loader2, ShoppingCart, User, UserRound, Wallet, CheckCircle2, UserPlus, TrendingDown, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSaleDetail } from '../../hooks/useReports'
 import { useSaleReturns, useCreateSaleReturn, useAssignSaleCustomer } from '../../hooks/useSales'
+import { useCustomer } from '../../hooks/useCustomers'
+import { useMyBusiness } from '../../hooks/useMyBusinesses'
 import CustomerSelectModal from '../customers/CustomerSelectModal'
+import QuoteActions from '../quotes/QuoteActions'
 import { useAuth } from '../../context/AuthContext'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
+import { orderNoteNumberLabel } from '../../utils/quotePdf'
 import { useT, dateLocale } from '../../i18n'
 
 // Per-line prices may carry up to 6 decimals (extended price precision);
@@ -23,9 +27,16 @@ function formatDateFull(str) {
 
 export default function SaleDetailModal({ saleId, onClose }) {
   const t = useT()
-  const { can } = useAuth()
+  const { can, user } = useAuth()
   const { data: sale, isLoading } = useSaleDetail(saleId)
   const { data: returns = [] } = useSaleReturns(saleId)
+  // Nota de pedido (William, 19-oct-2026): el cliente que no quiere factura se
+  // lleva igual un papel con todo lo que compró. Mismo molde que la cotización
+  // (PDF, WhatsApp, correo, imprimir); el negocio aporta su RUC y el cliente su
+  // teléfono/correo si la venta tiene uno asociado.
+  const [noteOpen, setNoteOpen] = useState(false)
+  const { data: business } = useMyBusiness({ enabled: noteOpen })
+  const { data: customer } = useCustomer(sale?.customerId, { enabled: noteOpen && !!sale?.customerId })
   const createReturn = useCreateSaleReturn(saleId)
   // Asociar cliente a una venta pasada (tarea 250). No en fiado: ahí el cliente es el deudor.
   const assignCustomer = useAssignSaleCustomer()
@@ -65,6 +76,37 @@ export default function SaleDetailModal({ saleId, onClose }) {
   // Fiado: customerDebtAfter es la deuda ACTUAL del cliente al momento de la
   // consulta. Si llegó a 0, todo lo fiado (de esta y otras ventas) ya se pagó.
   const debtPending = sale?.onCredit && Number(sale.customerDebtAfter ?? 0) > 0
+  const orderNote = useMemo(() => {
+    if (!sale) return null
+    const taxId = business?.taxId?.trim()
+    return {
+      id: sale.id,
+      createdAt: sale.createdAt,
+      number: orderNoteNumberLabel(sale),
+      businessName: business?.name || sale.businessName || user?.businessName,
+      businessTaxLabel: taxId ? `${business?.taxIdType?.trim() || 'RUC'} ${taxId}` : '',
+      authorName: sale.employeeName || user?.name,
+      customer: {
+        name: sale.customerName ?? customer?.name ?? '',
+        phone: customer?.phone ?? '',
+        email: customer?.email ?? '',
+      },
+      items: (sale.items || []).map((it) => ({
+        name: it.productName,
+        sku: it.productSku,
+        qty: Number(it.quantity),
+        unitPrice: Number(it.unitPriceOverride ?? it.unitPrice),
+        subtotal: Number(it.subtotal),
+      })),
+      notes: '',
+      paymentLabel: sale.onCredit
+        ? (debtPending ? t('Al fiado · pendiente de pago') : t('Al fiado · pagado'))
+        : (sale.paymentMethod || ''),
+      discountAmount: Number(sale.discountAmount) || 0,
+      discountLabel: sale.discountType === 'PERCENTAGE' ? `${t('Descuento')} (${sale.discountValue}%)` : undefined,
+      total: Number(sale.total),
+    }
+  }, [sale, business, customer, user, debtPending, t])
   const anythingReturnable = (sale?.items || []).some(
     (item) => Number(item.quantity) - (returnedByItem[item.id] ?? 0) > 0,
   )
@@ -377,6 +419,38 @@ export default function SaleDetailModal({ saleId, onClose }) {
               <div className="flex items-center justify-between text-purple-700">
                 <span>{t('Total devuelto')}</span>
                 <span className="font-semibold">−{formatAmount(totalReturned)}</span>
+              </div>
+            )}
+
+            {!returnMode && (
+              <div className="pt-2" data-testid="order-note">
+                {noteOpen && orderNote ? (
+                  <div className="rounded-xl border border-blue-100 bg-white px-3 py-3">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div>
+                        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-blue-600">
+                          <FileText size={12} /> {t('Nota de pedido')} · {orderNote.number}
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {t('Para el cliente que no quiere factura: todo lo que compró, con el total.')}
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => setNoteOpen(false)}
+                        className="rounded-lg px-2 py-1 text-xs font-semibold text-gray-500 hover:bg-gray-100">
+                        {t('Ocultar')}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <QuoteActions quote={orderNote} kind="orderNote" primary="whatsapp" compact />
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setNoteOpen(true)} data-testid="order-note-button"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors sm:w-auto sm:ml-auto">
+                    <FileText size={14} />
+                    {t('Nota de pedido')}
+                  </button>
+                )}
               </div>
             )}
 

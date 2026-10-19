@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { myBusinessesApi } from '../services/endpoints/myBusinesses'
+import { businessesApi } from '../services/endpoints/businesses'
 import { useAuth } from '../context/AuthContext'
 import { SUBSCRIPTION_KEY } from './useSubscription'
 
@@ -7,6 +8,19 @@ export const MY_BUSINESSES_KEY = 'my-businesses'
 export const BUSINESSES_OVERVIEW_KEY = 'my-businesses-overview'
 
 const unwrap = (r) => r.data?.data ?? r.data
+
+export const MY_BUSINESS_KEY = 'my-business'
+
+/** El negocio activo del usuario (nombre, RUC, moneda…): GET /api/me/business, cualquier rol. */
+export function useMyBusiness(options = {}) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: [MY_BUSINESS_KEY, user?.businessId ?? user?.id],
+    queryFn: () => businessesApi.getMine().then(unwrap),
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  })
+}
 
 /** Los negocios de la cuenta del dueño (solo OWNER). */
 export function useMyBusinesses(options = {}) {

@@ -1,30 +1,31 @@
 import { useState } from 'react'
 import { Download, Mail, MessageCircle, Printer, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { downloadQuotePdf } from '../../utils/quotePdf'
-import { shareQuoteWhatsApp, shareQuoteEmail } from '../../utils/shareQuote'
-import { printQuote } from '../../utils/printQuote'
+import { downloadDocPdf } from '../../utils/quotePdf'
+import { shareDocWhatsApp, shareDocEmail } from '../../utils/shareQuote'
+import { printDoc } from '../../utils/printQuote'
 import { useT } from '../../i18n'
 
 /**
- * Botonera de salida de una cotización: Descargar PDF · WhatsApp · Correo ·
+ * Botonera de salida de un documento: Descargar PDF · WhatsApp · Correo ·
  * Imprimir. `quote` es el objeto normalizado que entienden quotePdf/printQuote
  * (businessName, authorName, customer, items, notes, validityDays, number, createdAt).
+ * `kind` = 'quote' (cotización) u 'orderNote' (nota de pedido de una venta, 19-oct-2026).
  * `primary` marca cuál va destacada en azul (por defecto Descargar).
  */
-export default function QuoteActions({ quote, primary = 'download', compact = false }) {
+export default function QuoteActions({ quote, kind = 'quote', primary = 'download', compact = false }) {
   const t = useT()
   const [busy, setBusy] = useState(null)
 
   const onDownload = () => {
-    try { downloadQuotePdf(quote); toast.success(t('PDF descargado')) }
+    try { downloadDocPdf(quote, kind); toast.success(t('PDF descargado')) }
     catch { toast.error(t('No se pudo generar el PDF')) }
   }
 
   const onWhatsApp = async () => {
     setBusy('wa')
     try {
-      const how = await shareQuoteWhatsApp(quote)
+      const how = await shareDocWhatsApp(quote, kind)
       if (how === 'desktop') {
         toast.info(t('Se descargó el PDF y se abrió WhatsApp con el mensaje listo: adjunta el archivo descargado.'), { duration: 7000 })
       }
@@ -35,7 +36,7 @@ export default function QuoteActions({ quote, primary = 'download', compact = fa
   const onEmail = async () => {
     setBusy('mail')
     try {
-      const how = await shareQuoteEmail(quote)
+      const how = await shareDocEmail(quote, kind)
       if (how === 'desktop') {
         toast.info(t('Se descargó el PDF y se abrió tu correo con el mensaje listo: adjunta el archivo descargado.'), { duration: 7000 })
       }
@@ -44,7 +45,7 @@ export default function QuoteActions({ quote, primary = 'download', compact = fa
   }
 
   const onPrint = () => {
-    if (!printQuote(quote)) toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
+    if (!printDoc(quote, kind)) toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
   }
 
   const base = compact

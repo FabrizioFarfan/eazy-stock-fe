@@ -12,22 +12,28 @@
 
 import { formatPrice } from './formatMoney'
 import { whatsappDigits } from './phone'
-import { quotePdfBlob, quotePdfFileName, downloadQuotePdf, quoteNumberLabel } from './quotePdf'
+import { docPdfBlob, docPdfFileName, downloadDocPdf, DOC_KINDS, docTotals } from './quotePdf'
 import { t } from '../i18n'
 
 /** Teléfono → dígitos para wa.me, con el prefijo del país (lo legado sin "+" usa el del negocio). */
 export { whatsappDigits }
 
-export function quoteMessage(quote) {
-  const total = (quote.items ?? []).reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0)
-  const greet = quote.customer?.name ? t('Hola {name},', { name: quote.customer.name }) : t('Hola,')
-  const validity = quote.validityDays > 0 ? ` ${t('Es válida por {n} día(s).', { n: quote.validityDays })}` : ''
-  return `${greet} ${t('te envío la cotización {number} de {business} por un total de {total}.', {
-    number: quoteNumberLabel(quote.number),
-    business: quote.businessName || t('nuestro negocio'),
+/** Mensaje que acompaña al PDF (cotización o nota de pedido). */
+export function docMessage(doc, kind = 'quote') {
+  const { total } = docTotals(doc)
+  const greet = doc.customer?.name ? t('Hola {name},', { name: doc.customer.name }) : t('Hola,')
+  const vars = {
+    number: DOC_KINDS[kind].numberLabel(doc),
+    business: doc.businessName || t('nuestro negocio'),
     total: formatPrice(total),
-  })}${validity} ${t('Adjunto el PDF con el detalle. Quedo atento a cualquier consulta.')}`
+  }
+  if (kind === 'orderNote') {
+    return `${greet} ${t('te envío la nota de pedido {number} de {business} por un total de {total}.', vars)} ${t('Adjunto el PDF con el detalle de tu compra. ¡Gracias!')}`
+  }
+  const validity = doc.validityDays > 0 ? ` ${t('Es válida por {n} día(s).', { n: doc.validityDays })}` : ''
+  return `${greet} ${t('te envío la cotización {number} de {business} por un total de {total}.', vars)}${validity} ${t('Adjunto el PDF con el detalle. Quedo atento a cualquier consulta.')}`
 }
+export const quoteMessage = (quote) => docMessage(quote, 'quote')
 
 function canShareFiles(file) {
   try { return typeof navigator !== 'undefined' && !!navigator.canShare && navigator.canShare({ files: [file] }) }
@@ -39,11 +45,12 @@ function canShareFiles(file) {
  * se abrió, 'cancelled' si el usuario la cerró, o null si el dispositivo no
  * la soporta (entonces se usa el camino de escritorio).
  */
-async function tryNativeShare(quote) {
-  const file = new File([quotePdfBlob(quote)], quotePdfFileName(quote), { type: 'application/pdf' })
+async function tryNativeShare(doc, kind) {
+  const k = DOC_KINDS[kind]
+  const file = new File([docPdfBlob(doc, kind)], docPdfFileName(doc, kind), { type: 'application/pdf' })
   if (!canShareFiles(file)) return null
   try {
-    await navigator.share({ files: [file], title: `${t('Cotización')} ${quoteNumberLabel(quote.number)}`, text: quoteMessage(quote) })
+    await navigator.share({ files: [file], title: `${k.name()} ${k.numberLabel(doc)}`, text: docMessage(doc, kind) })
     return 'shared'
   } catch (e) {
     return e?.name === 'AbortError' ? 'cancelled' : null
@@ -51,23 +58,29 @@ async function tryNativeShare(quote) {
 }
 
 /** @returns {'shared'|'cancelled'|'desktop'} */
-export async function shareQuoteWhatsApp(quote) {
-  const native = await tryNativeShare(quote)
+export async function shareDocWhatsApp(doc, kind = 'quote') {
+  const native = await tryNativeShare(doc, kind)
   if (native) return native
-  downloadQuotePdf(quote)
-  const digits = whatsappDigits(quote.customer?.phone)
-  const url = `https://wa.me/${digits}?text=${encodeURIComponent(quoteMessage(quote))}`
+  downloadDocPdf(doc, kind)
+  const digits = whatsappDigits(doc.customer?.phone)
+  const url = `https://wa.me/${digits}?text=${encodeURIComponent(docMessage(doc, kind))}`
   window.open(url, '_blank', 'noopener')
   return 'desktop'
 }
 
 /** @returns {'shared'|'cancelled'|'desktop'} */
-export async function shareQuoteEmail(quote) {
-  const native = await tryNativeShare(quote)
+export async function shareDocEmail(doc, kind = 'quote') {
+  const native = await tryNativeShare(doc, kind)
   if (native) return native
-  downloadQuotePdf(quote)
-  const to = quote.customer?.email || ''
-  const subject = `${t('Cotización')} ${quoteNumberLabel(quote.number)} — ${quote.businessName || ''}`.trim()
-  window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(quoteMessage(quote))}`
+  downloadDocPdf(doc, kind)
+  const k = DOC_KINDS[kind]
+  const to = doc.customer?.email || ''
+  const subject = `${k.name()} ${k.numberLabel(doc)} — ${doc.businessName || ''}`.trim()
+  window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(docMessage(doc, kind))}`
   return 'desktop'
 }
+
+export const shareQuoteWhatsApp = (quote) => shareDocWhatsApp(quote, 'quote')
+export const shareQuoteEmail = (quote) => shareDocEmail(quote, 'quote')
+export const shareOrderNoteWhatsApp = (note) => shareDocWhatsApp(note, 'orderNote')
+export const shareOrderNoteEmail = (note) => shareDocEmail(note, 'orderNote')

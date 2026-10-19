@@ -5,6 +5,7 @@
 
 import { formatPhoneDisplay } from './phone'
 import { formatPrice } from './formatMoney'
+import { DOC_KINDS, docTotals } from './quotePdf'
 import { t, dateLocale, getLang } from '../i18n'
 
 function escapeHtml(s) {
@@ -21,35 +22,44 @@ function money(v) {
 /**
  * @param {object} p
  * @param {string} p.businessName   Nombre de la empresa.
+ * @param {string} [p.businessTaxLabel]  «RUC 20123456789» si el negocio lo tiene.
  * @param {string} p.authorName     Quién hace la cotización (owner o trabajador).
  * @param {{name?:string, phone?:string}} p.customer  Datos opcionales del cliente.
- * @param {Array<{name:string, sku?:string, unit?:string, qty:number, unitPrice:number}>} p.items
+ * @param {Array<{name:string, sku?:string, unit?:string, qty:number, unitPrice:number, subtotal?:number}>} p.items
  * @param {string} [p.notes]
  * @param {number} [p.validityDays]
+ * @param {string} [p.paymentLabel]   Nota de pedido: cómo pagó (Efectivo / Yape / al fiado).
+ * @param {number} [p.discountAmount] Nota de pedido: descuento de la venta, si lo hubo.
+ * @param {number} [p.total]          Nota de pedido: total cobrado (manda sobre la suma de líneas).
+ * @param {'quote'|'orderNote'} [kind]
  */
-export function printQuote({ businessName, authorName, customer = {}, items = [], notes = '', validityDays = 7, number = null, createdAt = null }) {
+export function printDoc(p, kind = 'quote') {
+  const { businessName, businessTaxLabel, authorName, customer = {}, items = [], notes = '', validityDays = 7, number = null, createdAt = null, paymentLabel, discountLabel } = p
+  const k = DOC_KINDS[kind]
   const win = window.open('', '_blank')
   if (!win) return false
 
   // Cotización guardada: sale con su correlativo del negocio (COT-0012) y la
   // fecha en que se hizo, así la reimpresión desde el historial es idéntica.
   const now = createdAt ? new Date(createdAt) : new Date()
-  const quoteNumber = number != null
-    ? `COT-${String(number).padStart(4, '0')}`
-    : `COT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+  const quoteNumber = kind !== 'quote'
+    ? k.numberLabel(p)
+    : number != null
+      ? `COT-${String(number).padStart(4, '0')}`
+      : `COT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
   const dateStr = now.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
 
   let validUntilStr = ''
-  if (validityDays > 0) {
+  if (kind === 'quote' && validityDays > 0) {
     const until = new Date(now.getTime() + validityDays * 86400000)
     validUntilStr = until.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
-  const total = items.reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0)
+  const { lines: linesTotal, discount, total } = docTotals(p)
 
   const rowsHtml = items.map((it, i) => {
     const qty = Number(it.qty) || 0
-    const subtotal = qty * (Number(it.unitPrice) || 0)
+    const subtotal = it.subtotal != null ? Number(it.subtotal) : qty * (Number(it.unitPrice) || 0)
     return `<tr>
       <td class="c muted">${i + 1}</td>
       <td>${escapeHtml(it.name)}${it.sku ? `<div class="sku">${escapeHtml(it.sku)}</div>` : ''}</td>
@@ -68,7 +78,7 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
     : ''
 
   win.document.write(`<!doctype html><html lang="${getLang()}"><head><meta charset="utf-8">
-    <title>${escapeHtml(t('Cotización'))} ${escapeHtml(quoteNumber)}</title>
+    <title>${escapeHtml(k.name())} ${escapeHtml(quoteNumber)}</title>
     <style>
       * { box-sizing: border-box; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }
       body { margin: 0; color: #1f2937; }
@@ -107,13 +117,15 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
       <div class="top">
         <div class="brand">
           <h1>${escapeHtml(businessName || t('Mi negocio'))}</h1>
+          ${businessTaxLabel ? `<p>${escapeHtml(businessTaxLabel)}</p>` : ''}
           <p>${escapeHtml(t('Atendido por {name}', { name: authorName || '—' }))}</p>
         </div>
         <div class="doc">
-          <p class="title">${escapeHtml(t('COTIZACIÓN'))}</p>
+          <p class="title">${escapeHtml(k.title())}</p>
           <p class="meta">${escapeHtml(t('N.°'))} <strong>${escapeHtml(quoteNumber)}</strong></p>
           <p class="meta">${escapeHtml(t('Fecha'))}: <strong>${escapeHtml(dateStr)}</strong></p>
           ${validUntilStr ? `<p class="meta">${escapeHtml(t('Válida hasta'))}: <strong>${escapeHtml(validUntilStr)}</strong></p>` : ''}
+          ${paymentLabel ? `<p class="meta">${escapeHtml(t('Pago'))}: <strong>${escapeHtml(paymentLabel)}</strong></p>` : ''}
         </div>
       </div>
 
@@ -130,15 +142,14 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
       </table>
 
       <div class="totals"><div class="box">
+        ${discount > 0 ? `<div class="row"><span>${escapeHtml(t('Subtotal'))}</span><span>${money(linesTotal)}</span></div>
+        <div class="row"><span>${escapeHtml(discountLabel || t('Descuento'))}</span><span>−${money(discount)}</span></div>` : ''}
         <div class="row grand"><span>${escapeHtml(t('Total'))}</span><span>${money(total)}</span></div>
       </div></div>
 
       ${notes ? `<div class="notes"><p class="label">${escapeHtml(t('Notas'))}</p><p>${escapeHtml(notes).replace(/\n/g, '<br>')}</p></div>` : ''}
 
-      <div class="foot">
-        ${escapeHtml(t('Este documento es una cotización referencial y no constituye comprobante de pago.'))}
-        ${validityDays > 0 ? escapeHtml(t('Precios válidos por {n} día(s).', { n: validityDays })) : ''}
-      </div>
+      <div class="foot">${escapeHtml(k.footer(p))}</div>
     </div>
   </body></html>`)
   win.document.close()
@@ -146,3 +157,6 @@ export function printQuote({ businessName, authorName, customer = {}, items = []
   win.print()
   return true
 }
+
+export const printQuote = (quote) => printDoc(quote, 'quote')
+export const printOrderNote = (note) => printDoc(note, 'orderNote')
