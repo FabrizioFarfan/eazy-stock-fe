@@ -4,7 +4,9 @@ export default {
   en: {
     'Tu negocio, bajo control.': 'Your business, under control.',
     'Gestiona, automatiza y vende más.': 'Manage, automate and sell more.',
-    'Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado y te muestra qué se vende. Y crece junto con tu negocio.': 'Eazy Stock organizes your inventory, charges in seconds and tells you every night how much you earned. What used to live in a notebook now works for you: it warns you what to restock, collects store credit and shows you what sells. And it grows with your business.',
+    'Gestiona, automatiza': 'Manage, automate',
+    'y vende más.': 'and sell more.',
+    'Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado, te muestra qué se vende, y mucho más.': 'Eazy Stock organizes your inventory, charges in seconds and tells you every night how much you earned. What used to live in a notebook now works for you: it warns you what to restock, collects store credit, shows you what sells, and much more.',
     'IA integrada: pronto, pregúntale a tu negocio': 'Built-in AI: soon, ask your business anything',
     'Apps para Android e iOS: ya casi listas': 'Android and iOS apps: almost ready',
     'Reportes que te dicen qué vender más': 'Reports that tell you what to sell more of',
@@ -28,7 +30,9 @@ export default {
   it: {
     'Tu negocio, bajo control.': 'La tua attività, sotto controllo.',
     'Gestiona, automatiza y vende más.': 'Gestisci, automatizza e vendi di più.',
-    'Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado y te muestra qué se vende. Y crece junto con tu negocio.': 'Eazy Stock mette in ordine il magazzino, incassa in pochi secondi e ogni sera ti dice quanto hai guadagnato. Quello che prima viveva sul quaderno ora lavora per te: ti avvisa cosa riordinare, incassa il credito ai clienti e ti mostra cosa si vende. E cresce insieme alla tua attività.',
+    'Gestiona, automatiza': 'Gestisci, automatizza',
+    'y vende más.': 'e vendi di più.',
+    'Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado, te muestra qué se vende, y mucho más.': 'Eazy Stock mette in ordine il magazzino, incassa in pochi secondi e ogni sera ti dice quanto hai guadagnato. Quello che prima viveva sul quaderno ora lavora per te: ti avvisa cosa riordinare, incassa il credito ai clienti, ti mostra cosa si vende, e molto altro.',
     'IA integrada: pronto, pregúntale a tu negocio': 'IA integrata: presto, chiedi qualsiasi cosa alla tua attività',
     'Apps para Android e iOS: ya casi listas': 'App per Android e iOS: quasi pronte',
     'Reportes que te dicen qué vender más': 'Report che ti dicono cosa vendere di più',

@@ -107,42 +107,51 @@ export function HeroBackdrop() {
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute left-1/2 top-1/2 h-[60rem] w-[60rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.13] blur-[160px]" />
       <div className="absolute -right-40 top-1/3 h-[34rem] w-[34rem] rounded-full bg-blue-500/10 blur-[140px]" />
-      <GridPattern />
       <svg className="lp-backdrop absolute inset-0 h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
-          <radialGradient id="lpb-fade" cx="50%" cy="50%" r="50%">
+          <radialGradient id="lpb-fade" cx="50%" cy="50%" r="60%">
             <stop offset="0%" stopColor="#fff" stopOpacity="1" />
-            <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+            <stop offset="70%" stopColor="#fff" stopOpacity=".9" />
+            <stop offset="100%" stopColor="#fff" stopOpacity=".3" />
           </radialGradient>
           <mask id="lpb-mask"><rect width="1440" height="900" fill="url(#lpb-fade)" /></mask>
+          <filter id="lpb-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.5" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
         </defs>
-        <g mask="url(#lpb-mask)" stroke="rgba(148,163,184,.35)" strokeWidth="1">
-          <g className="lp-spin-slow" style={{ transformOrigin: '1010px 450px' }}>
-            <circle cx="1010" cy="450" r="430" strokeDasharray="3 14" />
+        <g mask="url(#lpb-mask)" stroke="rgba(147,197,253,.75)" strokeWidth="1.5" filter="url(#lpb-glow)">
+          {/* halo de anillos alrededor de la ventana del producto, con satélites */}
+          <g className="lp-spin-slow" style={{ transformOrigin: '1010px 470px' }}>
+            <circle cx="1010" cy="470" r="470" strokeDasharray="4 12" />
+            <circle cx="1480" cy="470" r="5" fill="#93c5fd" stroke="none" />
           </g>
-          <g className="lp-spin-rev" style={{ transformOrigin: '1010px 450px' }}>
-            <circle cx="1010" cy="450" r="330" strokeDasharray="2 10" strokeOpacity=".7" />
+          <g className="lp-spin-rev" style={{ transformOrigin: '1010px 470px' }}>
+            <circle cx="1010" cy="470" r="395" strokeDasharray="3 9" strokeOpacity=".85" />
+            <circle cx="615" cy="470" r="4" fill="#bfdbfe" stroke="none" />
           </g>
-          <g className="lp-spin" style={{ transformOrigin: '1010px 450px' }}>
-            <circle cx="1010" cy="450" r="230" strokeDasharray="1 7" strokeOpacity=".6" />
+          <g className="lp-spin" style={{ transformOrigin: '1010px 470px' }}>
+            <circle cx="1010" cy="470" r="320" strokeDasharray="2 6" strokeOpacity=".8" />
+            <circle cx="1010" cy="150" r="4" fill="#60a5fa" stroke="none" />
           </g>
-          {/* estantes que se dibujan (isométricos) */}
-          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".55">
-            <path d="M120 640 L300 560 L480 640 L300 720 Z" />
-            <path d="M120 640 L120 700 L300 780 L480 700 L480 640" />
-            <path d="M300 720 L300 780" />
-            <path d="M160 600 L340 520 L520 600" strokeOpacity=".35" />
-            <path d="M160 600 L160 660" strokeOpacity=".35" />
-            <path d="M520 600 L520 660" strokeOpacity=".35" />
+          {/* línea de ventas que sube, encima del titular */}
+          <path className="lp-draw" d="M70 215 L200 180 L310 200 L430 130 L560 150 L690 70" strokeOpacity=".9" strokeLinecap="round" strokeLinejoin="round" />
+          {[[200, 180], [310, 200], [430, 130], [560, 150]].map(([x, y]) => (
+            <circle key={x} cx={x} cy={y} r="3" fill="#93c5fd" stroke="none" />
+          ))}
+          <circle cx="690" cy="70" r="5" fill="#60a5fa" stroke="none" className="lp-pulse-dot" />
+          {/* estantes isométricos en las esquinas libres */}
+          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".8" style={{ animationDelay: '.8s' }}>
+            <path d="M130 800 L300 725 L470 800 L300 875 Z" />
+            <path d="M130 800 L130 850 L300 925 L470 850 L470 800" />
+            <path d="M300 875 L300 925" />
+            <path d="M190 760 L190 810 M410 760 L410 810" strokeOpacity=".5" />
           </g>
-          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".4" style={{ animationDelay: '1.2s' }}>
-            <path d="M1180 150 L1300 95 L1420 150 L1300 205 Z" />
-            <path d="M1180 150 L1180 195 L1300 250 L1420 195 L1420 150" />
-            <path d="M1300 205 L1300 250" />
+          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".7" style={{ animationDelay: '1.4s' }}>
+            <path d="M1200 120 L1310 70 L1420 120 L1310 170 Z" />
+            <path d="M1200 120 L1200 160 L1310 210 L1420 160 L1420 120" />
+            <path d="M1310 170 L1310 210" />
           </g>
-          {/* línea de ventas que sube */}
-          <path className="lp-draw" style={{ animationDelay: '.6s' }} d="M80 300 L220 260 L330 290 L460 200 L600 230 L720 140" strokeOpacity=".5" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="720" cy="140" r="4" fill="rgba(96,165,250,.9)" stroke="none" className="lp-pulse-dot" />
         </g>
       </svg>
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />

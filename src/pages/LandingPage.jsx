@@ -126,7 +126,7 @@ export function Hero() {
 
       <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-12">
-          <div className="w-full flex-1 text-center lg:max-w-[46%] lg:text-left">
+          <div className="w-full flex-1 text-center lg:max-w-[50%] lg:text-left">
             <Link to="/planes" className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur transition-colors hover:bg-white/10">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
@@ -136,13 +136,15 @@ export function Hero() {
               <ArrowRight size={12} className="text-slate-400" />
             </Link>
 
-            <h1 className="lp-display lp-hero-h1 mb-6 text-[2.6rem] leading-[1.02] text-white sm:text-6xl lg:text-[4rem]">
-              {t('Tu negocio, bajo control.')}<br />
-              <span className="text-slate-400">{t('Gestiona, automatiza y vende más.')}</span>
+            {/* Tres líneas máximo en escritorio (Frank, 20-oct): cada línea no se parte. */}
+            <h1 className="lp-display lp-hero-h1 mb-6 text-[2.35rem] leading-[1.04] text-white sm:text-5xl lg:text-[min(3.6rem,2.95vw)]">
+              <span className="lg:whitespace-nowrap">{t('Tu negocio, bajo control.')}</span><br />
+              <span className="text-slate-400 lg:whitespace-nowrap">{t('Gestiona, automatiza')}</span><br />
+              <span className="text-slate-400 lg:whitespace-nowrap">{t('y vende más.')}</span>
             </h1>
 
             <p className="lp-hero-p mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
-              {t('Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado y te muestra qué se vende. Y crece junto con tu negocio.')}
+              {t('Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado, te muestra qué se vende, y mucho más.')}
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
@@ -171,7 +173,7 @@ export function Hero() {
             </ul>
           </div>
 
-          <div className="w-full flex-1 lg:max-w-[54%]">
+          <div className="w-full flex-1 lg:max-w-[50%]">
             <HeroTour />
           </div>
         </div>

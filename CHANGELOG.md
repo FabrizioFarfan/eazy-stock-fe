@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.1 — 2026-10-20 (retoques del hero, Frank)
+- Bajada: «…cobra el fiado, te muestra qué se vende, y mucho más.» (es/en/it).
+- Titular en **tres líneas máximo** en escritorio: cada línea no se parte (`whitespace-nowrap` desde lg) y el tamaño va con el ancho (`min(3.6rem, 2.95vw)`); columnas 50/50. Comprobado en ES y EN a 1280, 1440 y 1920.
+- Fondo SVG **visible de verdad** («no lo veo para nada»): anillos como halo alrededor de la ventana del producto con satélites que orbitan, brillo (`feGaussianBlur`), línea de ventas que sube por encima del titular con sus puntos, estantes isométricos en las esquinas libres; trazo más grueso y claro, sin la cuadrícula encima.
+
 ## 1.11.0 — 2026-10-20 (hero nuevo de la landing, Frank 20-oct; task 1011)
 - **Hero a pantalla completa** (`min-h-[100svh]`): al entrar no se ve nada de la sección siguiente. Titular nuevo «Tu negocio, bajo control. Gestiona, automatiza y vende más.» y bajada que vende más ventas, no solo orden (lo que antes vivía en el cuaderno ahora trabaja para ti… y crece junto con tu negocio). Píldora con la promo (gratis hasta el 15 de diciembre). Debajo del CTA, lo que viene: IA integrada pronto, apps Android/iOS ya casi, reportes que te dicen qué vender más, sin tarjeta + te ayudamos a cargar tus productos.
 - **Tour animado del producto en bucle de 12 s** (`landing/HeroTour.jsx`) en vez de la captura estática: el cursor recorre el Dashboard (ingresos de hoy, pide tu atención), abre Ventas › Nueva Venta en el **menú real** de la app (mismos grupos y estilos que `layouts/Sidebar.jsx`), escanea tres productos, cobra con Yape y luego abre Reportes › Balance (cierre de caja por medio + ganancia del mes). Las fichas flotantes cambian según la pantalla y solo aparecen cuando hay algo que decir (entrada/salida suave). El cursor se posiciona midiendo el DOM (`data-tour`), así no se desalinea. Se escala al ancho disponible (ResizeObserver), solo corre cuando se ve, y con `prefers-reduced-motion` (y en el prerender) se queda quieto en el Dashboard.
