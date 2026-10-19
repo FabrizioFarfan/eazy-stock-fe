@@ -125,8 +125,8 @@ export function Hero() {
       <HeroBackdrop />
 
       <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8">
-        <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-12">
-          <div className="w-full flex-1 text-center lg:max-w-[50%] lg:text-left">
+        <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16 xl:gap-24">
+          <div className="w-full flex-1 text-center lg:max-w-[46%] lg:text-left">
             <Link to="/planes" className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur transition-colors hover:bg-white/10">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
@@ -137,7 +137,7 @@ export function Hero() {
             </Link>
 
             {/* Tres líneas máximo en escritorio (Frank, 20-oct): cada línea no se parte. */}
-            <h1 className="lp-display lp-hero-h1 mb-6 text-[2.35rem] leading-[1.04] text-white sm:text-5xl lg:text-[min(3.6rem,2.95vw)]">
+            <h1 className="lp-display lp-hero-h1 mb-6 text-[2.35rem] leading-[1.04] text-white sm:text-5xl lg:text-[min(3.6rem,2.7vw)]">
               <span className="lg:whitespace-nowrap">{t('Tu negocio, bajo control.')}</span><br />
               <span className="text-slate-400 lg:whitespace-nowrap">{t('Gestiona, automatiza')}</span><br />
               <span className="text-slate-400 lg:whitespace-nowrap">{t('y vende más.')}</span>
@@ -173,7 +173,7 @@ export function Hero() {
             </ul>
           </div>
 
-          <div className="w-full flex-1 lg:max-w-[50%]">
+          <div className="w-full flex-1 lg:max-w-[48%]">
             <HeroTour />
           </div>
         </div>

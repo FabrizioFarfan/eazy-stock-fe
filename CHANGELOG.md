@@ -2,6 +2,10 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.2 — 2026-10-20 (hero: aire y fondo abstracto, Frank)
+- Más espacio entre el texto y la animación (`lg:gap-16 xl:gap-24`, columnas 46/48); el titular sigue en 3 líneas (`min(3.6rem, 2.7vw)`).
+- Fondo SVG v3, **abstracto**: fuera la línea con ángulos de 90° y las cajas isométricas («¿qué es eso?»). Ahora son corrientes curvas que nacen fuera del borde izquierdo, fluyen hacia la ventana del producto (todo converge en un solo lugar que lo gestiona) y salen por la derecha, con puntos que viajan por ellas (`animateMotion` + `mpath`) = los productos vendiéndose; degradado por corriente, brillo y el halo de anillos con satélites. Con `prefers-reduced-motion` las corrientes salen dibujadas y sin partículas.
+
 ## 1.11.1 — 2026-10-20 (retoques del hero, Frank)
 - Bajada: «…cobra el fiado, te muestra qué se vende, y mucho más.» (es/en/it).
 - Titular en **tres líneas máximo** en escritorio: cada línea no se parte (`whitespace-nowrap` desde lg) y el tamaño va con el ancho (`min(3.6rem, 2.95vw)`); columnas 50/50. Comprobado en ES y EN a 1280, 1440 y 1920.

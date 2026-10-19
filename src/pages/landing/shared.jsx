@@ -98,10 +98,23 @@ export function GlowOrbs() {
 }
 
 /**
- * Fondo del hero: brillo azul + SVG animado (como en Eazy Finance y Eazy Habit):
- * anillos punteados que giran despacio, una cuadrícula en perspectiva y
- * «estantes» que se dibujan solos. Todo decorativo y en una sola tinta.
+ * Fondo del hero (20-oct-2026, v3, Frank: «algo abstracto, sin ángulos de 90°, que las
+ * líneas entren conectadas desde el borde»): CORRIENTES curvas que nacen fuera del
+ * borde izquierdo, fluyen hacia la ventana del producto (todo converge en un solo
+ * lugar que lo gestiona) y salen por la derecha; puntos que viajan por ellas = los
+ * productos vendiéndose. Un halo de anillos alrededor de la ventana. Una sola tinta.
  */
+const STREAMS_IN = [
+  'M-60 110 C 300 40, 520 250, 760 330 S 980 430, 1010 470',
+  'M-60 230 C 260 190, 470 340, 700 420 S 950 490, 1010 470',
+  'M-60 800 C 320 850, 520 690, 760 590 S 960 520, 1010 470',
+  'M-60 920 C 420 960, 720 760, 900 620 S 1000 540, 1010 470',
+]
+const STREAMS_OUT = [
+  'M1010 470 C 1160 300, 1320 230, 1500 170',
+  'M1010 470 C 1200 590, 1340 690, 1500 760',
+]
+
 export function HeroBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -109,49 +122,61 @@ export function HeroBackdrop() {
       <div className="absolute -right-40 top-1/3 h-[34rem] w-[34rem] rounded-full bg-blue-500/10 blur-[140px]" />
       <svg className="lp-backdrop absolute inset-0 h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
-          <radialGradient id="lpb-fade" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stopColor="#fff" stopOpacity="1" />
-            <stop offset="70%" stopColor="#fff" stopOpacity=".9" />
-            <stop offset="100%" stopColor="#fff" stopOpacity=".3" />
-          </radialGradient>
-          <mask id="lpb-mask"><rect width="1440" height="900" fill="url(#lpb-fade)" /></mask>
           <filter id="lpb-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2.5" result="b" />
+            <feGaussianBlur stdDeviation="3" result="b" />
             <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
+          <linearGradient id="lpb-stream" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#93c5fd" stopOpacity=".15" />
+            <stop offset=".55" stopColor="#93c5fd" stopOpacity=".7" />
+            <stop offset="1" stopColor="#60a5fa" stopOpacity=".9" />
+          </linearGradient>
+          <linearGradient id="lpb-stream-out" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#60a5fa" stopOpacity=".9" />
+            <stop offset="1" stopColor="#93c5fd" stopOpacity=".1" />
+          </linearGradient>
+          {STREAMS_IN.map((d, i) => <path key={i} id={`lpb-in-${i}`} d={d} />)}
+          {STREAMS_OUT.map((d, i) => <path key={i} id={`lpb-out-${i}`} d={d} />)}
         </defs>
-        <g mask="url(#lpb-mask)" stroke="rgba(147,197,253,.75)" strokeWidth="1.5" filter="url(#lpb-glow)">
-          {/* halo de anillos alrededor de la ventana del producto, con satélites */}
-          <g className="lp-spin-slow" style={{ transformOrigin: '1010px 470px' }}>
-            <circle cx="1010" cy="470" r="470" strokeDasharray="4 12" />
-            <circle cx="1480" cy="470" r="5" fill="#93c5fd" stroke="none" />
-          </g>
-          <g className="lp-spin-rev" style={{ transformOrigin: '1010px 470px' }}>
-            <circle cx="1010" cy="470" r="395" strokeDasharray="3 9" strokeOpacity=".85" />
-            <circle cx="615" cy="470" r="4" fill="#bfdbfe" stroke="none" />
-          </g>
-          <g className="lp-spin" style={{ transformOrigin: '1010px 470px' }}>
-            <circle cx="1010" cy="470" r="320" strokeDasharray="2 6" strokeOpacity=".8" />
-            <circle cx="1010" cy="150" r="4" fill="#60a5fa" stroke="none" />
-          </g>
-          {/* línea de ventas que sube, encima del titular */}
-          <path className="lp-draw" d="M70 215 L200 180 L310 200 L430 130 L560 150 L690 70" strokeOpacity=".9" strokeLinecap="round" strokeLinejoin="round" />
-          {[[200, 180], [310, 200], [430, 130], [560, 150]].map(([x, y]) => (
-            <circle key={x} cx={x} cy={y} r="3" fill="#93c5fd" stroke="none" />
+        <g filter="url(#lpb-glow)" strokeLinecap="round">
+          {/* corrientes que entran desde el borde izquierdo */}
+          {STREAMS_IN.map((d, i) => (
+            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream)" strokeWidth={i % 2 ? 1.25 : 1.75} style={{ animationDelay: `${i * 0.35}s` }} />
           ))}
-          <circle cx="690" cy="70" r="5" fill="#60a5fa" stroke="none" className="lp-pulse-dot" />
-          {/* estantes isométricos en las esquinas libres */}
-          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".8" style={{ animationDelay: '.8s' }}>
-            <path d="M130 800 L300 725 L470 800 L300 875 Z" />
-            <path d="M130 800 L130 850 L300 925 L470 850 L470 800" />
-            <path d="M300 875 L300 925" />
-            <path d="M190 760 L190 810 M410 760 L410 810" strokeOpacity=".5" />
+          {/* y salen por la derecha */}
+          {STREAMS_OUT.map((d, i) => (
+            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream-out)" strokeWidth="1.5" style={{ animationDelay: `${1.6 + i * 0.4}s` }} />
+          ))}
+          {/* halo alrededor de la ventana */}
+          <g stroke="rgba(147,197,253,.55)" strokeWidth="1.25">
+            <g className="lp-spin-slow" style={{ transformOrigin: '1010px 470px' }}>
+              <circle cx="1010" cy="470" r="470" strokeDasharray="4 12" />
+              <circle cx="1480" cy="470" r="5" fill="#93c5fd" stroke="none" />
+            </g>
+            <g className="lp-spin-rev" style={{ transformOrigin: '1010px 470px' }}>
+              <circle cx="1010" cy="470" r="395" strokeDasharray="3 9" strokeOpacity=".85" />
+              <circle cx="615" cy="470" r="4" fill="#bfdbfe" stroke="none" />
+            </g>
+            <g className="lp-spin" style={{ transformOrigin: '1010px 470px' }}>
+              <circle cx="1010" cy="470" r="320" strokeDasharray="2 6" strokeOpacity=".8" />
+              <circle cx="1010" cy="150" r="4" fill="#60a5fa" stroke="none" />
+            </g>
           </g>
-          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".7" style={{ animationDelay: '1.4s' }}>
-            <path d="M1200 120 L1310 70 L1420 120 L1310 170 Z" />
-            <path d="M1200 120 L1200 160 L1310 210 L1420 160 L1420 120" />
-            <path d="M1310 170 L1310 210" />
-          </g>
+          {/* productos que viajan por las corrientes */}
+          {STREAMS_IN.map((_, i) => [0, 1].map((k) => (
+            <circle key={`${i}-${k}`} r={k ? 3 : 4.5} fill={k ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
+              <animateMotion dur={`${8 + i * 1.3}s`} begin={`${-(i * 2.1 + k * 4.5)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
+                <mpath href={`#lpb-in-${i}`} />
+              </animateMotion>
+            </circle>
+          )))}
+          {STREAMS_OUT.map((_, i) => [0, 1].map((k) => (
+            <circle key={`o${i}-${k}`} r={k ? 3 : 4} fill="#93c5fd" className="lp-particle">
+              <animateMotion dur={`${6 + i}s`} begin={`${-(i * 1.7 + k * 3)}s`} repeatCount="indefinite">
+                <mpath href={`#lpb-out-${i}`} />
+              </animateMotion>
+            </circle>
+          )))}
         </g>
       </svg>
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
@@ -197,7 +222,7 @@ export function LandingStyles() {
       @keyframes lp-ring   { 0% { transform: scale(.8); opacity: .8 } 100% { transform: scale(2.2); opacity: 0 } }
       @keyframes lp-click  { 0% { transform: scale(.4); opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
       @keyframes lp-spin   { to { transform: rotate(360deg) } }
-      @keyframes lp-draw   { from { stroke-dashoffset: 1200 } to { stroke-dashoffset: 0 } }
+      @keyframes lp-draw   { from { stroke-dashoffset: 1600 } to { stroke-dashoffset: 0 } }
       @keyframes lp-pulse-dot { 0%,100% { opacity: 1; r: 4 } 50% { opacity: .4; r: 7 } }
 
       .lp-bar { transform-origin: left; transform: scaleX(0); }
@@ -216,7 +241,7 @@ export function LandingStyles() {
       .lp-spin-slow { animation: lp-spin 140s linear infinite; }
       .lp-spin-rev  { animation: lp-spin 95s linear infinite reverse; }
       .lp-spin      { animation: lp-spin 60s linear infinite; }
-      .lp-draw { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: lp-draw 6s cubic-bezier(.22,1,.36,1) forwards; }
+      .lp-draw { stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: lp-draw 5s cubic-bezier(.22,1,.36,1) forwards; }
       .lp-pulse-dot { animation: lp-pulse-dot 2.4s ease-in-out infinite; }
 
       /* Laptops bajas (≤ 820 px de alto): el hero sigue entrando en una pantalla. */
@@ -234,6 +259,7 @@ export function LandingStyles() {
         .lp-bar, .lp-row, .lp-pop { opacity: 1; transform: none; animation: none !important; }
         .lp-marquee, .lp-scanline, .lp-blink, .lp-ring, .lp-spin-slow, .lp-spin-rev, .lp-spin, .lp-pulse-dot { animation: none !important; }
         .lp-draw { stroke-dashoffset: 0; animation: none !important; }
+        .lp-particle { display: none; }
       }
     `}</style>
   )
