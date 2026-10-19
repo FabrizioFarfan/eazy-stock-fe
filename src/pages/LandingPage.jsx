@@ -9,7 +9,7 @@ import {
   Menu, X, Landmark, Bot, Coffee, Apple,
   Award, Camera, History, Undo2, Banknote, EyeOff,
 } from 'lucide-react'
-import { useT } from '../i18n'
+import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { Reveal, Counter, GridPattern, GlowOrbs, SectionHead, LandingStyles } from './landing/shared'
 import {
@@ -17,7 +17,7 @@ import {
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { PUBLIC_PAGES, usePageSeo } from './landing/site'
-import { PLANS, TRIAL_DAYS, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
+import { PLANS, trialLine, promoVars } from './landing/plans'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
 const CTA = '/registro'
@@ -346,7 +346,7 @@ export function Benefits({ teaser = false }) {
           <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
             <p className="text-base font-semibold text-white sm:text-lg">
               {t('Menos cuaderno, menos plata perdida, más tiempo para vender.')}
-              <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde. {days} días gratis, sin tarjeta.', { days: TRIAL_DAYS })}</span>
+              <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde.')} {trialLine(t, dateLocale())}.</span>
             </p>
             <Link to={CTA} className="group inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-gray-100">
               {t('Probar gratis')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
@@ -929,7 +929,7 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Empiezas con 14 días gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Quien se registra ahora paga la mitad los primeros 6 meses.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -969,7 +969,7 @@ export function Faq({ head = true }) {
         <Reveal delay={100}>
           <div className="space-y-3">
             {FAQS.map(([q, a], i) => (
-              <FaqItem key={q} q={t(q)} a={t(a)} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
+              <FaqItem key={q} q={t(q, promoVars(dateLocale()))} a={t(a, promoVars(dateLocale()))} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
             ))}
           </div>
         </Reveal>
@@ -1032,7 +1032,7 @@ export function CtaBanner() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            {t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })}
+            {trialLine(t, dateLocale())}
           </span>
           <h2 className="lp-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {t('Tu tienda, ordenada')}<br />
@@ -1183,8 +1183,8 @@ function PricingTeaser() {
             <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })}</h2>
-                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Quien se registra ahora paga la mitad los primeros {months} meses.', { months: LAUNCH_DISCOUNT_MONTHS })}</p>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{trialLine(t, dateLocale())}</h2>
+                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))}</p>
               </div>
               <div className="grid flex-shrink-0 grid-cols-3 gap-2 sm:gap-3">
                 {PLANS.map((p) => (

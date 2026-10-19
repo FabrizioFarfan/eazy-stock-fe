@@ -3,27 +3,35 @@ import { Navigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Check, ArrowLeft, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock } from 'lucide-react'
+import { Check, ArrowLeft, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useT } from '../i18n'
+import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { usePageSeo } from './landing/site'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
 import { COUNTRIES } from '../utils/countries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
-import { TRIAL_DAYS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
+import { TRIAL_DAYS, promoActive, promoVars, trialLine } from './landing/plans'
+import { usePlans } from '../hooks/useSubscription'
+import { isValidPeruRuc, TAX_ID_LABEL } from '../utils/taxIds'
 
 /**
  * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
- * Frank: William traerá usuarios y cada cuenta nueva nace con 14 días gratis y
- * 50 % de descuento los primeros 6 meses; el BE lo aplica en POST /auth/register.
- * Mismo chrome oscuro que el login: panel izquierdo (escritorio) + formulario.
+ * Promo de lanzamiento (Frank + Fabrizio, 19-oct-2026, task 1001): gratis hasta el
+ * 15 de diciembre sin tarjeta; los primeros 50 negocios son fundadores (mitad de
+ * precio 6 meses). RUC obligatorio, válido y único (task 1002). El BE manda en
+ * POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
  */
 
-const PERKS = [
+const PERKS_PROMO = [
+  [Clock,       'Gratis hasta el {date} con tu negocio real, sin tarjeta'],
+  [Award,       'Los primeros {n} negocios pagan la mitad los primeros {months} meses'],
+  [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
+]
+const PERKS_AFTER = [
   [Clock,       '{days} días gratis con tu negocio real, sin tarjeta'],
-  [Sparkles,    '{pct} % de descuento los primeros {months} meses si te registras ahora'],
+  [Sparkles,    'Eliges tu plan solo cuando termina la prueba'],
   [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
 ]
 
@@ -35,9 +43,17 @@ const makeSchema = (t) => z.object({
   password:     z.string().min(6, t('Mínimo 6 caracteres')),
   businessName: z.string().trim().min(2, t('Mínimo 2 caracteres')),
   countryCode:  z.string().min(2, t('Requerido')).max(3),
+  taxId:        z.string().trim().min(1, t('El RUC es obligatorio')),
   currency:     z.string().length(3, t('Requerido')),
   phone:        z.string().trim().optional(),
   accept:       z.boolean().refine((v) => v === true, { message: t('Necesitamos que aceptes la política de privacidad') }),
+}).superRefine((v, ctx) => {
+  // Perú: RUC real de SUNAT (11 dígitos + verificador). Otros países: 6-20 letras o números.
+  const id = v.taxId.replace(/[\s.-]/g, '').toUpperCase()
+  const ok = v.countryCode === 'PE' ? isValidPeruRuc(id) : /^[A-Z0-9]{6,20}$/.test(id)
+  if (!ok) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['taxId'], message: v.countryCode === 'PE'
+    ? t('Ese RUC no es válido: son 11 dígitos y empieza por 10 o 20')
+    : t('Entre 6 y 20 letras o números') })
 })
 
 export default function RegisterPage() {
@@ -47,16 +63,21 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { data: plans } = usePlans()
+  const promo = promoActive()
+  const vars = promoVars(dateLocale())
   useNoAppDarkMode()
   usePageSeo({
     title: t('Crear cuenta — Eazy Stock'),
-    description: t('Crea tu cuenta de Eazy Stock en un minuto: {days} días gratis, sin tarjeta, con tu negocio real.', { days: TRIAL_DAYS }),
+    description: promo
+      ? t('Crea tu cuenta de Eazy Stock en un minuto: gratis hasta el {date}, sin tarjeta, con tu negocio real.', vars)
+      : t('Crea tu cuenta de Eazy Stock en un minuto: {days} días gratis, sin tarjeta, con tu negocio real.', { days: TRIAL_DAYS }),
     path: '/registro',
   })
 
   const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', password: '', businessName: '', countryCode: 'PE', currency: 'PEN', phone: '', accept: false },
+    defaultValues: { name: '', email: '', password: '', businessName: '', countryCode: 'PE', taxId: '', currency: 'PEN', phone: '', accept: false },
   })
 
   // Al cambiar el país se propone su moneda (se puede corregir).
@@ -78,7 +99,9 @@ export default function RegisterPage() {
       const field = getErrorField(err)
       if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
         setFieldError('email', { type: 'server', message: 'DUPLICATE_EMAIL' })
-      } else if (field && ['password', 'name', 'businessName', 'countryCode', 'currency', 'phone'].includes(field)) {
+      } else if (getErrorCode(err) === 'DUPLICATE_TAX_ID') {
+        setFieldError('taxId', { type: 'server', message: 'DUPLICATE_TAX_ID' })
+      } else if (field && ['password', 'name', 'businessName', 'countryCode', 'currency', 'phone', 'taxId'].includes(field)) {
         setFieldError(field, { type: 'server', message: getErrorMessage(err) })
       } else {
         setError(getErrorMessage(err))
@@ -88,7 +111,8 @@ export default function RegisterPage() {
     }
   }
 
-  const vars = { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }
+  const perks = promo ? PERKS_PROMO : PERKS_AFTER
+  const taxLabel = TAX_ID_LABEL[watchedCountry] ?? t('Identificación fiscal')
 
   return (
     <div className="flex min-h-screen">
@@ -109,7 +133,7 @@ export default function RegisterPage() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            {t('{days} días gratis, sin tarjeta', vars)}
+            {trialLine(t, dateLocale())}
           </span>
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white">
             {t('Tu tienda, ordenada')}<br />
@@ -119,7 +143,7 @@ export default function RegisterPage() {
             {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró.')}
           </p>
           <ul className="mt-10 space-y-4">
-            {PERKS.map(([Icon, text]) => (
+            {perks.map(([Icon, text]) => (
               <li key={text} className="flex items-center gap-3">
                 <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-600/20">
                   <Icon size={13} className="text-blue-400" />
@@ -128,6 +152,11 @@ export default function RegisterPage() {
               </li>
             ))}
           </ul>
+          {promo && plans && (
+            <p className={`mt-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold ${plans.foundersAvailable ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/5 text-slate-400'}`}>
+              <Award size={13} /> {plans.foundersAvailable ? t('Aún hay lugar entre los primeros {n}', vars) : t('Los primeros {n} ya entraron', vars)}
+            </p>
+          )}
         </div>
 
         <p className="relative text-xs text-slate-500">
@@ -155,13 +184,13 @@ export default function RegisterPage() {
             </Link>
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-900">{t('Crea tu cuenta')}</h2>
-              <p className="mt-1 text-sm text-gray-500">{t('{days} días gratis, sin tarjeta', vars)}</p>
+              <p className="mt-1 text-sm text-gray-500">{trialLine(t, dateLocale())}</p>
             </div>
           </div>
 
           <div className="mb-8 hidden lg:block">
             <h2 className="text-3xl font-bold text-gray-900">{t('Crea tu cuenta')}</h2>
-            <p className="mt-2 text-sm text-gray-500">{t('Un minuto y ya estás vendiendo. Sin tarjeta.')}</p>
+            <p className="mt-2 text-sm text-gray-500">{t('Un minuto y ya estás vendiendo.')} {trialLine(t, dateLocale())}.</p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8">
@@ -201,6 +230,24 @@ export default function RegisterPage() {
                 <label htmlFor="businessName" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Nombre de tu negocio')}</label>
                 <input id="businessName" {...register('businessName')} type="text" autoComplete="organization" placeholder={t('Bodega Doña María')} className={inputCls} />
                 {errors.businessName && <p className="mt-1 text-xs text-red-500">{errors.businessName.message}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="taxId" className="mb-1.5 block text-sm font-medium text-gray-700">{taxLabel}</label>
+                <input id="taxId" {...register('taxId')} type="text" inputMode={watchedCountry === 'PE' ? 'numeric' : 'text'} autoComplete="off"
+                  placeholder={watchedCountry === 'PE' ? '20123456786' : t('Tu número fiscal')} className={inputCls} data-testid="register-tax-id" />
+                <p className="mt-1 text-xs text-gray-400">
+                  {watchedCountry === 'PE'
+                    ? t('El RUC de tu negocio en SUNAT (11 dígitos). Uno por negocio: es lo que hace legal tu cuenta.')
+                    : t('La identificación fiscal de tu negocio. Una por negocio.')}
+                </p>
+                {errors.taxId && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.taxId.message === 'DUPLICATE_TAX_ID'
+                      ? <>{t('Ya hay un negocio con ese RUC.')} <Link to="/login" className="font-semibold underline">{t('Inicia sesión')}</Link></>
+                      : errors.taxId.message}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -246,7 +293,7 @@ export default function RegisterPage() {
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 {submitting ? t('Creando tu cuenta...') : t('Crear mi cuenta gratis')}
               </button>
-              <p className="text-center text-[11px] text-gray-400">{t('{days} días sin tarjeta · cancelas cuando quieras', vars)}</p>
+              <p className="text-center text-[11px] text-gray-400">{trialLine(t, dateLocale())} · {t('cancelas cuando quieras')}</p>
             </form>
           </div>
 

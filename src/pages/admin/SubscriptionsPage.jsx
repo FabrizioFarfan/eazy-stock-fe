@@ -41,6 +41,7 @@ function EditSubscriptionModal({ row, onClose }) {
       discountUntil: toDateInput(row.discountUntil),
       customPriceMonthly: row.customPriceMonthly ?? '',
       launchPriceLocked: !!row.launchPriceLocked,
+      founder: !!row.founder,
       note: row.note ?? '',
     },
   })
@@ -55,6 +56,7 @@ function EditSubscriptionModal({ row, onClose }) {
       discountUntil: v.discountUntil || null,
       customPriceMonthly: v.customPriceMonthly === '' ? null : Number(v.customPriceMonthly),
       launchPriceLocked: !!v.launchPriceLocked,
+      founder: !!v.founder,
       note: v.note?.trim() || null,
     }
     try {
@@ -107,6 +109,10 @@ function EditSubscriptionModal({ row, onClose }) {
         <input type="checkbox" {...register('launchPriceLocked')} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
         {t('Precio de lanzamiento bloqueado para siempre')}
       </label>
+      <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-3 text-sm text-gray-700">
+        <input type="checkbox" {...register('founder')} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
+        {t('Fundador (entre los primeros 50 de la promo)')}
+      </label>
       <EntityField label={t('Nota')} hint={t('La ve el dueño en Ajustes › Tu plan')}>
         <textarea rows={2} {...register('note')} className={inputCls} placeholder={t('Paga todos los 15 por Yape…')} />
       </EntityField>
@@ -146,6 +152,7 @@ function Row({ row, onEdit }) {
             <Chip tone={STATUS_TONE[row.status] ?? 'gray'}>{t(STATUS_LABEL[row.status] ?? row.status)}</Chip>
             <Chip tone="blue">{planName(row.plan)}</Chip>
             {row.launchPriceLocked && <Chip tone="amber">{t('Precio bloqueado')}</Chip>}
+            {row.founder && <Chip tone="emerald">{t('Fundador')}</Chip>}
           </div>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500">
             <Store size={12} className="text-gray-400" />

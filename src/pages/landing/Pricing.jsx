@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users } from 'lucide-react'
-import { useT } from '../../i18n'
+import { useT, dateLocale } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, CURRENCY, TRIAL_DAYS, YEARLY_FREE_MONTHS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS, yearlyPrice } from './plans'
+import { PLANS, OFFERS, COMPARE, CURRENCY, YEARLY_FREE_MONTHS, yearlyPrice, promoActive, promoVars, trialLine } from './plans'
 
 // Registro propio desde el 15-oct-2026 (antes todo iba al login).
 const CTA = '/registro'
-const OFFER_VARS = { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }
 const OFFER_ICONS = { Sparkles, Lock, CalendarClock }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -36,7 +35,7 @@ function BillingToggle({ yearly, onChange, dark }) {
         </button>
       </div>
       <p className={`text-xs ${dark ? 'text-slate-500' : 'text-gray-500'}`}>
-        {t('Todos los planes empiezan con {days} días de prueba, sin tarjeta.', { days: TRIAL_DAYS })}
+        {t('Todos los planes empiezan con la prueba gratis, sin tarjeta.')} {trialLine(t, dateLocale())}.
       </p>
     </div>
   )
@@ -127,7 +126,7 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
         {t(plan.cta)} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
       </Link>
       )}
-      {!compact && <p className={`mt-3 text-center text-[11px] ${muted}`}>{t('{days} días gratis · sin tarjeta · cancelas cuando quieras', { days: TRIAL_DAYS })}</p>}
+      {!compact && <p className={`mt-3 text-center text-[11px] ${muted}`}>{trialLine(t, dateLocale())} · {t('cancelas cuando quieras')}</p>}
     </div>
   )
 }
@@ -159,8 +158,11 @@ export function OffersGrid({ dark = false }) {
   const t = useT()
   return (
     <div className="grid gap-5 md:grid-cols-3">
-      {OFFERS.map(({ key, icon, tone, title, desc }, i) => {
+      {OFFERS.map(({ key, icon, tone, title, desc, afterPromo }, i) => {
         const Icon = OFFER_ICONS[icon] ?? Sparkles
+        // La oferta «gratis hasta el 15-dic» se convierte en «14 días gratis» cuando pasa la promo.
+        if (afterPromo && !promoActive()) ({ title, desc } = afterPromo)
+        const OFFER_VARS = promoVars(dateLocale())
         return (
           <Reveal key={key} delay={i * 100}>
             <div className={`group relative h-full overflow-hidden rounded-3xl p-7 transition-all hover:-translate-y-1 ${
@@ -231,7 +233,7 @@ export function PricingSection() {
             dark
             kicker={t('Precios y ofertas')}
             title={t('Un plan para cada tamaño de negocio')}
-            sub={t('{days} días gratis sin tarjeta y, si te registras ahora, {pct} % de descuento los primeros {months} meses. Pagas por el tamaño de tu negocio, no por funciones escondidas.', OFFER_VARS)}
+            sub={t('Gratis hasta el {date}, sin tarjeta, y los primeros {n} negocios pagan la mitad los primeros {months} meses. Pagas por el tamaño de tu negocio, no por funciones escondidas.', promoVars(dateLocale()))}
           />
         </Reveal>
         <PlanCards dark />

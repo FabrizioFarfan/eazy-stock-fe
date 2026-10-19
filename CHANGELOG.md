@@ -2,6 +2,13 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.10.0 — 2026-10-19 (promo de lanzamiento, RUC obligatorio, cobro el 15; tasks 1001-1003)
+- **Gratis hasta el 15 de diciembre, sin tarjeta** en toda la web pública (Inicio, /planes, login y registro) y en la app: `plans.js` tiene `PROMO_FREE_UNTIL`, `FOUNDERS_LIMIT`, `BILLING_DAY`, `promoActive()`, `promoVars()` y `trialLine()`; cuando pase la fecha, los textos vuelven solos a «14 días gratis». La oferta «{pct} % de descuento» pasa a ser «Los primeros 50 negocios pagan la mitad 6 meses» y la FAQ explica hasta cuándo es gratis, qué ganan los primeros 50 y que se cobra el 15 de cada mes.
+- **Registro con RUC obligatorio**: campo «RUC» (o la identificación fiscal del país: CUIT, RUT, NIT, RFC…) con validación en el navegador (`utils/taxIds.js`, mismo algoritmo SUNAT del BE) y errores del BE bajo el campo (inválido, repetido → «Inicia sesión»). El panel izquierdo muestra si aún hay lugar entre los primeros 50 (GET /api/plans, `foundersAvailable`), nunca la posición.
+- **Ajustes › Tu plan**: tarjeta «Primeros 50: Sí / No» (fundador: mitad de precio 6 meses y precio bloqueado); la prueba dice «Gratis hasta»; el pago con tarjeta explica que el primer cobro es el 15 tras el período gratis y luego cada 15. Banner: «Gratis hasta el {fecha}: te quedan {n} días» cuando la prueba es larga.
+- **Boss › Suscripciones**: chip «Fundador» y casilla para marcarlo o quitarlo.
+- Traducciones en/it en `dict/promo.js`.
+
 ## 1.9.0 — 2026-10-19 (nota de pedido, pedido de William; task 989)
 - **Nota de pedido desde el detalle de una venta.** Para el cliente que compró pero no quiere factura: en «Detalle de venta» (Ventas, Reportes y ficha del cliente) el botón «Nota de pedido» abre la botonera Descargar PDF · WhatsApp · Correo · Imprimir. El documento lleva el negocio con su RUC (si lo tiene en Ajustes), quién atendió, el cliente de la venta (con su teléfono y correo si está asociado), la fecha, el número `NP-AAAAMMDD-XXXX` (fecha de la venta + inicio de su id, estable para reimprimir), las líneas con cantidad, precio y subtotal, el subtotal y descuento si lo hubo, el total cobrado y cómo pagó (o «al fiado»). En el celular el PDF va adjunto a la hoja de compartir; en escritorio se descarga y se abre WhatsApp con el mensaje listo.
 - Un solo molde para cotización y nota de pedido: `quotePdf.js` (`buildDocPdf` + `DOC_KINDS`), `printQuote.js` (`printDoc`) y `shareQuote.js` (`shareDocWhatsApp/Email`, `docMessage`) aceptan `kind`; `QuoteActions` recibe `kind`. Las cotizaciones siguen igual (mismas funciones exportadas). Línea de RUC también en la cotización cuando el objeto la trae.

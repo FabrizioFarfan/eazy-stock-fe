@@ -3,6 +3,7 @@ import { Clock, AlertTriangle, Lock, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useT } from '../../i18n'
+import { formatDay } from './subscriptionUtils'
 
 /**
  * Franja bajo el Topbar con el estado del plan (M1 «Planes en serio», 15-oct-2026).
@@ -47,7 +48,9 @@ export default function SubscriptionBanner() {
           ? t('Tu prueba gratis termina hoy.')
           : n === 1
             ? t('Prueba gratis: te queda 1 día.')
-            : t('Prueba gratis: te quedan {n} días.', { n })}
+            : n > 14 && sub.trialEndsAt
+              ? t('Gratis hasta el {date}: te quedan {n} días.', { date: formatDay(sub.trialEndsAt), n })
+              : t('Prueba gratis: te quedan {n} días.', { n })}
         {urgent && <> {t('Activa tu plan para no quedar en solo lectura.')}</>}
       </Banner>
     )

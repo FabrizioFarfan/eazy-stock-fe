@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { CreditCard, Clock, CalendarCheck, Lock, MessageCircle, Mail, Sparkles, Loader2, Tag, Store, CheckCircle2, ExternalLink, Receipt } from 'lucide-react'
+import { CreditCard, Clock, CalendarCheck, Lock, MessageCircle, Mail, Sparkles, Loader2, Tag, Store, CheckCircle2, ExternalLink, Receipt, Award } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { billingApi } from '../../services/endpoints/billing'
@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useSubscription, SUBSCRIPTION_KEY } from '../../hooks/useSubscription'
 import { useT } from '../../i18n'
 import { PlanCards } from '../../pages/landing/Pricing'
-import { CURRENCY, PLANS, YEARLY_FREE_MONTHS } from '../../pages/landing/plans'
+import { CURRENCY, PLANS, YEARLY_FREE_MONTHS, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
 import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from './subscriptionUtils'
 
@@ -117,11 +117,11 @@ export default function PlanSection() {
         {sub && (
           <>
             {/* Estado + precio */}
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat icon={Sparkles} label={t('Plan')} value={currentPlan?.name ?? sub.plan}
                 sub={sub.maxEmployees != null ? t('Hasta {n} trabajadores', { n: sub.maxEmployees }) : t('Trabajadores ilimitados')} />
               {sub.status === 'TRIAL' && (
-                <Stat icon={Clock} label={t('Prueba gratis hasta')} value={formatDay(sub.trialEndsAt)}
+                <Stat icon={Clock} label={t('Gratis hasta')} value={formatDay(sub.trialEndsAt)}
                   sub={sub.daysLeft == null ? null : sub.daysLeft === 1 ? t('Queda 1 día') : t('Quedan {n} días', { n: Math.max(0, sub.daysLeft) })} tone={sub.daysLeft <= 3 ? 'amber' : 'blue'} />
               )}
               {sub.status === 'ACTIVE' && (
@@ -147,6 +147,13 @@ export default function PlanSection() {
                   ? (sub.discountUntil ? t('{pct} % de descuento hasta el {date}', { pct: sub.discountPercent, date: formatDay(sub.discountUntil) }) : t('{pct} % de descuento', { pct: sub.discountPercent }))
                   : customPrice ? t('Precio especial acordado') : sub.launchPriceLocked ? t('Precio de lanzamiento, para siempre') : null}
                 tone={hasDiscount ? 'emerald' : undefined} />
+              {/* Promo de lanzamiento (19-oct-2026): SÍ / NO entre los primeros 50, nunca la posición */}
+              <Stat icon={Award} label={t('Primeros {n}', { n: FOUNDERS_LIMIT })}
+                value={sub.founder ? t('Sí') : t('No')}
+                sub={sub.founder
+                  ? t('Fundador: {pct} % menos los primeros {months} meses y precio bloqueado', { pct: sub.discountPercent ?? 50, months: LAUNCH_DISCOUNT_MONTHS })
+                  : t('Los primeros {n} negocios ya entraron', { n: FOUNDERS_LIMIT })}
+                tone={sub.founder ? 'emerald' : undefined} />
             </div>
 
             {/* Varios negocios por dueño (15-oct-2026): cuántos tiene y cuántos admite el plan */}
@@ -177,7 +184,9 @@ export default function PlanSection() {
                 <p className="mt-1 text-xs text-gray-600">
                   {sub.stripeSubscriptionId
                     ? t('Se cobra solo cada período. Desde el portal cambias la tarjeta, descargas facturas o cancelas.')
-                    : t('Pago seguro con Stripe. Mensual, o anual pagando {n} meses en vez de 12. Se activa al instante.', { n: 12 - YEARLY_FREE_MONTHS })}
+                    : sub.status === 'TRIAL'
+                      ? t('Pago seguro con Stripe. Guardas la tarjeta hoy y el primer cobro es el {day} después de que termine tu período gratis; luego, cada {day}. Anual: {n} meses en vez de 12.', { day: BILLING_DAY, n: 12 - YEARLY_FREE_MONTHS })
+                      : t('Pago seguro con Stripe. Se cobra el {day} de cada mes (hoy, la parte proporcional). Anual: {n} meses en vez de 12. Se activa al instante.', { day: BILLING_DAY, n: 12 - YEARLY_FREE_MONTHS })}
                 </p>
                 {sub.stripeSubscriptionId ? (
                   <button type="button" onClick={openPortal} disabled={!!paying}

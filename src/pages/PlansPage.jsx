@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, Check, Store, Users, Sparkles } from 'lucide-react'
-import { useT } from '../i18n'
+import { useT, dateLocale } from '../i18n'
 import { Reveal, SectionHead, GridPattern, GlowOrbs, LandingStyles } from './landing/shared'
 import { PlanCards, OffersGrid, CompareTable } from './landing/Pricing'
-import { PLAN_FAQS, TRIAL_DAYS, LAUNCH_DISCOUNT_PERCENT, LAUNCH_DISCOUNT_MONTHS } from './landing/plans'
+import { PLAN_FAQS, promoVars, trialLine } from './landing/plans'
 import { Navbar, Footer, CtaBanner } from './LandingPage'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 
@@ -25,7 +25,7 @@ function useSeo() {
     const prevDesc = desc?.getAttribute('content')
     const prevCanon = canon?.getAttribute('href')
     document.title = t('Planes y precios — Eazy Stock')
-    desc?.setAttribute('content', t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {days} días de prueba sin tarjeta y {pct} % de descuento los primeros {months} meses.', { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS }))
+    desc?.setAttribute('content', t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta; los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale())))
     canon?.setAttribute('href', 'https://eazy-stock.com/planes')
     return () => {
       document.title = prevTitle
@@ -58,7 +58,7 @@ export default function PlansPage() {
 
   const steps = [
     [Users,    'Elige tu plan',            'Basic para una tienda, Pro para varias, AI si quieres que la inteligencia artificial trabaje contigo.'],
-    [Store,    'Prueba {days} días gratis', 'Sin tarjeta. Sube tu Excel, vende, cierra la caja: la prueba es con tu negocio real.'],
+    [Store,    'Pruébalo gratis hasta el {date}', 'Sin tarjeta. Sube tu Excel, vende, cierra la caja: la prueba es con tu negocio real.'],
     [Sparkles, 'Cambia cuando quieras',    'Subes o bajas de plan desde Ajustes. Tus datos no se tocan nunca.'],
   ]
 
@@ -78,7 +78,7 @@ export default function PlansPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              {t('{days} días gratis · {pct} % de descuento {months} meses', { days: TRIAL_DAYS, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS })}
+              {trialLine(t, dateLocale())} · {t('los primeros {n} pagan la mitad {months} meses', promoVars(dateLocale()))}
             </span>
             <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t('Planes y precios')}<br />
@@ -124,7 +124,7 @@ export default function PlansPage() {
                   <Icon size={34} className="text-white" />
                   <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-white">{String(i + 1).padStart(2, '0')}</span>
                 </div>
-                <h3 className="mb-2 text-lg font-bold text-gray-900">{t(title, { days: TRIAL_DAYS })}</h3>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">{t(title, promoVars(dateLocale()))}</h3>
                 <p className="text-sm leading-relaxed text-gray-500">{t(desc)}</p>
               </Reveal>
             ))}
@@ -139,7 +139,7 @@ export default function PlansPage() {
           <Reveal delay={100}>
             <div className="space-y-3">
               {PLAN_FAQS.map(([q, a], i) => (
-                <FaqItem key={q} q={t(q, { days: TRIAL_DAYS })} a={t(a, { days: TRIAL_DAYS })} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
+                <FaqItem key={q} q={t(q, promoVars(dateLocale()))} a={t(a, promoVars(dateLocale()))} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
               ))}
             </div>
           </Reveal>
