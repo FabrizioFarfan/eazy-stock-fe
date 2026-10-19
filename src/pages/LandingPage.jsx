@@ -11,9 +11,10 @@ import {
 } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { Reveal, Counter, GridPattern, GlowOrbs, SectionHead, LandingStyles } from './landing/shared'
+import { Reveal, Counter, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import HeroTour from './landing/HeroTour'
 import {
-  AppMockup, CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
+  CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { PUBLIC_PAGES, usePageSeo } from './landing/site'
@@ -113,35 +114,41 @@ export function Navbar() {
 
 export function Hero() {
   const t = useT()
+  const promises = [
+    [Bot,        'IA integrada: pronto, pregúntale a tu negocio'],
+    [Smartphone, 'Apps para Android e iOS: ya casi listas'],
+    [BarChart2,  'Reportes que te dicen qué vender más'],
+    [Check,      'Sin tarjeta · te ayudamos a cargar tus productos'],
+  ]
   return (
-    <section className="relative overflow-hidden bg-[#0a0e1a] pb-20 pt-28 sm:pb-28 sm:pt-36">
-      <GlowOrbs />
-      <GridPattern />
+    <section className="lp-hero relative flex min-h-[100svh] items-center overflow-hidden bg-[#0a0e1a] pb-16 pt-24 sm:pt-28">
+      <HeroBackdrop />
 
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-10">
-          <div className="flex-1 text-center lg:text-left">
-            <Link to="/funciones" className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-medium text-amber-200 backdrop-blur transition-colors hover:bg-amber-300/20">
-              <Sparkles size={12} />
-              {t('Nuevo: devoluciones al proveedor, historial de cada producto y precios que se corrigen al vender')}
-              <ArrowRight size={12} />
+      <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8">
+        <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-12">
+          <div className="w-full flex-1 text-center lg:max-w-[46%] lg:text-left">
+            <Link to="/planes" className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur transition-colors hover:bg-white/10">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-400" />
+              </span>
+              {trialLine(t, dateLocale())}
+              <ArrowRight size={12} className="text-slate-400" />
             </Link>
 
-            <h1 className="lp-display mb-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.6rem]">
-              {t('Tu negocio, ordenado.')}<br />
-              <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">
-                {t('Vende, cobra y controla el stock sin cuaderno.')}
-              </span>
+            <h1 className="lp-display lp-hero-h1 mb-6 text-[2.6rem] leading-[1.02] text-white sm:text-6xl lg:text-[4rem]">
+              {t('Tu negocio, bajo control.')}<br />
+              <span className="text-slate-400">{t('Gestiona, automatiza y vende más.')}</span>
             </h1>
 
-            <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
-              {t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo, y al cierre sabes exactamente cuánto hay en caja. Se aprende en una tarde.')}
+            <p className="lp-hero-p mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
+              {t('Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado y te muestra qué se vende. Y crece junto con tu negocio.')}
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
                 to={CTA}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/60 sm:w-auto"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-900/60 sm:w-auto"
               >
                 {t('Probar gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
@@ -154,24 +161,19 @@ export function Hero() {
               </Link>
             </div>
 
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 lg:justify-start">
-              {[
-                'Sin tarjeta, sin instalar nada',
-                'Desde el celular o la PC',
-                'Español · English · Italiano',
-                'Nacido en una ferretería de barrio',
-              ].map((k) => (
-                <div key={k} className="flex items-center gap-1.5">
-                  <Check size={12} className="text-emerald-400" />
-                  {t(k)}
-                </div>
+            <ul className="lp-hero-promises mt-9 grid gap-x-6 gap-y-2.5 text-left text-[13px] text-slate-400 sm:grid-cols-2">
+              {promises.map(([Icon, k]) => (
+                <li key={k} className="flex items-start gap-2">
+                  <Icon size={14} className="mt-0.5 flex-shrink-0 text-blue-400" />
+                  <span>{t(k)}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
-          <Reveal className="w-full flex-1 lg:flex lg:justify-end" delay={120}>
-            <AppMockup />
-          </Reveal>
+          <div className="w-full flex-1 lg:max-w-[54%]">
+            <HeroTour />
+          </div>
         </div>
       </div>
     </section>
@@ -882,11 +884,11 @@ export function OriginStory() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const COMING = [
-  { icon: Smartphone, tone: 'from-blue-500 to-indigo-600',   badge: 'Pronto',       title: 'Apps para Android e iOS',
-    desc: 'La misma app, nativa en tu celular: más rápida, con notificaciones y lista para vender aunque se caiga el internet.' },
+  { icon: Smartphone, tone: 'from-blue-500 to-indigo-600',   badge: 'Ya casi',      title: 'Apps para Android e iOS',
+    desc: 'Ya están casi listas: la misma app, nativa en tu celular, más rápida, con notificaciones y lista para vender aunque se caiga el internet.' },
   { icon: Sparkles,   tone: 'from-emerald-500 to-teal-600',  badge: 'Siempre',      title: 'Más funciones cada mes',
     desc: 'Construimos con nuestros clientes, de a una observación por vez. Lo que pides, se prioriza.' },
-  { icon: Bot,        tone: 'from-violet-500 to-fuchsia-600', badge: 'En el futuro', title: 'Inteligencia artificial',
+  { icon: Bot,        tone: 'from-violet-500 to-fuchsia-600', badge: 'Pronto',       title: 'IA integrada',
     desc: 'Pregúntale a tu negocio cuánto vendiste, qué reponer o qué se te está venciendo. Como hablar con tu contador, pero al instante.' },
 ]
 
@@ -1036,7 +1038,7 @@ export function CtaBanner() {
           </span>
           <h2 className="lp-display text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
             {t('Tu tienda, ordenada')}<br />
-            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('desde esta tarde.')}</span>
+            <span className="text-slate-400">{t('desde esta tarde.')}</span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
             {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró. Sin tarjeta, sin compromiso: si no te ordena la tienda, no nos debes nada.')}

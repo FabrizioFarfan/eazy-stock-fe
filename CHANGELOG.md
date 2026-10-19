@@ -2,6 +2,14 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.0 — 2026-10-20 (hero nuevo de la landing, Frank 20-oct; task 1011)
+- **Hero a pantalla completa** (`min-h-[100svh]`): al entrar no se ve nada de la sección siguiente. Titular nuevo «Tu negocio, bajo control. Gestiona, automatiza y vende más.» y bajada que vende más ventas, no solo orden (lo que antes vivía en el cuaderno ahora trabaja para ti… y crece junto con tu negocio). Píldora con la promo (gratis hasta el 15 de diciembre). Debajo del CTA, lo que viene: IA integrada pronto, apps Android/iOS ya casi, reportes que te dicen qué vender más, sin tarjeta + te ayudamos a cargar tus productos.
+- **Tour animado del producto en bucle de 12 s** (`landing/HeroTour.jsx`) en vez de la captura estática: el cursor recorre el Dashboard (ingresos de hoy, pide tu atención), abre Ventas › Nueva Venta en el **menú real** de la app (mismos grupos y estilos que `layouts/Sidebar.jsx`), escanea tres productos, cobra con Yape y luego abre Reportes › Balance (cierre de caja por medio + ganancia del mes). Las fichas flotantes cambian según la pantalla y solo aparecen cuando hay algo que decir (entrada/salida suave). El cursor se posiciona midiendo el DOM (`data-tour`), así no se desalinea. Se escala al ancho disponible (ResizeObserver), solo corre cuando se ve, y con `prefers-reduced-motion` (y en el prerender) se queda quieto en el Dashboard.
+- **Fuente nueva: Inter Tight** (autoalojada, OFL) en los titulares de toda la web pública; fuera Bricolage Grotesque (Frank: «no me gusta para nada; la de los negocios fancy, tipo Arial pero más alta y con menos curvas»). Mismo tipo que la web de la E.L.C.
+- **Colores sobrios**: fuera el degradado celeste/verde/ámbar de los titulares («parecía infantil»); blanco + gris + un solo azul. `GlowOrbs` queda en azul (afecta también a las cabeceras de /funciones, /para-quien, /planes y /preguntas). El CTA final también sin degradado.
+- **Fondo del hero con SVG animado** (`HeroBackdrop`, como en Eazy Finance y Eazy Habit): anillos punteados que giran despacio, estantes isométricos que se dibujan solos y una línea de ventas que sube, en una sola tinta.
+- Lo que viene (/preguntas): «Apps para Android e iOS» pasa a **Ya casi**; «Inteligencia artificial» pasa a **IA integrada · Pronto**. OG/Twitter title con el claim nuevo. Traducciones en/it en `dict/hero.js`. Se borra el `AppMockup` viejo y las fuentes Bricolage.
+
 ## 1.10.1 — 2026-10-19
 - Ajustes › Tu plan: el precio con decimales se muestra tal cual (S/ 19.50, no «S/ 20»). /planes: sin el «sin tarjeta» repetido bajo el selector mensual/anual.
 

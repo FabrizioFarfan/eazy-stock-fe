@@ -87,12 +87,65 @@ export function GridPattern({ light = false }) {
   )
 }
 
+/** Un solo brillo azul, sobrio (20-oct-2026: fuera el celeste/verde/ámbar, «parecía infantil»). */
 export function GlowOrbs() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-600/30 blur-[120px]" />
-      <div className="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-indigo-500/20 blur-[120px]" />
-      <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-400/10 blur-[140px]" />
+      <div className="absolute -left-32 top-1/4 h-[28rem] w-[28rem] rounded-full bg-blue-600/25 blur-[130px]" />
+      <div className="absolute right-0 top-1/2 h-80 w-80 rounded-full bg-blue-400/10 blur-[120px]" />
+    </div>
+  )
+}
+
+/**
+ * Fondo del hero: brillo azul + SVG animado (como en Eazy Finance y Eazy Habit):
+ * anillos punteados que giran despacio, una cuadrícula en perspectiva y
+ * «estantes» que se dibujan solos. Todo decorativo y en una sola tinta.
+ */
+export function HeroBackdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute left-1/2 top-1/2 h-[60rem] w-[60rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.13] blur-[160px]" />
+      <div className="absolute -right-40 top-1/3 h-[34rem] w-[34rem] rounded-full bg-blue-500/10 blur-[140px]" />
+      <GridPattern />
+      <svg className="lp-backdrop absolute inset-0 h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+        <defs>
+          <radialGradient id="lpb-fade" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+            <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+          </radialGradient>
+          <mask id="lpb-mask"><rect width="1440" height="900" fill="url(#lpb-fade)" /></mask>
+        </defs>
+        <g mask="url(#lpb-mask)" stroke="rgba(148,163,184,.35)" strokeWidth="1">
+          <g className="lp-spin-slow" style={{ transformOrigin: '1010px 450px' }}>
+            <circle cx="1010" cy="450" r="430" strokeDasharray="3 14" />
+          </g>
+          <g className="lp-spin-rev" style={{ transformOrigin: '1010px 450px' }}>
+            <circle cx="1010" cy="450" r="330" strokeDasharray="2 10" strokeOpacity=".7" />
+          </g>
+          <g className="lp-spin" style={{ transformOrigin: '1010px 450px' }}>
+            <circle cx="1010" cy="450" r="230" strokeDasharray="1 7" strokeOpacity=".6" />
+          </g>
+          {/* estantes que se dibujan (isométricos) */}
+          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".55">
+            <path d="M120 640 L300 560 L480 640 L300 720 Z" />
+            <path d="M120 640 L120 700 L300 780 L480 700 L480 640" />
+            <path d="M300 720 L300 780" />
+            <path d="M160 600 L340 520 L520 600" strokeOpacity=".35" />
+            <path d="M160 600 L160 660" strokeOpacity=".35" />
+            <path d="M520 600 L520 660" strokeOpacity=".35" />
+          </g>
+          <g className="lp-draw" strokeLinecap="round" strokeOpacity=".4" style={{ animationDelay: '1.2s' }}>
+            <path d="M1180 150 L1300 95 L1420 150 L1300 205 Z" />
+            <path d="M1180 150 L1180 195 L1300 250 L1420 195 L1420 150" />
+            <path d="M1300 205 L1300 250" />
+          </g>
+          {/* línea de ventas que sube */}
+          <path className="lp-draw" style={{ animationDelay: '.6s' }} d="M80 300 L220 260 L330 290 L460 200 L600 230 L720 140" strokeOpacity=".5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="720" cy="140" r="4" fill="rgba(96,165,250,.9)" stroke="none" className="lp-pulse-dot" />
+        </g>
+      </svg>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
     </div>
   )
 }
@@ -124,7 +177,7 @@ export function LandingStyles() {
   return (
     <style>{`
       html { scroll-behavior: smooth; }
-      .lp-display { font-family: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif; font-variation-settings: 'opsz' 96; letter-spacing: -0.025em; font-weight: 700; }
+      .lp-display { font-family: 'Inter Tight', 'Helvetica Neue', Arial, system-ui, sans-serif; letter-spacing: -0.035em; font-weight: 700; }
       @keyframes lp-floaty { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
       @keyframes lp-grow   { from { transform: scaleX(0) } to { transform: scaleX(1) } }
       @keyframes lp-row    { from { opacity: 0; transform: translateX(-8px) } to { opacity: 1; transform: none } }
@@ -133,6 +186,10 @@ export function LandingStyles() {
       @keyframes lp-scan   { 0%,100% { top: 12% } 50% { top: 84% } }
       @keyframes lp-blink  { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
       @keyframes lp-ring   { 0% { transform: scale(.8); opacity: .8 } 100% { transform: scale(2.2); opacity: 0 } }
+      @keyframes lp-click  { 0% { transform: scale(.4); opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
+      @keyframes lp-spin   { to { transform: rotate(360deg) } }
+      @keyframes lp-draw   { from { stroke-dashoffset: 1200 } to { stroke-dashoffset: 0 } }
+      @keyframes lp-pulse-dot { 0%,100% { opacity: 1; r: 4 } 50% { opacity: .4; r: 7 } }
 
       .lp-bar { transform-origin: left; transform: scaleX(0); }
       .lp-in .lp-bar { animation: lp-grow .9s cubic-bezier(.22,1,.36,1) forwards; }
@@ -146,14 +203,28 @@ export function LandingStyles() {
       .lp-blink { animation: lp-blink 1.1s steps(1) infinite; }
       .lp-ring { animation: lp-ring 1.8s ease-out infinite; }
       .lp-fade { animation: lp-pop .35s cubic-bezier(.22,1,.36,1); }
+      .lp-click { animation: lp-click .5s ease-out forwards; }
+      .lp-spin-slow { animation: lp-spin 140s linear infinite; }
+      .lp-spin-rev  { animation: lp-spin 95s linear infinite reverse; }
+      .lp-spin      { animation: lp-spin 60s linear infinite; }
+      .lp-draw { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: lp-draw 6s cubic-bezier(.22,1,.36,1) forwards; }
+      .lp-pulse-dot { animation: lp-pulse-dot 2.4s ease-in-out infinite; }
 
+      /* Laptops bajas (≤ 820 px de alto): el hero sigue entrando en una pantalla. */
+      @media (min-width: 1024px) and (max-height: 820px) {
+        .lp-hero-h1 { font-size: 3.1rem !important; margin-bottom: 1rem !important; }
+        .lp-hero-p  { font-size: .95rem !important; margin-bottom: 1.25rem !important; }
+        .lp-hero    { padding-top: 5.5rem !important; padding-bottom: 2.5rem !important; }
+        .lp-hero-promises { margin-top: 1.25rem !important; }
+      }
       @media (prefers-reduced-motion: no-preference) {
         .lp-floaty      { animation: lp-floaty 5s ease-in-out infinite; }
         .lp-floaty-slow { animation: lp-floaty 7s ease-in-out 1.2s infinite; }
       }
       @media (prefers-reduced-motion: reduce) {
         .lp-bar, .lp-row, .lp-pop { opacity: 1; transform: none; animation: none !important; }
-        .lp-marquee, .lp-scanline, .lp-blink, .lp-ring { animation: none !important; }
+        .lp-marquee, .lp-scanline, .lp-blink, .lp-ring, .lp-spin-slow, .lp-spin-rev, .lp-spin, .lp-pulse-dot { animation: none !important; }
+        .lp-draw { stroke-dashoffset: 0; animation: none !important; }
       }
     `}</style>
   )
