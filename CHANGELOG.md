@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.3 — 2026-10-20 (hero: móvil legible, animación más grande, fondo simple; Frank)
+- **Celular**: las corrientes del fondo pasaban por detrás del texto y no dejaban leer → el SVG solo se pinta desde lg; en el celular quedan la malla y las esfumaturas.
+- **Animación más grande en escritorio**: columnas 42 / 58 (ya no 50/50), contenedor hasta 96 rem y la ventana del producto crece hasta 1.3× (antes tope 1×): ~715 px a 1440, ~800 px a 1920. Titular sigue en 3 líneas (`min(3.6rem, 2.5vw)`).
+- **Fondo v4, simple** («muy cargado, los círculos no me gustan, la malla me gustaba, esfumaturas»): vuelve la malla con esfumatura más amplia, tres manchas de color difuminadas (azul arriba a la derecha, índigo abajo a la izquierda, celeste al centro) y solo dos corrientes curvas que entran desde el borde izquierdo hacia la ventana con 6 puntos viajando. Sin anillos. Quedó pensado para reutilizarlo en todas las webs.
+
 ## 1.11.2 — 2026-10-20 (hero: aire y fondo abstracto, Frank)
 - Más espacio entre el texto y la animación (`lg:gap-16 xl:gap-24`, columnas 46/48); el titular sigue en 3 líneas (`min(3.6rem, 2.7vw)`).
 - Fondo SVG v3, **abstracto**: fuera la línea con ángulos de 90° y las cajas isométricas («¿qué es eso?»). Ahora son corrientes curvas que nacen fuera del borde izquierdo, fluyen hacia la ventana del producto (todo converge en un solo lugar que lo gestiona) y salen por la derecha, con puntos que viajan por ellas (`animateMotion` + `mpath`) = los productos vendiéndose; degradado por corriente, brillo y el halo de anillos con satélites. Con `prefers-reduced-motion` las corrientes salen dibujadas y sin partículas.

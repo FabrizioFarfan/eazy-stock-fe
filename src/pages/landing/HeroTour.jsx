@@ -62,7 +62,7 @@ export default function HeroTour() {
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return undefined
-    const ro = new ResizeObserver(([e]) => setScale(Math.min(1, e.contentRect.width / W)))
+    const ro = new ResizeObserver(([e]) => setScale(Math.min(1.3, e.contentRect.width / W)))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])

@@ -76,12 +76,12 @@ export function GridPattern({ light = false }) {
   return (
     <div
       aria-hidden
-      className={`absolute inset-0 ${light ? 'opacity-[0.05]' : 'opacity-[0.08]'}`}
+      className={`absolute inset-0 ${light ? 'opacity-[0.05]' : 'opacity-[0.1]'}`}
       style={{
         backgroundImage: `linear-gradient(${line} 1px, transparent 1px), linear-gradient(90deg, ${line} 1px, transparent 1px)`,
         backgroundSize: '36px 36px',
-        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
-        WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 80%)',
+        maskImage: 'radial-gradient(ellipse at center, black 25%, transparent 78%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 25%, transparent 78%)',
       }}
     />
   )
@@ -98,82 +98,49 @@ export function GlowOrbs() {
 }
 
 /**
- * Fondo del hero (20-oct-2026, v3, Frank: «algo abstracto, sin ángulos de 90°, que las
- * líneas entren conectadas desde el borde»): CORRIENTES curvas que nacen fuera del
- * borde izquierdo, fluyen hacia la ventana del producto (todo converge en un solo
- * lugar que lo gestiona) y salen por la derecha; puntos que viajan por ellas = los
- * productos vendiéndose. Un halo de anillos alrededor de la ventana. Una sola tinta.
+ * Fondo del hero (20-oct-2026, v4 «simple», Frank: «muy cargado; la malla me gustaba;
+ * esfumaturas»): la malla con esfumatura, tres manchas de color difuminadas y dos
+ * corrientes curvas que entran desde el borde izquierdo hacia la ventana del producto
+ * con puntos que viajan (los productos vendiéndose). Sin círculos. Las corrientes solo
+ * en escritorio: en el celular pasaban por detrás del texto y no dejaban leer.
+ * Reutilizable: Frank quiere este efecto en todas las webs.
  */
-const STREAMS_IN = [
-  'M-60 110 C 300 40, 520 250, 760 330 S 980 430, 1010 470',
-  'M-60 230 C 260 190, 470 340, 700 420 S 950 490, 1010 470',
-  'M-60 800 C 320 850, 520 690, 760 590 S 960 520, 1010 470',
-  'M-60 920 C 420 960, 720 760, 900 620 S 1000 540, 1010 470',
-]
-const STREAMS_OUT = [
-  'M1010 470 C 1160 300, 1320 230, 1500 170',
-  'M1010 470 C 1200 590, 1340 690, 1500 760',
+const STREAMS = [
+  'M-60 150 C 340 70, 600 250, 830 330 S 1020 430, 1060 470',
+  'M-60 830 C 340 890, 600 690, 830 600 S 1020 520, 1060 470',
 ]
 
 export function HeroBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute left-1/2 top-1/2 h-[60rem] w-[60rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/[0.13] blur-[160px]" />
-      <div className="absolute -right-40 top-1/3 h-[34rem] w-[34rem] rounded-full bg-blue-500/10 blur-[140px]" />
-      <svg className="lp-backdrop absolute inset-0 h-full w-full" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+      {/* esfumaturas */}
+      <div className="absolute -top-48 right-[-12%] h-[46rem] w-[46rem] rounded-full bg-blue-500/20 blur-[160px]" />
+      <div className="absolute bottom-[-24%] left-[-14%] h-[40rem] w-[40rem] rounded-full bg-indigo-600/25 blur-[160px]" />
+      <div className="absolute left-[38%] top-1/2 h-[26rem] w-[26rem] -translate-y-1/2 rounded-full bg-sky-400/[0.08] blur-[120px]" />
+      {/* la malla, esfumada hacia los bordes */}
+      <GridPattern />
+      {/* corrientes (solo escritorio) */}
+      <svg className="absolute inset-0 hidden h-full w-full lg:block" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
           <filter id="lpb-glow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="b" />
             <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <linearGradient id="lpb-stream" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#93c5fd" stopOpacity=".15" />
-            <stop offset=".55" stopColor="#93c5fd" stopOpacity=".7" />
-            <stop offset="1" stopColor="#60a5fa" stopOpacity=".9" />
+            <stop offset="0" stopColor="#93c5fd" stopOpacity=".1" />
+            <stop offset=".6" stopColor="#93c5fd" stopOpacity=".6" />
+            <stop offset="1" stopColor="#60a5fa" stopOpacity=".85" />
           </linearGradient>
-          <linearGradient id="lpb-stream-out" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#60a5fa" stopOpacity=".9" />
-            <stop offset="1" stopColor="#93c5fd" stopOpacity=".1" />
-          </linearGradient>
-          {STREAMS_IN.map((d, i) => <path key={i} id={`lpb-in-${i}`} d={d} />)}
-          {STREAMS_OUT.map((d, i) => <path key={i} id={`lpb-out-${i}`} d={d} />)}
+          {STREAMS.map((d, i) => <path key={i} id={`lpb-s-${i}`} d={d} />)}
         </defs>
         <g filter="url(#lpb-glow)" strokeLinecap="round">
-          {/* corrientes que entran desde el borde izquierdo */}
-          {STREAMS_IN.map((d, i) => (
-            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream)" strokeWidth={i % 2 ? 1.25 : 1.75} style={{ animationDelay: `${i * 0.35}s` }} />
+          {STREAMS.map((d, i) => (
+            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream)" strokeWidth="1.5" style={{ animationDelay: `${i * 0.5}s` }} />
           ))}
-          {/* y salen por la derecha */}
-          {STREAMS_OUT.map((d, i) => (
-            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream-out)" strokeWidth="1.5" style={{ animationDelay: `${1.6 + i * 0.4}s` }} />
-          ))}
-          {/* halo alrededor de la ventana */}
-          <g stroke="rgba(147,197,253,.55)" strokeWidth="1.25">
-            <g className="lp-spin-slow" style={{ transformOrigin: '1010px 470px' }}>
-              <circle cx="1010" cy="470" r="470" strokeDasharray="4 12" />
-              <circle cx="1480" cy="470" r="5" fill="#93c5fd" stroke="none" />
-            </g>
-            <g className="lp-spin-rev" style={{ transformOrigin: '1010px 470px' }}>
-              <circle cx="1010" cy="470" r="395" strokeDasharray="3 9" strokeOpacity=".85" />
-              <circle cx="615" cy="470" r="4" fill="#bfdbfe" stroke="none" />
-            </g>
-            <g className="lp-spin" style={{ transformOrigin: '1010px 470px' }}>
-              <circle cx="1010" cy="470" r="320" strokeDasharray="2 6" strokeOpacity=".8" />
-              <circle cx="1010" cy="150" r="4" fill="#60a5fa" stroke="none" />
-            </g>
-          </g>
-          {/* productos que viajan por las corrientes */}
-          {STREAMS_IN.map((_, i) => [0, 1].map((k) => (
-            <circle key={`${i}-${k}`} r={k ? 3 : 4.5} fill={k ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
-              <animateMotion dur={`${8 + i * 1.3}s`} begin={`${-(i * 2.1 + k * 4.5)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
-                <mpath href={`#lpb-in-${i}`} />
-              </animateMotion>
-            </circle>
-          )))}
-          {STREAMS_OUT.map((_, i) => [0, 1].map((k) => (
-            <circle key={`o${i}-${k}`} r={k ? 3 : 4} fill="#93c5fd" className="lp-particle">
-              <animateMotion dur={`${6 + i}s`} begin={`${-(i * 1.7 + k * 3)}s`} repeatCount="indefinite">
-                <mpath href={`#lpb-out-${i}`} />
+          {STREAMS.map((_, i) => [0, 1, 2].map((k) => (
+            <circle key={`${i}-${k}`} r={k === 1 ? 3 : 4.5} fill={k === 1 ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
+              <animateMotion dur={`${9 + i * 1.5}s`} begin={`${-(i * 2.5 + k * 3.3)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
+                <mpath href={`#lpb-s-${i}`} />
               </animateMotion>
             </circle>
           )))}
@@ -221,9 +188,7 @@ export function LandingStyles() {
       @keyframes lp-blink  { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
       @keyframes lp-ring   { 0% { transform: scale(.8); opacity: .8 } 100% { transform: scale(2.2); opacity: 0 } }
       @keyframes lp-click  { 0% { transform: scale(.4); opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
-      @keyframes lp-spin   { to { transform: rotate(360deg) } }
       @keyframes lp-draw   { from { stroke-dashoffset: 1600 } to { stroke-dashoffset: 0 } }
-      @keyframes lp-pulse-dot { 0%,100% { opacity: 1; r: 4 } 50% { opacity: .4; r: 7 } }
 
       .lp-bar { transform-origin: left; transform: scaleX(0); }
       .lp-in .lp-bar { animation: lp-grow .9s cubic-bezier(.22,1,.36,1) forwards; }
@@ -238,11 +203,7 @@ export function LandingStyles() {
       .lp-ring { animation: lp-ring 1.8s ease-out infinite; }
       .lp-fade { animation: lp-pop .35s cubic-bezier(.22,1,.36,1); }
       .lp-click { animation: lp-click .5s ease-out forwards; }
-      .lp-spin-slow { animation: lp-spin 140s linear infinite; }
-      .lp-spin-rev  { animation: lp-spin 95s linear infinite reverse; }
-      .lp-spin      { animation: lp-spin 60s linear infinite; }
       .lp-draw { stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: lp-draw 5s cubic-bezier(.22,1,.36,1) forwards; }
-      .lp-pulse-dot { animation: lp-pulse-dot 2.4s ease-in-out infinite; }
 
       /* Laptops bajas (≤ 820 px de alto): el hero sigue entrando en una pantalla. */
       @media (min-width: 1024px) and (max-height: 820px) {
@@ -257,7 +218,7 @@ export function LandingStyles() {
       }
       @media (prefers-reduced-motion: reduce) {
         .lp-bar, .lp-row, .lp-pop { opacity: 1; transform: none; animation: none !important; }
-        .lp-marquee, .lp-scanline, .lp-blink, .lp-ring, .lp-spin-slow, .lp-spin-rev, .lp-spin, .lp-pulse-dot { animation: none !important; }
+        .lp-marquee, .lp-scanline, .lp-blink, .lp-ring { animation: none !important; }
         .lp-draw { stroke-dashoffset: 0; animation: none !important; }
         .lp-particle { display: none; }
       }
