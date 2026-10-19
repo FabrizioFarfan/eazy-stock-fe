@@ -2,6 +2,9 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.10.1 — 2026-10-19
+- Ajustes › Tu plan: el precio con decimales se muestra tal cual (S/ 19.50, no «S/ 20»). /planes: sin el «sin tarjeta» repetido bajo el selector mensual/anual.
+
 ## 1.10.0 — 2026-10-19 (promo de lanzamiento, RUC obligatorio, cobro el 15; tasks 1001-1003)
 - **Gratis hasta el 15 de diciembre, sin tarjeta** en toda la web pública (Inicio, /planes, login y registro) y en la app: `plans.js` tiene `PROMO_FREE_UNTIL`, `FOUNDERS_LIMIT`, `BILLING_DAY`, `promoActive()`, `promoVars()` y `trialLine()`; cuando pase la fecha, los textos vuelven solos a «14 días gratis». La oferta «{pct} % de descuento» pasa a ser «Los primeros 50 negocios pagan la mitad 6 meses» y la FAQ explica hasta cuándo es gratis, qué ganan los primeros 50 y que se cobra el 15 de cada mes.
 - **Registro con RUC obligatorio**: campo «RUC» (o la identificación fiscal del país: CUIT, RUT, NIT, RFC…) con validación en el navegador (`utils/taxIds.js`, mismo algoritmo SUNAT del BE) y errores del BE bajo el campo (inválido, repetido → «Inicia sesión»). El panel izquierdo muestra si aún hay lugar entre los primeros 50 (GET /api/plans, `foundersAvailable`), nunca la posición.

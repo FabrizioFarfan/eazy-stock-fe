@@ -13,7 +13,8 @@ import { CURRENCY, PLANS, YEARLY_FREE_MONTHS, FOUNDERS_LIMIT, BILLING_DAY, LAUNC
 import { Chip } from '../boss/BossKit'
 import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from './subscriptionUtils'
 
-const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString('es-PE', { maximumFractionDigits: 0 }))
+// 19.5 se muestra «19.50», no «20» (precio de fundador = la mitad de 39).
+const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString('es-PE', { minimumFractionDigits: Number.isInteger(Number(n)) ? 0 : 2, maximumFractionDigits: 2 }))
 
 /**
  * Ajustes › Tu plan (M1 «Planes en serio», 15-oct-2026), solo OWNER: estado de la

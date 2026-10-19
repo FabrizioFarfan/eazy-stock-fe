@@ -35,7 +35,7 @@ function BillingToggle({ yearly, onChange, dark }) {
         </button>
       </div>
       <p className={`text-xs ${dark ? 'text-slate-500' : 'text-gray-500'}`}>
-        {t('Todos los planes empiezan con la prueba gratis, sin tarjeta.')} {trialLine(t, dateLocale())}.
+        {t('Todos los planes empiezan con la prueba gratis:')} {trialLine(t, dateLocale()).toLowerCase()}.
       </p>
     </div>
   )
