@@ -300,12 +300,20 @@ export function Benefits({ teaser = false }) {
     <section id="beneficios" ref={ref} className={`scroll-mt-28 bg-white ${teaser ? 'py-24' : 'pb-24 pt-10'}`}>
       <style>{`
         .lp-hand { font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive; }
+        /* Hoja de cuaderno: papel casi blanco, rayas grises cada 28 px, un leve grano y la sombra del lomo a la izquierda */
         .lp-paper {
-          background-color: #fffdf6;
+          background-color: #fbfbfa;
           background-image:
-            linear-gradient(90deg, transparent 2.1rem, rgba(239,68,68,.35) 2.1rem, rgba(239,68,68,.35) calc(2.1rem + 1px), transparent calc(2.1rem + 1px)),
-            repeating-linear-gradient(transparent 0, transparent 27px, rgba(96,165,250,.35) 27px, rgba(96,165,250,.35) 28px);
-          background-position: 0 0, 0 1.6rem;
+            repeating-linear-gradient(transparent 0, transparent 27px, rgba(0,0,0,.11) 27px, rgba(0,0,0,.11) 28px),
+            linear-gradient(90deg, rgba(0,0,0,.06), transparent 14px),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-position: 0 1.75rem, 0 0, 0 0;
+          box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 24px -14px rgba(0,0,0,.25);
+        }
+        /* Ficha de la app: azul noche un punto más claro, luz arriba y bisel para que tenga cuerpo */
+        .lp-appcard {
+          background: linear-gradient(180deg, #1a2548 0%, #121b3a 55%, #0e162f 100%);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.35), 0 18px 36px -16px rgba(15,23,42,.6);
         }
         .lp-flip { perspective: 1800px; }
         .lp-flip-inner { display: grid; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
@@ -321,7 +329,7 @@ export function Benefits({ teaser = false }) {
           <SectionHead
             kicker={t('Beneficios concretos')}
             title={t('Lo que cambia en tu negocio desde la primera semana')}
-            sub={t('No es una lista de botones. Es plata que deja de perderse y tiempo que vuelve a tus manos.')}
+            sub={t('Caja que cuadra, fiado que se cobra y stock que no se acaba. Así se nota Eazy Stock en el día a día.')}
           />
         </Reveal>
 
@@ -357,21 +365,19 @@ export function Benefits({ teaser = false }) {
                 >
                   <div className="lp-flip-inner h-full" style={{ transitionDelay: `${(i % 3) * 110}ms` }}>
                     {/* ANTES: una hoja del cuaderno */}
-                    <article className="lp-paper relative flex flex-col items-center rounded-3xl border border-amber-100 px-7 pb-8 pt-7 text-center shadow-sm">
-                      <span className="lp-hand absolute right-5 top-5 rotate-[-12deg] rounded-md border-[3px] border-double border-red-500/70 px-2 text-lg font-bold uppercase leading-none text-red-500/80">
-                        {t('Antes')}
-                      </span>
-                      <IconTile icon={Icon} size={52} />
-                      <h3 className="lp-hand mt-4 text-[1.9rem] font-bold leading-[28px] text-gray-800">{t(title)}</h3>
-                      <p className="lp-hand mt-[28px] text-[1.35rem] leading-[28px] text-gray-700">{t(before)}</p>
+                    <article className="lp-paper relative flex flex-col items-center rounded-3xl border border-gray-200 px-7 pb-8 pt-7 text-center">
+                      <span className="lp-hand absolute right-6 top-4 text-xl text-gray-400">{t('Antes')}</span>
+                      <span className="text-[#0a0e1a]"><Icon size={44} /></span>
+                      <h3 className="lp-hand mt-3 text-[1.9rem] font-bold leading-[28px] text-gray-800">{t(title)}</h3>
+                      <p className="lp-hand mt-[28px] text-[1.35rem] leading-[28px] text-gray-600">{t(before)}</p>
                     </article>
                     {/* CON EAZY STOCK: la ficha de la app */}
-                    <article className="relative flex flex-col items-center rounded-3xl bg-[#0a0e1a] px-7 pb-8 pt-7 text-center text-white shadow-xl shadow-blue-900/20">
+                    <article className="lp-appcard relative flex flex-col items-center rounded-3xl px-7 pb-8 pt-7 text-center text-white">
                       <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300">
                         <Check size={12} /> {t('Con Eazy Stock')}
                       </span>
-                      <IconTile icon={Icon} size={52} light />
-                      <span className="mt-4 rounded-full border border-blue-400/30 bg-blue-500/15 px-2.5 py-1 text-[11px] font-bold text-blue-200">{t(chip)}</span>
+                      <span className="text-blue-100"><Icon size={44} /></span>
+                      <span className="mt-3 rounded-full border border-blue-400/30 bg-blue-500/15 px-2.5 py-1 text-[11px] font-bold text-blue-200">{t(chip)}</span>
                       <h3 className="lp-display mt-3 text-xl font-extrabold tracking-tight text-white">{t(title)}</h3>
                       <p className="mt-3 text-sm leading-relaxed text-slate-300">{t(after)}</p>
                     </article>

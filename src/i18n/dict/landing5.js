@@ -1,9 +1,10 @@
 // «Para todo tipo de negocio» v2 (20-oct-2026, task 1040): fotos por rubro.
 export default {
   en: {
-    'Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.':
-      'We build it inside a neighborhood hardware store in Peru, and it is made for corner shops, pharmacies, bookstores and whatever you sell. The same system, nothing odd to set up.',
-    'Aquí nació Eazy Stock': 'Eazy Stock was born here',
+    'Vendas lo que vendas: aquí entra tu mercadería, salen tus ventas y queda claro cuánto ganas. Desde el primer día.':
+      'Whatever you sell: your goods come in, your sales go out and how much you earn is clear. From day one.',
+    'Caja que cuadra, fiado que se cobra y stock que no se acaba. Así se nota Eazy Stock en el día a día.':
+      'A till that balances, store credit that gets collected and stock that never runs out. That is how Eazy Stock shows day to day.',
     'Toca una tarjeta para darle la vuelta': 'Tap a card to flip it',
     'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.': 'Meters, kilos and units with decimals. Thousands of codes and store credit up to date.',
     'Fecha de vencimiento por producto y aviso 30 días antes de perderlo.': 'Expiry date per product and a warning 30 days before you lose it.',
@@ -17,9 +18,10 @@ export default {
     'Cobro en segundos, varios vendedores y cierre de caja al final del día.': 'Checkout in seconds, several sellers and a cash closing at the end of the day.',
   },
   it: {
-    'Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.':
-      'Lo costruiamo dentro una ferramenta di quartiere in Perù ed è fatto per alimentari, farmacie, cartolerie e qualunque cosa tu venda. Lo stesso sistema, senza configurare nulla di strano.',
-    'Aquí nació Eazy Stock': 'Qui è nato Eazy Stock',
+    'Vendas lo que vendas: aquí entra tu mercadería, salen tus ventas y queda claro cuánto ganas. Desde el primer día.':
+      'Qualunque cosa tu venda: qui entra la merce, escono le vendite e si vede chiaro quanto guadagni. Dal primo giorno.',
+    'Caja que cuadra, fiado que se cobra y stock que no se acaba. Así se nota Eazy Stock en el día a día.':
+      'Cassa che torna, credito che si incassa e scorte che non finiscono. Così si sente Eazy Stock giorno per giorno.',
     'Toca una tarjeta para darle la vuelta': 'Tocca una scheda per girarla',
     'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.': 'Metri, chili e unità con decimali. Migliaia di codici e il credito ai clienti sempre aggiornato.',
     'Fecha de vencimiento por producto y aviso 30 días antes de perderlo.': 'Data di scadenza per prodotto e avviso 30 giorni prima di perderlo.',

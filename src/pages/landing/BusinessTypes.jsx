@@ -12,7 +12,7 @@ import { useT } from '../../i18n'
 import { Reveal, SectionHead } from './shared'
 
 const TYPES = [
-  { key: 'ferreterias',  label: 'Ferreterías', chip: 'Aquí nació Eazy Stock',
+  { key: 'ferreterias',  label: 'Ferreterías',
     blurb: 'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.' },
   { key: 'bodegas',      label: 'Bodegas y minimarkets',
     blurb: 'Venta rápida con código de barras y la caja que cuadra cada noche.' },
@@ -129,7 +129,7 @@ export function ForEveryBusiness() {
         aria-hidden={copy === 1 ? 'true' : undefined}
         onPointerEnter={(e) => { if (e.pointerType === 'mouse') { paused.current = true; setHover(i); setActive(i) } }}
         onPointerDown={(e) => { if (e.pointerType !== 'mouse') { setHover(i); setActive(i) } }}
-        className={`lp-tile group relative h-[clamp(300px,min(60vh,97vw),600px)] shrink-0 select-none overflow-hidden rounded-3xl bg-gray-900 [aspect-ratio:4/5] ${still ? 'snap-center' : ''} ${isFocus ? 'is-focus' : ''}`}
+        className={`lp-tile group relative h-[clamp(260px,min(48vh,80vw),480px)] shrink-0 select-none overflow-hidden rounded-3xl bg-gray-900 [aspect-ratio:4/5] ${still ? 'snap-center' : ''} ${isFocus ? 'is-focus' : ''}`}
       >
         <img
           src={`/business/${it.key}.webp`}
@@ -182,7 +182,7 @@ export function ForEveryBusiness() {
           <SectionHead
             kicker={t('Para todo tipo de negocio')}
             title={t('Si vendes y llevas las cuentas, es para ti.')}
-            sub={t('Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.')}
+            sub={t('Vendas lo que vendas: aquí entra tu mercadería, salen tus ventas y queda claro cuánto ganas. Desde el primer día.')}
           />
         </Reveal>
       </div>

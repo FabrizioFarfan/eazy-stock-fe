@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.15.1 — 2026-10-20 (retoques de Frank)
+- Carrusel: fichas más chicas (`clamp(260px, min(48vh, 80vw), 480px)` de alto) y fuera el chip «Aquí nació Eazy Stock».
+- Beneficios: hoja de cuaderno sobria y más real (papel casi blanco con rayas grises, grano leve y sombra del lomo; sin margen rojo ni sello), los iconos van **sin baldosa** en las dos caras (azul noche sobre el papel, azul claro sobre la ficha), y la ficha de la app es un azul noche **un punto más claro con luz arriba y bisel** (`.lp-appcard`).
+- Textos: la frase de la ferretería se dice una sola vez (en «De dónde sale»); «Para todo tipo de negocio» ahora dice «Vendas lo que vendas: aquí entra tu mercadería, salen tus ventas y queda claro cuánto ganas. Desde el primer día.» y Beneficios «Caja que cuadra, fiado que se cobra y stock que no se acaba. Así se nota Eazy Stock en el día a día.» (fuera «No es una lista de botones…»).
+
 ## 1.15.0 — 2026-10-20 (carrusel de borde a borde + Beneficios que giran; Frank, task 1040)
 - **«Para todo tipo de negocio» v3**: las fotos ya no van centradas en un contenedor: un **carrusel lento de borde a borde** de la pantalla (Frank: «que las fotos toquen los lados»), que se mueve solo a 26 px/s, **se queda quieto al pasar el mouse o al tocar en el celular** y muestra la frase de la ficha; se puede arrastrar con el mouse o el dedo. El foco sigue pasando ficha por ficha, **sin la barrita de tiempo** (Frank no la quiso). Las 10 fotos (Celulares incluida). `prefers-reduced-motion` → carril nativo sin movimiento.
 - **Beneficios con vuelta**: cada beneficio es una **tarjeta que gira en 3D**: por delante, una **hoja de cuaderno** (rayas, margen rojo, letra a mano Caveat autoalojada, sello «ANTES») con el problema; por detrás, la ficha oscura de la app con el icono **centrado**, el chip y lo que hace Eazy Stock. Entra en pantalla con el cuaderno y al segundo y medio **giran solas**; interruptor «Antes | Con Eazy Stock» arriba para girar todas, y clic/Enter en una tarjeta para girar solo esa. Fuera los bloques planos rojo/verde.
