@@ -254,7 +254,7 @@ export function CompareTable() {
           ? <span className="inline-flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-gray-700">{t(v.text)} {v.soon && <SoonMini />}</span>
           : <span className="text-sm font-semibold text-gray-900">{t(v)}</span>
   return (
-    <div className="overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-sm">
+    <div className="lp-table overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[560px] text-left">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">

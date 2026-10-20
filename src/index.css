@@ -322,6 +322,9 @@ html.dark .border-purple-200  { border-color: rgb(107 33 168 / 0.6); }
   max-height: calc(100vh - 11rem);
   overflow: auto;
 }
+/* La tabla comparativa de /planes (web pública) se muestra entera: sin tope de alto
+   ni scroll interno (20-oct-2026: se cortaban las últimas filas). */
+.overflow-x-auto.lp-table:has(> table) { max-height: none; }
 .overflow-x-auto:has(> table) > table > thead,
 .overflow-hidden:has(> table) > table > thead {
   position: sticky;

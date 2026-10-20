@@ -2,6 +2,9 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.12.2 — 2026-10-20
+- /planes: la tabla comparativa se mostraba con scroll interno y las últimas filas escondidas (la regla global de cabecera fija para las tablas de la app le ponía tope de alto). Clase `lp-table` sin tope.
+
 ## 1.12.1 — 2026-10-20 (planes definidos; Frank, task 1016)
 - **Pro = hasta 3 negocios y 20 trabajadores** (ya no «ilimitados»); AI sigue sin límite. Textos de /planes, Inicio, Ajustes, Mis negocios, FAQ y JSON-LD al día.
 - **Funciones por plan, con «Pronto» en lo que no está** (`PLANS[].features` acepta `{ text, soon }`; `COMPARE` acepta `'soon'` y `{ text, soon }`; chip `SoonMini`): apps Android/iOS (todos), boleta y factura electrónica SUNAT (Pro y AI), IA de prueba en Basic y Pro (10 ventas por voz al mes + 1 consejo de oferta por semana), y en AI ventas por voz sin límite, «pregúntale a tu negocio», consejos de ofertas diarios, promociones por WhatsApp y análisis. Diccionario `plans2.js` (en/it).
