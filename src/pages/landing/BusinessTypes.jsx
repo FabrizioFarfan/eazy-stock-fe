@@ -104,7 +104,7 @@ export function ForEveryBusiness() {
                   onBlur={() => setHover(null)}
                   tabIndex={0}
                   className={`lp-tile group relative w-[78vw] max-w-sm shrink-0 snap-center overflow-hidden rounded-3xl bg-gray-900 transition-transform duration-500 ease-out sm:w-auto sm:max-w-none ${
-                    it.big ? 'aspect-[4/5] sm:col-span-2 sm:aspect-[8/5] lg:col-span-6 lg:row-span-2 lg:aspect-auto' : 'aspect-[4/5] lg:col-span-3'
+                    it.big ? 'aspect-[4/5] sm:col-span-2 sm:aspect-[8/5] lg:col-span-6 lg:row-span-2 lg:aspect-[4/5]' : 'aspect-[4/5] lg:col-span-3'
                   } ${isFocus ? 'is-focus lg:-translate-y-1' : ''} ${hover === null ? 'is-auto' : ''}`}
                 >
                   <img
