@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.15.0 — 2026-10-20 (carrusel de borde a borde + Beneficios que giran; Frank, task 1040)
+- **«Para todo tipo de negocio» v3**: las fotos ya no van centradas en un contenedor: un **carrusel lento de borde a borde** de la pantalla (Frank: «que las fotos toquen los lados»), que se mueve solo a 26 px/s, **se queda quieto al pasar el mouse o al tocar en el celular** y muestra la frase de la ficha; se puede arrastrar con el mouse o el dedo. El foco sigue pasando ficha por ficha, **sin la barrita de tiempo** (Frank no la quiso). Las 10 fotos (Celulares incluida). `prefers-reduced-motion` → carril nativo sin movimiento.
+- **Beneficios con vuelta**: cada beneficio es una **tarjeta que gira en 3D**: por delante, una **hoja de cuaderno** (rayas, margen rojo, letra a mano Caveat autoalojada, sello «ANTES») con el problema; por detrás, la ficha oscura de la app con el icono **centrado**, el chip y lo que hace Eazy Stock. Entra en pantalla con el cuaderno y al segundo y medio **giran solas**; interruptor «Antes | Con Eazy Stock» arriba para girar todas, y clic/Enter en una tarjeta para girar solo esa. Fuera los bloques planos rojo/verde.
+- `public/fonts/caveat-latin.woff2` (Google Fonts, autoalojada), `landing5.js` («Toca una tarjeta para darle la vuelta»).
+
 ## 1.14.0 — 2026-10-20 («Para todo tipo de negocio» v2: fotos de inventarios por rubro; Frank, task 1040)
 - **Texto honesto**: ya no dice que «hoy ordena bodegas, farmacias, librerías…» (hoy solo la usa la ferretería; el marketing recién empieza). Ahora: «Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas».
 - **Fuera los iconos simples**: un **mosaico grande** (`landing/BusinessTypes.jsx`, ancho `max-w-7xl`) con una **foto completa por rubro**, generadas con IA (FLUX.1-schnell): solo el inventario de cada negocio, sin personas ni letreros. Ferreterías y Bodegas ocupan el doble (2×2); en tablet dos columnas, en móvil un carril deslizable con fichas de 78 vw.

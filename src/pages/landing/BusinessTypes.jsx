@@ -1,19 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  «Para todo tipo de negocio» v2 (Frank, 20-oct-2026, task 1040): fuera los
-//  iconos simples; un MOSAICO grande con una FOTO completa por rubro (hechas con
-//  IA: solo el inventario de cada negocio, sin personas) que ocupa la pantalla.
-//  Vivo aunque nadie lo toque: cada foto respira (Ken Burns lento) y un foco
-//  recorre las fichas una a una mostrando la frase de cada rubro; al pasar el
-//  mouse la ficha en foco es la tuya. Fotos autoalojadas en /business/*.webp.
+//  «Para todo tipo de negocio» v3 (Frank, 20-oct-2026, task 1040): una FOTO
+//  completa por rubro (hechas con IA: solo el inventario, sin personas) en un
+//  CARRUSEL lento de borde a borde de la pantalla («que las fotos toquen los
+//  lados»). Se mueve solo; al pasar el mouse o tocar en el celular se queda
+//  quieto y la ficha muestra su frase; se puede arrastrar. Un foco recorre las
+//  fichas una a una (sin barrita de tiempo: Frank no la quiso).
+//  Fotos autoalojadas en /business/*.webp (800×1000).
 // ═══════════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '../../i18n'
 import { Reveal, SectionHead } from './shared'
 
 const TYPES = [
-  { key: 'ferreterias',  label: 'Ferreterías',             big: true, chip: 'Aquí nació Eazy Stock',
+  { key: 'ferreterias',  label: 'Ferreterías', chip: 'Aquí nació Eazy Stock',
     blurb: 'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.' },
-  { key: 'bodegas',      label: 'Bodegas y minimarkets',   big: true,
+  { key: 'bodegas',      label: 'Bodegas y minimarkets',
     blurb: 'Venta rápida con código de barras y la caja que cuadra cada noche.' },
   { key: 'farmacias',    label: 'Farmacias y boticas',
     blurb: 'Fecha de vencimiento por producto y aviso 30 días antes de perderlo.' },
@@ -27,30 +28,39 @@ const TYPES = [
     blurb: 'Foto por producto: qué se vende y qué se queda en el estante.' },
   { key: 'veterinarias', label: 'Veterinarias y mascotas',
     blurb: 'Alimento por kilo, medicinas con vencimiento y cada cliente con su historial.' },
-  { key: 'celulares',    label: 'Celulares y electrónica',
-    blurb: 'Cotización en PDF por WhatsApp y el stock de accesorios al día.' },
   { key: 'cafeterias',   label: 'Cafeterías',
     blurb: 'Cobro en segundos, varios vendedores y cierre de caja al final del día.' },
+  { key: 'celulares',    label: 'Celulares y electrónica',
+    blurb: 'Cotización en PDF por WhatsApp y el stock de accesorios al día.' },
 ]
 
-// Fotos ya generadas; las demás entran al mosaico en cuanto salen del generador.
-const READY = new Set(['ferreterias', 'bodegas', 'farmacias', 'abarrotes', 'librerias', 'repuestos'])
-const SHOWN = TYPES.filter(t => READY.has(t.key))
+const SHOWN = TYPES
 
-const STEP_MS = 2600
+const STEP_MS = 2600   // cada cuánto salta el foco
+const SPEED = 26       // px/s del carrusel
+const RESUME_MS = 2500 // tras soltar en el celular, vuelve a moverse
+
+const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function ForEveryBusiness() {
   const t = useT()
-  const ref = useRef(null)
+  const sectionRef = useRef(null)
+  const trackRef = useRef(null)
+  const copyRef = useRef(null)
+  const paused = useRef(false)
+  const drag = useRef(null)
+  const x = useRef(0)
+  const resumeTimer = useRef(null)
   const [active, setActive] = useState(0)
   const [hover, setHover] = useState(null)
   const [running, setRunning] = useState(false)
+  const [still] = useState(reduced) // reduced motion: carril nativo, sin movimiento
 
-  // El foco solo recorre las fichas mientras la sección está en pantalla.
+  // Solo se mueve y salta el foco mientras la sección está en pantalla.
   useEffect(() => {
-    const el = ref.current
+    const el = sectionRef.current
     if (!el) return undefined
-    const obs = new IntersectionObserver(([e]) => setRunning(e.isIntersecting), { threshold: 0.2 })
+    const obs = new IntersectionObserver(([e]) => setRunning(e.isIntersecting), { threshold: 0.15 })
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
@@ -61,10 +71,98 @@ export function ForEveryBusiness() {
     return () => clearInterval(id)
   }, [running, hover])
 
+  // El carrusel: un bucle de animación que desplaza la pista y la rebobina sin corte.
+  useEffect(() => {
+    if (!running || still) return undefined
+    let raf = 0
+    let last = performance.now()
+    const tick = (now) => {
+      const dt = Math.min(64, now - last)
+      last = now
+      if (!paused.current && !drag.current) x.current -= (SPEED * dt) / 1000
+      const w = copyRef.current ? copyRef.current.offsetWidth : 0
+      if (w > 0) {
+        if (x.current <= -w) x.current += w
+        if (x.current > 0) x.current -= w
+      }
+      if (trackRef.current) trackRef.current.style.transform = `translate3d(${x.current}px,0,0)`
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [running, still])
+
+  const resumeLater = () => {
+    clearTimeout(resumeTimer.current)
+    resumeTimer.current = setTimeout(() => { paused.current = false; setHover(null) }, RESUME_MS)
+  }
+
+  const onPointerDown = (e) => {
+    if (still) return
+    clearTimeout(resumeTimer.current)
+    paused.current = true
+    drag.current = { x0: e.clientX, start: x.current, moved: false, type: e.pointerType }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+  const onPointerMove = (e) => {
+    const d = drag.current
+    if (!d) return
+    const dx = e.clientX - d.x0
+    if (Math.abs(dx) > 4) d.moved = true
+    x.current = d.start + dx
+  }
+  const onPointerUp = (e) => {
+    const d = drag.current
+    drag.current = null
+    if (!d) return
+    if (e.pointerType === 'mouse') return // el mouse sigue encima: se queda quieto hasta que se va
+    resumeLater()
+  }
+
   const focus = hover ?? active
 
+  const cards = (copy) => SHOWN.map((it, i) => {
+    const isFocus = focus === i
+    return (
+      <article
+        key={`${copy}-${it.key}`}
+        aria-hidden={copy === 1 ? 'true' : undefined}
+        onPointerEnter={(e) => { if (e.pointerType === 'mouse') { paused.current = true; setHover(i); setActive(i) } }}
+        onPointerDown={(e) => { if (e.pointerType !== 'mouse') { setHover(i); setActive(i) } }}
+        className={`lp-tile group relative h-[clamp(300px,min(60vh,97vw),600px)] shrink-0 select-none overflow-hidden rounded-3xl bg-gray-900 [aspect-ratio:4/5] ${still ? 'snap-center' : ''} ${isFocus ? 'is-focus' : ''}`}
+      >
+        <img
+          src={`/business/${it.key}.webp`}
+          alt={t(it.label)}
+          width={800}
+          height={1000}
+          loading={copy === 0 && i < 4 ? 'eager' : 'lazy'}
+          decoding="async"
+          draggable="false"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="lp-tile-shade absolute inset-0 bg-gradient-to-t from-blue-950/85 via-blue-950/25 to-transparent opacity-0" />
+        <span className="absolute left-4 top-4 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold tracking-wider text-white backdrop-blur">
+          {String(i + 1).padStart(2, '0')}
+        </span>
+        {it.chip && (
+          <span className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-lg shadow-blue-900/40">
+            {t(it.chip)}
+          </span>
+        )}
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+          <h3 className="lp-display text-xl font-extrabold leading-tight text-white sm:text-2xl">{t(it.label)}</h3>
+          <div className="lp-tile-blurb overflow-hidden">
+            <p className="mt-2 max-w-md text-sm leading-snug text-blue-100 sm:text-base">{t(it.blurb)}</p>
+          </div>
+        </div>
+      </article>
+    )
+  })
+
   return (
-    <section ref={ref} className="bg-white py-20 sm:py-24">
+    <section ref={sectionRef} className="overflow-hidden bg-white py-20 sm:py-24">
       <style>{`
         @keyframes lp-kb { from { transform: scale(1.06) translate(1.5%, 1%) } to { transform: scale(1.14) translate(-1.5%, -1.5%) } }
         .lp-tile img { animation: lp-kb 18s ease-in-out infinite alternate; will-change: transform; }
@@ -73,12 +171,11 @@ export function ForEveryBusiness() {
         .lp-tile.is-focus .lp-tile-blurb { max-height: 6rem; opacity: 1; transform: none; }
         .lp-tile .lp-tile-shade { transition: opacity .5s ease; }
         .lp-tile.is-focus .lp-tile-shade { opacity: 1; }
-        .lp-tile .lp-tile-bar { transform: scaleX(0); transform-origin: left; }
-        .lp-tile.is-focus.is-auto .lp-tile-bar { animation: lp-grow ${STEP_MS}ms linear forwards; }
-        .lp-tile.is-focus { box-shadow: 0 24px 48px -20px rgba(30, 64, 175, .45); }
+        .lp-tile { transition: transform .5s ease; }
+        .lp-tile.is-focus { transform: translateY(-6px); box-shadow: 0 24px 48px -20px rgba(30, 64, 175, .45); }
         .lp-rail { scrollbar-width: none; }
         .lp-rail::-webkit-scrollbar { display: none; }
-        @media (prefers-reduced-motion: reduce) { .lp-tile img, .lp-tile .lp-tile-bar { animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { .lp-tile img { animation: none !important; } }
       `}</style>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
@@ -88,68 +185,32 @@ export function ForEveryBusiness() {
             sub={t('Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.')}
           />
         </Reveal>
-
-        <Reveal>
-          <div
-            className="lp-rail -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-12"
-            onMouseLeave={() => setHover(null)}
-          >
-            {SHOWN.map((it, i) => {
-              const isFocus = focus === i
-              return (
-                <article
-                  key={it.key}
-                  onMouseEnter={() => { setHover(i); setActive(i) }}
-                  onFocus={() => { setHover(i); setActive(i) }}
-                  onBlur={() => setHover(null)}
-                  tabIndex={0}
-                  className={`lp-tile group relative w-[78vw] max-w-sm shrink-0 snap-center overflow-hidden rounded-3xl bg-gray-900 transition-transform duration-500 ease-out sm:w-auto sm:max-w-none ${
-                    it.big ? 'aspect-[4/5] sm:col-span-2 sm:aspect-[8/5] lg:col-span-6 lg:row-span-2 lg:aspect-[4/5]' : 'aspect-[4/5] lg:col-span-3'
-                  } ${isFocus ? 'is-focus lg:-translate-y-1' : ''} ${hover === null ? 'is-auto' : ''}`}
-                >
-                  <img
-                    src={`/business/${it.key}.webp`}
-                    alt={t(it.label)}
-                    width={1024}
-                    height={1280}
-                    loading={i < 3 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  {/* sombra base + sombra de foco */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <div className="lp-tile-shade absolute inset-0 bg-gradient-to-t from-blue-950/85 via-blue-950/25 to-transparent opacity-0" />
-
-                  <span className="absolute left-4 top-4 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold tracking-wider text-white backdrop-blur">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  {it.chip && (
-                    <span className="absolute right-4 top-4 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-lg shadow-blue-900/40">
-                      {t(it.chip)}
-                    </span>
-                  )}
-
-                  <div className={`absolute inset-x-0 bottom-0 ${it.big ? 'p-6 sm:p-8' : 'p-5'}`}>
-                    <h3 className={`lp-display font-extrabold leading-tight text-white ${it.big ? 'text-2xl sm:text-3xl lg:text-4xl' : 'text-xl'}`}>
-                      {t(it.label)}
-                    </h3>
-                    <div className="lp-tile-blurb overflow-hidden">
-                      <p className={`mt-2 leading-snug text-blue-100 ${it.big ? 'text-base sm:text-lg max-w-md' : 'text-sm'}`}>{t(it.blurb)}</p>
-                    </div>
-                    <div className="mt-3 h-0.5 w-16 overflow-hidden rounded-full bg-white/25">
-                      <div className="lp-tile-bar h-full w-full bg-blue-400" />
-                    </div>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </Reveal>
-
-        <Reveal className="mt-10 text-center">
-          <p className="text-sm text-gray-500 sm:text-base">{t('¿Tu rubro no está? Si anotas ventas, stock o fiado en un cuaderno, también es para ti.')}</p>
-        </Reveal>
       </div>
+
+      {/* De borde a borde: fuera del contenedor, sin márgenes */}
+      <Reveal>
+        {still ? (
+          <div className="lp-rail flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 py-3">{cards(0)}</div>
+        ) : (
+          <div
+            className="w-full cursor-grab touch-pan-y py-3 active:cursor-grabbing"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onPointerLeave={(e) => { if (e.pointerType === 'mouse') { paused.current = false; setHover(null) } }}
+          >
+            <div ref={trackRef} className="flex w-max will-change-transform">
+              <div ref={copyRef} className="flex gap-4 pr-4">{cards(0)}</div>
+              <div className="flex gap-4 pr-4">{cards(1)}</div>
+            </div>
+          </div>
+        )}
+      </Reveal>
+
+      <Reveal className="mt-8 px-5 text-center">
+        <p className="text-sm text-gray-500 sm:text-base">{t('¿Tu rubro no está? Si anotas ventas, stock o fiado en un cuaderno, también es para ti.')}</p>
+      </Reveal>
     </section>
   )
 }

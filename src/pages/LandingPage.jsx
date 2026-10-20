@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
   MessageCircle, Smartphone, Check, Users, Truck, Receipt,
@@ -275,8 +275,47 @@ const BENEFITS = [
 export function Benefits({ teaser = false }) {
   const t = useT()
   const list = teaser ? BENEFITS.slice(0, 3) : BENEFITS
+  const ref = useRef(null)
+  const [flipped, setFlipped] = useState(false)   // interruptor general: Antes | Con Eazy Stock
+  const [own, setOwn] = useState({})              // tarjetas giradas a mano, una por una
+  const [auto, setAuto] = useState(false)         // ya dio la vuelta sola al entrar en pantalla
+
+  // Entra en pantalla «Antes» (el cuaderno) y, tras un momento, las tarjetas giran solas a «Con Eazy Stock».
+  useEffect(() => {
+    const el = ref.current
+    if (!el || auto) return undefined
+    let timer = 0
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      obs.disconnect()
+      timer = setTimeout(() => { setFlipped(true); setAuto(true) }, 1500)
+    }, { threshold: 0.35 })
+    obs.observe(el)
+    return () => { obs.disconnect(); clearTimeout(timer) }
+  }, [auto])
+
+  const setAll = (v) => { setFlipped(v); setOwn({}); setAuto(true) }
+
   return (
-    <section id="beneficios" className={`scroll-mt-28 bg-white ${teaser ? 'py-24' : 'pb-24 pt-10'}`}>
+    <section id="beneficios" ref={ref} className={`scroll-mt-28 bg-white ${teaser ? 'py-24' : 'pb-24 pt-10'}`}>
+      <style>{`
+        .lp-hand { font-family: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive; }
+        .lp-paper {
+          background-color: #fffdf6;
+          background-image:
+            linear-gradient(90deg, transparent 2.1rem, rgba(239,68,68,.35) 2.1rem, rgba(239,68,68,.35) calc(2.1rem + 1px), transparent calc(2.1rem + 1px)),
+            repeating-linear-gradient(transparent 0, transparent 27px, rgba(96,165,250,.35) 27px, rgba(96,165,250,.35) 28px);
+          background-position: 0 0, 0 1.6rem;
+        }
+        .lp-flip { perspective: 1800px; }
+        .lp-flip-inner { display: grid; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.8,.2,1); }
+        .lp-flip-inner > * { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+        .lp-flip-inner > :last-child { transform: rotateY(180deg); }
+        .lp-flip.is-flipped .lp-flip-inner { transform: rotateY(180deg); }
+        .lp-flip:hover .lp-flip-inner { transform: rotateY(0) translateY(-4px); }
+        .lp-flip.is-flipped:hover .lp-flip-inner { transform: rotateY(180deg) translateY(-4px); }
+        @media (prefers-reduced-motion: reduce) { .lp-flip-inner { transition: none; } }
+      `}</style>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -285,32 +324,62 @@ export function Benefits({ teaser = false }) {
             sub={t('No es una lista de botones. Es plata que deja de perderse y tiempo que vuelve a tus manos.')}
           />
         </Reveal>
+
+        {/* Interruptor: el cuaderno de antes ↔ la app de ahora. Gira TODAS las tarjetas. */}
+        <Reveal className="-mt-4 mb-10 flex flex-col items-center gap-3">
+          <div role="group" aria-label={t('Antes')} className="relative inline-grid grid-cols-2 rounded-full border border-gray-200 bg-gray-100 p-1 text-sm font-bold">
+            <span
+              aria-hidden="true"
+              className={`absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-[#0a0e1a] shadow-md transition-transform duration-500 ${flipped ? 'translate-x-full' : ''}`}
+            />
+            <button type="button" onClick={() => setAll(false)} className={`relative z-10 rounded-full px-5 py-2 transition-colors ${flipped ? 'text-gray-500' : 'text-white'}`}>
+              {t('Antes')}
+            </button>
+            <button type="button" onClick={() => setAll(true)} className={`relative z-10 rounded-full px-5 py-2 transition-colors ${flipped ? 'text-white' : 'text-gray-500'}`}>
+              {t('Con Eazy Stock')}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">{t('Toca una tarjeta para darle la vuelta')}</p>
+        </Reveal>
+
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map(({ icon: Icon, chip, title, before, after }, i) => (
-            <Reveal key={title} delay={(i % 3) * 90}>
-              <article className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gray-200/60">
-                <div className="flex items-start justify-between gap-3">
-                  <IconTile icon={Icon} size={52} />
-                  <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-600">{t(chip)}</span>
-                </div>
-                <h3 className="mt-5 text-xl font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
-                <div className="mt-4 flex gap-3 rounded-2xl bg-red-50 p-3.5">
-                  <X size={16} className="mt-0.5 flex-shrink-0 text-red-500" />
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-red-600">{t('Antes')}</p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-gray-600">{t(before)}</p>
+          {list.map(({ icon: Icon, chip, title, before, after }, i) => {
+            const isFlipped = own[i] ?? flipped
+            return (
+              <Reveal key={title} delay={(i % 3) * 90}>
+                <div
+                  className={`lp-flip h-full cursor-pointer ${isFlipped ? 'is-flipped' : ''}`}
+                  onClick={() => setOwn(o => ({ ...o, [i]: !isFlipped }))}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOwn(o => ({ ...o, [i]: !isFlipped })) } }}
+                  aria-pressed={isFlipped}
+                >
+                  <div className="lp-flip-inner h-full" style={{ transitionDelay: `${(i % 3) * 110}ms` }}>
+                    {/* ANTES: una hoja del cuaderno */}
+                    <article className="lp-paper relative flex flex-col items-center rounded-3xl border border-amber-100 px-7 pb-8 pt-7 text-center shadow-sm">
+                      <span className="lp-hand absolute right-5 top-5 rotate-[-12deg] rounded-md border-[3px] border-double border-red-500/70 px-2 text-lg font-bold uppercase leading-none text-red-500/80">
+                        {t('Antes')}
+                      </span>
+                      <IconTile icon={Icon} size={52} />
+                      <h3 className="lp-hand mt-4 text-[1.9rem] font-bold leading-[28px] text-gray-800">{t(title)}</h3>
+                      <p className="lp-hand mt-[28px] text-[1.35rem] leading-[28px] text-gray-700">{t(before)}</p>
+                    </article>
+                    {/* CON EAZY STOCK: la ficha de la app */}
+                    <article className="relative flex flex-col items-center rounded-3xl bg-[#0a0e1a] px-7 pb-8 pt-7 text-center text-white shadow-xl shadow-blue-900/20">
+                      <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300">
+                        <Check size={12} /> {t('Con Eazy Stock')}
+                      </span>
+                      <IconTile icon={Icon} size={52} light />
+                      <span className="mt-4 rounded-full border border-blue-400/30 bg-blue-500/15 px-2.5 py-1 text-[11px] font-bold text-blue-200">{t(chip)}</span>
+                      <h3 className="lp-display mt-3 text-xl font-extrabold tracking-tight text-white">{t(title)}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-300">{t(after)}</p>
+                    </article>
                   </div>
                 </div>
-                <div className="mt-2.5 flex flex-1 gap-3 rounded-2xl bg-emerald-50 p-3.5">
-                  <Check size={16} className="mt-0.5 flex-shrink-0 text-emerald-600" />
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">{t('Con Eazy Stock')}</p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-gray-800">{t(after)}</p>
-                  </div>
-                </div>
-              </article>
-            </Reveal>
-          ))}
+              </Reveal>
+            )
+          })}
         </div>
         {teaser ? (
           <Reveal className="mt-10 text-center">

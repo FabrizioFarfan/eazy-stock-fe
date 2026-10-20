@@ -4,6 +4,7 @@ export default {
     'Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.':
       'We build it inside a neighborhood hardware store in Peru, and it is made for corner shops, pharmacies, bookstores and whatever you sell. The same system, nothing odd to set up.',
     'Aquí nació Eazy Stock': 'Eazy Stock was born here',
+    'Toca una tarjeta para darle la vuelta': 'Tap a card to flip it',
     'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.': 'Meters, kilos and units with decimals. Thousands of codes and store credit up to date.',
     'Fecha de vencimiento por producto y aviso 30 días antes de perderlo.': 'Expiry date per product and a warning 30 days before you lose it.',
     'Ventas por kilo o por unidad y el margen real de cada producto.': 'Sales by kilo or by unit and the real margin of every product.',
@@ -19,6 +20,7 @@ export default {
     'Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.':
       'Lo costruiamo dentro una ferramenta di quartiere in Perù ed è fatto per alimentari, farmacie, cartolerie e qualunque cosa tu venda. Lo stesso sistema, senza configurare nulla di strano.',
     'Aquí nació Eazy Stock': 'Qui è nato Eazy Stock',
+    'Toca una tarjeta para darle la vuelta': 'Tocca una scheda per girarla',
     'Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.': 'Metri, chili e unità con decimali. Migliaia di codici e il credito ai clienti sempre aggiornato.',
     'Fecha de vencimiento por producto y aviso 30 días antes de perderlo.': 'Data di scadenza per prodotto e avviso 30 giorni prima di perderlo.',
     'Ventas por kilo o por unidad y el margen real de cada producto.': 'Vendite al chilo o al pezzo e il margine reale di ogni prodotto.',
