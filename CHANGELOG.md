@@ -2,6 +2,11 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.4 — 2026-10-20 (hero cerrado: corrientes completas, botones 3D, fondo también en el CTA final; Frank)
+- **Tres corrientes con inicio y fin**: nacen fuera del borde izquierdo, cruzan todo el ancho y mueren fuera del derecho, esfumándose en ambos extremos (degradado en `userSpaceOnUse`). Ya no «se quedan a la mitad». Siguen solo en escritorio.
+- **Botones con cuerpo 3D** (`.lp-btn-3d` azul con luz arriba, bisel y base de sombra; `.lp-btn-3d-ghost` oscuro); al pasar se levantan, al pulsar se hunden. En el hero y en el CTA final.
+- **Sección final antes del pie** con el mismo `HeroBackdrop` (malla + esfumaturas + corrientes), sin los anillos que latían ni los orbes de colores; botones 3D.
+
 ## 1.11.3 — 2026-10-20 (hero: móvil legible, animación más grande, fondo simple; Frank)
 - **Celular**: las corrientes del fondo pasaban por detrás del texto y no dejaban leer → el SVG solo se pinta desde lg; en el celular quedan la malla y las esfumaturas.
 - **Animación más grande en escritorio**: columnas 42 / 58 (ya no 50/50), contenedor hasta 96 rem y la ventana del producto crece hasta 1.3× (antes tope 1×): ~715 px a 1440, ~800 px a 1920. Titular sigue en 3 líneas (`min(3.6rem, 2.5vw)`).

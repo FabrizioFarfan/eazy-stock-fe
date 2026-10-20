@@ -105,9 +105,13 @@ export function GlowOrbs() {
  * en escritorio: en el celular pasaban por detrás del texto y no dejaban leer.
  * Reutilizable: Frank quiere este efecto en todas las webs.
  */
+// Tres corrientes continuas: nacen fuera del borde izquierdo y mueren fuera del derecho
+// (Frank: «parece que se quedaron a la mitad; con inicio y fin»). Se esfuman en ambos
+// extremos con un degradado en coordenadas de usuario (no del bbox de cada trazo).
 const STREAMS = [
-  'M-60 150 C 340 70, 600 250, 830 330 S 1020 430, 1060 470',
-  'M-60 830 C 340 890, 600 690, 830 600 S 1020 520, 1060 470',
+  'M-60 150 C 300 60, 560 310, 860 300 S 1250 110, 1500 80',
+  'M-60 760 C 340 830, 620 640, 900 660 S 1250 770, 1500 700',
+  'M-60 900 C 400 950, 700 790, 950 830 S 1300 910, 1500 850',
 ]
 
 export function HeroBackdrop() {
@@ -126,10 +130,12 @@ export function HeroBackdrop() {
             <feGaussianBlur stdDeviation="3" result="b" />
             <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-          <linearGradient id="lpb-stream" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#93c5fd" stopOpacity=".1" />
-            <stop offset=".6" stopColor="#93c5fd" stopOpacity=".6" />
-            <stop offset="1" stopColor="#60a5fa" stopOpacity=".85" />
+          <linearGradient id="lpb-stream" gradientUnits="userSpaceOnUse" x1="-60" x2="1500" y1="0" y2="0">
+            <stop offset="0" stopColor="#93c5fd" stopOpacity="0" />
+            <stop offset=".18" stopColor="#93c5fd" stopOpacity=".55" />
+            <stop offset=".5" stopColor="#60a5fa" stopOpacity=".8" />
+            <stop offset=".82" stopColor="#93c5fd" stopOpacity=".55" />
+            <stop offset="1" stopColor="#93c5fd" stopOpacity="0" />
           </linearGradient>
           {STREAMS.map((d, i) => <path key={i} id={`lpb-s-${i}`} d={d} />)}
         </defs>
@@ -188,7 +194,7 @@ export function LandingStyles() {
       @keyframes lp-blink  { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
       @keyframes lp-ring   { 0% { transform: scale(.8); opacity: .8 } 100% { transform: scale(2.2); opacity: 0 } }
       @keyframes lp-click  { 0% { transform: scale(.4); opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
-      @keyframes lp-draw   { from { stroke-dashoffset: 1600 } to { stroke-dashoffset: 0 } }
+      @keyframes lp-draw   { from { stroke-dashoffset: 2000 } to { stroke-dashoffset: 0 } }
 
       .lp-bar { transform-origin: left; transform: scaleX(0); }
       .lp-in .lp-bar { animation: lp-grow .9s cubic-bezier(.22,1,.36,1) forwards; }
@@ -203,7 +209,23 @@ export function LandingStyles() {
       .lp-ring { animation: lp-ring 1.8s ease-out infinite; }
       .lp-fade { animation: lp-pop .35s cubic-bezier(.22,1,.36,1); }
       .lp-click { animation: lp-click .5s ease-out forwards; }
-      .lp-draw { stroke-dasharray: 1600; stroke-dashoffset: 1600; animation: lp-draw 5s cubic-bezier(.22,1,.36,1) forwards; }
+
+      /* Botones con cuerpo (Frank, 20-oct: «más 3D, muy planos»): luz arriba, bisel y base de sombra; se hunden al pulsar. */
+      .lp-btn-3d, .lp-btn-3d-ghost { position: relative; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; will-change: transform; }
+      .lp-btn-3d {
+        background: linear-gradient(180deg, #4f8df9 0%, #2563eb 55%, #1d4ed8 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.2), 0 6px 0 #1e3a8a, 0 16px 30px -10px rgba(37,99,235,.7);
+      }
+      .lp-btn-3d:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.2), 0 7px 0 #1e3a8a, 0 20px 34px -10px rgba(37,99,235,.75); }
+      .lp-btn-3d:active { transform: translateY(4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.2), 0 2px 0 #1e3a8a, 0 8px 16px -8px rgba(37,99,235,.6); }
+      .lp-btn-3d-ghost {
+        background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 100%);
+        border: 1px solid rgba(255,255,255,.18);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 5px 0 rgba(2,6,23,.9), 0 14px 24px -10px rgba(0,0,0,.8);
+      }
+      .lp-btn-3d-ghost:hover { transform: translateY(-1px); background: linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.07) 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 6px 0 rgba(2,6,23,.9), 0 18px 28px -10px rgba(0,0,0,.8); }
+      .lp-btn-3d-ghost:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 2px 0 rgba(2,6,23,.9), 0 6px 12px -8px rgba(0,0,0,.7); }
+      .lp-draw { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: lp-draw 5s cubic-bezier(.22,1,.36,1) forwards; }
 
       /* Laptops bajas (≤ 820 px de alto): el hero sigue entrando en una pantalla. */
       @media (min-width: 1024px) and (max-height: 820px) {

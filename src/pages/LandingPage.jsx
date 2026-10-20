@@ -150,14 +150,14 @@ export function Hero() {
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
               <Link
                 to={CTA}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/40 transition-all hover:bg-blue-500 hover:shadow-xl hover:shadow-blue-900/60 sm:w-auto"
+                className="lp-btn-3d group flex w-full items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold text-white sm:w-auto"
               >
                 {t('Probar gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 to="/funciones"
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/10 sm:w-auto"
+                className="lp-btn-3d-ghost flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-slate-100 sm:w-auto"
               >
                 {t('Ver cómo funciona')}
               </Link>
@@ -996,18 +996,7 @@ export function CtaBanner() {
   ]
   return (
     <section className="relative overflow-hidden bg-[#0a0e1a] py-28 sm:py-36">
-      <GridPattern />
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/25 blur-[140px]" />
-        <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-amber-400/15 blur-[120px]" />
-        <div className="absolute -right-24 top-0 h-80 w-80 rounded-full bg-fuchsia-500/15 blur-[120px]" />
-        {/* anillos que laten detrás del botón */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          {[0, 1, 2].map((i) => (
-            <span key={i} className="lp-ring absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/30" style={{ animationDelay: `${i * 0.6}s`, animationDuration: '3.6s' }} />
-          ))}
-        </div>
-      </div>
+      <HeroBackdrop />
 
       {/* fichas flotantes */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
@@ -1046,10 +1035,10 @@ export function CtaBanner() {
             {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró. Sin tarjeta, sin compromiso: si no te ordena la tienda, no nos debes nada.')}
           </p>
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link to={CTA} className="group relative inline-flex items-center gap-2 rounded-2xl bg-white px-9 py-4 text-base font-bold text-[#0a0e1a] shadow-[0_0_60px_-10px_rgba(96,165,250,.8)] transition-all hover:scale-[1.03] hover:shadow-[0_0_80px_-10px_rgba(96,165,250,1)]">
+            <Link to={CTA} className="lp-btn-3d group relative inline-flex items-center gap-2 rounded-2xl px-9 py-4 text-base font-bold text-white">
               {t('Probar gratis')} <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to={LOGIN} className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-7 py-4 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/10">
+            <Link to={LOGIN} className="lp-btn-3d-ghost inline-flex items-center gap-2 rounded-2xl px-7 py-4 text-sm font-semibold text-white">
               {t('Ya tengo cuenta')}
             </Link>
           </div>
