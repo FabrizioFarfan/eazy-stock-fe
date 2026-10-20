@@ -156,7 +156,7 @@ function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow =
   )
 }
 
-export function HeroBackdrop() {
+export function HeroBackdrop({ id = 'lpb', paths = STREAMS, mobilePaths = STREAMS_MOBILE, fade = true }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* esfumaturas: UN solo div con degradados radiales (20-oct-2026: los tres
@@ -175,9 +175,9 @@ export function HeroBackdrop() {
       {/* la malla, esfumada hacia los bordes */}
       <GridPattern />
       {/* corrientes: una versión apaisada para escritorio y otra vertical para el celular */}
-      <Streams id="lpb-d" paths={STREAMS} viewBox="0 0 1440 900" className="absolute inset-0 hidden h-full w-full lg:block" />
-      <Streams id="lpb-m" paths={STREAMS_MOBILE} viewBox="0 0 390 1150" className="absolute inset-0 h-full w-full opacity-80 lg:hidden" width={1.25} dot={3.5} glow={2} />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
+      <Streams id={`${id}-d`} paths={paths} viewBox="0 0 1440 900" className="absolute inset-0 hidden h-full w-full lg:block" />
+      <Streams id={`${id}-m`} paths={mobilePaths} viewBox="0 0 390 1150" className="absolute inset-0 h-full w-full opacity-80 lg:hidden" width={1.25} dot={3.5} glow={2} />
+      {fade && <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />}
     </div>
   )
 }

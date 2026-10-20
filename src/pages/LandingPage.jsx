@@ -1,7 +1,7 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import {
-  BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
+  BarChart2, Shield, QrCode, Bell, FileSpreadsheet,
   MessageCircle, Smartphone, Check, Users, Truck, Receipt,
   CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight,
   Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, ChevronDown,
@@ -11,9 +11,10 @@ import {
 } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { Reveal, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import { Reveal, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import { STREAMS_EDGES, STREAMS_CTA } from './landing/streams'
 import {
-  IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck,
+  IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck, IcoChat, IcoSheet,
   IcoHardware, IcoStore, IcoPharmacy, IcoBasket, IcoCup,
 } from './landing/icons'
 import HeroTour from './landing/HeroTour'
@@ -22,8 +23,8 @@ import {
   CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
-import { PUBLIC_PAGES, usePageSeo } from './landing/site'
-import { PLANS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, siteCurrency, trialLine, promoVars } from './landing/plans'
+import { usePageSeo } from './landing/site'
+import { PLANS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, siteCurrency, trialLine, promoVars, promoActive, PROMO_FREE_UNTIL } from './landing/plans'
 import { PeriodSelector, ComingSoonChip } from './landing/Pricing'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
@@ -34,35 +35,115 @@ const LOGIN = '/login'
 //  Navbar
 // ═══════════════════════════════════════════════════════════════════════════
 
-const NAV = PUBLIC_PAGES
+// Menú (20-oct-2026, Frank: «la navbar parece muy simplona; agrega Inicio con submenús de
+// las secciones»): Inicio y Funciones despliegan un panel con las secciones de cada página.
+const HOME_SECTIONS = [
+  { to: '/#rubros',         icon: IcoShelf,  label: 'Para todo tipo de negocio', desc: 'Bodegas, farmacias, ferreterías y más' },
+  { to: '/#beneficios',     icon: IcoChart,  label: 'Beneficios',               desc: 'Antes y después de Eazy Stock' },
+  { to: '/#un-dia',         icon: IcoTill,   label: 'Un día con Eazy Stock',    desc: 'De la venta al cierre de caja' },
+  { to: '/#como-funciona',  icon: IcoSheet,  label: 'Cómo empezar',             desc: 'Listo en una tarde' },
+  { to: '/#de-donde-sale',  icon: IcoChat,   label: 'De dónde sale',            desc: 'Nació en un mostrador' },
+  { to: '/#precios',        icon: IcoTag,    label: 'Precios',                  desc: 'Prueba gratis y planes' },
+]
+const FEATURE_SECTIONS = [
+  { to: '/funciones#vender',    icon: IcoScan,   label: 'Vender',               desc: 'Escanea, cobra y descuenta el stock' },
+  { to: '/funciones#caja',      icon: IcoTill,   label: 'Caja',                 desc: 'Cierre por cada medio de pago' },
+  { to: '/funciones#fiado',     icon: IcoLedger, label: 'Fiado',                desc: 'Límite, deuda y recordatorio' },
+  { to: '/funciones#pedidos',   icon: IcoTruck,  label: 'Pedidos',              desc: 'Stock mínimo y pedido en PDF' },
+  { to: '/funciones#importar',  icon: IcoSheet,  label: 'Importar tu catálogo', desc: 'Excel, Word, papel o foto' },
+  { to: '/funciones#funciones', icon: IcoShelf,  label: 'Todas las funciones',  desc: 'La lista completa' },
+]
+const NAV = [
+  { to: '/',           label: 'Inicio',     end: true, menu: HOME_SECTIONS },
+  { to: '/funciones',  label: 'Funciones',  menu: FEATURE_SECTIONS },
+  { to: '/para-quien', label: 'Para quién' },
+  { to: '/planes',     label: 'Precios' },
+  { to: '/preguntas',  label: 'Preguntas' },
+]
 
-/** `home=false` (p. ej. en /planes): los anclas vuelven a la portada. */
+function MenuPanel({ items, onPick }) {
+  const t = useT()
+  return (
+    <div className="grid grid-cols-1 gap-1 p-2 sm:grid-cols-2">
+      {items.map(({ to, icon: Icon, label, desc }) => (
+        <Link key={to} to={to} onClick={onPick} className="group/i flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-white/[0.07]">
+          <IconTile icon={Icon} size={38} light className="transition-transform group-hover/i:scale-105" />
+          <span className="min-w-0">
+            <span className="block text-sm font-bold text-white">{t(label)}</span>
+            <span className="block text-xs leading-snug text-slate-400">{t(desc)}</span>
+          </span>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export function Navbar() {
   const t = useT()
+  const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false)       // menú del celular
+  const [menu, setMenu] = useState(null)        // panel abierto en escritorio (índice de NAV)
+  const [sub, setSub] = useState(null)          // grupo desplegado en el celular
+  const closeTimer = useRef(null)
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+  // Al cambiar de página o de ancla se cierra todo (estado derivado durante el render).
+  const [seenKey, setSeenKey] = useState(location.key)
+  if (seenKey !== location.key) { setSeenKey(location.key); setOpen(false); setMenu(null) }
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') { setMenu(null); setOpen(false) } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const show = (i) => { clearTimeout(closeTimer.current); setMenu(i) }
+  const hide = () => { clearTimeout(closeTimer.current); closeTimer.current = setTimeout(() => setMenu(null), 140) }
 
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-      scrolled || open ? 'border-b border-white/10 bg-[#0a0e1a]/90 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'
+      scrolled || open || menu !== null ? 'border-b border-white/10 bg-[#0a0e1a]/90 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'
     }`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-5 sm:px-8">
         <Link to="/" className="flex items-center gap-2.5">
           <img src="/logo.png" alt="Eazy Stock" className="h-8 w-8 rounded-lg object-contain" />
-          <span className="text-lg font-bold text-white">Eazy Stock</span>
+          <span className="lp-display text-lg font-bold text-white">Eazy Stock</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex">
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to}
-              className={({ isActive }) => `text-sm transition-colors hover:text-white ${isActive ? 'font-semibold text-white' : 'text-slate-400'}`}>
-              {t(n.label)}
-            </NavLink>
+        {/* Escritorio: píldora con las páginas; Inicio y Funciones despliegan sus secciones */}
+        <nav className="hidden items-center gap-0.5 rounded-full border border-white/10 bg-white/[0.04] p-1 lg:flex" aria-label={t('Menú')}>
+          {NAV.map((n, i) => (
+            <div key={n.to} className="relative" onMouseEnter={() => n.menu && show(i)} onMouseLeave={() => n.menu && hide()}>
+              <NavLink
+                to={n.to}
+                end={n.end}
+                aria-haspopup={n.menu ? 'true' : undefined}
+                aria-expanded={n.menu ? menu === i : undefined}
+                onClick={(e) => { if (n.menu && menu !== i && !e.ctrlKey && !e.metaKey) { /* primer clic abre el panel */ e.preventDefault(); show(i) } }}
+                className={({ isActive }) => `flex items-center gap-1 rounded-full px-4 py-1.5 text-sm transition-colors ${
+                  isActive || menu === i ? 'bg-white/10 font-semibold text-white' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                {t(n.label)}
+                {n.menu && <ChevronDown size={14} className={`transition-transform ${menu === i ? 'rotate-180' : ''}`} />}
+              </NavLink>
+              {n.menu && (
+                <div className={`absolute left-1/2 top-full z-50 w-[34rem] -translate-x-1/2 pt-3 transition-all duration-200 ${
+                  menu === i ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-1 opacity-0'
+                }`}>
+                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0e1a]/95 shadow-2xl shadow-black/50 backdrop-blur-xl">
+                    <MenuPanel items={n.menu} onPick={() => setMenu(null)} />
+                    <Link to={n.to} onClick={() => setMenu(null)} className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/[0.05] hover:text-white">
+                      {n.end ? t('Ir al inicio') : t('Ver todas las funciones')} <ArrowRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -73,7 +154,7 @@ export function Navbar() {
           </Link>
           <Link
             to={CTA}
-            className="group hidden items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#0a0e1a] transition-all hover:bg-blue-50 sm:flex"
+            className="lp-btn-3d group hidden items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white sm:flex"
           >
             {t('Probar gratis')}
             <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
@@ -90,21 +171,35 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="border-t border-white/10 bg-[#0a0e1a] px-5 pb-5 pt-3 lg:hidden">
+        <div className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-white/10 bg-[#0a0e1a] px-5 pb-5 pt-2 lg:hidden">
           <nav className="flex flex-col">
-            <Link to="/" onClick={() => setOpen(false)} className="border-b border-white/5 py-3 text-sm font-medium text-slate-200">{t('Inicio')}</Link>
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} onClick={() => setOpen(false)}
-                className={({ isActive }) => `border-b border-white/5 py-3 text-sm font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                {t(n.label)}
-              </NavLink>
+            {NAV.map((n, i) => (
+              <div key={n.to} className="border-b border-white/5">
+                <div className="flex items-center">
+                  <NavLink to={n.to} end={n.end} onClick={() => setOpen(false)}
+                    className={({ isActive }) => `flex-1 py-3 text-sm font-medium ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                    {t(n.label)}
+                  </NavLink>
+                  {n.menu && (
+                    <button type="button" onClick={() => setSub(sub === i ? null : i)} aria-expanded={sub === i} aria-label={t('Abrir menú')}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300">
+                      <ChevronDown size={16} className={`transition-transform ${sub === i ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+                </div>
+                {n.menu && sub === i && (
+                  <div className="-mx-2 mb-2">
+                    <MenuPanel items={n.menu} onPick={() => setOpen(false)} />
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
           <div className="mt-4 flex gap-2">
-            <Link to={CTA} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#0a0e1a]">
+            <Link to={CTA} className="lp-btn-3d flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold text-white">
               {t('Probar gratis')} <ArrowRight size={14} />
             </Link>
-            <Link to={LOGIN} className="flex items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-slate-200">
+            <Link to={LOGIN} className="lp-btn-3d-ghost flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white">
               {t('Iniciar sesión')}
             </Link>
           </div>
@@ -395,8 +490,9 @@ export function Benefits({ teaser = false }) {
           </Reveal>
         ) : (
         <Reveal>
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
-            <p className="text-base font-semibold text-white sm:text-lg">
+          <div className="relative mt-10 flex flex-col items-center justify-between gap-4 overflow-hidden rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
+            <HeroBackdrop id="lpb-bn" paths={STREAMS_EDGES} fade={false} />
+            <p className="relative text-base font-semibold text-white sm:text-lg">
               {t('Menos cuaderno, menos plata perdida, más tiempo para vender.')}
               <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde.')} {trialLine(t, dateLocale())}.</span>
             </p>
@@ -784,7 +880,7 @@ export function Industries() {
   const t = useT()
   return (
     <section id="para-quien" className="scroll-mt-28 relative overflow-hidden bg-[#0a0e1a] py-24">
-      <GridPattern />
+      <HeroBackdrop id="lpb-pq" paths={STREAMS_EDGES} />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -818,36 +914,70 @@ export function Industries() {
 //  Cómo funciona
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Cómo empezar (20-oct-2026, Frank: «el paso 2 es muy abstracto; que entiendan que si lo
+// tienen en una hoja de papel, en Word o donde sea, les ayudamos a importarlo; y que el
+// texto suene humano, para boomers y millennials»). Sin degradados: iconos propios.
+const STEPS = [
+  { icon: IcoTeam, title: 'Crea tu cuenta',
+    desc: 'Pones el nombre de tu tienda y listo. Si tienes gente que vende contigo, la invitas y tú decides qué puede ver cada uno.' },
+  { icon: IcoSheet, title: 'Trae tu lista de productos, como la tengas',
+    desc: 'Si está en Excel, la subes y entra en minutos. Si la tienes en Word, en una hoja de papel o en el cuaderno, nos mandas una foto o el archivo por WhatsApp y la cargamos nosotros. Y si prefieres, la escribes producto por producto.',
+    },
+  { icon: IcoScan, title: 'Empieza a vender',
+    desc: 'Buscas el producto por el nombre o lo escaneas, cobras en efectivo, con tarjeta o con billetera digital, y al final del día la caja te dice cuánto entró.' },
+]
+const SOURCES = [
+  [FileSpreadsheet, 'Excel o CSV'],
+  [FileText,        'Word o PDF'],
+  [Camera,          'Foto del cuaderno'],
+  [MessageCircle,   'Por WhatsApp'],
+]
+
 export function HowItWorks() {
   const t = useT()
-  const steps = [
-    [Users,           'Crea tu negocio',       'Abres tu cuenta, pones el nombre de la tienda e invitas a tu gente con los permisos que tú decidas.'],
-    [FileSpreadsheet, 'Sube tu Excel',         'O carga productos uno por uno. El sistema te sugiere el código y guarda unidad, mínimo y vencimiento.'],
-    [ShoppingCart,    'Vende desde el día uno','Escaneas, cobras por cualquier medio, fías con control y cierras la caja cada noche.'],
-  ]
   return (
-    <section id="como-funciona" className="bg-white py-24">
+    <section id="como-funciona" className="scroll-mt-20 bg-white py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <Reveal>
           <SectionHead kicker={t('Cómo empezar')} title={t('Listo en una tarde, no en tres semanas')} />
         </Reveal>
-        <div className="relative grid gap-10 md:grid-cols-3">
-          <div className="absolute left-0 right-0 top-12 hidden h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent md:block" />
-          {steps.map(([Icon, title, desc], i) => (
-            <Reveal key={title} delay={i * 130} className="relative flex flex-col items-center text-center">
-              <div className="relative mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xl shadow-blue-200">
-                <Icon size={34} className="text-white" />
-                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#0a0e1a] text-xs font-extrabold text-blue-300 ring-4 ring-white">
+        <div className="relative grid gap-6 md:grid-cols-3">
+          <div className="absolute left-[16%] right-[16%] top-[4.5rem] hidden h-0.5 bg-gradient-to-r from-transparent via-blue-300 to-transparent md:block" />
+          {STEPS.map(({ icon: Icon, title, desc }, i) => (
+            <Reveal key={title} delay={i * 130} className="relative flex h-full flex-col items-center rounded-3xl border border-gray-200 bg-white px-6 pb-7 pt-8 text-center shadow-sm">
+              <div className="relative mb-5">
+                <IconTile icon={Icon} size={72} className="rounded-3xl shadow-xl shadow-blue-100" />
+                <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-extrabold text-white ring-4 ring-white">
                   {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
-              <h3 className="mb-2 text-lg font-bold text-gray-900">{t(title)}</h3>
-              <p className="text-sm leading-relaxed text-gray-500">{t(desc)}</p>
+              <h3 className="lp-display mb-2 text-xl font-extrabold text-gray-900">{t(title)}</h3>
+              <p className="text-sm leading-relaxed text-gray-600">{t(desc)}</p>
             </Reveal>
           ))}
         </div>
-        <Reveal delay={200} className="mt-14 text-center">
-          <Link to={CTA} className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+
+        {/* Paso 2 en concreto: de dónde puede venir la lista y que la cargamos nosotros */}
+        <Reveal delay={150} className="mt-6">
+          <div className="flex flex-col items-center gap-5 rounded-3xl border border-blue-100 bg-blue-50/60 px-6 py-6 text-center lg:flex-row lg:justify-between lg:text-left">
+            <div className="lg:max-w-xs">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">{t('Como la tengas')}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{t('Si no es Excel, lo cargamos nosotros en 24–48 h. Sin costo.')}</p>
+              <Link to="/funciones#importar" className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:underline">
+                {t('Ver cómo lo importamos')} <ArrowRight size={13} />
+              </Link>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {SOURCES.map(([SIcon, label]) => (
+                <span key={label} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm">
+                  <SIcon size={16} className="flex-shrink-0 text-blue-600" /> {t(label)}
+                </span>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+        <Reveal delay={200} className="mt-12 text-center">
+          <Link to={CTA} className="lp-btn-3d group inline-flex items-center gap-2 rounded-2xl px-8 py-3.5 text-sm font-bold text-white">
             {t('Probar gratis')} <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
         </Reveal>
@@ -1041,7 +1171,7 @@ export function CtaBanner() {
   ]
   return (
     <section className="relative overflow-hidden bg-[#0a0e1a] py-28 sm:py-36">
-      <HeroBackdrop />
+      <HeroBackdrop id="lpb-cta" paths={STREAMS_CTA} />
 
       {/* fichas flotantes */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
@@ -1103,8 +1233,9 @@ export function CtaBanner() {
 export function Footer() {
   const t = useT()
   return (
-    <footer className="bg-[#0a0e1a] py-16">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+    <footer className="relative overflow-hidden bg-[#0a0e1a] py-16">
+      <HeroBackdrop id="lpb-ft" paths={STREAMS_EDGES} fade={false} />
+      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2.5">
@@ -1168,42 +1299,120 @@ export function Footer() {
 
 // Inicio: cuatro tarjetas que llevan a cada parte de Funciones (en vez de las
 // maquetas largas, que ahora viven en /funciones).
-const HIGHLIGHTS = [
-  { icon: IcoScan,   to: '/funciones#vender',  title: 'Vende en segundos',       desc: 'Escaneas con la cámara del celular, cobras por cualquier medio y el stock se descuenta solo.' },
-  { icon: IcoTill,   to: '/funciones#caja',    title: 'Cierra la caja sin dudas', desc: 'Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.' },
-  { icon: IcoLedger, to: '/funciones#fiado',  title: 'Controla el fiado',       desc: 'Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.' },
-  { icon: IcoTruck,  to: '/funciones#pedidos', title: 'Nunca te quedes sin stock', desc: 'Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.' },
+// Un día con Eazy Stock (20-oct-2026, Frank: «mejora el diseño, los iconos siempre centrados»):
+// una LÍNEA DE TIEMPO del día de la tienda. El punto recorre las horas y la ficha de ese
+// momento se enciende; con el mouse encima, manda la ficha señalada.
+const DAY = [
+  { time: '8:00',  icon: IcoScan,   to: '/funciones#vender',  title: 'Vende en segundos',          desc: 'Escaneas con la cámara del celular, cobras por cualquier medio y el stock se descuenta solo.' },
+  { time: '12:30', icon: IcoLedger, to: '/funciones#fiado',   title: 'Controla el fiado',          desc: 'Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.' },
+  { time: '17:00', icon: IcoTruck,  to: '/funciones#pedidos', title: 'Nunca te quedes sin stock',  desc: 'Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.' },
+  { time: '20:00', icon: IcoTill,   to: '/funciones#caja',    title: 'Cierra la caja sin dudas',   desc: 'Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.' },
 ]
+const DAY_STEP_MS = 3000
 
 function Highlights() {
   const t = useT()
+  const ref = useRef(null)
+  const [active, setActive] = useState(0)
+  const [hover, setHover] = useState(null)
+  const [running, setRunning] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const obs = new IntersectionObserver(([e]) => setRunning(e.isIntersecting), { threshold: 0.3 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  useEffect(() => {
+    if (!running || hover !== null) return undefined
+    const id = setInterval(() => setActive((a) => (a + 1) % DAY.length), DAY_STEP_MS)
+    return () => clearInterval(id)
+  }, [running, hover])
+  const focus = hover ?? active
+  const pct = (focus / (DAY.length - 1)) * 100
   return (
-    <section className="bg-gray-50 py-24">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+    <section id="un-dia" ref={ref} className="relative scroll-mt-20 overflow-hidden bg-[#0a0e1a] py-24">
+      <HeroBackdrop id="lpb-day" paths={STREAMS_EDGES} />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
-          <SectionHead kicker={t('Un día con Eazy Stock')} title={t('De la venta al cierre de caja, sin hojas sueltas')} />
+          <SectionHead dark kicker={t('Un día con Eazy Stock')} title={t('De la venta al cierre de caja, sin hojas sueltas')} />
         </Reveal>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {HIGHLIGHTS.map(({ icon: Icon, to, title, desc }, i) => (
-            <Reveal key={to} delay={i * 80}>
-              <Link to={to} className="group flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50">
-                <IconTile icon={Icon} size={52} className="mb-5" />
-                <h3 className="text-lg font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-500">{t(desc)}</p>
-                <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
-                  {t('Ver cómo funciona')} <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            </Reveal>
-          ))}
+
+        {/* la línea del día (escritorio) */}
+        <Reveal className="mb-8 hidden px-[12.5%] lg:block">
+          <div className="relative h-1 rounded-full bg-white/10">
+            <div className="absolute inset-y-0 left-0 rounded-full bg-blue-400 transition-[width] duration-700 ease-out" style={{ width: `${pct}%` }} />
+            {DAY.map((d, i) => (
+              <span key={d.time} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${(i / (DAY.length - 1)) * 100}%` }}>
+                <span className={`block h-3 w-3 rounded-full ring-4 ring-[#0a0e1a] transition-colors ${i <= focus ? 'bg-blue-400' : 'bg-white/20'}`} />
+              </span>
+            ))}
+            <span className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_6px_rgba(96,165,250,.35)] transition-[left] duration-700 ease-out" style={{ left: `${pct}%` }} />
+          </div>
+        </Reveal>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" onMouseLeave={() => setHover(null)}>
+          {DAY.map(({ time, icon: Icon, to, title, desc }, i) => {
+            const on = focus === i
+            return (
+              <Reveal key={to} delay={i * 80}>
+                <Link
+                  to={to}
+                  onMouseEnter={() => setHover(i)}
+                  className={`group flex h-full flex-col items-center rounded-3xl border p-6 text-center transition-all duration-500 ${
+                    on ? '-translate-y-1.5 border-blue-400/60 bg-white/[0.09] shadow-2xl shadow-blue-900/40' : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
+                  }`}
+                >
+                  <span className={`mb-4 rounded-full px-3 py-1 font-mono text-xs font-bold tracking-wider transition-colors ${on ? 'bg-blue-500 text-white' : 'bg-white/10 text-slate-300'}`}>{time}</span>
+                  <IconTile icon={Icon} size={56} light className={`transition-transform duration-500 ${on ? 'scale-110' : ''}`} />
+                  <h3 className="lp-display mt-5 text-lg font-extrabold tracking-tight text-white">{t(title)}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-400">{t(desc)}</p>
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-300">
+                    {t('Ver cómo funciona')} <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </Reveal>
+            )
+          })}
         </div>
-        <Reveal className="mt-10 text-center">
-          <Link to="/funciones" className="group inline-flex items-center gap-2 rounded-xl bg-[#0a0e1a] px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02]">
+        <Reveal className="mt-12 text-center">
+          <Link to="/funciones" className="lp-btn-3d group inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-bold text-white">
             {t('Ver todas las funciones')} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
         </Reveal>
       </div>
     </section>
+  )
+}
+
+// Cuenta regresiva de la promo (20-oct-2026, Frank: «donde dice precio, que muestre la marcha
+// atrás del tiempo gratuito: días, horas, minutos y segundos»). Termina a medianoche de Lima.
+function Countdown() {
+  const t = useT()
+  const end = new Date(`${PROMO_FREE_UNTIL}T00:00:00-05:00`).getTime()
+  const [left, setLeft] = useState(() => end - Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setLeft(end - Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [end])
+  if (left <= 0) return null
+  const d = Math.floor(left / 86400000)
+  const h = Math.floor(left / 3600000) % 24
+  const m = Math.floor(left / 60000) % 60
+  const sec = Math.floor(left / 1000) % 60
+  const cells = [[d, 'días'], [h, 'horas'], [m, 'min'], [sec, 'seg']]
+  return (
+    <div className="mt-5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{t('Lo gratis se acaba en')}</p>
+      <div className="mt-2 flex gap-2">
+        {cells.map(([v, label]) => (
+          <div key={label} className="min-w-[3.8rem] rounded-xl border border-white/10 bg-white/[0.06] px-2 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,.1)]">
+            <p className="font-mono text-2xl font-extrabold tabular-nums text-white">{String(v).padStart(2, '0')}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t(label)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -1215,16 +1424,17 @@ function PricingTeaser() {
   const currency = siteCurrency()
   const per = periodOf(period)
   return (
-    <section className="bg-white py-20">
+    <section id="precios" className="scroll-mt-20 bg-white py-20">
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-[#0a0e1a] px-6 py-10 sm:px-10">
-            <GridPattern />
+            <HeroBackdrop id="lpb-pr" paths={STREAMS_EDGES} fade={false} />
             <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>
                 <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{trialLine(t, dateLocale())}</h2>
                 <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))}</p>
+                {promoActive() && <Countdown />}
               </div>
               <div className="flex flex-shrink-0 flex-col items-center gap-4 lg:items-end">
                 <PeriodSelector period={period} onChange={setPeriod} dark compact />

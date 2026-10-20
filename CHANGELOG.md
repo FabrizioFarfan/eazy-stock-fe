@@ -2,6 +2,14 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.16.0 — 2026-10-20 (navbar con submenús, «Un día» en línea de tiempo, paso 2 concreto, cuenta regresiva, corrientes en todo lo oscuro; Frank, task 1042)
+- **Navbar**: píldora con las páginas y **«Inicio» y «Funciones» despliegan un panel** (icono + nombre + una línea) con las secciones de cada página (Inicio: rubros, beneficios, un día, cómo empezar, de dónde sale, precios; Funciones: vender, caja, fiado, pedidos, importar, todas). Se abre al pasar el mouse o con un clic, se cierra con Escape, al navegar o al salir; en el celular, acordeón. «Probar gratis» en 3D. Anclas nuevas `#rubros`, `#un-dia`, `#precios`.
+- **«Un día con Eazy Stock»**: sección oscura con **línea de tiempo del día** (8:00 vende · 12:30 fiado · 17:00 pedido · 20:00 cierre): el punto recorre las horas y la ficha de ese momento se enciende; con el mouse manda la señalada. Iconos **centrados** en baldosa clara.
+- **«Cómo empezar»**: tres tarjetas con iconos propios centrados (fuera los degradados) y textos en cristiano («Pones el nombre de tu tienda y listo…»). **Paso 2 concreto**: «Trae tu lista de productos, como la tengas» + banda «Como la tengas» con Excel/CSV · Word/PDF · Foto del cuaderno · Por WhatsApp, «si no es Excel lo cargamos nosotros en 24–48 h, sin costo» y enlace a /funciones#importar.
+- **Precios**: **cuenta regresiva** de lo gratis (días · horas · min · seg hasta la medianoche de Lima del 15-dic); desaparece sola al terminar la promo.
+- **Corrientes del fondo** (`HeroBackdrop` con `id` y `paths`; trazados en `landing/streams.js`): en el CTA final pasan **por detrás de los botones**, no del texto (`STREAMS_CTA`); y van por los bordes (`STREAMS_EDGES`) en todas las zonas oscuras: «Un día», tarjeta de precios, pie, «Para quién», franja de Beneficios y cabecera de las páginas interiores.
+- Diccionario `landing6.js` (en/it).
+
 ## 1.15.1 — 2026-10-20 (retoques de Frank)
 - Carrusel: fichas más chicas (`clamp(260px, min(48vh, 80vw), 480px)` de alto) y fuera el chip «Aquí nació Eazy Stock».
 - Beneficios: hoja de cuaderno sobria y más real (papel casi blanco con rayas grises, grano leve y sombra del lomo; sin margen rojo ni sello), los iconos van **sin baldosa** en las dos caras (azul noche sobre el papel, azul claro sobre la ficha), y la ficha de la app es un azul noche **un punto más claro con luz arriba y bisel** (`.lp-appcard`).

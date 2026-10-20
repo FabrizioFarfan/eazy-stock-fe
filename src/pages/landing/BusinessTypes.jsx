@@ -162,7 +162,7 @@ export function ForEveryBusiness() {
   })
 
   return (
-    <section ref={sectionRef} className="overflow-hidden bg-white py-20 sm:py-24">
+    <section id="rubros" ref={sectionRef} className="scroll-mt-20 overflow-hidden bg-white py-20 sm:py-24">
       <style>{`
         @keyframes lp-kb { from { transform: scale(1.06) translate(1.5%, 1%) } to { transform: scale(1.14) translate(-1.5%, -1.5%) } }
         .lp-tile img { animation: lp-kb 18s ease-in-out infinite alternate; will-change: transform; }

@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useT } from '../../i18n'
-import { Reveal, GridPattern, GlowOrbs, LandingStyles } from './shared'
+import { Reveal, HeroBackdrop, LandingStyles } from './shared'
+import { STREAMS_EDGES } from './streams'
 import { useNoAppDarkMode } from './useNoAppDarkMode'
 
 /**
@@ -60,8 +61,7 @@ export function PageHero({ kicker, title, highlight, sub, children }) {
   return (
     <section className="relative overflow-hidden bg-[#0a0e1a] pb-20 pt-32 sm:pb-24 sm:pt-40">
       <LandingStyles />
-      <GlowOrbs />
-      <GridPattern />
+      <HeroBackdrop id="lpb-ph" paths={STREAMS_EDGES} />
       <div className="relative mx-auto max-w-5xl px-5 text-center sm:px-8">
         <Reveal>
           {kicker && (
