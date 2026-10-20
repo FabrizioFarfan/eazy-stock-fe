@@ -2,6 +2,13 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.14.0 — 2026-10-20 («Para todo tipo de negocio» v2: fotos de inventarios por rubro; Frank, task 1040)
+- **Texto honesto**: ya no dice que «hoy ordena bodegas, farmacias, librerías…» (hoy solo la usa la ferretería; el marketing recién empieza). Ahora: «Lo construimos dentro de una ferretería de barrio en Perú y está hecho para bodegas, farmacias, librerías y lo que tú vendas».
+- **Fuera los iconos simples**: un **mosaico grande** (`landing/BusinessTypes.jsx`, ancho `max-w-7xl`) con una **foto completa por rubro**, generadas con IA (FLUX.1-schnell): solo el inventario de cada negocio, sin personas ni letreros. Ferreterías y Bodegas ocupan el doble (2×2); en tablet dos columnas, en móvil un carril deslizable con fichas de 78 vw.
+- **Vivo sin tocarlo**: cada foto respira (Ken Burns lento, 18 s, alternado), un foco recorre las fichas cada 2,6 s mostrando la frase de cada rubro (solo mientras la sección está en pantalla) y la barrita azul marca el tiempo; al pasar el mouse, la ficha en foco es la tuya. `prefers-reduced-motion` lo apaga. Chip «Aquí nació Eazy Stock» en Ferreterías.
+- Frases por rubro con solo funciones reales (decimales, vencimiento, códigos, fiado, cierre de caja, cotización por WhatsApp, foto por producto). Se mantiene «¿Tu rubro no está?…».
+- Fotos autoalojadas en `public/business/*.webp` (800×1000, ~150 KB cada una, `loading="lazy"` salvo las tres primeras). Diccionario `landing5.js` (en/it); fuera la frase vieja de `landing4.js`.
+
 ## 1.13.0 — 2026-10-20 (landing v2: iconos propios, para todo tipo de negocio, fondo liviano; Frank, task 1017)
 - **Fuera la sección de números** («7 reportes · 14 permisos · 3 idiomas · 6 decimales»: no le decían nada a nadie y sonaban a ferretería). En su lugar, **«Para todo tipo de negocio»**: diez rubros con icono propio (ferreterías, bodegas, farmacias, abarrotes, librerías, repuestos, ropa, veterinarias, cafeterías, celulares) y «si anotas en un cuaderno, también es para ti».
 - **Iconos propios de Eazy Stock** (`landing/icons.jsx`): un solo trazo redondeado y un punto de acento azul, siempre dentro de la baldosa azul noche `IconTile`. Reemplazan los cuadrados con degradado de colores en Beneficios, «Un día con Eazy Stock», Para quién y los rubros. El chip «Hasta 6 decimales» pasa a «Se corrige al vender».

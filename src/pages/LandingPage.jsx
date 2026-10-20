@@ -14,9 +14,10 @@ import LangSwitcher from '../i18n/LangSwitcher'
 import { Reveal, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
 import {
   IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck,
-  IcoHardware, IcoStore, IcoPharmacy, IcoBasket, IcoBook, IcoGear, IcoShirt, IcoPaw, IcoCup, IcoPhone,
+  IcoHardware, IcoStore, IcoPharmacy, IcoBasket, IcoCup,
 } from './landing/icons'
 import HeroTour from './landing/HeroTour'
+import { ForEveryBusiness } from './landing/BusinessTypes'
 import {
   CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
 } from './landing/mockups'
@@ -222,55 +223,6 @@ export function Marquee() {
             {t(label)}
           </span>
         ))}
-      </div>
-    </section>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Para todo tipo de negocio (20-oct-2026, Frank: fuera los números «7 reportes /
-//  14 permisos / 3 idiomas / 6 decimales», que no le dicen nada a nadie y suenan a
-//  ferretería; el SaaS es para todo comercio de Latinoamérica)
-// ═══════════════════════════════════════════════════════════════════════════
-
-const BUSINESS_TYPES = [
-  [IcoHardware, 'Ferreterías'],
-  [IcoStore,    'Bodegas y minimarkets'],
-  [IcoPharmacy, 'Farmacias y boticas'],
-  [IcoBasket,   'Abarrotes'],
-  [IcoBook,     'Librerías y bazares'],
-  [IcoGear,     'Repuestos y talleres'],
-  [IcoShirt,    'Ropa y calzado'],
-  [IcoPaw,      'Veterinarias y mascotas'],
-  [IcoCup,      'Cafeterías'],
-  [IcoPhone,    'Celulares y electrónica'],
-]
-
-export function ForEveryBusiness() {
-  const t = useT()
-  return (
-    <section className="bg-white py-20 sm:py-24">
-      <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <Reveal>
-          <SectionHead
-            kicker={t('Para todo tipo de negocio')}
-            title={t('Si vendes y llevas las cuentas, es para ti.')}
-            sub={t('Nació en una ferretería de barrio y hoy ordena bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.')}
-          />
-        </Reveal>
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
-          {BUSINESS_TYPES.map(([Icon, label], i) => (
-            <Reveal key={label} delay={i * 50} className="w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.7rem)] lg:w-[calc(20%-0.8rem)]">
-              <div className="group flex h-full flex-col items-center gap-3 rounded-3xl border border-gray-200 bg-white px-3 py-5 text-center transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50">
-                <IconTile icon={Icon} size={56} className="transition-transform group-hover:scale-105" />
-                <p className="text-sm font-bold leading-snug text-gray-900">{t(label)}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-        <Reveal className="mt-8 text-center">
-          <p className="text-sm text-gray-500">{t('¿Tu rubro no está? Si anotas ventas, stock o fiado en un cuaderno, también es para ti.')}</p>
-        </Reveal>
       </div>
     </section>
   )
