@@ -1233,9 +1233,8 @@ export function CtaBanner() {
 export function Footer() {
   const t = useT()
   return (
-    <footer className="relative overflow-hidden bg-[#0a0e1a] py-16">
-      <HeroBackdrop id="lpb-ft" paths={STREAMS_EDGES} fade={false} />
-      <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
+    <footer className="bg-[#0a0e1a] py-16">
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2.5">

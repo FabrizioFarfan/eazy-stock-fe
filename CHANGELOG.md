@@ -2,6 +2,9 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.16.1 — 2026-10-20
+- Pie sin las corrientes (Frank: «too much, antes estaba bien»).
+
 ## 1.16.0 — 2026-10-20 (navbar con submenús, «Un día» en línea de tiempo, paso 2 concreto, cuenta regresiva, corrientes en todo lo oscuro; Frank, task 1042)
 - **Navbar**: píldora con las páginas y **«Inicio» y «Funciones» despliegan un panel** (icono + nombre + una línea) con las secciones de cada página (Inicio: rubros, beneficios, un día, cómo empezar, de dónde sale, precios; Funciones: vender, caja, fiado, pedidos, importar, todas). Se abre al pasar el mouse o con un clic, se cierra con Escape, al navegar o al salir; en el celular, acordeón. «Probar gratis» en 3D. Anclas nuevas `#rubros`, `#un-dia`, `#precios`.
 - **«Un día con Eazy Stock»**: sección oscura con **línea de tiempo del día** (8:00 vende · 12:30 fiado · 17:00 pedido · 20:00 cierre): el punto recorre las horas y la ficha de ese momento se enciende; con el mouse manda la señalada. Iconos **centrados** en baldosa clara.
