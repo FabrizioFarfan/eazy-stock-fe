@@ -58,7 +58,7 @@ export default function LoginPage() {
         <div className="relative">
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white">
             {t('Tu negocio,')}<br />
-            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('bajo control.')}</span>
+            <span className="text-slate-400">{t('bajo control.')}</span>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
             {t('Inventario, ventas, fiado y caja desde una sola pantalla. Simple, rápido y sin cuaderno.')}

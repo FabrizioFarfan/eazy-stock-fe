@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive, ArrowRight, AlertTriangle, CalendarClock, CircleDollarSign, Truck, Boxes } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive, ArrowRight, AlertTriangle, CalendarClock, CircleDollarSign, Truck, Boxes, Zap } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
 import { useProducts, useReactivateProduct, useProductUnits } from '../hooks/useProducts'
@@ -156,6 +156,17 @@ const SHORTCUT_TONES = {
   purple: 'bg-purple-50 text-purple-600',
   gray:   'bg-gray-100 text-gray-500',
 }
+/** Etiqueta «Por completar» de los productos creados al vuelo (20-oct-2026). */
+function QuickBadge() {
+  const t = useT()
+  return (
+    <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100"
+      title={t('Creado al vuelo desde Nueva venta. Edítalo para ponerle costo, stock y proveedor.')}>
+      <Zap size={10} /> {t('Por completar')}
+    </span>
+  )
+}
+
 function Shortcut({ icon: Icon, label, n, on, onClick, tone = 'gray', title }) {
   return (
     <button type="button" onClick={onClick} title={title} aria-pressed={on}
@@ -186,6 +197,7 @@ function ProductCardRow({ p, onOpen, showCost }) {
         <ProductThumb product={p} size={48} />
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 break-words text-sm font-semibold leading-snug text-gray-900">{p.name}</p>
+          {p.quickCreated && <QuickBadge />}
           <p className="mt-0.5 truncate text-xs text-gray-400">
             <span className="font-mono">{p.sku}</span>
             {p.supplierName && <> · {p.supplierName}</>}
@@ -268,6 +280,8 @@ export default function ProductsPage() {
   const [lowStock, setLowStock]         = useState(false)
   const [orphansOnly, setOrphansOnly]   = useState(false)
   const [variableOnly, setVariableOnly] = useState(searchParams.get('variablePrice') === '1')
+  // ?quick=1 pre-activa «Por completar» (link desde el Dashboard)
+  const [quickOnly, setQuickOnly]       = useState(searchParams.get('quick') === '1')
   // ?locationId= pre-activa el filtro de ubicación (link desde la página Ubicaciones)
   // ?brandId= / ?categoryId= / ?supplierId= llegan desde las tarjetas de Marcas, Categorías y Proveedores
   const [colFilters, setColFilters]     = useState(() => ({
@@ -327,7 +341,7 @@ export default function ProductsPage() {
     return () => window.removeEventListener('eazystock:show-deleted-products', handler)
   }, [])
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, sortBy, debouncedCol])
+  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, quickOnly, sortBy, debouncedCol])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
   const [qrModal,     setQrModal]     = useState(null)
@@ -345,6 +359,7 @@ export default function ProductsPage() {
     ...(lowStock && { lowStock: true }),
     ...(orphansOnly && { placeholderOnly: true }),
     ...(variableOnly && { variablePriceOnly: true }),
+    ...(quickOnly && { quickOnly: true }),
     // Filtros por columna
     ...(c.name && { name: c.name }),
     ...(c.sku && { sku: c.sku }),
@@ -375,6 +390,7 @@ export default function ProductsPage() {
   const { data: cExpiring } = useProducts({ ...countBase, active: true, expiryStatus: 'expiring' })
   const { data: cVariable } = useProducts({ ...countBase, active: true, variablePriceOnly: true })
   const { data: cOrphans }  = useProducts({ ...countBase, active: true, placeholderOnly: true })
+  const { data: cQuick }    = useProducts({ ...countBase, active: true, quickOnly: true })
   const { data: cHidden }   = useProducts({ ...countBase, active: false })
   const counts = {
     active:   cActive?.totalElements,
@@ -382,6 +398,7 @@ export default function ProductsPage() {
     expiring: cExpiring?.totalElements,
     variable: cVariable?.totalElements,
     orphans:  cOrphans?.totalElements,
+    quick:    cQuick?.totalElements,
     hidden:   cHidden?.totalElements,
   }
 
@@ -392,6 +409,7 @@ export default function ProductsPage() {
     if (key === 'expiring') setField('expiryStatus', expiringOn ? '' : 'expiring')
     if (key === 'variable') setVariableOnly((v) => !v)
     if (key === 'orphans')  setOrphansOnly((v) => !v)
+    if (key === 'quick')    setQuickOnly((v) => !v)
     if (key === 'hidden')   setField('status', showHidden ? 'active' : 'inactive')
   }
   // Desde la franja siempre PRENDE (y lleva a la tabla).
@@ -401,9 +419,9 @@ export default function ProductsPage() {
     if (key === 'variable') setVariableOnly(true)
     document.getElementById('products-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-  const anyShortcut = lowStock || expiringOn || variableOnly || orphansOnly || showHidden
+  const anyShortcut = lowStock || expiringOn || variableOnly || orphansOnly || quickOnly || showHidden
   const clearShortcuts = () => {
-    setLowStock(false); setVariableOnly(false); setOrphansOnly(false)
+    setLowStock(false); setVariableOnly(false); setOrphansOnly(false); setQuickOnly(false)
     setColFilters((f) => ({ ...f, expiryStatus: '', status: 'active' }))
   }
 
@@ -641,6 +659,11 @@ export default function ProductsPage() {
           <Shortcut icon={CircleDollarSign} tone="orange" label={t('Sin precio definido')} n={counts.variable}
             on={variableOnly} onClick={() => pickShortcut('variable')}
             title={t('Productos con precio variable: el precio se pide al momento de vender. Edítalos para ponerles un precio fijo.')} />
+          {(!!counts.quick || quickOnly) && (
+            <Shortcut icon={Zap} tone="amber" label={t('Por completar')} n={counts.quick}
+              on={quickOnly} onClick={() => pickShortcut('quick')}
+              title={t('Creados al vuelo desde Nueva venta: solo tienen nombre y precio. Edítalos para ponerles costo, stock y proveedor.')} />
+          )}
           {(!!counts.orphans || orphansOnly) && (
             <Shortcut icon={Truck} tone="purple" label={t('Sin proveedor real')} n={counts.orphans}
               on={orphansOnly} onClick={() => pickShortcut('orphans')}
@@ -819,6 +842,7 @@ export default function ProductsPage() {
                         <ProductThumb product={p} size={34} />
                         <div className="min-w-0">
                           <p className="line-clamp-2 break-words font-semibold leading-snug text-gray-900">{p.name}</p>
+                          {p.quickCreated && <QuickBadge />}
                           {p.presentation && (
                             <p className="text-xs text-gray-400 truncate">{p.presentation}</p>
                           )}

@@ -2,6 +2,15 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.12.0 — 2026-10-20 (onboarding del catálogo + precios nuevos y períodos; tasks 1014/1015)
+- **Crear producto al vuelo desde Nueva venta** (Frank, 20-oct, task 1014): si la búsqueda no encuentra nada, botón «Crear «…» y vender ahora»; si se escanea un código desconocido, se abre el mismo modal con el código ya puesto (`components/products/QuickProductModal.jsx`: nombre, precio, unidad). Se crea de verdad (`POST /products/quick`), entra al carrito y se cobra aunque no tenga stock (queda negativo). La tarjeta lo muestra con la etiqueta ámbar «Por completar»; las validaciones de cantidad no lo topan al stock.
+- **Productos**: atajo «Por completar» (`?quick=1` desde el Dashboard) y etiqueta en cada fila; al editarlo deja de estar marcado.
+- **Dashboard**: «Pide tu atención» suma «productos por completar» y, si el catálogo está vacío, la franja «Carga tu catálogo, o empieza vendiendo» lleva a la bienvenida.
+- **Precios nuevos** (Frank, 20-oct, task 1015): Basic S/ 36 · Pro S/ 79 · AI S/ 139 al mes; fuera de Perú US$ 9.90 · 22.90 · 39.90. Soles si el navegador está en español (Perú o sin región), dólares en el resto (`siteCurrency()`); en la app, por el país del negocio. `landing/plans.js` guarda los totales por período en `prices.PEN/USD` (tabla de Frank) con `periodPrice`, `perMonth`, `savings`, `fmtMoney`.
+- **Tres períodos con selector** (Mensual · Trimestral −10 % · Anual −20 %) en /planes, en Precios del Inicio y en Ajustes › Tu plan: cada tarjeta muestra el precio por mes, el total de una vez y el ahorro frente al mensual. Desaparece el «año = 10 meses». Ajustes › Tu plan paga con tarjeta mensual, trimestral o anual con el total en el botón y la moneda del negocio.
+- **Plan AI «Llega pronto»**: chip y botón apagado en las tres pantallas; sus funciones siguen listadas; FAQ nueva. JSON-LD con los planes. Diccionario `pricing2.js` (en/it).
+- **/bienvenida** (`pages/WelcomePage.jsx`), a donde cae toda cuenta recién registrada: tres puertas — Sube tu Excel o CSV (importador), Lo cargamos nosotros (WhatsApp con mensaje prellenado con nombre y negocio, o correo) y Empieza vendiendo (Nueva venta); nota «Pronto: foto del cuaderno o PDF con IA». Textos es/en/it en `dict/onboarding.js`.
+
 ## 1.11.5 — 2026-10-20 (corrientes también en el celular; Frank)
 - `Streams` es ahora un componente con `paths`/`viewBox`; en el celular se pinta una versión vertical propia (`STREAMS_MOBILE`, lienzo 390×1150) con tres corrientes por las franjas libres del texto, más finas (1.25) y con menos brillo, al 80 %. El texto sigue legible (comprobado a 390 y 430).
 

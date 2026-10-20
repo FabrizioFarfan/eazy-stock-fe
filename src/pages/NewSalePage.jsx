@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Banknote, Smartphone, Landmark } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Banknote, Smartphone, Landmark, Zap } from 'lucide-react'
+import QuickProductModal from '../components/products/QuickProductModal'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -42,7 +43,9 @@ function parseNumber(s) {
 
 function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }) {
   const t = useT()
-  const noStock    = product.currentStock === 0
+  // Creado al vuelo y «por completar» (20-oct): se vende aunque no tenga stock cargado.
+  const quick      = !!product.quickCreated
+  const noStock    = product.currentStock === 0 && !quick
   const isVariable = !!product.priceIsVariable
 
   // Cantidad y precio se deciden ACÁ, antes de agregar (dictado de William):
@@ -80,7 +83,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
 
   const q = Number(qty)
   const qtyInvalid = !Number.isFinite(q) || q <= 0
-    || q > Number(product.currentStock ?? 0) + 1e-9
+    || (!quick && q > Number(product.currentStock ?? 0) + 1e-9)
     || (!isDivisibleUnit(product.unit) && !Number.isInteger(q))
 
   const handleAdd = () => {
@@ -123,10 +126,17 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
 
       <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
+          {quick ? (
+            <p className="mb-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-100"
+              title={t('Creado al vuelo: aún sin stock cargado. Se vende igual; complétalo en Productos.')}>
+              <Zap size={11} /> {t('Por completar')} · {t('Stock')}: {formatQty(product.currentStock)}
+            </p>
+          ) : (
           <p className={`mb-1 inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${
             noStock ? 'bg-red-50 text-red-600 ring-red-100' : 'bg-emerald-50 text-emerald-700 ring-emerald-100'}`}>
             {t('Stock')}: {formatQty(product.currentStock)} {product.unit || t('unidad')}
           </p>
+          )}
           {isVariable ? (
             <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
               {t('Precio variable')}
@@ -167,7 +177,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
               value={qty}
               onChange={setQty}
               unit={product.unit || t('unidad')}
-              max={product.currentStock}
+              max={quick ? undefined : product.currentStock}
               maxDecimals={3}
               className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             />
@@ -306,7 +316,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
           value={quantity}
           onChange={(v) => onQtyChange(product.id, v)}
           unit={product.unit || t('unidad')}
-          max={product.currentStock}
+          max={product.quickCreated ? undefined : product.currentStock}
           maxDecimals={3}
           className="w-36"
           label={t('Cantidad')}
@@ -583,6 +593,9 @@ export default function NewSalePage() {
 
   const [search, setSearch]               = useState('')
   const debouncedSearch                   = useDebounce(search, 400)
+  // Crear al vuelo (20-oct): { name, barcode } abre el modal; null = cerrado.
+  const [quickOpen, setQuickOpen]         = useState(null)
+  const canRegisterSale  = can('canRegisterSale')
   const [cart, setCart]                   = useState([])
   const [notes, setNotes]                 = useState('')
   const [discountType, setDiscountType]   = useState('PERCENTAGE')
@@ -708,7 +721,7 @@ export default function NewSalePage() {
   // Al re-escanear un producto ya en el carrito: suma 1 (tope = stock disponible).
   const bumpQty = (id) => setCart((prev) =>
     prev.map((i) => i.product.id === id
-      ? { ...i, quantity: Math.min((Number(i.quantity) || 0) + 1, i.product.currentStock) } : i))
+      ? { ...i, quantity: i.product.quickCreated ? (Number(i.quantity) || 0) + 1 : Math.min((Number(i.quantity) || 0) + 1, i.product.currentStock) } : i))
   const changePrice = (id, raw) => setCart((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, unitPrice: raw } : i))
 
@@ -717,8 +730,13 @@ export default function NewSalePage() {
     scanLockRef.current = true
     try {
       const product = (await productsApi.scanCode(code)).data.data
-      if (!product)                   { toast.error(t('Producto no encontrado')); return }
-      if (product.currentStock === 0) { toast.warning(t('Sin stock disponible')); return }
+      if (!product) {
+        // Código desconocido: crearlo al vuelo con el código ya puesto (20-oct).
+        if (canRegisterSale) setQuickOpen({ name: '', barcode: code })
+        else toast.error(t('Producto no encontrado'))
+        return
+      }
+      if (product.currentStock === 0 && !product.quickCreated) { toast.warning(t('Sin stock disponible')); return }
       if (cartStateRef.current.some((i) => i.product.id === product.id)) {
         bumpQty(product.id)
         toast.info(t('Cantidad actualizada'))
@@ -727,7 +745,8 @@ export default function NewSalePage() {
       addToCart(product)
       toast.success(product.name)
     } catch {
-      toast.error(t('Producto no encontrado'))
+      if (canRegisterSale) setQuickOpen({ name: '', barcode: code })
+      else toast.error(t('Producto no encontrado'))
     } finally {
       scanLockRef.current = false
     }
@@ -770,7 +789,7 @@ export default function NewSalePage() {
   const invalidQtyItem = cart.find((i) => {
     const q = Number(i.quantity)
     if (!Number.isFinite(q) || q <= 0) return true
-    if (q > Number(i.product.currentStock ?? 0) + 1e-9) return true
+    if (!i.product.quickCreated && q > Number(i.product.currentStock ?? 0) + 1e-9) return true
     if (!isDivisibleUnit(i.product.unit) && !Number.isInteger(q)) return true
     return false
   })
@@ -922,6 +941,11 @@ export default function NewSalePage() {
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
               <Search size={13} /> {t('¿Qué lleva el cliente?')}
             </p>
+            {quickOpen && (
+              <QuickProductModal initialName={quickOpen.name} barcode={quickOpen.barcode}
+                onClose={() => setQuickOpen(null)}
+                onCreated={(product) => { addToCart(product); setQuickOpen(null); setSearch('') }} />
+            )}
             <ScannerInput
               value={search}
               onChange={setSearch}
@@ -958,6 +982,15 @@ export default function NewSalePage() {
             <div className="flex flex-col items-center gap-2 py-12">
               <p className="text-sm font-medium text-gray-500">{t('Sin resultados')}</p>
               <p className="text-xs text-gray-400">{t('No se encontraron productos para "{q}"', { q: debouncedSearch })}</p>
+              {canRegisterSale && (
+                <button type="button" onClick={() => setQuickOpen({ name: debouncedSearch, barcode: '' })} data-testid="quick-create"
+                  className="mt-3 flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 hover:bg-blue-700">
+                  <Zap size={14} /> {t('Crear «{q}» y vender ahora', { q: debouncedSearch })}
+                </button>
+              )}
+              {canRegisterSale && (
+                <p className="max-w-xs text-center text-[11px] text-gray-400">{t('Solo nombre y precio. Queda «por completar» para terminarlo después en Productos.')}</p>
+              )}
             </div>
           ) : (
             <div className="space-y-2.5">

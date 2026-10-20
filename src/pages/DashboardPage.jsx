@@ -1,10 +1,10 @@
 import { formatPrice } from '../utils/formatMoney'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import {
   ShoppingCart, TrendingUp, ArrowUpDown,
   AlertTriangle, CheckCircle2,
   FileText, ArrowRight, CalendarClock, UserX, UserRound, TrendingDown,
-  CalendarDays, PackagePlus, BarChart3, ArrowDownToLine, SlidersHorizontal, Undo2,
+  CalendarDays, PackagePlus, BarChart3, ArrowDownToLine, SlidersHorizontal, Undo2, Zap, Upload,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers, useSalesBalance } from '../hooks/useReports'
@@ -324,10 +324,12 @@ function MonthCard({ scopeParams }) {
 }
 
 // Lo que pide atención HOY, cada fila lleva a su reporte
-function AttentionCard({ lowCount, expCount, inactiveCount, loading }) {
+function AttentionCard({ lowCount, expCount, inactiveCount, quickCount, loading }) {
   const t = useT()
   const navigate = useNavigate()
   const rows = [
+    // Creados al vuelo desde Nueva venta (20-oct): solo aparece si hay alguno.
+    ...(quickCount ? [{ key: 'quick', icon: Zap, n: quickCount, label: t('productos por completar'), to: '/products?quick=1', bad: 'bg-amber-50 text-amber-600' }] : []),
     { key: 'low', icon: AlertTriangle, n: lowCount, label: t('productos con stock bajo'), to: '/reports?tab=low-stock', bad: 'bg-red-50 text-red-600' },
     { key: 'exp', icon: CalendarClock, n: expCount, label: t('productos por vencer'), to: '/reports?tab=expiring', bad: 'bg-amber-50 text-amber-600' },
     { key: 'cli', icon: UserX, n: inactiveCount, label: t('clientes sin volver +30 días'), to: '/reports/customers', bad: 'bg-indigo-50 text-indigo-600' },
@@ -479,6 +481,26 @@ function MovementsPanel({ movements }) {
   )
 }
 
+/** Sin productos todavía: la puerta a «Carga tu catálogo» (onboarding, 20-oct-2026). */
+function CatalogBanner() {
+  const t = useT()
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-[#0a0e1a] p-5 text-white sm:p-6">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-blue-500/30 blur-3xl" />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-300">{t('Primer paso')}</p>
+          <h3 className="mt-1 text-xl font-extrabold">{t('Carga tu catálogo, o empieza vendiendo')}</h3>
+          <p className="mt-1 max-w-xl text-sm text-slate-300">{t('Sube tu Excel, mándanos tu lista y la cargamos nosotros, o crea cada producto en la primera venta. Tú eliges.')}</p>
+        </div>
+        <Link to="/bienvenida" className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-blue-50">
+          <Upload size={15} /> {t('Ver las opciones')} <ArrowRight size={14} />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 function OwnerDashboard({ name, businessId }) {
   const t = useT()
   const navigate    = useNavigate()
@@ -491,6 +513,10 @@ function OwnerDashboard({ name, businessId }) {
   const { data: lowStockPage, isLoading: loadingLow }     = useReportsLowStock({ size: 10, ...scopeParams })
   const { data: expiringPage, isLoading: loadingExp }     = useReportsExpiring({ size: 10, ...scopeParams })
   const { data: inactive }                                = useInactiveCustomers({ days: 30, ...scopeParams })
+  // Onboarding (20-oct): ¿hay catálogo? ¿hay productos creados al vuelo por completar?
+  const { data: anyProduct, isLoading: loadingAny }       = useProducts({ size: 1, ...scopeParams })
+  const { data: quickPage }                               = useProducts({ size: 1, active: true, quickOnly: true, ...scopeParams })
+  const noCatalog = !loadingAny && (anyProduct?.totalElements ?? 0) === 0
 
   const lowStock  = lowStockPage?.content ?? []
   const expiring  = expiringPage?.content ?? []
@@ -503,12 +529,14 @@ function OwnerDashboard({ name, businessId }) {
     <div className="flex flex-col gap-5">
       <PageHeader name={name} />
 
+      {noCatalog && <CatalogBanner />}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         <TodayHero summary={summary} yesterday={ySummary} loading={loadingSummary} />
         <MonthCard scopeParams={scopeParams} />
         <AttentionCard loading={loadingLow || loadingExp}
           lowCount={lowStockPage?.totalElements} expCount={expiringPage?.totalElements}
-          inactiveCount={inactive?.customers?.length} />
+          inactiveCount={inactive?.customers?.length} quickCount={quickPage?.totalElements} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

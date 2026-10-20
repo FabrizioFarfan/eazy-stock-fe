@@ -7,25 +7,30 @@ import { billingApi } from '../../services/endpoints/billing'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useAuth } from '../../context/AuthContext'
 import { useSubscription, SUBSCRIPTION_KEY } from '../../hooks/useSubscription'
+import { useMyBusiness } from '../../hooks/useMyBusinesses'
 import { useT } from '../../i18n'
 import { PlanCards } from '../../pages/landing/Pricing'
-import { CURRENCY, PLANS, YEARLY_FREE_MONTHS, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
+import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
 import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from './subscriptionUtils'
-
-// 19.5 se muestra «19.50», no «20» (precio de fundador = la mitad de 39).
-const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString('es-PE', { minimumFractionDigits: Number.isInteger(Number(n)) ? 0 : 2, maximumFractionDigits: 2 }))
 
 /**
  * Ajustes › Tu plan (M1 «Planes en serio», 15-oct-2026), solo OWNER: estado de la
  * suscripción, precio efectivo (con el descuento de lanzamiento), las tres tarjetas
  * de /planes con el actual marcado y cómo activar o pagar (manual por WhatsApp o
  * correo hasta que llegue la pasarela). Se llega con /settings#plan desde el banner.
+ * Desde el 20-oct-2026 (task 1015): selector Mensual · Trimestral −10 % · Anual −20 %
+ * y moneda del negocio (soles en Perú, dólares en el resto); el plan AI llega pronto.
  */
 export default function PlanSection() {
   const t = useT()
   const { user } = useAuth()
   const { data: sub, isLoading, isError } = useSubscription()
+  const { data: biz } = useMyBusiness()
+  // Moneda del negocio activo; el BE manda en `sub.currency` (precio especial = soles).
+  const currency = sub?.currency ?? currencyForCountry(biz?.countryCode)
+  const [period, setPeriod] = useState(DEFAULT_PERIOD)
+  const per = periodOf(period)
   const ref = useRef(null)
   const { hash, search } = useLocation()
   const navigate = useNavigate()
@@ -140,8 +145,8 @@ export default function PlanSection() {
               <Stat icon={Tag} label={t('Precio al mes')}
                 value={(
                   <span className="flex items-baseline gap-2">
-                    <span>{CURRENCY} {fmt(sub.priceMonthly)}</span>
-                    {hasDiscount && <span className="text-sm font-semibold text-gray-400 line-through">{CURRENCY} {fmt(sub.listPriceMonthly)}</span>}
+                    <span>{fmtMoney(sub.priceMonthly, currency)}</span>
+                    {hasDiscount && <span className="text-sm font-semibold text-gray-400 line-through">{fmtMoney(sub.listPriceMonthly, currency)}</span>}
                   </span>
                 )}
                 sub={hasDiscount
@@ -172,7 +177,7 @@ export default function PlanSection() {
             {/* Tarjetas de planes (las de /planes, compactas) */}
             <div className="mt-8">
               <p className="mb-5 text-xs font-bold uppercase tracking-widest text-gray-400">{t('Los planes')}</p>
-              <PlanCards compact current={current} ctaTo={waLink} />
+              <PlanCards compact current={current} ctaTo={waLink} currency={currency} period={period} onPeriodChange={setPeriod} />
             </div>
 
             {/* Pago con tarjeta (Stripe, M2) si el BE lo tiene configurado */}
@@ -186,8 +191,8 @@ export default function PlanSection() {
                   {sub.stripeSubscriptionId
                     ? t('Se cobra solo cada período. Desde el portal cambias la tarjeta, descargas facturas o cancelas.')
                     : sub.status === 'TRIAL'
-                      ? t('Pago seguro con Stripe. Guardas la tarjeta hoy y el primer cobro es el {day} después de que termine tu período gratis; luego, cada {day}. Anual: {n} meses en vez de 12.', { day: BILLING_DAY, n: 12 - YEARLY_FREE_MONTHS })
-                      : t('Pago seguro con Stripe. Se cobra el {day} de cada mes (hoy, la parte proporcional). Anual: {n} meses en vez de 12. Se activa al instante.', { day: BILLING_DAY, n: 12 - YEARLY_FREE_MONTHS })}
+                      ? t('Pago seguro con Stripe. Guardas la tarjeta hoy y el primer cobro es el {day} después de que termine tu período gratis; luego, cada período. Trimestral −{q} %, anual −{y} %.', { day: BILLING_DAY, q: PERIODS[1].discount, y: PERIODS[2].discount })
+                      : t('Pago seguro con Stripe. Se cobra el {day} (hoy, la parte proporcional) y luego cada período. Trimestral −{q} %, anual −{y} %. Se activa al instante.', { day: BILLING_DAY, q: PERIODS[1].discount, y: PERIODS[2].discount })}
                 </p>
                 {sub.stripeSubscriptionId ? (
                   <button type="button" onClick={openPortal} disabled={!!paying}
@@ -196,21 +201,33 @@ export default function PlanSection() {
                   </button>
                 ) : (
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    {PLANS.map((p) => (
-                      <div key={p.key} className={`rounded-xl border bg-white p-3 ${p.key === current ? 'border-emerald-300 ring-2 ring-emerald-600/15' : 'border-gray-200'}`}>
-                        <p className="text-sm font-bold text-gray-900">{p.name} <span className="text-xs font-semibold text-gray-400">· {CURRENCY} {fmt(p.monthly)}/{t('mes')}</span></p>
-                        <div className="mt-2 flex flex-col gap-1.5">
-                          <button type="button" onClick={() => payWithCard(p.key.toUpperCase(), 'MONTHLY')} disabled={!!paying}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60">
-                            {paying === `${p.key.toUpperCase()}-MONTHLY` ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />} {t('Mensual')}
-                          </button>
-                          <button type="button" onClick={() => payWithCard(p.key.toUpperCase(), 'YEARLY')} disabled={!!paying}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60">
-                            {paying === `${p.key.toUpperCase()}-YEARLY` ? <Loader2 size={13} className="animate-spin" /> : null} {t('Anual · {n} meses gratis', { n: YEARLY_FREE_MONTHS })}
-                          </button>
+                    {PLANS.map((p) => {
+                      const interval = per.interval
+                      const key = `${p.key.toUpperCase()}-${interval}`
+                      const total = periodPrice(p, per.key, currency)
+                      return (
+                        <div key={p.key} className={`rounded-xl border bg-white p-3 ${p.key === current ? 'border-emerald-300 ring-2 ring-emerald-600/15' : 'border-gray-200'}`}>
+                          <p className="text-sm font-bold text-gray-900">{p.name} <span className="text-xs font-semibold text-gray-400">· {fmtMoney(periodPrice(p, 'monthly', currency), currency)}/{t('mes')}</span></p>
+                          <div className="mt-2 flex flex-col gap-1.5">
+                            {p.comingSoon ? (
+                              <button type="button" disabled
+                                className="inline-flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-xs font-bold text-gray-400">
+                                <Clock size={13} /> {t('Llega pronto')}
+                              </button>
+                            ) : (
+                              <button type="button" onClick={() => payWithCard(p.key.toUpperCase(), interval)} disabled={!!paying}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60">
+                                {paying === key ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
+                                {' '}{t('Pagar {total} · {period}', { total: fmtMoney(total, currency), period: t(per.label).toLowerCase() })}
+                              </button>
+                            )}
+                            {per.discount > 0 && !p.comingSoon && (
+                              <p className="text-center text-[11px] text-gray-500">{t('{pct} % menos que mes a mes', { pct: per.discount })}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>

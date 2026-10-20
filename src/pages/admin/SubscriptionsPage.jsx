@@ -8,7 +8,7 @@ import { ReportHeader, ReportHero, BigSearch } from '../../components/reports/Re
 import { BossSwitcher, FlagAvatar, Chip } from '../../components/boss/BossKit'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { whatsappDigits } from '../../utils/phone'
-import { CURRENCY, PLANS } from '../landing/plans'
+import { CURRENCY, PLANS, fmtMoney } from '../landing/plans'
 import { formatDay, STATUS_TONE, STATUS_LABEL } from '../../components/subscription/subscriptionUtils'
 import { useT } from '../../i18n'
 
@@ -165,7 +165,7 @@ function Row({ row, onEdit }) {
           <p className="mt-0.5 text-xs text-gray-500">
             {when}{days ? ` (${days})` : ''}
             <span className="mx-1.5 text-gray-300">·</span>
-            <span className="font-semibold text-gray-700">{CURRENCY} {fmt(row.priceMonthly)}/{t('mes')}</span>
+            <span className="font-semibold text-gray-700">{fmtMoney(row.priceMonthly, row.currency ?? 'PEN')}/{t('mes')}</span>
             {row.discountPercent > 0 && <span className="ml-1 text-emerald-600">−{row.discountPercent}%{row.discountUntil ? ` ${t('hasta')} ${formatDay(row.discountUntil)}` : ''}</span>}
             {row.customPriceMonthly != null && <span className="ml-1 text-amber-700">({t('especial')})</span>}
           </p>

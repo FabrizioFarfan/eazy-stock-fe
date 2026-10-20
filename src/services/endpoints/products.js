@@ -7,6 +7,8 @@ export const productsApi = {
   getById: (id) => api.get(`/products/${id}`),
 
   create: (data) => api.post('/products', data),
+  /** Crear AL VUELO desde Nueva venta: { name, salePrice, unit?, barcode? } → queda «por completar». */
+  quickCreate: (data) => api.post('/products/quick', data),
 
   // ¿Ya tengo un producto con este nombre? Chequeo en vivo del formulario
   // (William creó «Waype Kg Blanco» dos veces). params: { name, supplierId, excludeId }

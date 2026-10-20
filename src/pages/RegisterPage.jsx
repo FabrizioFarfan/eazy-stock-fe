@@ -137,7 +137,7 @@ export default function RegisterPage() {
           </span>
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white">
             {t('Tu tienda, ordenada')}<br />
-            <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('desde esta tarde.')}</span>
+            <span className="text-slate-400">{t('desde esta tarde.')}</span>
           </h1>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-400">
             {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró.')}

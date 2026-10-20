@@ -24,6 +24,7 @@ function LandingRoute() {
   return <LandingPage />
 }
 import DashboardPage  from '../pages/DashboardPage'
+import WelcomePage    from '../pages/WelcomePage'
 import ProductsPage   from '../pages/ProductsPage'
 import ProductImportPage from '../pages/ProductImportPage'
 import ProductExportPage from '../pages/ProductExportPage'
@@ -82,6 +83,10 @@ export default function AppRouter() {
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><DashboardPage /></ProtectedRoute>
+      } />
+      {/* Onboarding «Carga tu catálogo» (20-oct-2026): a donde cae una cuenta recién creada. */}
+      <Route path="/bienvenida" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><WelcomePage /></ProtectedRoute>
       } />
       <Route path="/products" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ProductsPage /></ProtectedRoute>

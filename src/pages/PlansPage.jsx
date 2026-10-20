@@ -82,7 +82,7 @@ export default function PlansPage() {
             </span>
             <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t('Planes y precios')}<br />
-              <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{t('claros como tu caja.')}</span>
+              <span className="text-slate-400">{t('claros como tu caja.')}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
               {t('Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.')}

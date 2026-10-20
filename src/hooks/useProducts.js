@@ -94,6 +94,18 @@ export function useCreateProduct() {
   })
 }
 
+/** Producto creado al vuelo desde Nueva venta (20-oct-2026): real, marcado «por completar». */
+export function useQuickCreateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => productsApi.quickCreate(data).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
+      qc.invalidateQueries({ queryKey: [FREE_CODES_KEY] })
+    },
+  })
+}
+
 export function useUpdateProduct() {
   const qc = useQueryClient()
   return useMutation({

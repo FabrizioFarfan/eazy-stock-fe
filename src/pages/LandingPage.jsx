@@ -18,7 +18,8 @@ import {
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { PUBLIC_PAGES, usePageSeo } from './landing/site'
-import { PLANS, trialLine, promoVars } from './landing/plans'
+import { PLANS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, siteCurrency, trialLine, promoVars } from './landing/plans'
+import { PeriodSelector, ComingSoonChip } from './landing/Pricing'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
 const CTA = '/registro'
@@ -1167,6 +1168,10 @@ function Highlights() {
 // Inicio: los precios en una línea; el detalle vive en /planes.
 function PricingTeaser() {
   const t = useT()
+  // Selector de período (20-oct-2026, task 1015): precio por mes, total y ahorro de cada plan.
+  const [period, setPeriod] = useState(DEFAULT_PERIOD)
+  const currency = siteCurrency()
+  const per = periodOf(period)
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
@@ -1179,13 +1184,28 @@ function PricingTeaser() {
                 <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{trialLine(t, dateLocale())}</h2>
                 <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))}</p>
               </div>
-              <div className="grid flex-shrink-0 grid-cols-3 gap-2 sm:gap-3">
-                {PLANS.map((p) => (
-                  <div key={p.key} className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-center">
-                    <p className="text-xs font-bold text-slate-300">{p.name}</p>
-                    <p className="mt-0.5 whitespace-nowrap text-lg font-extrabold text-white sm:text-xl">S/ {p.monthly}<span className="text-xs font-medium text-slate-400">{t('/mes')}</span></p>
-                  </div>
-                ))}
+              <div className="flex flex-shrink-0 flex-col items-center gap-4 lg:items-end">
+                <PeriodSelector period={period} onChange={setPeriod} dark compact />
+                <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
+                  {PLANS.map((p) => {
+                    const save = savings(p, per.key, currency)
+                    return (
+                      <div key={p.key} className="relative rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-3 text-center sm:px-4">
+                        <p className="text-xs font-bold text-slate-300">{p.name}</p>
+                        <p className="mt-0.5 whitespace-nowrap text-lg font-extrabold text-white sm:text-xl">{fmtMoney(perMonth(p, per.key, currency), currency)}<span className="text-xs font-medium text-slate-400">{t('/mes')}</span></p>
+                        {per.months > 1 ? (
+                          <p className="mt-1 text-[11px] leading-tight text-slate-400">
+                            {t('{total} por {unit}', { total: fmtMoney(periodPrice(p, per.key, currency), currency), unit: t(per.unit) })}
+                            <br /><span className="font-bold text-emerald-400">{t('ahorras {amount}', { amount: fmtMoney(save.amount, currency) })}</span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-[11px] leading-tight text-slate-500">{t('cada mes')}</p>
+                        )}
+                        {p.comingSoon && <ComingSoonChip className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 text-[9px]" />}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
             <div className="relative mt-8 flex justify-center lg:justify-start">

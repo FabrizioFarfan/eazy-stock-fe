@@ -72,7 +72,7 @@ export function PageHero({ kicker, title, highlight, sub, children }) {
             {highlight && (
               <>
                 <br />
-                <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-200 bg-clip-text text-transparent">{highlight}</span>
+                <span className="text-slate-400">{highlight}</span>
               </>
             )}
           </h1>

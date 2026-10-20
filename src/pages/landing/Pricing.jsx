@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users } from 'lucide-react'
+import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users, Clock } from 'lucide-react'
 import { useT, dateLocale } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, CURRENCY, YEARLY_FREE_MONTHS, yearlyPrice, promoActive, promoVars, trialLine } from './plans'
+import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine } from './plans'
 
 // Registro propio desde el 15-oct-2026 (antes todo iba al login).
 const CTA = '/registro'
@@ -13,39 +13,65 @@ const OFFER_ICONS = { Sparkles, Lock, CalendarClock }
 //  Precios y ofertas — sección de la landing (#precios) y piezas de /planes
 // ═══════════════════════════════════════════════════════════════════════════
 
-function fmt(n) {
-  return n.toLocaleString('es-PE')
-}
-
-/** Interruptor mensual / anual. */
-function BillingToggle({ yearly, onChange, dark }) {
+/**
+ * Selector de período (20-oct-2026, task 1015): Mensual · Trimestral −10 % · Anual −20 %.
+ * Lo usan /planes, la sección de precios del Inicio y Ajustes › Tu plan.
+ * `compact` = sin la línea de la prueba gratis debajo.
+ */
+export function PeriodSelector({ period, onChange, dark = false, compact = false }) {
   const t = useT()
-  const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-all'
+  const base = 'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-all sm:px-4'
   const on = dark ? 'bg-white text-[#0a0e1a] shadow' : 'bg-[#0a0e1a] text-white shadow'
   const off = dark ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className={`inline-flex items-center gap-1 rounded-full border p-1 ${dark ? 'border-white/15 bg-white/5' : 'border-gray-200 bg-white'}`} role="group" aria-label={t('Forma de pago')}>
-        <button type="button" onClick={() => onChange(false)} className={`${base} ${yearly ? off : on}`} aria-pressed={!yearly}>{t('Mensual')}</button>
-        <button type="button" onClick={() => onChange(true)} className={`${base} ${yearly ? on : off}`} aria-pressed={yearly}>
-          {t('Anual')}
-          <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${yearly ? (dark ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-400 text-[#0a0e1a]') : 'bg-emerald-500/15 text-emerald-500'}`}>
-            {t('{n} meses gratis', { n: YEARLY_FREE_MONTHS })}
-          </span>
-        </button>
+      <div className={`inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full border p-1 ${dark ? 'border-white/15 bg-white/5' : 'border-gray-200 bg-white'}`} role="group" aria-label={t('Período de pago')}>
+        {PERIODS.map((p) => {
+          const active = p.key === period
+          return (
+            <button key={p.key} type="button" onClick={() => onChange(p.key)} className={`${base} ${active ? on : off}`} aria-pressed={active}>
+              {t(p.label)}
+              {p.discount > 0 && (
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tracking-wider ${active ? (dark ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-400 text-[#0a0e1a]') : 'bg-emerald-500/15 text-emerald-500'}`}>
+                  −{p.discount} %
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
-      <p className={`text-xs ${dark ? 'text-slate-500' : 'text-gray-500'}`}>
-        {t('Todos los planes empiezan con la prueba gratis:')} {trialLine(t, dateLocale()).toLowerCase()}.
-      </p>
+      {!compact && (
+        <p className={`text-xs ${dark ? 'text-slate-500' : 'text-gray-500'}`}>
+          {t('Todos los planes empiezan con la prueba gratis:')} {trialLine(t, dateLocale()).toLowerCase()}.
+        </p>
+      )}
     </div>
   )
 }
 
-/** Tarjeta de un plan. En fondo oscuro, el plan destacado es la tarjeta blanca. */
-function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = false }) {
+/** Chip «Llega pronto» del plan AI (se ve en las tres pantallas). */
+export function ComingSoonChip({ className = '' }) {
+  const t = useT()
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[#0a0e1a] shadow ${className}`}>
+      <Clock size={11} strokeWidth={3} /> {t('Llega pronto')}
+    </span>
+  )
+}
+
+/**
+ * Tarjeta de un plan. En fondo oscuro, el plan destacado es la tarjeta blanca.
+ * Muestra el precio POR MES del período elegido, el total a pagar de una vez y
+ * cuánto ahorra frente al mensual. El plan AI «llega pronto»: chip y botón apagado.
+ */
+function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, compact = false }) {
   const t = useT()
   const hi = plan.highlight
-  const price = yearly ? Math.round(yearlyPrice(plan.monthly) / 12) : plan.monthly
+  const per = periodOf(period)
+  const monthly = perMonth(plan, per.key, currency)
+  const total = periodPrice(plan, per.key, currency)
+  const save = savings(plan, per.key, currency)
+  const soon = !!plan.comingSoon
   const shell = hi
     ? 'bg-white text-gray-900 shadow-[0_30px_80px_-20px_rgba(37,99,235,.55)] ring-2 ring-blue-500/60'
     : dark
@@ -53,6 +79,7 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
       : 'border border-gray-200 bg-white text-gray-900'
   const muted = hi ? 'text-gray-500' : dark ? 'text-slate-400' : 'text-gray-500'
   const line = hi ? 'border-gray-100' : dark ? 'border-white/10' : 'border-gray-100'
+  const saveTone = hi ? 'text-emerald-600' : 'text-emerald-400'
   return (
     <div className={`relative flex h-full flex-col rounded-3xl transition-transform hover:-translate-y-1 ${compact ? 'p-5' : 'p-7 sm:p-8'} ${shell} ${current ? 'ring-2 ring-emerald-500' : ''}`}>
       {current && (
@@ -60,6 +87,7 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
           {t('Tu plan actual')}
         </span>
       )}
+      {soon && !current && <ComingSoonChip className="absolute -top-3 right-7" />}
       {plan.badge && (
         <span className={`absolute -top-3 left-7 rounded-full bg-gradient-to-r px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg ${plan.tone}`}>
           {t(plan.badge)}
@@ -77,15 +105,19 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
 
       <div className={`mt-6 border-b pb-6 ${line}`}>
         <div className="flex items-baseline gap-1">
-          <span className={`text-sm font-semibold ${muted}`}>{CURRENCY}</span>
-          <span className="font-mono text-5xl font-extrabold tracking-tight">{fmt(price)}</span>
+          <span className={`text-sm font-semibold ${muted}`}>{moneyParts(monthly, currency).symbol}</span>
+          <span className={`font-mono font-extrabold tracking-tight ${compact ? 'text-4xl' : 'text-5xl'}`}>{moneyParts(monthly, currency).number}</span>
           <span className={`text-sm ${muted}`}>/ {t('mes')}</span>
         </div>
-        <p className={`mt-1.5 text-xs ${muted}`}>
-          {yearly
-            ? t('{cur} {total} al año, pagado de una vez', { cur: CURRENCY, total: fmt(yearlyPrice(plan.monthly)) })
-            : t('o {cur} {total} al año ({n} meses gratis)', { cur: CURRENCY, total: fmt(yearlyPrice(plan.monthly)), n: YEARLY_FREE_MONTHS })}
-        </p>
+        {per.months === 1 ? (
+          <p className={`mt-1.5 text-xs ${muted}`}>{t('Se cobra cada mes. Trimestral −{q} %, anual −{y} %.', { q: PERIODS[1].discount, y: PERIODS[2].discount })}</p>
+        ) : (
+          <p className={`mt-1.5 text-xs ${muted}`}>
+            {t('{total} por {unit}, pagado de una vez', { total: fmtMoney(total, currency), unit: t(per.unit) })}
+            {' · '}
+            <span className={`font-bold ${saveTone}`}>{t('ahorras {amount}', { amount: fmtMoney(save.amount, currency) })}</span>
+          </p>
+        )}
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -112,6 +144,10 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
         <span className={`mt-8 inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3.5 text-sm font-bold ${hi ? 'border-gray-200 text-gray-500' : dark ? 'border-white/15 text-slate-300' : 'border-gray-200 text-gray-500'}`}>
           <Check size={15} /> {t('Es tu plan')}
         </span>
+      ) : soon ? (
+        <span aria-disabled="true" className={`mt-8 inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl border border-dashed px-5 py-3.5 text-sm font-bold ${dark ? 'border-white/20 text-slate-400' : 'border-gray-300 text-gray-400'}`}>
+          <Clock size={15} /> {t('Llega pronto')}
+        </span>
       ) : (
       <Link
         to={ctaTo}
@@ -126,26 +162,35 @@ function PlanCard({ plan, yearly, dark, current = false, ctaTo = CTA, compact = 
         {t(plan.cta)} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
       </Link>
       )}
-      {!compact && <p className={`mt-3 text-center text-[11px] ${muted}`}>{trialLine(t, dateLocale())} · {t('cancelas cuando quieras')}</p>}
+      {!compact && (
+        <p className={`mt-3 text-center text-[11px] ${muted}`}>
+          {soon ? t('Mientras tanto, Basic o Pro; te pasas a AI cuando salga.') : <>{trialLine(t, dateLocale())} · {t('cancelas cuando quieras')}</>}
+        </p>
+      )}
     </div>
   )
 }
 
-/** Interruptor + las tres tarjetas. Reutilizado por la landing y por /planes. */
 /**
+ * Selector de período + las tres tarjetas. Reutilizado por /planes, el Inicio y Ajustes › Tu plan.
  * `current` = key del plan actual (lo marca y desactiva su botón); `ctaTo` = a dónde
- * lleva el botón (en la app, el WhatsApp/plan); `compact` = sin interruptor anual ni
- * letra chica (Ajustes › Tu plan).
+ * lleva el botón (en la app, el WhatsApp/plan); `compact` = tarjetas más chicas y sin
+ * letra chica (Ajustes › Tu plan); `currency` = 'PEN' | 'USD' (por defecto la de la web
+ * según el navegador); `period`/`onPeriodChange` = controlado desde fuera (Ajustes), si
+ * no se pasan el selector lleva su propio estado.
  */
-export function PlanCards({ dark = false, current = null, ctaTo = CTA, compact = false }) {
-  const [yearly, setYearly] = useState(false)
+export function PlanCards({ dark = false, current = null, ctaTo = CTA, compact = false, currency, period, onPeriodChange }) {
+  const [own, setOwn] = useState(DEFAULT_PERIOD)
+  const cur = currency ?? siteCurrency()
+  const per = period ?? own
+  const setPer = onPeriodChange ?? setOwn
   return (
     <>
-      {!compact && <Reveal className="mb-10 flex justify-center"><BillingToggle yearly={yearly} onChange={setYearly} dark={dark} /></Reveal>}
+      <Reveal className={`flex justify-center ${compact ? 'mb-6' : 'mb-10'}`}><PeriodSelector period={per} onChange={setPer} dark={dark} compact={compact} /></Reveal>
       <div className={`grid gap-6 pt-3 lg:grid-cols-3 ${compact ? 'lg:gap-4' : 'lg:gap-5'}`}>
         {PLANS.map((p, i) => (
           <Reveal key={p.key} delay={i * 110} className="h-full">
-            <PlanCard plan={p} yearly={yearly} dark={dark} current={current === p.key} ctaTo={ctaTo} compact={compact} />
+            <PlanCard plan={p} period={per} currency={cur} dark={dark} current={current === p.key} ctaTo={ctaTo} compact={compact} />
           </Reveal>
         ))}
       </div>
@@ -199,7 +244,8 @@ export function CompareTable() {
             {PLANS.map((p) => (
               <th key={p.key} className="px-4 py-4 text-center">
                 <span className={`inline-block rounded-full bg-gradient-to-r px-3 py-1 text-xs font-extrabold text-white ${p.tone}`}>{p.name}</span>
-                <p className="mt-1 font-mono text-xs text-gray-500">{CURRENCY} {fmt(p.monthly)} / {t('mes')}</p>
+                <p className="mt-1 font-mono text-xs text-gray-500">{fmtMoney(periodPrice(p, 'monthly', siteCurrency()), siteCurrency())} / {t('mes')}</p>
+                {p.comingSoon && <p className="mt-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-600">{t('Llega pronto')}</p>}
               </th>
             ))}
           </tr>

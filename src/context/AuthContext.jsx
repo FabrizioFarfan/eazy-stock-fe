@@ -144,6 +144,8 @@ export function AuthProvider({ children }) {
   const register = async (payload) => {
     const res = await api.post("/auth/register", payload);
     await _startSession(res.data);
+    // Cuenta nueva (20-oct-2026): primero «Carga tu catálogo», no un panel vacío.
+    navigate("/bienvenida");
   };
 
   // Varios negocios por dueño (15-oct-2026): el token lleva el businessId, así que

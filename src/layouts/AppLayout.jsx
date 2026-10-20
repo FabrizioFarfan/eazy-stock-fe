@@ -1,5 +1,6 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ShoppingCart, Package } from 'lucide-react'
@@ -73,10 +74,14 @@ export default function AppLayout({ children }) {
   const WELCOME_TUTORIAL_KEY = 'eazystock_tutorial_seen'
 
   // Show on first visit (cuando el set de vistos ya cargó del BE)
+  // En /bienvenida («Carga tu catálogo», 20-oct-2026) no se abre encima: esa página
+  // ya es el primer paso; el tour salta al entrar al panel.
+  const { pathname } = useLocation()
   useEffect(() => {
     if (!seenTutorials || seenTutorials.has(WELCOME_TUTORIAL_KEY)) return
+    if (pathname === '/bienvenida') return
     setShowTutorial(true)
-  }, [seenTutorials])
+  }, [seenTutorials, pathname])
 
   // Listen for manual trigger from SettingsPage
   useEffect(() => {
