@@ -12,7 +12,7 @@ import { usePageSeo } from './landing/site'
 import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
 import { COUNTRIES } from '../utils/countries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
-import { TRIAL_DAYS, promoActive, promoVars, trialLine } from './landing/plans'
+import { promoActive, promoVars, trialLine, afterPromoLine } from './landing/plans'
 import { usePlans } from '../hooks/useSubscription'
 import { isValidPeruRuc, TAX_ID_LABEL } from '../utils/taxIds'
 
@@ -20,8 +20,9 @@ import { isValidPeruRuc, TAX_ID_LABEL } from '../utils/taxIds'
  * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
  * Promo de lanzamiento (Frank + Fabrizio, 19-oct-2026, task 1001): gratis hasta el
  * 15 de diciembre sin tarjeta; los primeros 50 negocios son fundadores (mitad de
- * precio 6 meses). RUC obligatorio, válido y único (task 1002). El BE manda en
- * POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
+ * precio 6 meses). RUC obligatorio, válido y único (task 1002). Regla post-promo
+ * (task 1018): después del 15-dic, 1 mes gratis y el segundo mes a mitad de precio.
+ * El BE manda en POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
  */
 
 const PERKS_PROMO = [
@@ -29,9 +30,10 @@ const PERKS_PROMO = [
   [Award,       'Los primeros {n} negocios pagan la mitad los primeros {months} meses'],
   [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
 ]
+/** Después de la promo: {trial} = «1 mes»; la 2.ª ventaja es afterPromoLine (segundo mes a mitad de precio). */
 const PERKS_AFTER = [
-  [Clock,       '{days} días gratis con tu negocio real, sin tarjeta'],
-  [Sparkles,    'Eliges tu plan solo cuando termina la prueba'],
+  [Clock,       '{trial} gratis con tu negocio real, sin tarjeta'],
+  [Sparkles,    (t) => afterPromoLine(t, { capital: true }) || t('Eliges tu plan solo cuando termina la prueba')],
   [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
 ]
 
@@ -71,7 +73,7 @@ export default function RegisterPage() {
     title: t('Crear cuenta — Eazy Stock'),
     description: promo
       ? t('Crea tu cuenta de Eazy Stock en un minuto: gratis hasta el {date}, sin tarjeta, con tu negocio real.', vars)
-      : t('Crea tu cuenta de Eazy Stock en un minuto: {days} días gratis, sin tarjeta, con tu negocio real.', { days: TRIAL_DAYS }),
+      : t('Crea tu cuenta de Eazy Stock en un minuto: {trial} gratis, sin tarjeta, con tu negocio real.', vars),
     path: '/registro',
   })
 
@@ -143,12 +145,12 @@ export default function RegisterPage() {
             {t('Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró.')}
           </p>
           <ul className="mt-10 space-y-4">
-            {perks.map(([Icon, text]) => (
-              <li key={text} className="flex items-center gap-3">
+            {perks.map(([Icon, text], i) => (
+              <li key={i} className="flex items-center gap-3">
                 <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-600/20">
                   <Icon size={13} className="text-blue-400" />
                 </span>
-                <span className="text-sm text-slate-300">{t(text, vars)}</span>
+                <span className="text-sm text-slate-300">{typeof text === 'function' ? text(t) : t(text, vars)}</span>
               </li>
             ))}
           </ul>

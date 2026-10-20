@@ -4,7 +4,7 @@ import { Check, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { trialLine } from './landing/plans'
+import { trialLine, afterPromoLine, promoActive } from './landing/plans'
 
 const FEATURES = [
   'Stock en vivo con alertas de mínimo y vencimiento',
@@ -172,7 +172,7 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-xs text-gray-500">
             {t('¿Aún no tienes cuenta?')}{' '}
             <Link to="/registro" className="font-semibold text-blue-600 hover:underline">{t('Crear cuenta gratis')}</Link>
-            <span className="block text-gray-400">{trialLine(t, dateLocale())}.</span>
+            <span className="block text-gray-400">{trialLine(t, dateLocale())}{promoActive() ? '' : `, ${afterPromoLine(t)}`}.</span>
           </p>
           {/* Legales DE: en móvil el panel izquierdo (con sus enlaces) no se ve */}
           <p className="mt-3 text-center text-xs text-gray-400 lg:hidden">

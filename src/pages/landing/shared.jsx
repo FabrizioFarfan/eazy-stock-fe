@@ -126,10 +126,8 @@ function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow =
   return (
     <svg className={className} viewBox={viewBox} preserveAspectRatio="xMidYMin slice" fill="none">
       <defs>
-        <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation={glow} result="b" />
-          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
+        {/* Sin feGaussianBlur (20-oct-2026): el filtro se recalculaba en cada frame de las
+            partículas y era lo que más pesaba; el «brillo» ahora es un segundo trazo ancho y tenue. */}
         <linearGradient id={`${id}-grad`} gradientUnits="userSpaceOnUse" x1={viewBox.split(' ')[0] - 60} x2={Number(viewBox.split(' ')[2]) + 60} y1="0" y2="0">
           <stop offset="0" stopColor="#93c5fd" stopOpacity="0" />
           <stop offset=".18" stopColor="#93c5fd" stopOpacity=".55" />
@@ -139,11 +137,14 @@ function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow =
         </linearGradient>
         {paths.map((d, i) => <path key={i} id={`${id}-${i}`} d={d} />)}
       </defs>
-      <g filter={`url(#${id}-glow)`} strokeLinecap="round">
+      <g strokeLinecap="round">
+        {paths.map((d, i) => (
+          <path key={`h${i}`} d={d} stroke={`url(#${id}-grad)`} strokeWidth={width * 4} strokeOpacity={glow * 0.06} />
+        ))}
         {paths.map((d, i) => (
           <path key={i} d={d} className="lp-draw" stroke={`url(#${id}-grad)`} strokeWidth={width} style={{ animationDelay: `${i * 0.5}s` }} />
         ))}
-        {paths.map((_, i) => [0, 1, 2].map((k) => (
+        {paths.map((_, i) => [0, 1].map((k) => (
           <circle key={`${i}-${k}`} r={k === 1 ? dot * 0.66 : dot} fill={k === 1 ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
             <animateMotion dur={`${9 + i * 1.5}s`} begin={`${-(i * 2.5 + k * 3.3)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
               <mpath href={`#${id}-${i}`} />
@@ -158,10 +159,19 @@ function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow =
 export function HeroBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* esfumaturas */}
-      <div className="absolute -top-48 right-[-12%] h-[46rem] w-[46rem] rounded-full bg-blue-500/20 blur-[160px]" />
-      <div className="absolute bottom-[-24%] left-[-14%] h-[40rem] w-[40rem] rounded-full bg-indigo-600/25 blur-[160px]" />
-      <div className="absolute left-[38%] top-1/2 h-[26rem] w-[26rem] -translate-y-1/2 rounded-full bg-sky-400/[0.08] blur-[120px]" />
+      {/* esfumaturas: UN solo div con degradados radiales (20-oct-2026: los tres
+          blur-[160px] se repintaban en cada frame de la animación y en PCs con muchas
+          pestañas el hero iba lentísimo; un gradient es casi gratis para la GPU) */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: [
+            'radial-gradient(42rem 42rem at 92% 6%, rgba(59,130,246,.22), transparent 62%)',
+            'radial-gradient(38rem 38rem at 2% 104%, rgba(79,70,229,.26), transparent 62%)',
+            'radial-gradient(26rem 26rem at 44% 52%, rgba(56,189,248,.08), transparent 60%)',
+          ].join(','),
+        }}
+      />
       {/* la malla, esfumada hacia los bordes */}
       <GridPattern />
       {/* corrientes: una versión apaisada para escritorio y otra vertical para el celular */}

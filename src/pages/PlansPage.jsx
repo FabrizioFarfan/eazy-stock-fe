@@ -4,7 +4,7 @@ import { ArrowRight, ChevronDown, Check, Store, Users, Sparkles } from 'lucide-r
 import { useT, dateLocale } from '../i18n'
 import { Reveal, SectionHead, GridPattern, GlowOrbs, LandingStyles } from './landing/shared'
 import { PlanCards, OffersGrid, CompareTable } from './landing/Pricing'
-import { PLAN_FAQS, promoVars, trialLine } from './landing/plans'
+import { PLAN_FAQS, promoActive, promoVars, trialLine } from './landing/plans'
 import { Navbar, Footer, CtaBanner } from './LandingPage'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 
@@ -25,7 +25,9 @@ function useSeo() {
     const prevDesc = desc?.getAttribute('content')
     const prevCanon = canon?.getAttribute('href')
     document.title = t('Planes y precios — Eazy Stock')
-    desc?.setAttribute('content', t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta; los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale())))
+    desc?.setAttribute('content', promoActive()
+      ? t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta; los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))
+      : t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {trial} gratis sin tarjeta y el segundo mes al {apct} %.', promoVars(dateLocale())))
     canon?.setAttribute('href', 'https://eazy-stock.com/planes')
     return () => {
       document.title = prevTitle

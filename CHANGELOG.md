@@ -2,6 +2,13 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.13.0 — 2026-10-20 (landing v2: iconos propios, para todo tipo de negocio, fondo liviano; Frank, task 1017)
+- **Fuera la sección de números** («7 reportes · 14 permisos · 3 idiomas · 6 decimales»: no le decían nada a nadie y sonaban a ferretería). En su lugar, **«Para todo tipo de negocio»**: diez rubros con icono propio (ferreterías, bodegas, farmacias, abarrotes, librerías, repuestos, ropa, veterinarias, cafeterías, celulares) y «si anotas en un cuaderno, también es para ti».
+- **Iconos propios de Eazy Stock** (`landing/icons.jsx`): un solo trazo redondeado y un punto de acento azul, siempre dentro de la baldosa azul noche `IconTile`. Reemplazan los cuadrados con degradado de colores en Beneficios, «Un día con Eazy Stock», Para quién y los rubros. El chip «Hasta 6 decimales» pasa a «Se corrige al vender».
+- **Fondo del hero mucho más liviano** (iba lentísimo en PCs con muchas pestañas): las tres manchas `blur-[160px]` pasan a un solo div con degradados radiales, las corrientes ya no usan `feGaussianBlur` (el brillo es un segundo trazo ancho y tenue) y hay 6 partículas en vez de 9. Mismo aspecto.
+- Diccionario `landing4.js` (en/it).
+- **Regla post-promo** (task 1018): tras el 15 de diciembre la web dice «1 mes gratis, sin tarjeta» y «el segundo mes a mitad de precio» (FAQ, ofertas, registro, login, precios y SEO); durante la promo no cambia nada. Constantes `TRIAL_DAYS = 30`, `AFTER_PROMO_DISCOUNT_PERCENT/MONTHS` en `plans.js`, `afterPromoLine()`, diccionario `promo2.js` (en/it). Arreglados el subtítulo de #precios y la meta de /planes, que seguían diciendo «gratis hasta el 15-dic» sin rama post-promo.
+
 ## 1.12.2 — 2026-10-20
 - /planes: la tabla comparativa se mostraba con scroll interno y las últimas filas escondidas (la regla global de cabecera fija para las tablas de la app le ponía tope de alto). Clase `lp-table` sin tope.
 

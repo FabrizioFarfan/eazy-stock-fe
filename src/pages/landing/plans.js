@@ -13,8 +13,16 @@
 
 /** Símbolo de los soles: lo usa el panel del boss, que trabaja siempre en PEN. */
 export const CURRENCY = 'S/'
-/** Prueba gratis sin tarjeta (Frank, 15-oct-2026: «2 semanas free»). El BE la aplica en /auth/register. */
-export const TRIAL_DAYS = 14
+/**
+ * Prueba gratis sin tarjeta DESPUÉS de la promo (REGLA POST-PROMO, Frank, 20-oct-2026, task 1018):
+ * 1 mes (30 días). Durante la promo nadie ve este número: es gratis hasta PROMO_FREE_UNTIL.
+ * Frank avisó que más adelante bajará a 14: se cambia aquí (y app.promo.after-trial-days en el BE).
+ * Con 30 los textos dicen «1 mes»; con otro número, «{days} días» (ver trialLengthLabel).
+ */
+export const TRIAL_DAYS = 30
+/** Post-promo: el primer mes pagado (el 2.º mes) con este descuento durante estos meses. Fundadores: LAUNCH_*. */
+export const AFTER_PROMO_DISCOUNT_PERCENT = 50
+export const AFTER_PROMO_DISCOUNT_MONTHS = 1
 /** Oferta de lanzamiento (Frank, 15-oct-2026, «50 % los primeros 6 meses, vemos»): la aplica el BE al registrarse. */
 export const LAUNCH_DISCOUNT_PERCENT = 50
 export const LAUNCH_DISCOUNT_MONTHS = 6
@@ -108,19 +116,56 @@ export function promoFreeUntilLabel(locale = 'es-PE', withYear = false) {
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', ...(withYear ? { year: 'numeric' } : {}) }).format(d)
 }
 
-/** Variables para los textos de la promo y los períodos: {date}, {days}, {n}, {pct}, {months}, {day}, {q}, {y}. */
+/**
+ * Cuánto dura la prueba post-promo, en palabras y en el idioma activo: «1 mes» / «1 month» /
+ * «1 mese» cuando TRIAL_DAYS es 30; «{days} días» / «days» / «giorni» para cualquier otro número.
+ * Va por locale (como promoFreeUntilLabel) para poder meterlo en las variables de los textos.
+ */
+export function trialLengthLabel(locale = 'es-PE') {
+  const lang = String(locale || 'es').slice(0, 2).toLowerCase()
+  if (TRIAL_DAYS === 30) return { en: '1 month', it: '1 mese' }[lang] ?? '1 mes'
+  return `${TRIAL_DAYS} ${{ en: 'days', it: 'giorni' }[lang] ?? 'días'}`
+}
+
+/**
+ * Variables para los textos de la promo y los períodos: {date}, {days}, {trial} («1 mes»),
+ * {n}, {pct}, {months}, {apct}, {amonths} (post-promo), {day}, {q}, {y}.
+ */
 export function promoVars(locale) {
-  return { date: promoFreeUntilLabel(locale), days: TRIAL_DAYS, n: FOUNDERS_LIMIT, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS, day: BILLING_DAY, q: QUARTERLY_DISCOUNT, y: YEARLY_DISCOUNT }
+  return {
+    date: promoFreeUntilLabel(locale), days: TRIAL_DAYS, trial: trialLengthLabel(locale),
+    n: FOUNDERS_LIMIT, pct: LAUNCH_DISCOUNT_PERCENT, months: LAUNCH_DISCOUNT_MONTHS,
+    apct: AFTER_PROMO_DISCOUNT_PERCENT, amonths: AFTER_PROMO_DISCOUNT_MONTHS,
+    day: BILLING_DAY, q: QUARTERLY_DISCOUNT, y: YEARLY_DISCOUNT,
+  }
 }
 
 /**
  * Frase corta de la prueba gratis: durante la promo «Gratis hasta el 15 de diciembre, sin tarjeta»;
- * después vuelve a «14 días gratis, sin tarjeta». `t` es el traductor activo.
+ * después «1 mes gratis, sin tarjeta» (o «{days} días gratis…» si TRIAL_DAYS deja de ser 30).
+ * `t` es el traductor activo.
  */
 export function trialLine(t, locale) {
   return promoActive()
     ? t('Gratis hasta el {date}, sin tarjeta', promoVars(locale))
-    : t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })
+    : t('{trial} gratis, sin tarjeta', { trial: trialLengthLabel(locale) })
+}
+
+/**
+ * Coletilla del descuento post-promo, para pegar tras trialLine cuando la promo ya pasó:
+ * «y el segundo mes a mitad de precio» (50 % × 1 mes). Con otros números dice el porcentaje y
+ * los meses. `capital` = empieza frase («El segundo mes a mitad de precio»). Vacía si no hay descuento.
+ */
+export function afterPromoLine(t, { capital = false } = {}) {
+  const pct = AFTER_PROMO_DISCOUNT_PERCENT, months = AFTER_PROMO_DISCOUNT_MONTHS
+  if (!(pct > 0) || !(months > 0)) return ''
+  if (months === 1) {
+    if (pct === 50) return capital ? t('El segundo mes a mitad de precio') : t('y el segundo mes a mitad de precio')
+    return capital ? t('El segundo mes con {apct} % de descuento', { apct: pct }) : t('y el segundo mes con {apct} % de descuento', { apct: pct })
+  }
+  return capital
+    ? t('Los {amonths} meses siguientes con {apct} % de descuento', { amonths: months, apct: pct })
+    : t('y los {amonths} meses siguientes con {apct} % de descuento', { amonths: months, apct: pct })
 }
 
 /**
@@ -244,9 +289,10 @@ export const OFFERS = [
     tone: 'from-amber-400 to-orange-500',
     title: 'Gratis hasta el {date}, sin tarjeta',
     desc: 'Creas tu cuenta en un minuto y usas todo Eazy Stock con tu negocio real, gratis, hasta el {date}. Recién entonces eliges tu plan; si no te ordena la tienda, no nos debes nada.',
+    /** Cuando pasa la promo (regla post-promo, task 1018): 1 mes gratis y el segundo mes al 50 %. */
     afterPromo: {
-      title: '{days} días gratis, sin tarjeta',
-      desc: 'Creas tu cuenta en un minuto y usas todo Eazy Stock con tu negocio real durante {days} días. Si no te ordena la tienda, no nos debes nada.',
+      title: '{trial} gratis, sin tarjeta',
+      desc: 'Creas tu cuenta en un minuto y usas todo Eazy Stock con tu negocio real durante {trial}, sin tarjeta. El segundo mes lo pagas al {apct} % y, si no te ordena la tienda, no nos debes nada.',
     },
   },
   {
@@ -267,7 +313,7 @@ export const OFFERS = [
 
 export const PLAN_FAQS = [
   ['¿Qué pasa cuando termine la prueba gratis?', 'Eliges tu plan y sigues donde estabas: no se borra nada. Si no eliges, tu cuenta queda en modo lectura hasta que decidas, con todos tus datos intactos.'],
-  ['¿Hasta cuándo es gratis?', 'Hasta el {date}, para quien se registra antes de esa fecha. Después, cada cuenta nueva tiene {days} días de prueba. La promo no pide tarjeta: la pones solo cuando decides seguir.'],
+  ['¿Hasta cuándo es gratis?', 'Hasta el {date}, para quien se registra antes de esa fecha. Después, cada cuenta nueva tiene {trial} gratis y el segundo mes al {apct} %. La promo no pide tarjeta: la pones solo cuando decides seguir.'],
   ['¿Qué ganan los primeros {n} negocios?', 'Pagan {pct} % menos durante los primeros {months} meses en cualquier plan y conservan el precio de lanzamiento para siempre. En Ajustes › Tu plan ves si entraste: sí o no.'],
   ['¿Puedo cambiar de plan más adelante?', 'Sí, cuando quieras y desde Ajustes. Al subir de plan el cambio es inmediato. Al bajar, mantienes lo que tienes hasta el cierre del período y te avisamos si algo supera el límite del plan nuevo.'],
   ['Tengo dos tiendas, ¿necesito dos cuentas?', 'No. Con Pro o AI manejas todos tus negocios desde una sola cuenta y un solo panel; cada tienda tiene su stock, su caja y su gente por separado.'],

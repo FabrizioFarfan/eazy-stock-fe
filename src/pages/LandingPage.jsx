@@ -3,15 +3,19 @@ import { useEffect, useState } from 'react'
 import {
   BarChart2, ShoppingCart, Shield, QrCode, Bell, FileSpreadsheet,
   MessageCircle, Smartphone, Check, Users, Truck, Receipt,
-  CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight, Wrench,
-  Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, Pill, ChevronDown,
-  Store, CalendarClock, Filter, Hash, Moon, Languages, Percent,
-  Menu, X, Landmark, Bot, Coffee, Apple,
+  CreditCard, Sparkles, Wallet, Boxes, ScanLine, ArrowRight,
+  Tag, ClipboardCheck, AlertTriangle, FileText, Trophy, ChevronDown,
+  CalendarClock, Filter, Hash, Moon, Languages, Percent,
+  Menu, X, Landmark, Bot,
   Award, Camera, History, Undo2, Banknote, EyeOff,
 } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { Reveal, Counter, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import { Reveal, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import {
+  IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck,
+  IcoHardware, IcoStore, IcoPharmacy, IcoBasket, IcoBook, IcoGear, IcoShirt, IcoPaw, IcoCup, IcoPhone,
+} from './landing/icons'
 import HeroTour from './landing/HeroTour'
 import {
   CashClosingMockup, SupplierOrderMockup, PosMockup, FiadoMockup, ImportMockup,
@@ -224,31 +228,49 @@ export function Marquee() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Stats con contadores
+//  Para todo tipo de negocio (20-oct-2026, Frank: fuera los números «7 reportes /
+//  14 permisos / 3 idiomas / 6 decimales», que no le dicen nada a nadie y suenan a
+//  ferretería; el SaaS es para todo comercio de Latinoamérica)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function Stats() {
+const BUSINESS_TYPES = [
+  [IcoHardware, 'Ferreterías'],
+  [IcoStore,    'Bodegas y minimarkets'],
+  [IcoPharmacy, 'Farmacias y boticas'],
+  [IcoBasket,   'Abarrotes'],
+  [IcoBook,     'Librerías y bazares'],
+  [IcoGear,     'Repuestos y talleres'],
+  [IcoShirt,    'Ropa y calzado'],
+  [IcoPaw,      'Veterinarias y mascotas'],
+  [IcoCup,      'Cafeterías'],
+  [IcoPhone,    'Celulares y electrónica'],
+]
+
+export function ForEveryBusiness() {
   const t = useT()
-  const stats = [
-    { to: 7,  label: 'reportes listos',   sub: 'Ventas, día, producto, proveedor, stock bajo, por vencer, resurtido' },
-    { to: 14, label: 'permisos finos',    sub: 'Hasta «solo ver el cierre de caja»' },
-    { to: 3,  label: 'idiomas',           sub: 'Español, inglés e italiano' },
-    { to: 6,  label: 'decimales en precios', sub: 'Para el tornillo a $ 0.0357' },
-  ]
   return (
-    <section className="bg-white py-14">
+    <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-          {stats.map(({ to, label, sub }, i) => (
-            <Reveal key={label} delay={i * 90} className="text-center">
-              <p className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-                <Counter to={to} />
-              </p>
-              <p className="mt-1.5 text-sm font-bold text-gray-900">{t(label)}</p>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">{t(sub)}</p>
+        <Reveal>
+          <SectionHead
+            kicker={t('Para todo tipo de negocio')}
+            title={t('Si vendes y llevas las cuentas, es para ti.')}
+            sub={t('Nació en una ferretería de barrio y hoy ordena bodegas, farmacias, librerías y lo que tú vendas. El mismo sistema, sin configurar nada raro.')}
+          />
+        </Reveal>
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+          {BUSINESS_TYPES.map(([Icon, label], i) => (
+            <Reveal key={label} delay={i * 50} className="w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.7rem)] lg:w-[calc(20%-0.8rem)]">
+              <div className="group flex h-full flex-col items-center gap-3 rounded-3xl border border-gray-200 bg-white px-3 py-5 text-center transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50">
+                <IconTile icon={Icon} size={56} className="transition-transform group-hover:scale-105" />
+                <p className="text-sm font-bold leading-snug text-gray-900">{t(label)}</p>
+              </div>
             </Reveal>
           ))}
         </div>
+        <Reveal className="mt-8 text-center">
+          <p className="text-sm text-gray-500">{t('¿Tu rubro no está? Si anotas ventas, stock o fiado en un cuaderno, también es para ti.')}</p>
+        </Reveal>
       </div>
     </section>
   )
@@ -261,37 +283,37 @@ export function Stats() {
 
 const BENEFITS = [
   {
-    icon: Wallet, color: 'from-emerald-500 to-teal-600', chip: 'Al centavo',
+    icon: IcoTill, chip: 'Al centavo',
     title: 'La caja cuadra, todos los días',
     before: 'Cierras contando billetes y nunca sabes si falta plata o se anotó mal.',
     after: 'La app te dice cuánto debe haber en el cajón: el fondo para dar vuelto, más el efectivo vendido, menos las devoluciones. Y lo mismo por cada medio de pago.',
   },
   {
-    icon: CreditCard, color: 'from-violet-500 to-fuchsia-600', chip: 'WhatsApp en 1 clic',
+    icon: IcoLedger, chip: 'WhatsApp en 1 clic',
     title: 'El fiado se cobra',
     before: 'El cuaderno se moja, se pierde o nadie recuerda quién debe cuánto.',
     after: 'Cada cliente tiene su límite, su deuda al día y su estado de cuenta en PDF. El recordatorio de cobro sale por WhatsApp con un clic.',
   },
   {
-    icon: AlertTriangle, color: 'from-orange-500 to-red-500', chip: 'Pedido en PDF',
+    icon: IcoShelf, chip: 'Pedido en PDF',
     title: 'Nunca más «se acabó»',
     before: 'Te enteras de que no hay stock cuando el cliente ya lo está pidiendo.',
     after: 'Cada producto tiene su mínimo y avisa en vivo cuando baja. El pedido al proveedor sale en PDF en dos clics, con lo que falta de cada uno.',
   },
   {
-    icon: Shield, color: 'from-blue-500 to-indigo-600', chip: 'Cada venta con nombre',
+    icon: IcoTeam, chip: 'Cada venta con nombre',
     title: 'Tu equipo vende, tú controlas',
     before: 'Dejas la tienda y no sabes quién vendió qué, ni a qué precio.',
     after: 'Cada venta queda con el nombre del vendedor y la hora. El vendedor no ve tus costos ni toca el stock a mano, y tú decides cada permiso.',
   },
   {
-    icon: Tag, color: 'from-amber-500 to-orange-600', chip: 'Hasta 6 decimales',
+    icon: IcoTag, chip: 'Se corrige al vender',
     title: 'Precios siempre al día',
     before: 'Precios viejos o mal redondeados que te comen el margen en silencio.',
     after: 'Corriges el precio en plena venta y queda para siempre, con aviso. Los precios con céntimos de céntimo nunca se redondean, y vender por debajo del precio queda marcado.',
   },
   {
-    icon: BarChart2, color: 'from-cyan-500 to-blue-600', chip: 'Ganancia real',
+    icon: IcoChart, chip: 'Ganancia real',
     title: 'Sabes qué te deja plata',
     before: 'Vendes todo el mes y no sabes si ganaste, ni con qué producto.',
     after: 'Ganancia del mes, productos que más rinden, mejores clientes y vendedores. Y lo que está por vencer, para liquidarlo antes de perderlo.',
@@ -312,13 +334,11 @@ export function Benefits({ teaser = false }) {
           />
         </Reveal>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map(({ icon: Icon, color, chip, title, before, after }, i) => (
+          {list.map(({ icon: Icon, chip, title, before, after }, i) => (
             <Reveal key={title} delay={(i % 3) * 90}>
               <article className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gray-200/60">
                 <div className="flex items-start justify-between gap-3">
-                  <div className={`inline-flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-md`}>
-                    <Icon size={22} />
-                  </div>
+                  <IconTile icon={Icon} size={52} />
                   <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-600">{t(chip)}</span>
                 </div>
                 <h3 className="mt-5 text-xl font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
@@ -725,12 +745,12 @@ export function Features() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const INDUSTRIES = [
-  [Wrench, 'Ferreterías',           'Miles de códigos, tornillos a céntimos, metros de cable y el cliente de siempre que paga a fin de mes.', 'from-orange-500 to-red-500'],
-  [Store,  'Bodegas y minimarkets', 'Venta al paso con escáner, fiado del barrio con recordatorio y aviso de lo que vence.', 'from-amber-500 to-orange-600'],
-  [Pill,   'Farmacias y boticas',   'Fecha de vencimiento en cada caja, reporte «Por vencer» y venta por blíster o unidad.', 'from-rose-500 to-pink-600'],
-  [Truck,  'Distribuidoras',        'Recepciones grandes, cuentas por pagar a proveedores y pedidos en PDF.', 'from-blue-500 to-indigo-600'],
-  [Apple,  'Abarrotes y alimentos', 'Venta por kilo o gramo, lo perecible controlado y cierre de caja por medio de pago.', 'from-emerald-500 to-teal-600'],
-  [Coffee, 'Cualquier tienda de barrio', 'Si vendes y anotas en cuaderno, esto es para ti. Se aprende en una tarde.', 'from-violet-500 to-fuchsia-600'],
+  [IcoHardware, 'Ferreterías',           'Miles de códigos, tornillos a céntimos, metros de cable y el cliente de siempre que paga a fin de mes.', 'from-orange-500 to-red-500'],
+  [IcoStore,  'Bodegas y minimarkets', 'Venta al paso con escáner, fiado del barrio con recordatorio y aviso de lo que vence.', 'from-amber-500 to-orange-600'],
+  [IcoPharmacy,   'Farmacias y boticas',   'Fecha de vencimiento en cada caja, reporte «Por vencer» y venta por blíster o unidad.', 'from-rose-500 to-pink-600'],
+  [IcoTruck,  'Distribuidoras',        'Recepciones grandes, cuentas por pagar a proveedores y pedidos en PDF.', 'from-blue-500 to-indigo-600'],
+  [IcoBasket,  'Abarrotes y alimentos', 'Venta por kilo o gramo, lo perecible controlado y cierre de caja por medio de pago.', 'from-emerald-500 to-teal-600'],
+  [IcoCup, 'Cualquier tienda de barrio', 'Si vendes y anotas en cuaderno, esto es para ti. Se aprende en una tarde.', 'from-violet-500 to-fuchsia-600'],
 ]
 
 export function Industries() {
@@ -748,17 +768,14 @@ export function Industries() {
           />
         </Reveal>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {INDUSTRIES.map(([Icon, title, desc, color], i) => (
+          {INDUSTRIES.map(([Icon, title, desc], i) => (
             <Reveal
               key={title}
               delay={(i % 3) * 90}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06]"
             >
-              <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${color} opacity-30 blur-2xl transition-opacity group-hover:opacity-50`} />
               <div className="relative">
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
-                  <Icon size={22} className="text-white" />
-                </div>
+                <IconTile icon={Icon} size={52} light className="mb-4" />
                 <h3 className="mb-2 text-base font-bold text-white">{t(title)}</h3>
                 <p className="text-sm leading-relaxed text-slate-400">{t(desc)}</p>
               </div>
@@ -934,7 +951,7 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis y el segundo mes al {apct} %. Hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -1125,10 +1142,10 @@ export function Footer() {
 // Inicio: cuatro tarjetas que llevan a cada parte de Funciones (en vez de las
 // maquetas largas, que ahora viven en /funciones).
 const HIGHLIGHTS = [
-  { icon: ScanLine,   color: 'from-emerald-500 to-teal-600',  to: '/funciones#vender',  title: 'Vende en segundos',       desc: 'Escaneas con la cámara del celular, cobras por cualquier medio y el stock se descuenta solo.' },
-  { icon: Wallet,     color: 'from-blue-500 to-indigo-600',   to: '/funciones#caja',    title: 'Cierra la caja sin dudas', desc: 'Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.' },
-  { icon: CreditCard, color: 'from-violet-500 to-fuchsia-600', to: '/funciones#fiado',  title: 'Controla el fiado',       desc: 'Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.' },
-  { icon: Truck,      color: 'from-amber-500 to-orange-600',  to: '/funciones#pedidos', title: 'Nunca te quedes sin stock', desc: 'Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.' },
+  { icon: IcoScan,   to: '/funciones#vender',  title: 'Vende en segundos',       desc: 'Escaneas con la cámara del celular, cobras por cualquier medio y el stock se descuenta solo.' },
+  { icon: IcoTill,   to: '/funciones#caja',    title: 'Cierra la caja sin dudas', desc: 'Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.' },
+  { icon: IcoLedger, to: '/funciones#fiado',  title: 'Controla el fiado',       desc: 'Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.' },
+  { icon: IcoTruck,  to: '/funciones#pedidos', title: 'Nunca te quedes sin stock', desc: 'Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.' },
 ]
 
 function Highlights() {
@@ -1140,12 +1157,10 @@ function Highlights() {
           <SectionHead kicker={t('Un día con Eazy Stock')} title={t('De la venta al cierre de caja, sin hojas sueltas')} />
         </Reveal>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {HIGHLIGHTS.map(({ icon: Icon, color, to, title, desc }, i) => (
+          {HIGHLIGHTS.map(({ icon: Icon, to, title, desc }, i) => (
             <Reveal key={to} delay={i * 80}>
               <Link to={to} className="group flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50">
-                <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-md`}>
-                  <Icon size={22} />
-                </div>
+                <IconTile icon={Icon} size={52} className="mb-5" />
                 <h3 className="text-lg font-extrabold tracking-tight text-gray-900">{t(title)}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-gray-500">{t(desc)}</p>
                 <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700">
@@ -1239,7 +1254,7 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <Marquee />
-      <Stats />
+      <ForEveryBusiness />
       <Benefits teaser />
       <Highlights />
       <HowItWorks />
