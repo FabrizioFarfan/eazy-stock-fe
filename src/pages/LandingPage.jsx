@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { Reveal, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
+import { Reveal, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
 import { STREAMS_EDGES, STREAMS_CTA } from './landing/streams'
 import {
   IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck, IcoChat, IcoSheet,
@@ -1427,7 +1427,7 @@ function PricingTeaser() {
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-[#0a0e1a] px-6 py-10 sm:px-10">
-            <HeroBackdrop id="lpb-pr" paths={STREAMS_EDGES} fade={false} />
+            <GridPattern />
             <div className="relative flex flex-col items-center gap-8 text-center lg:flex-row lg:justify-between lg:text-left">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>

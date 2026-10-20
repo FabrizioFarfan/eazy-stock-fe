@@ -2,6 +2,9 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.16.2 — 2026-10-20
+- La tarjeta de precios (con la cuenta regresiva) vuelve a la malla sola, sin corrientes (Frank).
+
 ## 1.16.1 — 2026-10-20
 - Pie sin las corrientes (Frank: «too much, antes estaba bien»).
 
