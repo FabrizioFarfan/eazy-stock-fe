@@ -101,8 +101,8 @@ export function GlowOrbs() {
  * Fondo del hero (20-oct-2026, v4 «simple», Frank: «muy cargado; la malla me gustaba;
  * esfumaturas»): la malla con esfumatura, tres manchas de color difuminadas y dos
  * corrientes curvas que entran desde el borde izquierdo hacia la ventana del producto
- * con puntos que viajan (los productos vendiéndose). Sin círculos. Las corrientes solo
- * en escritorio: en el celular pasaban por detrás del texto y no dejaban leer.
+ * con puntos que viajan (los productos vendiéndose). Sin círculos. En el celular, una
+ * versión vertical propia (STREAMS_MOBILE) por las franjas libres del texto.
  * Reutilizable: Frank quiere este efecto en todas las webs.
  */
 // Tres corrientes continuas: nacen fuera del borde izquierdo y mueren fuera del derecho
@@ -113,6 +113,47 @@ const STREAMS = [
   'M-60 760 C 340 830, 620 640, 900 660 S 1250 770, 1500 700',
   'M-60 900 C 400 950, 700 790, 950 830 S 1300 910, 1500 850',
 ]
+// Celular (Frank: «también quiero ese SVG en mobile»): lienzo vertical 390×1150 y
+// tres corrientes por las franjas libres (sobre el titular, entre botones y promesas,
+// al pie), más finas y suaves para que el texto siga leyéndose.
+const STREAMS_MOBILE = [
+  'M-20 150 C 80 90, 190 210, 290 160 S 380 100, 410 110',
+  'M-20 700 C 90 660, 180 740, 280 700 S 370 650, 410 670',
+  'M-20 1080 C 110 1130, 220 1010, 320 1050 S 390 1100, 410 1090',
+]
+
+function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow = 3 }) {
+  return (
+    <svg className={className} viewBox={viewBox} preserveAspectRatio="xMidYMin slice" fill="none">
+      <defs>
+        <filter id={`${id}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation={glow} result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <linearGradient id={`${id}-grad`} gradientUnits="userSpaceOnUse" x1={viewBox.split(' ')[0] - 60} x2={Number(viewBox.split(' ')[2]) + 60} y1="0" y2="0">
+          <stop offset="0" stopColor="#93c5fd" stopOpacity="0" />
+          <stop offset=".18" stopColor="#93c5fd" stopOpacity=".55" />
+          <stop offset=".5" stopColor="#60a5fa" stopOpacity=".8" />
+          <stop offset=".82" stopColor="#93c5fd" stopOpacity=".55" />
+          <stop offset="1" stopColor="#93c5fd" stopOpacity="0" />
+        </linearGradient>
+        {paths.map((d, i) => <path key={i} id={`${id}-${i}`} d={d} />)}
+      </defs>
+      <g filter={`url(#${id}-glow)`} strokeLinecap="round">
+        {paths.map((d, i) => (
+          <path key={i} d={d} className="lp-draw" stroke={`url(#${id}-grad)`} strokeWidth={width} style={{ animationDelay: `${i * 0.5}s` }} />
+        ))}
+        {paths.map((_, i) => [0, 1, 2].map((k) => (
+          <circle key={`${i}-${k}`} r={k === 1 ? dot * 0.66 : dot} fill={k === 1 ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
+            <animateMotion dur={`${9 + i * 1.5}s`} begin={`${-(i * 2.5 + k * 3.3)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
+              <mpath href={`#${id}-${i}`} />
+            </animateMotion>
+          </circle>
+        )))}
+      </g>
+    </svg>
+  )
+}
 
 export function HeroBackdrop() {
   return (
@@ -123,35 +164,9 @@ export function HeroBackdrop() {
       <div className="absolute left-[38%] top-1/2 h-[26rem] w-[26rem] -translate-y-1/2 rounded-full bg-sky-400/[0.08] blur-[120px]" />
       {/* la malla, esfumada hacia los bordes */}
       <GridPattern />
-      {/* corrientes (solo escritorio) */}
-      <svg className="absolute inset-0 hidden h-full w-full lg:block" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
-        <defs>
-          <filter id="lpb-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="b" />
-            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <linearGradient id="lpb-stream" gradientUnits="userSpaceOnUse" x1="-60" x2="1500" y1="0" y2="0">
-            <stop offset="0" stopColor="#93c5fd" stopOpacity="0" />
-            <stop offset=".18" stopColor="#93c5fd" stopOpacity=".55" />
-            <stop offset=".5" stopColor="#60a5fa" stopOpacity=".8" />
-            <stop offset=".82" stopColor="#93c5fd" stopOpacity=".55" />
-            <stop offset="1" stopColor="#93c5fd" stopOpacity="0" />
-          </linearGradient>
-          {STREAMS.map((d, i) => <path key={i} id={`lpb-s-${i}`} d={d} />)}
-        </defs>
-        <g filter="url(#lpb-glow)" strokeLinecap="round">
-          {STREAMS.map((d, i) => (
-            <path key={i} d={d} className="lp-draw" stroke="url(#lpb-stream)" strokeWidth="1.5" style={{ animationDelay: `${i * 0.5}s` }} />
-          ))}
-          {STREAMS.map((_, i) => [0, 1, 2].map((k) => (
-            <circle key={`${i}-${k}`} r={k === 1 ? 3 : 4.5} fill={k === 1 ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
-              <animateMotion dur={`${9 + i * 1.5}s`} begin={`${-(i * 2.5 + k * 3.3)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
-                <mpath href={`#lpb-s-${i}`} />
-              </animateMotion>
-            </circle>
-          )))}
-        </g>
-      </svg>
+      {/* corrientes: una versión apaisada para escritorio y otra vertical para el celular */}
+      <Streams id="lpb-d" paths={STREAMS} viewBox="0 0 1440 900" className="absolute inset-0 hidden h-full w-full lg:block" />
+      <Streams id="lpb-m" paths={STREAMS_MOBILE} viewBox="0 0 390 1150" className="absolute inset-0 h-full w-full opacity-80 lg:hidden" width={1.25} dot={3.5} glow={2} />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />
     </div>
   )

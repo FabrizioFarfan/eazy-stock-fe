@@ -2,6 +2,9 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.11.5 — 2026-10-20 (corrientes también en el celular; Frank)
+- `Streams` es ahora un componente con `paths`/`viewBox`; en el celular se pinta una versión vertical propia (`STREAMS_MOBILE`, lienzo 390×1150) con tres corrientes por las franjas libres del texto, más finas (1.25) y con menos brillo, al 80 %. El texto sigue legible (comprobado a 390 y 430).
+
 ## 1.11.4 — 2026-10-20 (hero cerrado: corrientes completas, botones 3D, fondo también en el CTA final; Frank)
 - **Tres corrientes con inicio y fin**: nacen fuera del borde izquierdo, cruzan todo el ancho y mueren fuera del derecho, esfumándose en ambos extremos (degradado en `userSpaceOnUse`). Ya no «se quedan a la mitad». Siguen solo en escritorio.
 - **Botones con cuerpo 3D** (`.lp-btn-3d` azul con luz arriba, bisel y base de sombra; `.lp-btn-3d-ghost` oscuro); al pasar se levantan, al pulsar se hunden. En el hero y en el CTA final.
