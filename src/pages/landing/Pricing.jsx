@@ -49,6 +49,16 @@ export function PeriodSelector({ period, onChange, dark = false, compact = false
   )
 }
 
+/** Chip chico «Pronto» para una función que aún no está (20-oct-2026). */
+export function SoonMini() {
+  const t = useT()
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 align-middle text-[10px] font-extrabold uppercase tracking-wider text-amber-600">
+      <Clock size={9} strokeWidth={3} /> {t('Pronto')}
+    </span>
+  )
+}
+
 /** Chip «Llega pronto» del plan AI (se ve en las tres pantallas). */
 export function ComingSoonChip({ className = '' }) {
   const t = useT()
@@ -130,14 +140,18 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
       </div>
 
       <ul className="mt-6 flex-1 space-y-2.5">
-        {plan.features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5 text-sm leading-snug">
-            <span className={`mt-0.5 flex h-4.5 w-4.5 flex-shrink-0 items-center justify-center rounded-full ${hi ? 'bg-blue-600 text-white' : 'bg-emerald-500/15 text-emerald-500'}`} style={{ height: 18, width: 18 }}>
-              <Check size={11} strokeWidth={3} />
-            </span>
-            <span>{t(f)}</span>
-          </li>
-        ))}
+        {plan.features.map((raw) => {
+          const f = typeof raw === 'string' ? { text: raw } : raw
+          return (
+            <li key={f.text} className="flex items-start gap-2.5 text-sm leading-snug">
+              <span className={`mt-0.5 flex flex-shrink-0 items-center justify-center rounded-full ${
+                f.soon ? 'bg-amber-500/15 text-amber-500' : hi ? 'bg-blue-600 text-white' : 'bg-emerald-500/15 text-emerald-500'}`} style={{ height: 18, width: 18 }}>
+                {f.soon ? <Clock size={11} strokeWidth={3} /> : <Check size={11} strokeWidth={3} />}
+              </span>
+              <span className={f.soon ? muted : ''}>{t(f.text)} {f.soon && <SoonMini />}</span>
+            </li>
+          )
+        })}
       </ul>
 
       {current ? (
@@ -234,7 +248,11 @@ export function CompareTable() {
     ? <Check size={18} strokeWidth={3} className="mx-auto text-emerald-500" />
     : v === false
       ? <Minus size={16} className="mx-auto text-gray-300" />
-      : <span className="text-sm font-semibold text-gray-900">{t(v)}</span>
+      : v === 'soon'
+        ? <SoonMini />
+        : typeof v === 'object'
+          ? <span className="inline-flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-gray-700">{t(v.text)} {v.soon && <SoonMini />}</span>
+          : <span className="text-sm font-semibold text-gray-900">{t(v)}</span>
   return (
     <div className="overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[560px] text-left">

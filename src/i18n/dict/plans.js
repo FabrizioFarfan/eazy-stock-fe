@@ -97,7 +97,7 @@ export default {
     'Preguntas sobre los planes': 'Questions about the plans',
     'Antes de elegir': 'Before you choose',
     // FAQ de la landing (respuesta nueva)
-    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'During the launch you try it free, no card. Then there are three plans: Basic (1 business, up to 5 workers), Pro (unlimited businesses and workers) and AI (everything in Pro plus artificial intelligence). All with a 30-day trial, and whoever joins during the launch keeps the price.',
+    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'During the launch you try it free, no card. Then there are three plans: Basic (1 business, up to 5 workers), Pro (up to 3 businesses and 20 workers) and AI (everything in Pro, no limits, with artificial intelligence). All with a 30-day trial, and whoever joins during the launch keeps the price.',
   },
   it: {
     'Precios': 'Prezzi',
@@ -189,6 +189,6 @@ export default {
     'Subes o bajas de plan desde Ajustes. Tus datos no se tocan nunca.': 'Sali o scendi di piano da Impostazioni. I tuoi dati non si toccano mai.',
     'Preguntas sobre los planes': 'Domande sui piani',
     'Antes de elegir': 'Prima di scegliere',
-    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'Durante il lancio lo provi gratis, senza carta. Poi ci sono tre piani: Basic (1 attività, fino a 5 collaboratori), Pro (attività e collaboratori illimitati) e AI (tutto Pro più intelligenza artificiale). Tutti con 30 giorni di prova, e chi entra durante il lancio mantiene il prezzo.',
+    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'Durante il lancio lo provi gratis, senza carta. Poi ci sono tre piani: Basic (1 attività, fino a 5 collaboratori), Pro (attività e collaboratori illimitati) e AI (tutto Pro più intelligenza artificiale). Tutti con 30 giorni di prova, e chi entra durante il lancio mantiene il prezzo.',
   },
 }

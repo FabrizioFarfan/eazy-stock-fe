@@ -72,7 +72,7 @@ function NewBusinessModal({ onClose, onCreated }) {
           <Crown size={16} className="mt-0.5 flex-shrink-0 text-amber-600" />
           <div>
             <p className="font-bold">{t('Tu plan admite un solo negocio')}</p>
-            <p className="mt-0.5 text-xs">{t('Con el plan Pro tienes negocios y trabajadores ilimitados en esta misma cuenta.')}</p>
+            <p className="mt-0.5 text-xs">{t('Con el plan Pro tienes hasta 3 negocios y 20 trabajadores en esta misma cuenta; con AI, sin límite.')}</p>
             <Link to="/settings#plan" onClick={onClose} className="mt-1 inline-block text-xs font-bold text-amber-800 underline">{t('Ver mi plan')} →</Link>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function MyBusinessesPage() {
           className="flex min-h-[14rem] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 bg-white/60 p-6 text-center text-sm text-gray-500 transition-colors hover:border-blue-300 hover:bg-blue-50/40 hover:text-blue-700">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Plus size={22} /></span>
           <span className="font-bold">{t('Nuevo negocio')}</span>
-          <span className="text-xs text-gray-400">{sub?.maxBusinesses === 1 ? t('Con Pro, los que quieras') : t('Otra tienda bajo tu misma cuenta')}</span>
+          <span className="text-xs text-gray-400">{sub?.maxBusinesses === 1 ? t('Con Pro, hasta 3') : t('Otra tienda bajo tu misma cuenta')}</span>
         </button>
       </div>
 

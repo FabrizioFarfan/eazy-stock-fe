@@ -123,6 +123,14 @@ export function trialLine(t, locale) {
     : t('{days} días gratis, sin tarjeta', { days: TRIAL_DAYS })
 }
 
+/**
+ * Planes DEFINIDOS (Frank, 20-oct-2026, task 1016): Basic 1 negocio / 5 trabajadores,
+ * Pro HASTA 3 negocios / 20 trabajadores (ya no ilimitado), AI sin límite. Lo que aún
+ * no está construido va con `soon: true` y se muestra con el chip «Pronto»: apps
+ * móviles, boleta/factura electrónica SUNAT (solo Pro y AI), IA de prueba en Basic y
+ * Pro (10 ventas por voz al mes + 1 consejo de oferta por semana, task 1013) y la IA
+ * completa + promociones por WhatsApp en AI. Un feature es un string o { text, soon }.
+ */
 export const PLANS = [
   {
     key: 'basic',
@@ -140,18 +148,20 @@ export const PLANS = [
     ],
     features: [
       'Inventario, ventas, fiado y recepciones',
-      'Cierre de caja por medio de pago',
-      'Cotizaciones y estado de cuenta en PDF',
-      'Importar y exportar desde Excel',
-      'Reportes: ventas, vencimientos, mejores clientes',
-      'Tutoriales en cada pantalla · ES · EN · IT',
+      'Cierre de caja por medio de pago y fondo de caja',
+      'Cotizaciones, nota de pedido y estado de cuenta en PDF o WhatsApp',
+      'Importar y exportar desde Excel, o lo cargamos nosotros',
+      'Reportes: ventas, ganancia, vencimientos, mejores clientes y vendedores',
+      'Permisos por trabajador · tutoriales · ES · EN · IT',
+      { text: 'Apps para Android e iOS', soon: true },
+      { text: 'IA de prueba: 10 ventas por voz al mes y 1 consejo de oferta por semana', soon: true },
     ],
     cta: 'Empezar con Basic',
   },
   {
     key: 'pro',
     name: 'Pro',
-    tagline: 'Para el dueño con más de una tienda o un equipo grande.',
+    tagline: 'Para el dueño con hasta 3 tiendas o un equipo grande.',
     prices: {
       PEN: { monthly: 79, quarterly: 213, yearly: 758 },
       USD: { monthly: 22.90, quarterly: 61.80, yearly: 219 },
@@ -160,15 +170,16 @@ export const PLANS = [
     highlight: true,
     badge: 'Más elegido',
     limits: [
-      ['∞', 'negocios'],
-      ['∞', 'trabajadores'],
+      ['3', 'negocios'],
+      ['20', 'trabajadores'],
     ],
     features: [
       'Todo lo de Basic',
-      'Negocios ilimitados en una sola cuenta',
-      'Trabajadores ilimitados con permisos por persona',
-      'Panel del dueño: todas tus tiendas en una pantalla',
+      'Hasta 3 negocios en una sola cuenta, con el resumen de todos',
+      'Hasta 20 trabajadores con permisos por persona',
       'Cambia de negocio sin cerrar sesión',
+      { text: 'Boleta y factura electrónica SUNAT desde la venta', soon: true },
+      { text: 'IA de prueba: 10 ventas por voz al mes y 1 consejo de oferta por semana', soon: true },
       'Soporte prioritario por WhatsApp',
     ],
     cta: 'Empezar con Pro',
@@ -190,32 +201,39 @@ export const PLANS = [
       ['∞', 'trabajadores'],
     ],
     features: [
-      'Todo lo de Pro',
-      'Ventas por nota de voz: dictas y confirmas',
-      'Análisis: lo que más vendes, lo lento y lo que vence',
-      'Ofertas sugeridas que tú apruebas',
-      'Clientes con consentimiento para recibir ofertas',
-      'Envío de ofertas por WhatsApp o SMS con resultados',
+      'Todo lo de Pro, sin límite de negocios ni trabajadores',
+      { text: 'Ventas por nota de voz, sin límite', soon: true },
+      { text: 'Pregúntale a tu negocio: cuánto vendiste, qué reponer, qué vence', soon: true },
+      { text: 'Consejos de ofertas: qué producto, a cuánto y hasta cuándo', soon: true },
+      { text: 'Promociones por WhatsApp a tus clientes de siempre', soon: true },
+      { text: 'Análisis: lo que más vendes, lo lento y lo que vence', soon: true },
     ],
     cta: 'Empezar con AI',
   },
 ]
 
 /** Filas de la tabla comparativa de /planes: [texto, basic, pro, ai]. true = ✓, string = texto. */
+/**
+ * Tabla comparativa de /planes. Celda: true / false / string / 'soon' (chip «Pronto»)
+ * / { text, soon } (texto con chip).
+ */
 export const COMPARE = [
-  ['Negocios',                                  '1',            'Ilimitados', 'Ilimitados'],
-  ['Trabajadores',                              'Hasta 5',      'Ilimitados', 'Ilimitados'],
+  ['Negocios',                                  '1',            'Hasta 3',  'Ilimitados'],
+  ['Trabajadores',                              'Hasta 5',      'Hasta 20', 'Ilimitados'],
   ['Inventario, ventas, fiado y recepciones',   true, true, true],
   ['Cierre de caja y fondo de caja',            true, true, true],
-  ['Cotizaciones y pedidos al proveedor en PDF',true, true, true],
+  ['Cotizaciones, nota de pedido y pedidos al proveedor en PDF', true, true, true],
   ['Importar / exportar Excel',                 true, true, true],
   ['Reportes y análisis de clientes',           true, true, true],
   ['Permisos por trabajador',                   true, true, true],
-  ['Panel del dueño con varios negocios',       false, true, true],
+  ['Varios negocios en una cuenta, con resumen', false, true, true],
   ['Soporte prioritario por WhatsApp',          false, true, true],
-  ['Ventas por nota de voz',                    false, false, true],
-  ['Análisis de ventas con IA',                 false, false, true],
-  ['Ofertas sugeridas y envío a clientes',      false, false, true],
+  ['Apps para Android e iOS',                   'soon', 'soon', 'soon'],
+  ['Boleta y factura electrónica SUNAT',        false, 'soon', 'soon'],
+  ['Ventas por nota de voz',                    { text: '10 al mes', soon: true }, { text: '10 al mes', soon: true }, { text: 'Sin límite', soon: true }],
+  ['Consejo de oferta con IA',                  { text: '1 por semana', soon: true }, { text: '1 por semana', soon: true }, { text: 'Todos los días', soon: true }],
+  ['Pregúntale a tu negocio',                   false, false, 'soon'],
+  ['Promociones por WhatsApp a tus clientes',   false, false, 'soon'],
 ]
 
 /** Ofertas vigentes: se muestran en la landing y en /planes. */

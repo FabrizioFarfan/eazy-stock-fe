@@ -934,7 +934,7 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (negocios y trabajadores ilimitados) y AI (todo lo de Pro más inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
