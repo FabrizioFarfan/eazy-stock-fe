@@ -26,6 +26,9 @@ const MESSAGE_BY_CODE = {
   NOT_FOUND:               'Recurso no encontrado',
   LINKED_RESOURCE:         'No se puede eliminar: hay registros asociados',
   INTERNAL_ERROR:          'Ocurrió un error inesperado. Intentá de nuevo.',
+  // Recuperar contraseña / confirmar correo (22-oct-2026)
+  INVALID_TOKEN:           'Este enlace no es válido o ya venció. Pide uno nuevo.',
+  TOO_MANY_REQUESTS:       'Ya te mandamos varios correos. Espera unos minutos y vuelve a intentar.',
 }
 
 /**

@@ -4,13 +4,15 @@ import { Mail, Phone } from 'lucide-react'
 import { useLang, useT } from '../i18n'
 import { Navbar, Footer } from './LandingPage'
 import { PageHero, usePublicPage } from './landing/site'
-import { IMPRESSUM, IMPRESSUM_LANGS, PRIVACY, PRIVACY_LANGS, PRIVACY_UPDATED, LEGAL_ENTITY } from './legal/legalContent'
+import { IMPRESSUM, IMPRESSUM_LANGS, PRIVACY, PRIVACY_LANGS, PRIVACY_UPDATED, TERMS, TERMS_LANGS, TERMS_UPDATED, LEGAL_ENTITY } from './legal/legalContent'
 
 /**
  * Páginas legales (15-oct-2026): Fabrizio sacó su Partita IVA en Berlín y por ley
  * alemana la web necesita /impressum (§ 5 DDG) y /datenschutz (DSGVO); las dos en
  * alemán vinculante + es/en de cortesía con pestañas (16-oct-2026). Van enlazadas en el footer de la web pública,
  * en el login y al pie de Ajustes. Paso previo a la pasarela de pagos.
+ * 22-oct-2026: /terminos (Términos y condiciones, español vinculante + en/de) para
+ * cobrar suscripciones con Stripe: renovación, cancelación, reembolsos, solo lectura.
  */
 
 function Prose({ children }) {
@@ -41,13 +43,27 @@ function LangTabs({ langs, code, onChange }) {
   )
 }
 
-/** Idioma inicial de una página legal: navegador en alemán → alemán (vinculante); si no, el de la web si tiene versión. */
-function useLegalLang(docs, lang) {
+/** Idioma inicial de una página legal: navegador en alemán → alemán (vinculante); si no, el de la web si tiene versión, y si no el `fallback`. */
+function useLegalLang(docs, lang, fallback = 'de') {
   return useState(() => {
     const nav = (typeof navigator !== 'undefined' && navigator.language || '').slice(0, 2).toLowerCase()
     if (nav === 'de') return 'de'
-    return docs[lang] ? lang : 'de'
+    return docs[lang] ? lang : fallback
   })
+}
+
+/** Cuerpo de un documento por secciones (Datenschutz y Términos comparten la pieza). */
+function Sections({ sections }) {
+  return (
+    <div className="space-y-10">
+      {sections.map((s) => (
+        <div key={s.h}>
+          <h2 className="mb-3 text-lg font-bold text-gray-900">{s.h}</h2>
+          {s.p.map((p, j) => <p key={j} className="mt-3 text-[15px] leading-relaxed text-gray-700">{p}</p>)}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 /** /impressum — § 5 DDG. Alemán vinculante (texto del asesor) + es/en de cortesía, con pestañas como la Datenschutz. */
@@ -87,7 +103,10 @@ export function ImpressumPage() {
             <a href={`mailto:${LEGAL_ENTITY.email}`} className="inline-flex items-center gap-2 font-semibold hover:text-blue-600"><Mail size={15} /> {LEGAL_ENTITY.email}</a>
             <a href={`tel:${LEGAL_ENTITY.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 font-semibold hover:text-blue-600"><Phone size={15} /> {LEGAL_ENTITY.phone}</a>
           </div>
-          <Link to="/datenschutz" className="text-sm font-semibold text-blue-600 hover:underline">{t('Política de privacidad')} →</Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/datenschutz" className="text-sm font-semibold text-blue-600 hover:underline">{t('Política de privacidad')} →</Link>
+            <Link to="/terminos" className="text-sm font-semibold text-blue-600 hover:underline">{t('Términos y condiciones')} →</Link>
+          </div>
         </div>
       </Prose>
       <Footer />
@@ -114,17 +133,49 @@ export function PrivacyPage() {
       </PageHero>
       <Prose>
         <p className="mb-10 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{doc.note}</p>
-        <div className="space-y-10">
-          {doc.sections.map((s) => (
-            <div key={s.h}>
-              <h2 className="mb-3 text-lg font-bold text-gray-900">{s.h}</h2>
-              {s.p.map((p, j) => <p key={j} className="mt-3 text-[15px] leading-relaxed text-gray-700">{p}</p>)}
-            </div>
-          ))}
-        </div>
+        <Sections sections={doc.sections} />
         <div className="mt-12 flex flex-col gap-3 rounded-3xl border border-gray-200 bg-gray-50 p-6 sm:flex-row sm:items-center sm:justify-between">
           <a href={`mailto:${LEGAL_ENTITY.email}`} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600"><Mail size={15} /> {LEGAL_ENTITY.email}</a>
-          <Link to="/impressum" className="text-sm font-semibold text-blue-600 hover:underline">Impressum →</Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/impressum" className="text-sm font-semibold text-blue-600 hover:underline">Impressum →</Link>
+            <Link to="/terminos" className="text-sm font-semibold text-blue-600 hover:underline">{t('Términos y condiciones')} →</Link>
+          </div>
+        </div>
+      </Prose>
+      <Footer />
+    </div>
+  )
+}
+
+/**
+ * /terminos — Términos y condiciones (22-oct-2026). Arranca en el idioma de la web
+ * (es/en/de); si no hay versión (italiano), en español, que es la que vale.
+ */
+export function TermsPage() {
+  const t = useT()
+  const { lang } = useLang()
+  const [code, setCode] = useLegalLang(TERMS, lang, 'es')
+  const doc = TERMS[code]
+  usePublicPage({
+    title: `${doc.title} — Eazy Stock`,
+    description: t('Cómo funciona la suscripción a Eazy Stock: planes, pago, renovación, cancelación, reembolsos y qué pasa con tus datos.'),
+    path: '/terminos',
+  })
+  return (
+    <div className="min-h-screen bg-white text-gray-900">
+      <Navbar />
+      <PageHero kicker={doc.kicker} title={doc.title} sub={TERMS_UPDATED[code]}>
+        <LangTabs langs={TERMS_LANGS} code={code} onChange={setCode} />
+      </PageHero>
+      <Prose>
+        <p className="mb-10 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{doc.note}</p>
+        <Sections sections={doc.sections} />
+        <div className="mt-12 flex flex-col gap-3 rounded-3xl border border-gray-200 bg-gray-50 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <a href={`mailto:${LEGAL_ENTITY.email}`} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-600"><Mail size={15} /> {LEGAL_ENTITY.email}</a>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/datenschutz" className="text-sm font-semibold text-blue-600 hover:underline">{t('Política de privacidad')} →</Link>
+            <Link to="/impressum" className="text-sm font-semibold text-blue-600 hover:underline">Impressum →</Link>
+          </div>
         </div>
       </Prose>
       <Footer />

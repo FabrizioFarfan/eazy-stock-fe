@@ -167,6 +167,8 @@ export default function RegisterPage() {
           <Link to="/impressum" className="hover:text-slate-300">Impressum</Link>
           <span className="mx-2 text-slate-700">·</span>
           <Link to="/datenschutz" className="hover:text-slate-300">{t('Privacidad')}</Link>
+          <span className="mx-2 text-slate-700">·</span>
+          <Link to="/terminos" className="hover:text-slate-300">{t('Términos')}</Link>
         </p>
       </div>
 
@@ -296,6 +298,13 @@ export default function RegisterPage() {
                 {submitting ? t('Creando tu cuenta...') : t('Crear mi cuenta gratis')}
               </button>
               <p className="text-center text-[11px] text-gray-400">{trialLine(t, dateLocale())} · {t('cancelas cuando quieras')}</p>
+              {/* Términos (22-oct-2026): aceptación expresa antes de cobrar con Stripe */}
+              <p className="text-center text-[11px] text-gray-400">
+                {t('Al crear la cuenta aceptas los')}{' '}
+                <Link to="/terminos" target="_blank" className="font-semibold text-gray-500 hover:text-blue-600 hover:underline">{t('Términos')}</Link>
+                {' '}{t('y la')}{' '}
+                <Link to="/datenschutz" target="_blank" className="font-semibold text-gray-500 hover:text-blue-600 hover:underline">{t('Política de privacidad')}</Link>
+              </p>
             </form>
           </div>
 
@@ -307,6 +316,8 @@ export default function RegisterPage() {
             <Link to="/impressum" className="hover:text-gray-600">Impressum</Link>
             <span className="mx-2">·</span>
             <Link to="/datenschutz" className="hover:text-gray-600">{t('Privacidad')}</Link>
+            <span className="mx-2">·</span>
+            <Link to="/terminos" className="hover:text-gray-600">{t('Términos')}</Link>
           </p>
         </div>
       </div>

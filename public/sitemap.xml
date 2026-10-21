@@ -38,7 +38,13 @@
   </url>
   <url>
     <loc>https://eazy-stock.com/datenschutz</loc>
-    <lastmod>2026-10-15</lastmod>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://eazy-stock.com/terminos</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

@@ -8,8 +8,15 @@ import RegisterPage   from '../pages/RegisterPage'
 import PlansPage      from '../pages/PlansPage'
 import FeaturesPage   from '../pages/FeaturesPage'
 import AudiencePage   from '../pages/AudiencePage'
-import { ImpressumPage, PrivacyPage } from '../pages/LegalPage'
+import { ImpressumPage, PrivacyPage, TermsPage } from '../pages/LegalPage'
 import FaqPage        from '../pages/FaqPage'
+import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+import ResetPasswordPage  from '../pages/ResetPasswordPage'
+import VerifyEmailPage    from '../pages/VerifyEmailPage'
+
+// Alias en inglés que conservan el ?token=… del correo
+function ResetRedirect()  { return <Navigate to={{ pathname: '/restablecer', search: window.location.search }} replace /> }
+function VerifyRedirect() { return <Navigate to={{ pathname: '/verificar',   search: window.location.search }} replace /> }
 
 const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/sales/new' }
 
@@ -68,6 +75,13 @@ export default function AppRouter() {
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/register" element={<Navigate to="/registro" replace />} />
       <Route path="/signup" element={<Navigate to="/registro" replace />} />
+      {/* Recuperar contraseña + confirmar correo por enlace (22-oct-2026); alias en inglés */}
+      <Route path="/olvide" element={<ForgotPasswordPage />} />
+      <Route path="/restablecer" element={<ResetPasswordPage />} />
+      <Route path="/verificar" element={<VerifyEmailPage />} />
+      <Route path="/forgot" element={<Navigate to="/olvide" replace />} />
+      <Route path="/reset" element={<ResetRedirect />} />
+      <Route path="/verify" element={<VerifyRedirect />} />
       <Route path="/planes" element={<PlansPage />} />
       <Route path="/funciones" element={<FeaturesPage />} />
       <Route path="/para-quien" element={<AudiencePage />} />
@@ -79,6 +93,11 @@ export default function AppRouter() {
       <Route path="/privacidad" element={<Navigate to="/datenschutz" replace />} />
       <Route path="/privacy" element={<Navigate to="/datenschutz" replace />} />
       <Route path="/legal" element={<Navigate to="/impressum" replace />} />
+      {/* Términos y condiciones (22-oct-2026): suscripción con Stripe; alias en/de */}
+      <Route path="/terminos" element={<TermsPage />} />
+      <Route path="/terms" element={<Navigate to="/terminos" replace />} />
+      <Route path="/agb" element={<Navigate to="/terminos" replace />} />
+      <Route path="/condiciones" element={<Navigate to="/terminos" replace />} />
 
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={

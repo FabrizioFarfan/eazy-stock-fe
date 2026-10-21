@@ -1281,6 +1281,7 @@ export function Footer() {
             {/* Legales DE (15-oct-2026): obligatorios por § 5 DDG y DSGVO */}
             <Link to="/impressum" className="transition-colors hover:text-white">Impressum</Link>
             <Link to="/datenschutz" className="transition-colors hover:text-white">{t('Privacidad')}</Link>
+            <Link to="/terminos" className="transition-colors hover:text-white">{t('Términos')}</Link>
             <span className="flex items-center gap-2 text-slate-600">
               <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               {t('Todos los sistemas operativos')}

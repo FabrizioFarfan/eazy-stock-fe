@@ -5,6 +5,9 @@
 // e inglés como traducción de cortesía para nuestros usuarios (16-oct-2026).
 // Datos: Contabo GmbH es el hoster (servidor en la UE); no hay analítica ni rastreo;
 // localStorage solo técnico (sesión, idioma, menú) → sin banner de cookies.
+// 22-oct-2026 (antes de cobrar con Stripe): TÉRMINOS Y CONDICIONES (/terminos) en
+// es/de/en — renovación automática, cancelación, reembolsos, solo lectura al vencer,
+// datos — y la Datenschutz suma la sección «Pagos (Stripe)» que exige la DSGVO.
 
 export const LEGAL_ENTITY = {
   name: 'Fabrizio Farfan',
@@ -94,7 +97,7 @@ export const IMPRESSUM = {
 }
 
 /** Fecha de la Datenschutz; se muestra en cada idioma. */
-export const PRIVACY_UPDATED = { de: 'Stand: 15. Oktober 2026', es: 'Última actualización: 15 de octubre de 2026', en: 'Last updated: October 15, 2026' }
+export const PRIVACY_UPDATED = { de: 'Stand: 22. Oktober 2026', es: 'Última actualización: 22 de octubre de 2026', en: 'Last updated: October 22, 2026' }
 
 export const PRIVACY_LANGS = [
   { code: 'de', label: 'Deutsch' },
@@ -149,8 +152,11 @@ export const PRIVACY = {
       { h: '9. Keine Analyse-Tools, kein Tracking, keine Werbung', p: [
         'Auf eazy-stock.com werden keine Web-Analyse-Dienste (z. B. Google Analytics), keine Social-Media-Plugins, keine eingebetteten Videos und keine Werbenetzwerke eingesetzt. Es findet keine Profilbildung statt. Deshalb zeigen wir auch kein Cookie-Banner.',
       ] },
-      { h: '10. Zahlungen', p: [
-        'Derzeit werden kostenpflichtige Pläne per Rechnung und Überweisung abgerechnet; Zahlungsdaten werden nicht über die Website verarbeitet. Sobald wir einen Online-Zahlungsdienstleister einbinden, ergänzen wir diese Erklärung um die entsprechenden Angaben (Anbieter, Datenkategorien, Rechtsgrundlage) und informieren registrierte Nutzer.',
+      { h: '10. Zahlungen (Stripe)', p: [
+        'Kartenzahlungen für die kostenpflichtigen Pläne von Eazy Stock werden über Stripe abgewickelt (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Irland). Beim Bezahlen geben Sie Ihre Kartendaten in ein Formular von Stripe ein; wir selbst sehen und speichern Ihre Kartennummer zu keinem Zeitpunkt.',
+        'Stripe verarbeitet dafür die Kartendaten, Betrag und Währung, Ihren Namen und Ihre E-Mail-Adresse sowie technische Daten wie die IP-Adresse, um die Zahlung auszuführen und Betrug zu verhindern. Wir speichern lediglich Ihre Kundenkennung bei Stripe, den gewählten Plan, den Status des Abonnements (aktiv, abgelaufen, gekündigt) und das Datum der letzten Zahlung.',
+        'Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Durchführung des Abonnementvertrags) sowie Art. 6 Abs. 1 lit. c DSGVO (steuer- und handelsrechtliche Pflicht zur Aufbewahrung von Zahlungsbelegen). Stripe kann Daten in Länder außerhalb der Europäischen Union übermitteln, insbesondere in die USA; Grundlage dafür sind die Standardvertragsklauseln der Europäischen Kommission. Näheres in der Datenschutzerklärung von Stripe: https://stripe.com/privacy.',
+        'Stripe sendet Ihnen für jede Abbuchung eine Quittung per E-Mail. Wenn Sie per Überweisung oder Yape bezahlen, trägt unser Team die Zahlung manuell ein; in diesem Fall speichern wir nur Datum, Betrag und Zahlungsweg.',
       ] },
       { h: '11. Ihre Rechte', p: [
         'Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Verarbeitung (Art. 15 DSGVO) sowie ein Recht auf Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO).',
@@ -205,8 +211,11 @@ export const PRIVACY = {
       { h: '9. Sin analítica, sin rastreo, sin publicidad', p: [
         'En eazy-stock.com no hay servicios de analítica web (por ejemplo Google Analytics), ni plugins de redes sociales, ni vídeos incrustados, ni redes publicitarias. No se crean perfiles. Por eso tampoco mostramos un banner de cookies.',
       ] },
-      { h: '10. Pagos', p: [
-        'Por ahora los planes de pago se facturan por transferencia; no se procesan datos de pago a través de la web. Cuando integremos una pasarela de pago en línea, completaremos esta política con los datos correspondientes (proveedor, categorías de datos, base legal) e informaremos a los usuarios registrados.',
+      { h: '10. Pagos (Stripe)', p: [
+        'Los pagos con tarjeta de los planes de Eazy Stock los procesa Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublín 2, Irlanda). Cuando pagas, escribes los datos de tu tarjeta en un formulario de Stripe; nosotros nunca vemos ni guardamos el número de tu tarjeta.',
+        'Para ello Stripe trata los datos de la tarjeta, el importe y la moneda, tu nombre y tu correo, y datos técnicos como la dirección IP, para ejecutar el pago y prevenir el fraude. Nosotros guardamos solo tu identificador de cliente en Stripe, el plan contratado, el estado de la suscripción (activa, vencida, cancelada) y la fecha del último pago.',
+        'Base legal: art. 6.1.b RGPD (ejecución del contrato de suscripción) y art. 6.1.c RGPD (obligación fiscal y contable de conservar los registros de pago). Stripe puede transferir datos a países fuera de la Unión Europea, en particular a Estados Unidos; para ello se apoya en las cláusulas contractuales tipo de la Comisión Europea. Más información en la política de privacidad de Stripe: https://stripe.com/privacy.',
+        'Stripe te envía por correo el recibo de cada cobro. Si pagas por transferencia o Yape, nuestro equipo registra el pago a mano; en ese caso guardamos solo la fecha, el importe y el medio de pago.',
       ] },
       { h: '11. Tus derechos', p: [
         'Tienes derecho, en todo momento y gratis, a saber qué datos personales tuyos guardamos, de dónde vienen, a quién se envían y para qué (art. 15 RGPD), y derecho a rectificación (art. 16), supresión (art. 17), limitación del tratamiento (art. 18), portabilidad (art. 20) y oposición (art. 21 RGPD).',
@@ -261,8 +270,11 @@ export const PRIVACY = {
       { h: '9. No analytics, no tracking, no advertising', p: [
         'eazy-stock.com uses no web analytics services (such as Google Analytics), no social media plugins, no embedded videos and no advertising networks. No profiling takes place. That is why we show no cookie banner.',
       ] },
-      { h: '10. Payments', p: [
-        'Paid plans are currently billed by invoice and bank transfer; no payment data is processed through the website. Once we integrate an online payment provider, we will add the relevant details (provider, data categories, legal basis) to this policy and inform registered users.',
+      { h: '10. Payments (Stripe)', p: [
+        'Card payments for Eazy Stock\'s paid plans are processed by Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Ireland). When you pay, you enter your card details in a form provided by Stripe; we never see or store your card number.',
+        'For this purpose Stripe processes the card details, the amount and currency, your name and email, and technical data such as the IP address, in order to execute the payment and prevent fraud. We store only your Stripe customer identifier, the plan you chose, the subscription status (active, expired, cancelled) and the date of the last payment.',
+        'Legal basis: Art. 6(1)(b) GDPR (performance of the subscription contract) and Art. 6(1)(c) GDPR (tax and accounting duty to keep payment records). Stripe may transfer data to countries outside the European Union, in particular to the United States; it relies on the European Commission\'s standard contractual clauses for this. More in Stripe\'s privacy policy: https://stripe.com/privacy.',
+        'Stripe emails you a receipt for every charge. If you pay by bank transfer or Yape, our team records the payment manually; in that case we store only the date, the amount and the payment method.',
       ] },
       { h: '11. Your rights', p: [
         'You have the right, at any time and free of charge, to information about your stored personal data, its origin and recipients and the purpose of processing (Art. 15 GDPR), as well as the rights to rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and objection (Art. 21 GDPR).',
@@ -270,6 +282,248 @@ export const PRIVACY = {
       ] },
       { h: '12. Changes to this policy', p: [
         'We may update this privacy policy so that it always meets current legal requirements or reflects changes to our services, for example when new features are introduced. The new version applies from your next visit.',
+      ] },
+    ],
+  },
+}
+
+/**
+ * Términos y condiciones (22-oct-2026, antes de cobrar suscripciones con Stripe).
+ * El ESPAÑOL es la versión que vale (el cliente es el dueño de negocio hispanohablante);
+ * alemán e inglés son traducciones de cortesía. Ley alemana, fuero Berlín (como en
+ * EAZY PROJECT). Datos: suscripción por dueño, mensual/anual, PEN en Perú y USD fuera,
+ * tarjeta por Stripe (cobro el 15) o pago manual (transferencia/Yape), promo de
+ * lanzamiento gratis hasta el 15-dic-2026, fundadores 50 % 6 meses, después 30 días
+ * gratis + primer mes al 50 %; al vencer → SOLO LECTURA, nada se borra.
+ */
+export const TERMS_UPDATED = { de: 'Stand: 22. Oktober 2026', es: 'Última actualización: 22 de octubre de 2026', en: 'Last updated: October 22, 2026' }
+
+export const TERMS_LANGS = [
+  { code: 'es', label: 'Español' },
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+]
+
+export const TERMS = {
+  es: {
+    title: 'Términos y condiciones',
+    kicker: 'Términos',
+    note: 'Esta versión en español es la que vale. Las versiones en inglés y alemán son traducciones de cortesía.',
+    sections: [
+      { h: '1. Quiénes somos y qué cubren estos términos', p: [
+        'Eazy Stock es un sistema de inventario, ventas y fiado para negocios pequeños. Lo ofrece Eazy Life Company; el titular legal figura en el Aviso legal (Impressum). En estos términos «nosotros» es Eazy Life Company y «tú» es el dueño del negocio que abre la cuenta.',
+        'Estos términos valen para la web eazy-stock.com y para la aplicación Eazy Stock. Al crear una cuenta los aceptas. Si no estás de acuerdo con algo, no crees la cuenta o escríbenos antes.',
+      ] },
+      { h: '2. Para quién es Eazy Stock', p: [
+        'Eazy Stock es una herramienta para negocios (uso profesional), no para consumidores. Para abrir una cuenta tienes que tener al menos 18 años y actuar para un negocio propio o para una empresa que te haya autorizado.',
+        'La cuenta es del dueño del negocio. El dueño puede dar acceso a sus empleados; todo lo que hagan dentro de la app cuenta como hecho por el negocio.',
+      ] },
+      { h: '3. Tu cuenta', p: [
+        'Los datos que das al registrarte tienen que ser verdaderos (nombre, correo, nombre y país del negocio). Si cambian, actualízalos en Ajustes.',
+        'La contraseña es tuya: no la compartas. Si crees que alguien entró a tu cuenta sin permiso, cámbiala y avísanos.',
+        'Según tu plan puedes manejar uno o varios negocios con la misma cuenta.',
+      ] },
+      { h: '4. Planes y precios', p: [
+        'Eazy Stock funciona por suscripción por dueño de negocio, con plan mensual o anual. Los precios y lo que incluye cada plan están en la página de planes y dentro de la app.',
+        'Los precios se muestran en soles (PEN) si tu negocio está en Perú y en dólares (USD) en el resto de países. El precio que ves es el que pagas.',
+      ] },
+      { h: '5. Promoción de lanzamiento', p: [
+        'Hasta el 15 de diciembre de 2026 Eazy Stock es gratis para todos y no pedimos tarjeta.',
+        'Los primeros 50 negocios que se registren («fundadores») pagan la mitad del precio durante sus primeros 6 meses de suscripción de pago.',
+        'Quien se registre después de la promoción tiene 30 días gratis y el primer mes al 50 %. Mientras la promoción esté vigente, sus condiciones se pueden consultar en la página de planes.',
+      ] },
+      { h: '6. Cómo se paga', p: [
+        'Con tarjeta: el pago lo procesa Stripe (Stripe Payments Europe, Ltd., Dublín, Irlanda). Nosotros no vemos ni guardamos el número de tu tarjeta. Los cobros con tarjeta se hacen el día 15 de cada mes (una vez al mes en el plan mensual; una vez al año en el plan anual).',
+        'Pago manual: si lo prefieres, puedes pagar por transferencia bancaria o Yape. Nuestro equipo registra el pago a mano y tu suscripción queda activa cuando lo recibimos.',
+        'Comprobantes: si pagas con tarjeta, Stripe te envía un recibo por correo. Por ahora no emitimos factura ni boleta electrónica peruana (SUNAT). Si la necesitas para tu contabilidad, escríbenos antes de contratar.',
+      ] },
+      { h: '7. Renovación automática', p: [
+        'La suscripción se renueva sola al final de cada período (mes o año) con el mismo plan, salvo que la canceles antes de que termine el período.',
+        'Si el cobro con tarjeta falla, lo intentamos de nuevo y te avisamos por correo. Si no se puede cobrar, la cuenta pasa a solo lectura (ver punto 10).',
+      ] },
+      { h: '8. Cancelación', p: [
+        'Puedes cancelar cuando quieras desde Ajustes o escribiéndonos. La cancelación es efectiva al final del período que ya pagaste: hasta entonces sigues usando Eazy Stock con normalidad y no se te vuelve a cobrar.',
+      ] },
+      { h: '9. Reembolsos y cambios de precio', p: [
+        'No devolvemos el dinero de un período que ya empezó. La excepción es un error nuestro (por ejemplo, un cobro duplicado o un cobro después de cancelar): en ese caso te lo devolvemos completo.',
+        'Podemos cambiar los precios avisándote con al menos 30 días por correo o dentro de la app. Un cambio de precio nunca afecta a un período que ya pagaste: se aplica a partir de la siguiente renovación. Si no estás de acuerdo, puedes cancelar antes de que entre en vigor.',
+      ] },
+      { h: '10. Qué pasa si la suscripción vence sin pagar', p: [
+        'Si tu suscripción vence y no hay pago, tu cuenta pasa a solo lectura: puedes entrar, ver todo y exportar tus datos, pero no registrar ventas ni cambiar nada. No se borra nada.',
+        'Cuando vuelves a pagar, la cuenta se reactiva con todos tus datos tal como estaban.',
+        'Si no quieres seguir, puedes pedirnos por correo que borremos tu cuenta y todos los datos de tu negocio; lo hacemos en un plazo de 30 días.',
+      ] },
+      { h: '11. Tus datos', p: [
+        'Los datos que cargas en Eazy Stock (productos, ventas, clientes, proveedores, empleados) son tuyos. Nosotros los guardamos y procesamos solo para prestarte el servicio, como encargados del tratamiento. No los vendemos ni los usamos para otros fines.',
+        'Puedes exportar tus datos en cualquier momento. Si borras la cuenta, borramos los datos de tu negocio, salvo lo que la ley nos obligue a conservar (por ejemplo, los registros de pagos).',
+        'Cómo tratamos los datos personales está explicado en la Política de privacidad.',
+      ] },
+      { h: '12. Uso correcto', p: [
+        'Usa Eazy Stock solo para gestionar tu negocio y dentro de la ley. No puedes revender el servicio, intentar acceder a datos de otros negocios, copiar la aplicación ni sobrecargar o atacar el sistema.',
+        'Si detectamos un uso que daña el servicio o a otros usuarios, podemos suspender la cuenta. Te avisaremos y podrás explicarlo, salvo que haya que actuar de inmediato por seguridad.',
+      ] },
+      { h: '13. Disponibilidad y responsabilidad', p: [
+        'Hacemos lo posible para que Eazy Stock esté disponible todo el tiempo y hacemos copias de seguridad periódicas. Aun así puede haber cortes por mantenimiento, actualizaciones o fallos ajenos a nosotros. Avisaremos de los mantenimientos planificados cuando sea posible.',
+        'Eazy Stock te ayuda a llevar tu inventario y tus ventas, pero los números que salen dependen de lo que tú registras. Comprueba tus datos y guarda tus propios comprobantes: la app no sustituye a tu contador ni a tus obligaciones fiscales.',
+        'Respondemos sin límite por dolo, negligencia grave y daños a la vida, el cuerpo o la salud. Por negligencia leve respondemos solo si incumplimos una obligación esencial del contrato y, en ese caso, solo por el daño previsible y típico de este tipo de servicio. Fuera de esos casos no respondemos.',
+      ] },
+      { h: '14. Cambios en estos términos', p: [
+        'Podemos actualizar estos términos, por ejemplo al añadir funciones o planes nuevos o por cambios legales. Te avisaremos con al menos 30 días por correo o dentro de la app. Si no estás de acuerdo, puedes cancelar antes de que entren en vigor; si sigues usando Eazy Stock después de esa fecha, se aplican los términos nuevos.',
+      ] },
+      { h: '15. Ley aplicable y jurisdicción', p: [
+        'Estos términos se rigen por la ley alemana. Para cualquier disputa son competentes los tribunales de Berlín (Alemania).',
+        'Si alguna parte de estos términos no fuera válida, el resto sigue en pie.',
+      ] },
+      { h: '16. Contacto', p: [
+        `¿Dudas sobre tu suscripción, un cobro o estos términos? Escríbenos a ${LEGAL_ENTITY.email}.`,
+      ] },
+    ],
+  },
+  en: {
+    title: 'Terms and conditions',
+    kicker: 'Terms',
+    note: 'The Spanish version is the binding one. This translation is provided for convenience.',
+    sections: [
+      { h: '1. Who we are and what these terms cover', p: [
+        'Eazy Stock is an inventory, sales and store-credit system for small businesses. It is offered by Eazy Life Company; the legal owner is named in the Legal notice (Impressum). In these terms "we" means Eazy Life Company and "you" means the business owner who opens the account.',
+        'These terms apply to the website eazy-stock.com and to the Eazy Stock application. By creating an account you accept them. If you disagree with anything, do not create the account or write to us first.',
+      ] },
+      { h: '2. Who Eazy Stock is for', p: [
+        'Eazy Stock is a tool for businesses (professional use), not for consumers. To open an account you must be at least 18 years old and act for your own business or for a company that has authorised you.',
+        'The account belongs to the business owner. The owner may give access to employees; everything they do inside the app counts as done by the business.',
+      ] },
+      { h: '3. Your account', p: [
+        'The details you give when registering must be true (name, email, business name and country). If they change, update them in Settings.',
+        'Your password is yours: do not share it. If you think someone accessed your account without permission, change it and let us know.',
+        'Depending on your plan you can manage one or several businesses with the same account.',
+      ] },
+      { h: '4. Plans and prices', p: [
+        'Eazy Stock works as a subscription per business owner, with a monthly or an annual plan. Prices and what each plan includes are shown on the plans page and inside the app.',
+        'Prices are shown in soles (PEN) if your business is in Peru and in US dollars (USD) in all other countries. The price you see is the price you pay.',
+      ] },
+      { h: '5. Launch promotion', p: [
+        'Until 15 December 2026 Eazy Stock is free for everyone and we do not ask for a card.',
+        'The first 50 businesses to register ("founders") pay half price during their first 6 months of paid subscription.',
+        'Anyone who registers after the promotion gets 30 days free and the first month at 50 %. While the promotion runs, its conditions can be checked on the plans page.',
+      ] },
+      { h: '6. How you pay', p: [
+        'By card: payments are processed by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). We never see or store your card number. Card charges are made on the 15th of the month (once a month on the monthly plan; once a year on the annual plan).',
+        'Manual payment: if you prefer, you can pay by bank transfer or Yape. Our team records the payment manually and your subscription is active once we receive it.',
+        'Receipts: if you pay by card, Stripe emails you a receipt. For now we do not issue Peruvian electronic invoices or receipts (SUNAT). If you need one for your accounting, write to us before subscribing.',
+      ] },
+      { h: '7. Automatic renewal', p: [
+        'The subscription renews automatically at the end of each period (month or year) on the same plan, unless you cancel before the period ends.',
+        'If a card charge fails, we retry and notify you by email. If the charge cannot be collected, the account switches to read-only (see section 10).',
+      ] },
+      { h: '8. Cancellation', p: [
+        'You can cancel at any time from Settings or by writing to us. Cancellation takes effect at the end of the period you have already paid for: until then you keep using Eazy Stock as usual and you are not charged again.',
+      ] },
+      { h: '9. Refunds and price changes', p: [
+        'We do not refund a period that has already started. The exception is a mistake on our side (for example a duplicate charge or a charge after you cancelled): in that case we refund it in full.',
+        'We may change prices with at least 30 days\' notice by email or inside the app. A price change never affects a period you have already paid for: it applies from the next renewal. If you disagree, you can cancel before it takes effect.',
+      ] },
+      { h: '10. What happens if the subscription expires unpaid', p: [
+        'If your subscription expires and no payment is received, your account switches to read-only: you can log in, see everything and export your data, but you cannot record sales or change anything. Nothing is deleted.',
+        'When you pay again, the account is reactivated with all your data exactly as it was.',
+        'If you do not want to continue, you can ask us by email to delete your account and all your business data; we do it within 30 days.',
+      ] },
+      { h: '11. Your data', p: [
+        'The data you enter in Eazy Stock (products, sales, customers, suppliers, employees) is yours. We store and process it only to provide the service, as a processor on your behalf. We do not sell it or use it for other purposes.',
+        'You can export your data at any time. If you delete the account, we delete your business data, except what the law requires us to keep (for example payment records).',
+        'How we handle personal data is explained in the Privacy policy.',
+      ] },
+      { h: '12. Acceptable use', p: [
+        'Use Eazy Stock only to manage your business and within the law. You may not resell the service, try to access other businesses\' data, copy the application, or overload or attack the system.',
+        'If we detect use that harms the service or other users, we may suspend the account. We will notify you and give you the chance to explain, unless immediate action is needed for security.',
+      ] },
+      { h: '13. Availability and liability', p: [
+        'We do our best to keep Eazy Stock available at all times and we make regular backups. Even so, there may be interruptions due to maintenance, updates or failures beyond our control. We will announce planned maintenance where possible.',
+        'Eazy Stock helps you keep track of your inventory and sales, but the figures it shows depend on what you record. Check your data and keep your own receipts: the app does not replace your accountant or your tax obligations.',
+        'We are liable without limit for intent, gross negligence and injury to life, body or health. For slight negligence we are liable only if we breach an essential contractual obligation and, in that case, only for the foreseeable damage typical of this kind of service. Beyond these cases we are not liable.',
+      ] },
+      { h: '14. Changes to these terms', p: [
+        'We may update these terms, for example when adding new features or plans or because of legal changes. We will notify you at least 30 days in advance by email or inside the app. If you disagree, you can cancel before they take effect; if you keep using Eazy Stock after that date, the new terms apply.',
+      ] },
+      { h: '15. Governing law and jurisdiction', p: [
+        'These terms are governed by German law. The courts of Berlin (Germany) have jurisdiction over any dispute.',
+        'If any part of these terms is invalid, the rest remains in force.',
+      ] },
+      { h: '16. Contact', p: [
+        `Questions about your subscription, a charge or these terms? Write to us at ${LEGAL_ENTITY.email}.`,
+      ] },
+    ],
+  },
+  de: {
+    title: 'Allgemeine Geschäftsbedingungen',
+    kicker: 'AGB',
+    note: 'Maßgeblich ist die spanische Fassung. Diese Übersetzung dient dem Verständnis.',
+    sections: [
+      { h: '1. Wer wir sind und was diese Bedingungen regeln', p: [
+        'Eazy Stock ist ein Inventar-, Verkaufs- und Kundenkredit-System für kleine Geschäfte. Anbieter ist Eazy Life Company; der rechtliche Inhaber ist im Impressum genannt. In diesen Bedingungen bedeutet „wir“ Eazy Life Company und „Sie“ den Geschäftsinhaber, der das Konto eröffnet.',
+        'Diese Bedingungen gelten für die Website eazy-stock.com und für die Anwendung Eazy Stock. Mit der Eröffnung eines Kontos akzeptieren Sie sie. Wenn Sie mit etwas nicht einverstanden sind, eröffnen Sie kein Konto oder schreiben Sie uns vorher.',
+      ] },
+      { h: '2. Für wen Eazy Stock ist', p: [
+        'Eazy Stock ist ein Werkzeug für Unternehmen (gewerbliche Nutzung), nicht für Verbraucher. Um ein Konto zu eröffnen, müssen Sie mindestens 18 Jahre alt sein und für ein eigenes Geschäft oder für ein Unternehmen handeln, das Sie dazu ermächtigt hat.',
+        'Das Konto gehört dem Geschäftsinhaber. Der Inhaber kann seinen Mitarbeitern Zugang geben; alles, was diese in der App tun, gilt als Handlung des Geschäfts.',
+      ] },
+      { h: '3. Ihr Konto', p: [
+        'Die Angaben bei der Registrierung müssen wahr sein (Name, E-Mail, Name und Land des Geschäfts). Ändern sie sich, aktualisieren Sie sie in den Einstellungen.',
+        'Das Passwort gehört Ihnen: Geben Sie es nicht weiter. Wenn Sie glauben, dass jemand ohne Erlaubnis auf Ihr Konto zugegriffen hat, ändern Sie es und informieren Sie uns.',
+        'Je nach Plan können Sie mit demselben Konto ein oder mehrere Geschäfte verwalten.',
+      ] },
+      { h: '4. Pläne und Preise', p: [
+        'Eazy Stock wird als Abonnement pro Geschäftsinhaber angeboten, mit monatlichem oder jährlichem Plan. Die Preise und der Umfang jedes Plans stehen auf der Seite „Pläne“ und in der App.',
+        'Die Preise werden in Soles (PEN) angezeigt, wenn Ihr Geschäft in Peru ist, und in US-Dollar (USD) in allen anderen Ländern. Der angezeigte Preis ist der Preis, den Sie zahlen.',
+      ] },
+      { h: '5. Einführungsaktion', p: [
+        'Bis zum 15. Dezember 2026 ist Eazy Stock für alle kostenlos, und wir verlangen keine Karte.',
+        'Die ersten 50 registrierten Geschäfte („Gründer“) zahlen in den ersten 6 Monaten des bezahlten Abonnements den halben Preis.',
+        'Wer sich nach der Aktion registriert, erhält 30 Tage kostenlos und den ersten Monat zu 50 %. Solange die Aktion läuft, sind ihre Bedingungen auf der Seite „Pläne“ einsehbar.',
+      ] },
+      { h: '6. Bezahlung', p: [
+        'Per Karte: Die Zahlung wird von Stripe abgewickelt (Stripe Payments Europe, Ltd., Dublin, Irland). Wir sehen und speichern Ihre Kartennummer nicht. Kartenabbuchungen erfolgen am 15. des Monats (einmal im Monat beim Monatsplan; einmal im Jahr beim Jahresplan).',
+        'Manuelle Zahlung: Auf Wunsch können Sie per Banküberweisung oder Yape zahlen. Unser Team trägt die Zahlung manuell ein; Ihr Abonnement ist aktiv, sobald die Zahlung bei uns eingegangen ist.',
+        'Belege: Bei Kartenzahlung sendet Ihnen Stripe eine Quittung per E-Mail. Derzeit stellen wir keine peruanischen elektronischen Rechnungen oder Belege (SUNAT) aus. Wenn Sie diese für Ihre Buchhaltung brauchen, schreiben Sie uns vor Vertragsabschluss.',
+      ] },
+      { h: '7. Automatische Verlängerung', p: [
+        'Das Abonnement verlängert sich am Ende jedes Zeitraums (Monat oder Jahr) automatisch um denselben Plan, sofern Sie es nicht vor Ablauf des Zeitraums kündigen.',
+        'Schlägt eine Kartenabbuchung fehl, versuchen wir es erneut und benachrichtigen Sie per E-Mail. Kann der Betrag nicht eingezogen werden, wechselt das Konto in den Nur-Lese-Modus (siehe Punkt 10).',
+      ] },
+      { h: '8. Kündigung', p: [
+        'Sie können jederzeit in den Einstellungen oder per E-Mail kündigen. Die Kündigung wird zum Ende des bereits bezahlten Zeitraums wirksam: Bis dahin nutzen Sie Eazy Stock ganz normal weiter, und es wird nichts mehr abgebucht.',
+      ] },
+      { h: '9. Erstattungen und Preisänderungen', p: [
+        'Für einen bereits begonnenen Zeitraum erstatten wir kein Geld. Ausnahme ist ein Fehler unsererseits (z. B. eine doppelte Abbuchung oder eine Abbuchung nach der Kündigung): In diesem Fall erstatten wir den Betrag vollständig.',
+        'Wir können die Preise mit einer Frist von mindestens 30 Tagen per E-Mail oder in der App ändern. Eine Preisänderung betrifft nie einen bereits bezahlten Zeitraum: Sie gilt ab der nächsten Verlängerung. Wenn Sie nicht einverstanden sind, können Sie vor dem Inkrafttreten kündigen.',
+      ] },
+      { h: '10. Was passiert, wenn das Abonnement unbezahlt abläuft', p: [
+        'Läuft Ihr Abonnement ab und geht keine Zahlung ein, wechselt Ihr Konto in den Nur-Lese-Modus: Sie können sich anmelden, alles ansehen und Ihre Daten exportieren, aber keine Verkäufe erfassen und nichts ändern. Es wird nichts gelöscht.',
+        'Sobald Sie wieder zahlen, wird das Konto mit allen Daten genau so reaktiviert, wie sie waren.',
+        'Wenn Sie nicht weitermachen möchten, können Sie uns per E-Mail bitten, Ihr Konto und alle Daten Ihres Geschäfts zu löschen; wir erledigen das innerhalb von 30 Tagen.',
+      ] },
+      { h: '11. Ihre Daten', p: [
+        'Die Daten, die Sie in Eazy Stock erfassen (Produkte, Verkäufe, Kunden, Lieferanten, Mitarbeiter), gehören Ihnen. Wir speichern und verarbeiten sie ausschließlich zur Erbringung des Dienstes als Auftragsverarbeiter. Wir verkaufen sie nicht und nutzen sie nicht für andere Zwecke.',
+        'Sie können Ihre Daten jederzeit exportieren. Wenn Sie das Konto löschen, löschen wir die Daten Ihres Geschäfts, mit Ausnahme dessen, was wir gesetzlich aufbewahren müssen (z. B. Zahlungsbelege).',
+        'Wie wir personenbezogene Daten verarbeiten, erklärt die Datenschutzerklärung.',
+      ] },
+      { h: '12. Zulässige Nutzung', p: [
+        'Nutzen Sie Eazy Stock nur zur Verwaltung Ihres Geschäfts und im Rahmen der Gesetze. Sie dürfen den Dienst nicht weiterverkaufen, nicht versuchen, auf Daten anderer Geschäfte zuzugreifen, die Anwendung nicht kopieren und das System nicht überlasten oder angreifen.',
+        'Stellen wir eine Nutzung fest, die dem Dienst oder anderen Nutzern schadet, können wir das Konto sperren. Wir benachrichtigen Sie und geben Ihnen Gelegenheit zur Stellungnahme, es sei denn, aus Sicherheitsgründen ist sofortiges Handeln nötig.',
+      ] },
+      { h: '13. Verfügbarkeit und Haftung', p: [
+        'Wir bemühen uns, Eazy Stock jederzeit verfügbar zu halten, und erstellen regelmäßig Sicherungskopien. Dennoch kann es zu Unterbrechungen durch Wartung, Updates oder Störungen kommen, die außerhalb unseres Einflusses liegen. Geplante Wartungen kündigen wir nach Möglichkeit an.',
+        'Eazy Stock hilft Ihnen, Ihr Inventar und Ihre Verkäufe zu führen; die angezeigten Zahlen hängen jedoch davon ab, was Sie erfassen. Prüfen Sie Ihre Daten und bewahren Sie Ihre eigenen Belege auf: Die App ersetzt weder Ihren Steuerberater noch Ihre steuerlichen Pflichten.',
+        'Wir haften unbeschränkt bei Vorsatz, grober Fahrlässigkeit sowie bei Schäden an Leben, Körper oder Gesundheit. Bei leichter Fahrlässigkeit haften wir nur bei Verletzung einer wesentlichen Vertragspflicht und in diesem Fall nur für den vorhersehbaren, vertragstypischen Schaden. Im Übrigen ist die Haftung ausgeschlossen.',
+      ] },
+      { h: '14. Änderungen dieser Bedingungen', p: [
+        'Wir können diese Bedingungen aktualisieren, z. B. bei neuen Funktionen oder Plänen oder aufgrund rechtlicher Änderungen. Wir informieren Sie mindestens 30 Tage im Voraus per E-Mail oder in der App. Wenn Sie nicht einverstanden sind, können Sie vor dem Inkrafttreten kündigen; nutzen Sie Eazy Stock nach diesem Datum weiter, gelten die neuen Bedingungen.',
+      ] },
+      { h: '15. Anwendbares Recht und Gerichtsstand', p: [
+        'Für diese Bedingungen gilt deutsches Recht. Gerichtsstand für alle Streitigkeiten ist Berlin (Deutschland).',
+        'Sollte ein Teil dieser Bedingungen unwirksam sein, bleibt der Rest wirksam.',
+      ] },
+      { h: '16. Kontakt', p: [
+        `Fragen zu Ihrem Abonnement, einer Abbuchung oder diesen Bedingungen? Schreiben Sie uns an ${LEGAL_ENTITY.email}.`,
       ] },
     ],
   },

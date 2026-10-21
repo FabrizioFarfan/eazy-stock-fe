@@ -9,6 +9,12 @@ export default {
     'Qué datos trata Eazy Stock, para qué, dónde se alojan y qué derechos tienes (DSGVO / RGPD).': 'What data Eazy Stock processes, why, where it is hosted and what your rights are (GDPR).',
     'Privacidad': 'Privacy',
     'Legal': 'Legal',
+    // /terminos (22-oct-2026)
+    'Términos': 'Terms',
+    'Términos y condiciones': 'Terms and conditions',
+    'Cómo funciona la suscripción a Eazy Stock: planes, pago, renovación, cancelación, reembolsos y qué pasa con tus datos.': 'How the Eazy Stock subscription works: plans, payment, renewal, cancellation, refunds and what happens to your data.',
+    'Al crear la cuenta aceptas los': 'By creating the account you accept the',
+    'y la': 'and the',
   },
   it: {
     'Aviso legal': 'Note legali',
@@ -18,5 +24,11 @@ export default {
     'Qué datos trata Eazy Stock, para qué, dónde se alojan y qué derechos tienes (DSGVO / RGPD).': 'Quali dati tratta Eazy Stock, perché, dove sono ospitati e quali sono i tuoi diritti (GDPR).',
     'Privacidad': 'Privacy',
     'Legal': 'Legale',
+    // /terminos (22-oct-2026)
+    'Términos': 'Termini',
+    'Términos y condiciones': 'Termini e condizioni',
+    'Cómo funciona la suscripción a Eazy Stock: planes, pago, renovación, cancelación, reembolsos y qué pasa con tus datos.': 'Come funziona l\'abbonamento a Eazy Stock: piani, pagamento, rinnovo, disdetta, rimborsi e cosa succede ai tuoi dati.',
+    'Al crear la cuenta aceptas los': 'Creando l\'account accetti i',
+    'y la': 'e la',
   },
 }

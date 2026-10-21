@@ -159,6 +159,11 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {/* Recuperar contraseña por correo (22-oct-2026) */}
+              <div className="-mt-2 text-right">
+                <Link to="/olvide" className="text-xs font-semibold text-blue-600 hover:underline">{t('¿Olvidaste tu contraseña?')}</Link>
+              </div>
+
               <button
                 type="submit"
                 disabled={submitting}

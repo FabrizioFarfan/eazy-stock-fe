@@ -2,6 +2,14 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+
+## 1.17.0 — 2026-10-22 (listo para cobrar: cuentas y legales; task 1112)
+- **¿Olvidaste tu contraseña?** en el login → `/olvide` (mensaje neutro) → correo → `/restablecer?token=` (nueva contraseña ×2 con ojito). Alias /forgot y /reset.
+- **Confirma tu correo**: `/verificar?token=` y franja discreta en la app («Confirma tu correo… · Reenviar», se cierra por sesión) para cuentas sin verificar. Pagar con tarjeta exige el correo confirmado.
+- **Términos y condiciones** en `/terminos` (alias /terms, /agb, /condiciones), español vinculante + inglés y alemán: renovación, cancelación, reembolsos, solo lectura al vencer, promo y fundadores, cobro el 15, sin factura SUNAT, borrado por correo, ley alemana. Prerenderizada y en el sitemap.
+- **Privacidad**: sección «Pagos (Stripe)» en alemán, español e inglés; actualizada al 22-oct-2026.
+- Enlace «Términos» en el pie de la landing, del registro y de Impressum/Privacidad; en el registro, «Al crear la cuenta aceptas los Términos y la Política de privacidad».
+
 ## 1.16.3 — 2026-10-21 (dark mode con contraste de verdad; Frank, task 1094)
 - **Divisores**: en oscuro las líneas de TODAS las listas («Pide tu atención», «Stock bajo», movimientos, notificaciones, fondo de caja…) se quedaban casi blancas (#f3f4f6). Causa: el selector que genera Tailwind para `divide-*` (`> :not([hidden]) ~ :not([hidden])`) pesa más que el override viejo (`> * + *`), que nunca ganaba; `divide-gray-50` ni estaba mapeado. Ahora van en #374151 / #4B5563.
 - **Caja «Debe haber en el cajón ahora»** (Dashboard): el fondo `bg-emerald-50/70` no tenía regla en oscuro → verde pastel con texto claro encima, invisible. Mapeadas todas las variantes con opacidad que faltaban (`bg-emerald-50/60|70`, `bg-amber-50/60`, `bg-orange-50/70`, `bg-gray-50/40|80`, `bg-gray-200/70`, `text-emerald-700/70`, `text-blue-700/70`).
