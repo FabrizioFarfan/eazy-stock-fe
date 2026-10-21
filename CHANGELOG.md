@@ -2,6 +2,13 @@
 
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
+## 1.16.3 — 2026-10-21 (dark mode con contraste de verdad; Frank, task 1094)
+- **Divisores**: en oscuro las líneas de TODAS las listas («Pide tu atención», «Stock bajo», movimientos, notificaciones, fondo de caja…) se quedaban casi blancas (#f3f4f6). Causa: el selector que genera Tailwind para `divide-*` (`> :not([hidden]) ~ :not([hidden])`) pesa más que el override viejo (`> * + *`), que nunca ganaba; `divide-gray-50` ni estaba mapeado. Ahora van en #374151 / #4B5563.
+- **Caja «Debe haber en el cajón ahora»** (Dashboard): el fondo `bg-emerald-50/70` no tenía regla en oscuro → verde pastel con texto claro encima, invisible. Mapeadas todas las variantes con opacidad que faltaban (`bg-emerald-50/60|70`, `bg-amber-50/60`, `bg-orange-50/70`, `bg-gray-50/40|80`, `bg-gray-200/70`, `text-emerald-700/70`, `text-blue-700/70`).
+- **Precio variable en Nueva venta**: la línea del carrito con precio por definir (`bg-orange-50/70` + `border-orange-300`) quedaba clara en oscuro → naranja oscuro translúcido con borde a juego. Bordes/rings 300 de «seleccionado» (`border-blue-300`, `border-emerald-300`, `ring-blue-300/60`, `ring-slate-200`) también.
+- **Hover/focus**: `hover:bg-gray-200`, `hover:bg-blue-200`, `focus:bg-white`, `hover:text-gray-700`… ponían texto oscuro sobre oscuro o un parpadeo blanco al pasar el mouse. Mapeados todos.
+- Auditoría automática de clases claras sin regla oscura: 0 pendientes.
+
 ## 1.16.2 — 2026-10-20
 - La tarjeta de precios (con la cuenta regresiva) vuelve a la malla sola, sin corrientes (Frank).
 

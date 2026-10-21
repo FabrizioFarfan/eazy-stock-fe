@@ -711,3 +711,79 @@ html.dark .border-amber-300 { border-color: rgb(180 83 9 / 0.6); }
 html.dark .border-red-300   { border-color: rgb(185 28 28 / 0.6); }
 html.dark .bg-amber-600     { background-color: #b45309; }
 html.dark .hover\:bg-amber-700:hover { background-color: #92400e; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DARK MODE · CONTRASTE (Frank, 21-oct-2026): «la caja del cajón casi no se
+   ve, las líneas divisorias son muy blancas, el precio variable en Ventas
+   tiene mal fondo… corrige TODOS esos errores del dark mode».
+   Tres causas, las tres resueltas aquí:
+   1) DIVISORES: Tailwind genera `.divide-gray-100 > :not([hidden]) ~ :not([hidden])`
+      (especificidad 0,3,0) y el override viejo `html.dark .divide-gray-100 > * + *`
+      (0,2,1) PERDÍA → las líneas se quedaban en #f3f4f6 (casi blanco) en todas
+      las listas de la app («Pide tu atención», «Stock bajo», movimientos,
+      notificaciones…). `divide-gray-50` ni siquiera estaba mapeado.
+   2) FONDOS CON OPACIDAD (`bg-emerald-50/70`, `bg-orange-50/70`…): son clases
+      DISTINTAS a `bg-emerald-50`; sin mapear se quedaban claras con texto
+      claro encima (caja «Debe haber en el cajón», línea de precio variable).
+   3) HOVER / FOCUS con tonos claros (`hover:bg-gray-200`, `hover:text-gray-700`,
+      `focus:bg-white`…): al pasar el mouse el texto se volvía oscuro sobre
+      oscuro o la fila parpadeaba en blanco.
+   Auditoría automática (toda clase clara usada en la app sin regla html.dark)
+   → 0 pendientes tras este bloque. Regla de siempre: un color nuevo se agrega
+   AQUÍ, no con `dark:` en el JSX.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 1) Divisores — misma forma que el selector de Tailwind, más html.dark */
+html.dark .divide-gray-50  > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #374151; }
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #4B5563; }
+
+/* 2) Fondos y textos con opacidad */
+html.dark .bg-emerald-50\/60    { background-color: rgb(6 78 59 / 0.35); }
+html.dark .bg-emerald-50\/70    { background-color: rgb(6 78 59 / 0.42); }
+html.dark .bg-amber-50\/60      { background-color: rgb(120 53 15 / 0.35); }
+html.dark .bg-orange-50\/70     { background-color: rgb(124 45 18 / 0.42); }
+html.dark .bg-gray-50\/40       { background-color: rgb(17 24 39 / 0.4); }
+html.dark .bg-gray-50\/80       { background-color: rgb(17 24 39 / 0.8); }
+html.dark .bg-gray-200\/70      { background-color: rgb(75 85 99 / 0.7); }
+html.dark .bg-gray-300          { background-color: #6B7280; }
+html.dark .text-emerald-700\/70 { color: rgb(110 231 183 / 0.8); }
+html.dark .text-blue-700\/70    { color: rgb(147 197 253 / 0.8); }
+html.dark .text-slate-700       { color: #CBD5E1; }
+
+/* Bordes y rings de tono 300 (estados «seleccionado») */
+html.dark .border-blue-300      { border-color: rgb(59 130 246 / 0.6); }
+html.dark .border-emerald-300   { border-color: rgb(16 185 129 / 0.6); }
+html.dark .border-orange-300    { border-color: rgb(249 115 22 / 0.6); }
+html.dark .ring-slate-200       { --tw-ring-color: #4B5563; }
+html.dark .ring-blue-300\/60    { --tw-ring-color: rgb(59 130 246 / 0.5); }
+html.dark .focus\:ring-emerald-100:focus { --tw-ring-color: rgb(4 120 87 / 0.45); }
+
+/* 3) Hover / focus */
+html.dark .hover\:bg-gray-200:hover      { background-color: #4B5563; }
+html.dark .hover\:bg-gray-200\/70:hover  { background-color: rgb(75 85 99 / 0.7); }
+html.dark .hover\:bg-gray-50\/60:hover   { background-color: rgb(55 65 81 / 0.5); }
+html.dark .hover\:bg-slate-100:hover     { background-color: #374151; }
+html.dark .hover\:bg-blue-200:hover      { background-color: rgb(30 58 138 / 0.55); }
+html.dark .hover\:bg-amber-200:hover     { background-color: rgb(120 53 15 / 0.55); }
+html.dark .hover\:bg-blue-50\/30:hover   { background-color: rgb(30 58 138 / 0.22); }
+html.dark .hover\:bg-blue-50\/50:hover   { background-color: rgb(30 58 138 / 0.28); }
+html.dark .focus\:bg-white:focus         { background-color: #374151; }
+html.dark .group:hover .group-hover\:bg-red-100 { background-color: rgb(127 29 29 / 0.42); }
+html.dark .hover\:border-blue-200:hover,
+html.dark .hover\:border-blue-300:hover  { border-color: rgb(59 130 246 / 0.6); }
+html.dark .hover\:border-red-200:hover   { border-color: rgb(185 28 28 / 0.6); }
+html.dark .hover\:text-gray-500:hover    { color: #A8B0BD; }
+html.dark .hover\:text-gray-600:hover    { color: #D1D5DB; }
+html.dark .hover\:text-gray-700:hover    { color: #E5E7EB; }
+html.dark .hover\:text-gray-800:hover    { color: #F3F4F6; }
+html.dark .hover\:text-gray-900:hover    { color: #F9FAFB; }
+html.dark .hover\:text-blue-600:hover    { color: #93c5fd; }
+html.dark .hover\:text-blue-700:hover,
+html.dark .group:hover .group-hover\:text-blue-700 { color: #bfdbfe; }
+html.dark .hover\:text-red-500:hover,
+html.dark .hover\:text-red-600:hover     { color: #fca5a5; }
+html.dark .hover\:text-red-700:hover     { color: #fecaca; }
+html.dark .hover\:text-amber-700:hover,
+html.dark .hover\:text-amber-900:hover   { color: #fde68a; }
+html.dark .hover\:text-orange-900:hover  { color: #fed7aa; }
