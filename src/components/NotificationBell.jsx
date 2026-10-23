@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Bell, BellOff, ArrowRight } from 'lucide-react'
 import { useNotifications } from '../hooks/useNotifications'
 import NotificationItem from './notifications/NotificationItem'
+import { notificationTarget } from './notifications/notificationTarget'
+import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
 
 // ── component ─────────────────────────────────────────────────────────────────
@@ -12,6 +14,7 @@ export default function NotificationBell() {
   const panelRef        = useRef(null)
   const t               = useT()
   const navigate        = useNavigate()
+  const { user }        = useAuth()
   const { notifications, total, unreadCount, isLoading, markRead, markAllRead } = useNotifications()
 
   // Close panel on outside click
@@ -86,7 +89,11 @@ export default function NotificationBell() {
             ) : (
               <ul className="divide-y divide-gray-50">
                 {notifications.map((n) => (
-                  <NotificationItem key={n.id} notification={n} onClick={() => !n.read && markRead(n.id)} />
+                  <NotificationItem key={n.id} notification={n} onClick={() => {
+                    if (!n.read) markRead(n.id)
+                    const to = notificationTarget(n, user?.role)
+                    if (to) { setOpen(false); navigate(to) }
+                  }} />
                 ))}
               </ul>
             )}

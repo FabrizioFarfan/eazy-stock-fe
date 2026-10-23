@@ -1,6 +1,6 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound, TrendingDown, TrendingUp, ArrowRight, History, Banknote, Smartphone, Landmark, HandCoins, MoreHorizontal, SlidersHorizontal } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
@@ -298,6 +298,19 @@ export default function SalesPage() {
   // ── Pagination ────────────────────────────────────────────────────────────
   const [page, setPage] = useState(0)
   const [selectedSaleId, setSelectedSaleId] = useState(null)
+  // ?sale=<id> abre el detalle de esa venta (desde un aviso de la campana); al
+  // cerrarlo se quita de la URL para que no se vuelva a abrir.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const saleParam = searchParams.get('sale')
+  const openSaleId = saleParam || selectedSaleId
+  const closeSale = () => {
+    setSelectedSaleId(null)
+    if (saleParam) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('sale')
+      setSearchParams(next, { replace: true })
+    }
+  }
 
   const hasFilters = from || to || selectedProducts.length > 0 || supplierId ||
     employeeId || debTotalMin !== '' || debTotalMax !== '' || effectivePayFilter !== '' || customerFilter
@@ -743,10 +756,10 @@ export default function SalesPage() {
         )}
       </div>
 
-      {selectedSaleId && (
+      {openSaleId && (
         <SaleDetailModal
-          saleId={selectedSaleId}
-          onClose={() => setSelectedSaleId(null)}
+          saleId={openSaleId}
+          onClose={closeSale}
         />
       )}
     </div>

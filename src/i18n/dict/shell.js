@@ -2,6 +2,16 @@
 // bienvenida, HelpDrawer, EntityPicker, errores de API y fechas.
 export default {
   en: {
+    // ── 23-oct: avisos nuevos LOW_STOCK / EXPIRING (también llegan al teléfono por push)
+    'Stock bajo': 'Low stock',
+    'Por vencer': 'Expiring soon',
+    'Vence hoy': 'Expires today',
+    'Vence mañana': 'Expires tomorrow',
+    'Vence en {n} días': 'Expires in {n} days',
+    'Quedan {n} (mínimo {m})': '{n} left (minimum {m})',
+    '{n} en stock · vence hoy': '{n} in stock · expires today',
+    '{n} en stock · vence mañana': '{n} in stock · expires tomorrow',
+    '{n} en stock · vence el {d}': '{n} in stock · expires on {d}',
     // ── 29-sep: Notificaciones y Ajustes rediseñadas
     'Tu nombre y tu correo para entrar': 'Your name and the email you log in with',
     'Nombre, país, moneda y RUC': 'Name, country, currency and tax ID',
@@ -261,6 +271,16 @@ export default {
   },
 
   it: {
+    // ── 23-oct: avvisi nuovi LOW_STOCK / EXPIRING
+    'Stock bajo': 'Scorta bassa',
+    'Por vencer': 'In scadenza',
+    'Vence hoy': 'Scade oggi',
+    'Vence mañana': 'Scade domani',
+    'Vence en {n} días': 'Scade tra {n} giorni',
+    'Quedan {n} (mínimo {m})': 'Ne restano {n} (minimo {m})',
+    '{n} en stock · vence hoy': '{n} in magazzino · scade oggi',
+    '{n} en stock · vence mañana': '{n} in magazzino · scade domani',
+    '{n} en stock · vence el {d}': '{n} in magazzino · scade il {d}',
     // ── 29-sep: Notificaciones y Ajustes rediseñadas
     'Tu nombre y tu correo para entrar': 'Il tuo nome e l\'email per entrare',
     'Nombre, país, moneda y RUC': 'Nome, paese, valuta e partita IVA',

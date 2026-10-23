@@ -4,6 +4,8 @@ import { ArrowLeft, BellOff, CheckCheck, Loader2, Bell, BellDot, CalendarDays } 
 import { ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { useNotifications, useNotificationSearch } from '../hooks/useNotifications'
 import NotificationItem from '../components/notifications/NotificationItem'
+import { notificationTarget } from '../components/notifications/notificationTarget'
+import { useAuth } from '../context/AuthContext'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
@@ -16,6 +18,7 @@ import { useT, dateLocale } from '../i18n'
 export default function NotificationsPage() {
   const t = useT()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [onlyUnread, setOnlyUnread] = useState(false)
   const search = useNotificationSearch(onlyUnread)
   const { unreadCount, markRead, markAllRead, isMarkingAll } = useNotifications()
@@ -139,7 +142,11 @@ export default function NotificationsPage() {
               <ul className="divide-y divide-gray-50">
                 {g.items.map((n) => (
                   <NotificationItem key={n.id} notification={n} size="lg"
-                    onClick={() => !n.read && markRead(n.id)} />
+                    onClick={() => {
+                      if (!n.read) markRead(n.id)
+                      const to = notificationTarget(n, user?.role)
+                      if (to) navigate(to)
+                    }} />
                 ))}
               </ul>
             </div>

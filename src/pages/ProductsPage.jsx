@@ -480,7 +480,7 @@ export default function ProductsPage() {
       })
       .catch(() => { /* producto inexistente: queda la lista normal */ })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams.get('edit')])
 
   // Ocultar o borrar: el modal explica la diferencia y solo ofrece el borrado
   // real cuando el producto nunca se usó.

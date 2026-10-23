@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
+import { announceToken } from "../services/wsClient";
 import { getMyPermissions } from "../services/endpoints/permissions";
 import { tutorialsApi } from "../services/endpoints/tutorials";
 import { myBusinessesApi } from "../services/endpoints/myBusinesses";
@@ -127,6 +128,7 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem("eazystock_token", accessToken);
     localStorage.setItem("eazystock_refresh_token", refreshToken);
+    announceToken();
     setToken(accessToken);
     setUser(normalizeUser(userData));
     await Promise.all([loadPermissions(), loadTutorials(userData)]);

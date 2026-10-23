@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { toast } from 'sonner'
 import { t } from '../i18n'
+import { announceToken } from './wsClient'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -67,6 +68,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
 
         processQueue(null, accessToken)
+        announceToken()   // el WebSocket reconecta con el token nuevo si se había caído
         return api(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)

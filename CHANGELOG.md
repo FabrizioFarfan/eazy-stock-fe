@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.18.0 — 2026-10-23 (avisos al teléfono; sube junto al API 1.11.0)
+- **El tiempo real va con sesión**: el API ya no deja escuchar el WebSocket sin token. `wsClient` manda `Authorization: Bearer` en el CONNECT de STOMP (lo lee de localStorage en cada reconexión) y `useBusinessSocket` reconecta en cuanto hay token nuevo (renovado en `api.js`, login o cambio de negocio, evento `eazystock:token`); si el API responde «SESSION_EXPIRED» al conectar, fuerza la renovación. **Sin esta versión la web pierde las ventas en vivo con el API 1.11.0.**
+- **Token caducado → 401**: el API responde ahora 401 `{code: SESSION_EXPIRED}` (antes 403 vacío, y la web no renovaba la sesión: «Error al guardar» hasta recargar). `api.js` ya renovaba con 401; no hizo falta tocar la lógica.
+- **Avisos nuevos en la campana y en Notificaciones**: «Stock bajo» (icono rojo, cuando un movimiento deja el producto bajo su mínimo) y «Por vencer» (morado, 9:00 del negocio: vence hoy, mañana o en 7 días). Título y cuerpo traducidos es/en/it.
+- **Tocar un aviso abre su sitio**: venta → su detalle (`/sales?sale=<id>`), nuevo stock → movimientos del producto, stock bajo → ficha del producto (dueño) o Inventario › stock bajo, por vencer → ficha del producto o Reportes › Por vencer. Los avisos viejos sin `entityId` abren la lista. Productos abre `?edit=` también si ya estabas en la página.
+
 ## 1.17.0 — 2026-10-22 (listo para cobrar: cuentas y legales; task 1112)
 - **¿Olvidaste tu contraseña?** en el login → `/olvide` (mensaje neutro) → correo → `/restablecer?token=` (nueva contraseña ×2 con ojito). Alias /forgot y /reset.
 - **Confirma tu correo**: `/verificar?token=` y franja discreta en la app («Confirma tu correo… · Reenviar», se cierra por sesión) para cuentas sin verificar. Pagar con tarjeta exige el correo confirmado.
