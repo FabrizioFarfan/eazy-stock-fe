@@ -23,6 +23,7 @@ import PlanSection from '../components/subscription/PlanSection'
 import FeedbackSection from '../components/feedback/FeedbackSection'
 import { displayTaxIdType } from '../utils/taxIds'
 import PaymentMethodsSection from '../components/settings/PaymentMethodsSection'
+import DeleteAccountSection from '../components/settings/DeleteAccountSection'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -694,6 +695,9 @@ export default function SettingsPage() {
           </div>
         </button>
       </Section>
+
+      {/* Borrado de cuenta (24-oct-2026, API 1.14.0): dueño y empleado; /settings#delete-account */}
+      <DeleteAccountSection />
 
       </div>
       </div>

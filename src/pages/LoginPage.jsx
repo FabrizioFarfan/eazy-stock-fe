@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { Check, ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { Check, ArrowLeft, Eye, EyeOff, CalendarClock, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
+import { getErrorCode } from '../utils/handleApiError'
+import { readDeletionNotice, clearDeletionNotice, formatDeletionDate } from '../utils/deletionNotice'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { trialLine, afterPromoLine, promoActive } from './landing/plans'
@@ -22,17 +25,27 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // Recién pedido el borrado de cuenta (Ajustes › Eliminar mi cuenta): la fecha y cómo cancelarlo
+  const [deletion, setDeletion] = useState(readDeletionNotice)
 
   if (!isLoading && token) return <Navigate to="/dashboard" replace />
+
+  const dismissDeletion = () => { clearDeletionNotice(); setDeletion(null) }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setSubmitting(true)
     try {
-      await login(email, password)
+      const data = await login(email, password)
+      clearDeletionNotice()
+      // Entrar dentro de los 30 días cancela el borrado pedido (API 1.14.0)
+      if (data?.accountReactivated) {
+        toast.success(t('Cancelamos el borrado de tu cuenta. ¡Qué bueno verte de nuevo!'), { duration: 8000 })
+      }
     } catch (err) {
       setError(
+        getErrorCode(err) === 'BUSINESS_PENDING_DELETION' ? t('Este negocio está en proceso de baja.') :
         err.response?.data?.message ??
         err.response?.data?.error ??
         t('Credenciales incorrectas'),
@@ -111,6 +124,8 @@ export default function LoginPage() {
             <p className="mt-2 text-sm text-gray-500">{t('Ingresa tus credenciales para continuar')}</p>
           </div>
 
+          {deletion && <DeletionNotice notice={deletion} onClose={dismissDeletion} />}
+
           <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-100">
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
               <div>
@@ -187,6 +202,26 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Aviso tras pedir el borrado: cuándo se borra para siempre y que volver a entrar lo cancela. */
+function DeletionNotice({ notice, onClose }) {
+  const t = useT()
+  const date = formatDeletionDate(notice.deletionScheduledAt, dateLocale())
+  const owner = notice.role === 'OWNER'
+  const when = date
+    ? (owner ? t('Tu cuenta y tu negocio se borrarán para siempre el {date}.', { date }) : t('Tu usuario se borrará para siempre el {date}.', { date }))
+    : (owner ? t('Tu cuenta y tu negocio se borrarán para siempre dentro de 30 días.') : t('Tu usuario se borrará para siempre dentro de 30 días.'))
+  return (
+    <div role="status" data-testid="deletion-notice" className="relative mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 pr-10 text-sm text-amber-900">
+      <button type="button" onClick={onClose} aria-label={t('Cerrar')}
+        className="absolute right-2.5 top-2.5 rounded-lg p-1 text-amber-700 hover:bg-amber-100"><X size={15} /></button>
+      <p className="flex items-center gap-2 font-bold"><CalendarClock size={16} /> {t('Pediste eliminar tu cuenta')}</p>
+      <p className="mt-1.5">{when}</p>
+      <p className="mt-1.5">{t('¿Cambiaste de opinión? Entra con tu correo y contraseña antes de esa fecha y la reactivamos.')}</p>
+      <p className="mt-1.5 text-amber-800/80">{t('Te mandamos un correo con todos los detalles.')}</p>
     </div>
   )
 }

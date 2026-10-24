@@ -1282,6 +1282,8 @@ export function Footer() {
             <Link to="/impressum" className="transition-colors hover:text-white">Impressum</Link>
             <Link to="/datenschutz" className="transition-colors hover:text-white">{t('Privacidad')}</Link>
             <Link to="/terminos" className="transition-colors hover:text-white">{t('Términos')}</Link>
+            {/* Google Play (24-oct-2026): cómo pedir el borrado de la cuenta */}
+            <Link to="/eliminar-cuenta" className="transition-colors hover:text-white">{t('Eliminar cuenta')}</Link>
             <span className="flex items-center gap-2 text-slate-600">
               <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               {t('Todos los sistemas operativos')}

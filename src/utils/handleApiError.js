@@ -29,6 +29,9 @@ const MESSAGE_BY_CODE = {
   // Recuperar contraseña / confirmar correo (22-oct-2026)
   INVALID_TOKEN:           'Este enlace no es válido o ya venció. Pide uno nuevo.',
   TOO_MANY_REQUESTS:       'Ya te mandamos varios correos. Espera unos minutos y vuelve a intentar.',
+  // Borrado de cuenta (24-oct-2026, API 1.14.0)
+  WRONG_PASSWORD:            'La contraseña no es correcta.',
+  BUSINESS_PENDING_DELETION: 'Este negocio está en proceso de baja.',
 }
 
 /**

@@ -144,9 +144,12 @@ export function AuthProvider({ children }) {
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
   };
 
+  // Devuelve el AuthResponse: la pantalla de login mira `accountReactivated`
+  // (borrado de cuenta cancelado al volver a entrar, API 1.14.0).
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     await _startSession(res.data);
+    return res.data;
   };
 
   // Registro propio (M1 «Planes en serio», 15-oct-2026): crea negocio + OWNER con
@@ -182,6 +185,10 @@ export function AuthProvider({ children }) {
     _clearSession();
   };
 
+  // Borrado de cuenta pedido (API 1.14.0): el BE ya revocó todos los tokens,
+  // así que no se llama a /auth/logout (daría 401 → refresh → «sesión expiró»).
+  const endSessionLocally = () => { queryClient.clear(); _clearSession(); };
+
   const _clearSession = () => {
     localStorage.removeItem("eazystock_token");
     localStorage.removeItem("eazystock_refresh_token");
@@ -212,7 +219,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, refreshUser, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

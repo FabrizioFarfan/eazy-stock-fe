@@ -49,6 +49,12 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://eazy-stock.com/eliminar-cuenta</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://eazy-stock.com/registro</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>monthly</changefreq>

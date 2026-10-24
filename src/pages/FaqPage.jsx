@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Mail, MessageCircle } from 'lucide-react'
 import { useT } from '../i18n'
 import { Navbar, Footer, CtaBanner, Faq, ComingSoon } from './LandingPage'
@@ -32,6 +33,10 @@ export default function FaqPage() {
               <div className="flex-1">
                 <p className="text-base font-bold text-gray-900">{t('¿Te quedó una duda?')}</p>
                 <p className="text-sm text-gray-500">{t('Escríbenos y te respondemos lo antes posible.')}</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {t('¿Quieres borrar tu cuenta?')}{' '}
+                  <Link to="/eliminar-cuenta" className="font-semibold text-blue-600 hover:underline">{t('Así se hace')} →</Link>
+                </p>
               </div>
               <a href="mailto:kontakt.eazylife@gmail.com" className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-gray-900 shadow-sm ring-1 ring-gray-200 hover:bg-gray-100">
                 <Mail size={15} /> kontakt.eazylife@gmail.com

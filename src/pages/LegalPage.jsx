@@ -139,6 +139,7 @@ export function PrivacyPage() {
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <Link to="/impressum" className="text-sm font-semibold text-blue-600 hover:underline">Impressum →</Link>
             <Link to="/terminos" className="text-sm font-semibold text-blue-600 hover:underline">{t('Términos y condiciones')} →</Link>
+            <Link to="/eliminar-cuenta" className="text-sm font-semibold text-blue-600 hover:underline">{t('Eliminar tu cuenta')} →</Link>
           </div>
         </div>
       </Prose>

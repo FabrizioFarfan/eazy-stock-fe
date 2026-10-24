@@ -105,7 +105,7 @@
         // Web pública (multipágina desde el 25-sep-2026): la portada solo sin sesión
         // (con sesión redirige al panel); el resto de páginas públicas, siempre.
         var path = location.pathname.replace(/\/+$/, '') || '/'
-        var PUBLIC = ['/funciones', '/para-quien', '/planes', '/preguntas', '/impressum', '/datenschutz', '/terminos', '/registro']
+        var PUBLIC = ['/funciones', '/para-quien', '/planes', '/preguntas', '/impressum', '/datenschutz', '/terminos', '/eliminar-cuenta', '/registro']
         var isLanding = (path === '/' && !hasSession) || PUBLIC.indexOf(path) !== -1
         // la landing tiene su propio diseño oscuro: el modo oscuro de la app no se le aplica
         if (!isLanding && (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches))) {

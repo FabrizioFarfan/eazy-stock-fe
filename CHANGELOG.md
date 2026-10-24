@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.21.0 — 2026-10-24 (borrado de cuenta; sube junto al API 1.14.0)
+- **Ajustes › Eliminar mi cuenta** (dueño y empleado; BOSS/SUPER_ADMIN no la ven): confirmación escribiendo la contraseña (400 `WRONG_PASSWORD` → «La contraseña no es correcta.») y el aviso de los **30 días** (en ese tiempo nadie usa la cuenta; volver a entrar la reactiva). Textos distintos: el dueño borra su cuenta, su(s) negocio(s) y todos los datos, y su suscripción se cancela al momento; el empleado solo su usuario (sus ventas se quedan en el negocio). Con su ayuda (HelpDrawer). `POST /api/me/account/deletion` → la sesión se cierra en local (`endSessionLocally`: el API ya revocó los tokens, no se llama a `/auth/logout`) y el login muestra «Pediste eliminar tu cuenta» con la fecha de `deletionScheduledAt` (va en sessionStorage, sobrevive a una recarga).
+- **Login**: si el AuthResponse trae `accountReactivated: true`, aviso «Cancelamos el borrado de tu cuenta. ¡Qué bueno verte de nuevo!»; un empleado con 403 `BUSINESS_PENDING_DELETION` ve «Este negocio está en proceso de baja.». `login()` del AuthContext devuelve ahora el AuthResponse.
+- **Página pública `/eliminar-cuenta`** (alias `/delete-account`) para Google Play: cómo pedirlo (app, web o kontakt.eazylife@gmail.com), qué se borra (dueño / empleado), en cuánto tiempo (30 días) y cómo cancelarlo (volver a entrar). Prerenderizada, en `sitemap.xml` y en la lista de páginas públicas de `index.html`; enlazada desde el pie de la web, la Política de privacidad y Preguntas.
+- Textos es/en/it (`dict/accountDeletion.js`).
+
 ## 1.20.1 — 2026-10-24 (sube junto al API 1.13.1)
 - **Brasil fuera** de «¿Dónde está tu negocio?» y de la lista de países del negocio (por ahora la app es en español). Los teléfonos de clientes siguen aceptando +55.
 

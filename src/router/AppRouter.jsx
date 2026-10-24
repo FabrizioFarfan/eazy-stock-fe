@@ -10,6 +10,7 @@ import FeaturesPage   from '../pages/FeaturesPage'
 import AudiencePage   from '../pages/AudiencePage'
 import { ImpressumPage, PrivacyPage, TermsPage } from '../pages/LegalPage'
 import FaqPage        from '../pages/FaqPage'
+import DeleteAccountInfoPage from '../pages/DeleteAccountInfoPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage  from '../pages/ResetPasswordPage'
 import VerifyEmailPage    from '../pages/VerifyEmailPage'
@@ -98,6 +99,9 @@ export default function AppRouter() {
       <Route path="/terms" element={<Navigate to="/terminos" replace />} />
       <Route path="/agb" element={<Navigate to="/terminos" replace />} />
       <Route path="/condiciones" element={<Navigate to="/terminos" replace />} />
+      {/* Borrado de cuenta (24-oct-2026): la página pública que pide Google Play; alias en inglés */}
+      <Route path="/eliminar-cuenta" element={<DeleteAccountInfoPage />} />
+      <Route path="/delete-account" element={<Navigate to="/eliminar-cuenta" replace />} />
 
       {/* OWNER + EMPLOYEE */}
       <Route path="/dashboard" element={
