@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Eazy Stock — Presentación y guía de demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: 1920px 1080px; margin: 0; }
+  :root {
+    --navy: #0b1220; --navy2: #111b33; --blue: #2563eb; --blue2: #1d4ed8; --sky: #38bdf8;
+    --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --soft: #f1f5f9;
+    --green: #059669; --amber: #d97706; --red: #dc2626; --violet: #7c3aed;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; font-family: "Inter", system-ui, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .s { width: 1920px; height: 1080px; position: relative; overflow: hidden; page-break-after: always; padding: 96px 120px 110px; background: #fff; }
+  .s:last-child { page-break-after: auto; }
+  .dark { background: radial-gradient(1200px 700px at 85% 10%, #1e3a8a 0%, rgba(30,58,138,0) 60%), linear-gradient(160deg, #0b1220 0%, #0f1a36 100%); color: #fff; }
+  .dark .muted { color: #a5b4cc; }
+  .grid-bg::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(148,163,184,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,.07) 1px, transparent 1px); background-size: 64px 64px; pointer-events: none; }
+  .soft { background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%); }
+
+  .kicker { font-size: 20px; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; color: var(--blue); margin: 0 0 18px; }
+  .dark .kicker { color: var(--sky); }
+  h1 { font-size: 104px; line-height: .98; letter-spacing: -4px; font-weight: 900; margin: 0; }
+  h2 { font-size: 68px; line-height: 1.02; letter-spacing: -2.4px; font-weight: 900; margin: 0 0 18px; max-width: 1500px; }
+  h3 { font-size: 30px; line-height: 1.15; letter-spacing: -.6px; font-weight: 800; margin: 0 0 10px; }
+  p.lead { font-size: 30px; line-height: 1.4; color: var(--muted); margin: 0; max-width: 1300px; }
+  .dark p.lead { color: #c7d2e5; }
+  .muted { color: var(--muted); }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .hl { color: var(--blue); }
+  .dark .hl { color: var(--sky); }
+
+  .foot { position: absolute; left: 120px; right: 120px; bottom: 44px; display: flex; align-items: center; gap: 14px; font-size: 18px; color: #94a3b8; font-weight: 600; }
+  .foot img { width: 30px; height: 30px; }
+  .foot .sp { flex: 1; }
+  .foot .part { padding: 6px 14px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800; }
+  .foot .part.demo { background: #fef3c7; color: #92400e; }
+  .dark .foot .part { background: rgba(255,255,255,.08); color: #cbd5e1; }
+
+  .shot { border-radius: 22px; overflow: hidden; box-shadow: 0 2px 4px rgba(15,23,42,.06), 0 24px 60px rgba(15,23,42,.18); border: 1px solid var(--line); background: #fff; }
+  .shot img { display: block; width: 100%; }
+  .dark .shot { border-color: rgba(255,255,255,.12); box-shadow: 0 40px 100px rgba(0,0,0,.55); }
+
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 32px 34px; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.06); }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 999px; font-size: 19px; font-weight: 700; }
+  .ic { width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .ic svg { width: 32px; height: 32px; }
+  .row { display: flex; gap: 32px; }
+  .pain .card { padding: 26px 30px; }
+  .pain h3 { margin-top: 16px !important; }
+  .pain .ic { width: 56px; height: 56px; }
+</style>
+</head>
+<body>
+
+<!-- 1 · PORTADA -->
+<section class="s dark grid-bg">
+  <div style="display:flex;align-items:center;gap:18px;position:relative">
+    <img src="img/logo.png" style="width:64px;height:64px">
+    <b style="font-size:34px;letter-spacing:-.6px">Eazy Stock</b>
+    <span class="chip" style="margin-left:18px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.35);color:#bae6fd">Presentación y guía de demo</span>
+  </div>
+  <div style="position:absolute;left:120px;top:250px;width:760px">
+    <h1>Tu negocio,<br>bajo control.</h1>
+    <p class="lead" style="margin-top:34px;font-size:31px">Inventario, ventas, caja y fiado en una sola app. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado y cada noche te dice cuánto ganaste.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:40px">
+      <span class="chip" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)">PC · tablet · celular</span>
+      <span class="chip" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)">Sin instalar nada</span>
+      <span class="chip" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18)">Se aprende en una tarde</span>
+    </div>
+  </div>
+  <div class="shot" style="position:absolute;right:-40px;top:230px;width:1000px;transform:perspective(2400px) rotateY(-9deg) rotateX(3deg)"><img src="img/hero-mock.jpg"></div>
+  <div class="foot"><img src="img/logo.png"><span>eazy-stock.com</span><span class="sp"></span><span>Eazy Life Company · Octubre 2026</span></div>
+</section>
+
+<!-- 2 · CÓMO USAR ESTE DOCUMENTO -->
+<section class="s">
+  <p class="kicker">Antes de empezar</p>
+  <h2>Este documento tiene dos partes</h2>
+  <p class="lead">Úsalo como presentación frente al cliente y como chuleta para hacer la demo en vivo.</p>
+  <div class="row" style="margin-top:64px">
+    <div class="card" style="flex:1;padding:48px">
+      <span class="chip" style="background:#dbeafe;color:#1e40af">Parte 1 · páginas 3 a 10</span>
+      <h3 style="font-size:42px;margin-top:28px">La presentación</h3>
+      <p class="lead" style="font-size:26px">Para mostrársela al dueño del negocio: el problema que tiene hoy, cómo lo resuelve Eazy Stock, para quién sirve, cómo se empieza y cuánto cuesta.</p>
+    </div>
+    <div class="card" style="flex:1;padding:48px;border-color:#fcd34d;background:#fffbeb">
+      <span class="chip" style="background:#fde68a;color:#92400e">Parte 2 · páginas 11 a 15</span>
+      <h3 style="font-size:42px;margin-top:28px">La guía de demo</h3>
+      <p class="lead" style="font-size:26px">Para ti, que haces la demo: qué preparar antes, el guion clic por clic en 15 minutos, cómo responder las dudas típicas y cómo cerrar.</p>
+    </div>
+  </div>
+  <div style="margin-top:48px;font-size:25px;color:var(--muted);display:flex;gap:14px;align-items:center">
+    <span class="chip" style="background:var(--soft);color:var(--ink)">La regla de oro</span>
+    No vendas funciones: muestra cómo desaparece un problema que el cliente ya tiene.
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span>2</span></div>
+</section>
+
+<!-- 3 · EL PROBLEMA -->
+<section class="s soft">
+  <p class="kicker">El problema</p>
+  <h2 style="font-size:62px">El cuaderno ya no alcanza.<br><span class="hl">Y cada día cuesta plata.</span></h2>
+  <p class="lead">Así se maneja hoy la mayoría de tiendas, bodegas y ferreterías: cuaderno, Excel suelto y memoria.</p>
+  <div class="pain" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:40px">
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg></div><h3 style="margin-top:22px">La caja no cuadra</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">Cierras contando billetes y nunca sabes si falta plata o se anotó mal.</p></div>
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M8 7h8M8 11h6"/></svg></div><h3 style="margin-top:22px">El fiado se pierde</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">El cuaderno se moja, se pierde o nadie recuerda quién debe cuánto.</p></div>
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></div><h3 style="margin-top:22px">«Se acabó»</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">Te enteras de que no hay stock cuando el cliente ya lo está pidiendo. Esa venta se va a otra tienda.</p></div>
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v4M19 16h.01"/></svg></div><h3 style="margin-top:22px">No sabes quién vendió qué</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">Dejas la tienda y no sabes quién vendió qué, ni a qué precio.</p></div>
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div><h3 style="margin-top:22px">Precios viejos</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">Precios desactualizados o mal redondeados que te comen el margen sin que lo notes.</p></div>
+    <div class="card"><div class="ic" style="background:#fee2e2;color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg></div><h3 style="margin-top:22px">No sabes si ganaste</h3><p class="muted" style="font-size:22px;line-height:1.45;margin:0">Vendes todo el mes y no sabes si ganaste, ni con qué producto.</p></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>3</span></div>
+</section>
+
+<!-- 4 · LA SOLUCIÓN -->
+<section class="s dark grid-bg">
+  <div style="position:relative;width:640px;margin-top:40px">
+    <p class="kicker">La solución</p>
+    <h2 style="font-size:64px">Todo lo que pasa en tu tienda, <span class="hl">en una sola app.</span></h2>
+    <p class="lead" style="margin-top:20px">Vender, cobrar, cerrar la caja, pedir al proveedor y fiar con control. Cada función nació de un problema real de un negocio real.</p>
+    <div style="margin-top:44px;display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;font-size:24px;font-weight:600">
+      <div>✓ Funciona en el navegador</div><div>✓ La cámara es tu lector</div>
+      <div>✓ Se instala como app</div><div>✓ Español · inglés · italiano</div>
+      <div>✓ Cada empleado, su usuario</div><div>✓ Tutorial en cada pantalla</div>
+    </div>
+  </div>
+  <div class="shot" style="position:absolute;right:110px;top:200px;width:980px"><img src="img/hero-mock.jpg"></div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>4</span></div>
+</section>
+
+<!-- 5 · ANTES VS DESPUÉS -->
+<section class="s">
+  <p class="kicker">Beneficios concretos</p>
+  <h2>Lo que cambia desde la primera semana</h2>
+  <div style="margin-top:40px;border:1px solid var(--line);border-radius:24px;overflow:hidden;font-size:22px;line-height:1.38">
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;background:var(--soft);font-weight:800;font-size:17px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">
+      <div style="padding:16px 28px"></div><div style="padding:16px 28px">Antes, con cuaderno</div><div style="padding:16px 28px;color:var(--blue)">Con Eazy Stock</div>
+    </div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">La caja cuadra</div><div style="padding:20px 28px;color:var(--muted)">Cierras contando billetes y con dudas.</div><div style="padding:20px 28px;background:#f8fbff">Te dice cuánto efectivo debe haber en el cajón, y cuánto entró por cada medio de pago.</div></div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">El fiado se cobra</div><div style="padding:20px 28px;color:var(--muted)">Nadie recuerda quién debe cuánto.</div><div style="padding:20px 28px;background:#f8fbff">Límite por cliente, deuda al día, estado de cuenta en PDF y recordatorio por WhatsApp en un clic.</div></div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">Nunca más «se acabó»</div><div style="padding:20px 28px;color:var(--muted)">Te enteras cuando el cliente ya lo pide.</div><div style="padding:20px 28px;background:#f8fbff">Stock mínimo con aviso en vivo y el pedido al proveedor en PDF en dos clics.</div></div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">Tu equipo vende, tú controlas</div><div style="padding:20px 28px;color:var(--muted)">No sabes quién vendió qué.</div><div style="padding:20px 28px;background:#f8fbff">Cada venta con vendedor y hora. El vendedor no ve tus costos; tú decides cada permiso.</div></div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">Precios al día</div><div style="padding:20px 28px;color:var(--muted)">Precios viejos que comen el margen.</div><div style="padding:20px 28px;background:#f8fbff">Corriges el precio en plena venta y queda guardado; vender por debajo queda marcado.</div></div>
+    <div style="display:grid;grid-template-columns:330px 1fr 1fr;border-top:1px solid var(--line)"><div style="padding:20px 28px;font-weight:800">Sabes qué te deja plata</div><div style="padding:20px 28px;color:var(--muted)">No sabes si ganaste en el mes.</div><div style="padding:20px 28px;background:#f8fbff">Ganancia del mes, productos que más rinden, mejores clientes y vendedores, y lo que está por vencer.</div></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>5</span></div>
+</section>
+
+<!-- 6 · UN DÍA CON EAZY STOCK -->
+<section class="s soft">
+  <p class="kicker">Un día con Eazy Stock</p>
+  <h2>De la venta al cierre de caja, sin hojas sueltas</h2>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:44px">
+    <div><span class="chip mono" style="background:var(--ink);color:#fff">08:00</span><h3 style="margin-top:18px">Vende en segundos</h3><p class="muted" style="font-size:20px;line-height:1.4;margin:0 0 22px;min-height:84px">Escaneas con la cámara, cobras por cualquier medio y el stock se descuenta solo.</p><div class="shot"><img src="img/m-pos.jpg"></div></div>
+    <div><span class="chip mono" style="background:var(--ink);color:#fff">12:30</span><h3 style="margin-top:18px">Controla el fiado</h3><p class="muted" style="font-size:20px;line-height:1.4;margin:0 0 22px;min-height:84px">Límite por cliente, recordatorio por WhatsApp y estado de cuenta en PDF.</p><div class="shot"><img src="img/m-fiado.jpg"></div></div>
+    <div><span class="chip mono" style="background:var(--ink);color:#fff">17:00</span><h3 style="margin-top:18px">No te quedes sin stock</h3><p class="muted" style="font-size:20px;line-height:1.4;margin:0 0 22px;min-height:84px">Alertas de stock mínimo y el pedido al proveedor en PDF, en dos clics.</p><div class="shot"><img src="img/m-pedido.jpg"></div></div>
+    <div><span class="chip mono" style="background:var(--ink);color:#fff">20:00</span><h3 style="margin-top:18px">Cierra la caja sin dudas</h3><p class="muted" style="font-size:20px;line-height:1.4;margin:0 0 22px;min-height:84px">Cuánto entró por cada medio de pago y cuánto efectivo debe haber en el cajón.</p><div class="shot"><img src="img/m-caja.jpg"></div></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>6</span></div>
+</section>
+
+<!-- 7 · FUNCIONES -->
+<section class="s">
+  <div style="display:flex;gap:72px">
+    <div style="flex:1">
+      <p class="kicker">Funciones clave</p>
+      <h2 style="font-size:60px">Todo lo que necesita una tienda de verdad</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 40px;margin-top:36px;font-size:22px;line-height:1.35">
+        <div><b>Punto de venta</b><br><span class="muted">Escaneo con la cámara, descuentos con permiso, venta por metro, kilo o unidad.</span></div>
+        <div><b>Cierre de caja</b><br><span class="muted">Por medio de pago, con fondo de caja y devoluciones.</span></div>
+        <div><b>Fiado y cuentas por cobrar</b><br><span class="muted">Límite de crédito, abonos parciales, WhatsApp y PDF.</span></div>
+        <div><b>Proveedores y por pagar</b><br><span class="muted">Recepciones de mercadería y deuda con cada proveedor.</span></div>
+        <div><b>Vencimientos</b><br><span class="muted">Fecha por producto y reporte «Por vencer» a 30 días.</span></div>
+        <div><b>Cotizaciones</b><br><span class="muted">Presupuesto y nota de pedido en PDF o por WhatsApp.</span></div>
+        <div><b>Reportes</b><br><span class="muted">Ventas, ganancia, compras y gastos, clientes y vendedores.</span></div>
+        <div><b>Equipo</b><br><span class="muted">14 permisos por empleado y registro de cada cambio.</span></div>
+        <div><b>Varios negocios</b><br><span class="muted">Hasta 3 tiendas en una cuenta, con resumen de todas (Pro).</span></div>
+        <div><b>Avisos en vivo</b><br><span class="muted">Stock bajo, por vencer y ventas, en la campana.</span></div>
+      </div>
+    </div>
+    <div style="width:700px;padding-top:30px">
+      <p style="font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 16px">Importar desde Excel</p>
+      <div class="shot"><img src="img/m-importar.jpg"></div>
+      <p class="muted" style="font-size:22px;line-height:1.45;margin-top:24px">El importador detecta las columnas, corrige tildes rotas y muestra fila por fila qué va a entrar antes de tocar nada. ¿No tienes Excel? <b style="color:var(--ink)">Lo cargamos nosotros.</b></p>
+    </div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>7</span></div>
+</section>
+
+<!-- 8 · PARA QUIÉN -->
+<section class="s">
+  <p class="kicker">Para todo tipo de negocio</p>
+  <h2>Si vendes y llevas las cuentas, es para ti.</h2>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:22px;margin-top:40px">
+    <style>.biz{position:relative;height:330px;border-radius:22px;overflow:hidden;background:#0f172a}.biz img{width:100%;height:100%;object-fit:cover;display:block}.biz div{position:absolute;inset:auto 0 0 0;padding:70px 20px 18px;background:linear-gradient(180deg,rgba(11,18,32,0),rgba(11,18,32,.92));color:#fff}.biz b{font-size:23px;display:block;margin-bottom:6px}.biz span{font-size:16px;line-height:1.35;color:#cbd5e1}</style>
+    <div class="biz"><img src="img/ferreterias.jpg"><div><b>Ferreterías</b><span>Metros, kilos y unidades con decimales. Miles de códigos y el fiado al día.</span></div></div>
+    <div class="biz"><img src="img/bodegas.jpg"><div><b>Bodegas y minimarkets</b><span>Venta rápida con código de barras y la caja que cuadra cada noche.</span></div></div>
+    <div class="biz"><img src="img/farmacias.jpg"><div><b>Farmacias y boticas</b><span>Vencimiento por producto y aviso 30 días antes.</span></div></div>
+    <div class="biz"><img src="img/abarrotes.jpg"><div><b>Abarrotes</b><span>Por kilo o por unidad y el margen real de cada producto.</span></div></div>
+    <div class="biz"><img src="img/librerias.jpg"><div><b>Librerías y bazares</b><span>Miles de ítems chicos; encuentras cualquiera en un segundo.</span></div></div>
+    <div class="biz"><img src="img/repuestos.jpg"><div><b>Repuestos y talleres</b><span>Código propio y del proveedor. Pedidos en PDF.</span></div></div>
+    <div class="biz"><img src="img/ropa.jpg"><div><b>Ropa y calzado</b><span>Foto por producto: qué se vende y qué se queda.</span></div></div>
+    <div class="biz"><img src="img/veterinarias.jpg"><div><b>Veterinarias</b><span>Alimento por kilo, medicinas con vencimiento.</span></div></div>
+    <div class="biz"><img src="img/cafeterias.jpg"><div><b>Cafeterías</b><span>Cobro en segundos, varios vendedores y cierre de caja.</span></div></div>
+    <div class="biz"><img src="img/celulares.jpg"><div><b>Celulares y electrónica</b><span>Cotización en PDF por WhatsApp y accesorios al día.</span></div></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>8</span></div>
+</section>
+
+<!-- 9 · CÓMO EMPEZAR -->
+<section class="s soft">
+  <p class="kicker">Cómo empezar</p>
+  <h2>Listo en una tarde, no en tres semanas</h2>
+  <div class="row" style="margin-top:56px">
+    <div class="card" style="flex:1;padding:56px 48px;min-height:440px"><div class="mono" style="font-size:72px;font-weight:700;color:var(--blue)">01</div><h3 style="font-size:38px;margin-top:20px">Crea tu cuenta</h3><p class="muted" style="font-size:26px;line-height:1.5;margin:0">Pones el nombre de tu tienda y listo. Si tienes gente que vende contigo, la invitas y tú decides qué puede ver cada uno.</p></div>
+    <div class="card" style="flex:1;padding:56px 48px;min-height:440px"><div class="mono" style="font-size:72px;font-weight:700;color:var(--blue)">02</div><h3 style="font-size:38px;margin-top:20px">Trae tu lista de productos, como la tengas</h3><p class="muted" style="font-size:26px;line-height:1.5;margin:0">Excel: la subes y entra en minutos. Word, papel o cuaderno: nos mandas una foto por WhatsApp y la cargamos nosotros.</p></div>
+    <div class="card" style="flex:1;padding:56px 48px;min-height:440px"><div class="mono" style="font-size:72px;font-weight:700;color:var(--blue)">03</div><h3 style="font-size:38px;margin-top:20px">Empieza a vender</h3><p class="muted" style="font-size:26px;line-height:1.5;margin:0">Buscas o escaneas el producto, cobras en efectivo, tarjeta o billetera digital, y al final del día la caja te dice cuánto entró.</p></div>
+  </div>
+  <div style="margin-top:44px;background:var(--ink);color:#fff;border-radius:24px;padding:36px 44px;display:flex;align-items:center;gap:30px">
+    <div style="font-size:28px;font-weight:800;flex:1">Si no es Excel, lo cargamos nosotros en 24–48 h. Sin costo.</div>
+    <span class="chip" style="background:rgba(255,255,255,.1)">Excel o CSV</span><span class="chip" style="background:rgba(255,255,255,.1)">Word o PDF</span><span class="chip" style="background:rgba(255,255,255,.1)">Foto del cuaderno</span><span class="chip" style="background:rgba(255,255,255,.1)">Por WhatsApp</span>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>9</span></div>
+</section>
+
+<!-- 10 · PRECIOS -->
+<section class="s">
+  <p class="kicker">Precios</p>
+  <h2>Gratis hasta el 15 de diciembre. <span class="hl">Sin tarjeta.</span></h2>
+  <p class="lead">Después, un plan según el tamaño del negocio. Precios en soles para Perú y en dólares para los demás países.</p>
+  <div class="row" style="margin-top:44px;align-items:stretch">
+    <div class="card" style="flex:1;padding:40px"><h3 style="font-size:36px">Basic</h3><p class="muted" style="font-size:21px;margin:0 0 18px">Para una tienda que quiere dejar el cuaderno.</p><div><span style="font-size:72px;font-weight:900;letter-spacing:-2px">S/ 36</span><span class="muted" style="font-size:24px"> /mes</span></div><div class="muted" style="font-size:19px">US$ 9.90 fuera de Perú</div><div style="margin-top:22px;font-size:21px;line-height:1.6">✓ 1 negocio · 5 trabajadores<br>✓ Inventario, ventas, fiado, caja<br>✓ Reportes, Excel, cotizaciones</div></div>
+    <div class="card" style="flex:1;padding:40px;border:3px solid var(--blue);position:relative"><span class="chip" style="position:absolute;top:-22px;left:40px;background:var(--blue);color:#fff">Más elegido</span><h3 style="font-size:36px">Pro</h3><p class="muted" style="font-size:21px;margin:0 0 18px">Para el dueño con hasta 3 tiendas o un equipo grande.</p><div><span style="font-size:72px;font-weight:900;letter-spacing:-2px">S/ 79</span><span class="muted" style="font-size:24px"> /mes</span></div><div class="muted" style="font-size:19px">US$ 22.90 fuera de Perú</div><div style="margin-top:22px;font-size:21px;line-height:1.6">✓ Hasta 3 negocios · 20 trabajadores<br>✓ Resumen de todas las tiendas<br>✓ Soporte prioritario por WhatsApp</div></div>
+    <div class="card" style="flex:1;padding:40px;background:#faf5ff;border-color:#e9d5ff"><h3 style="font-size:36px">AI <span class="chip" style="font-size:15px;background:#fde68a;color:#92400e;vertical-align:middle">Llega pronto</span></h3><p class="muted" style="font-size:21px;margin:0 0 18px">Para vender hablando y que la IA mire tus números.</p><div><span style="font-size:72px;font-weight:900;letter-spacing:-2px">S/ 139</span><span class="muted" style="font-size:24px"> /mes</span></div><div class="muted" style="font-size:19px">US$ 39.90 fuera de Perú</div><div style="margin-top:22px;font-size:21px;line-height:1.6">✓ Todo Pro, sin límites<br>✓ Ventas por nota de voz<br>✓ Pregúntale a tu negocio</div></div>
+  </div>
+  <div style="display:flex;gap:28px;margin-top:30px;font-size:21px">
+    <div style="flex:1;background:#eff6ff;border-radius:18px;padding:20px 26px"><b>Fundadores:</b> los primeros 50 negocios pagan la mitad durante 6 meses y mantienen el precio de lanzamiento.</div>
+    <div style="flex:1;background:#ecfdf5;border-radius:18px;padding:20px 26px"><b>Trimestral −10 % · anual −20 %.</b> Después de la promo: 1 mes gratis y el segundo mes a mitad de precio.</div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Presentación</span><span>10</span></div>
+</section>
+
+<!-- 11 · PORTADA GUÍA -->
+<section class="s dark grid-bg">
+  <div style="position:relative;margin-top:180px">
+    <span class="chip" style="background:#fde68a;color:#92400e">Parte 2 · Para quien hace la demo</span>
+    <h1 style="margin-top:36px;font-size:120px">Guía de la demo</h1>
+    <p class="lead" style="margin-top:30px;max-width:1150px">15 minutos, un solo objetivo: que el dueño vea su propio problema resuelto en la pantalla y se registre ese mismo día.</p>
+    <div style="display:flex;gap:56px;margin-top:70px;font-size:26px">
+      <div><div class="mono hl" style="font-size:58px;font-weight:700">15</div><span class="muted">minutos de demo</span></div>
+      <div><div class="mono hl" style="font-size:58px;font-weight:700">6</div><span class="muted">pantallas que mostrar</span></div>
+      <div><div class="mono hl" style="font-size:58px;font-weight:700">1</div><span class="muted">objetivo: el registro</span></div>
+    </div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part">Guía de demo</span><span>11</span></div>
+</section>
+
+<!-- 12 · PREPARACIÓN -->
+<section class="s">
+  <p class="kicker" style="color:var(--amber)">Antes de la demo</p>
+  <h2>Prepárala en 20 minutos</h2>
+  <div class="row" style="margin-top:44px">
+    <div style="flex:1.15">
+      <h3 style="font-size:28px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:19px">Tu cuenta de demo</h3>
+      <div class="card" style="margin-top:12px;font-size:23px;line-height:1.75">
+        <b>1.</b> Entra a <span class="mono hl">eazy-stock.com/registro</span> y crea la cuenta con un negocio parecido al del cliente (por ejemplo «Ferretería Demo»). Es gratis y sin tarjeta.<br>
+        <b>2.</b> Carga de 10 a 15 productos del rubro, con stock, precio y stock mínimo. Deja 2 o 3 por debajo del mínimo.<br>
+        <b>3.</b> Crea 2 clientes y hazles una venta al fiado a cada uno.<br>
+        <b>4.</b> Haz 4 o 5 ventas con distintos medios de pago para que el cierre de caja tenga datos.<br>
+        <b>5.</b> Crea un empleado «Vendedor» para mostrar los permisos.
+      </div>
+    </div>
+    <div style="flex:1">
+      <h3 style="color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:19px">Lo que llevas</h3>
+      <div class="card" style="margin-top:12px;font-size:23px;line-height:1.75">
+        ☐ Laptop o tablet con la sesión ya iniciada<br>
+        ☐ Celular con la app abierta (para escanear con la cámara)<br>
+        ☐ Un producto real con código de barras<br>
+        ☐ WhatsApp en el celular para el recordatorio de fiado<br>
+        ☐ Buena conexión a internet
+      </div>
+      <h3 style="color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:19px;margin-top:30px">Lo que preguntas primero</h3>
+      <div class="card" style="margin-top:12px;font-size:23px;line-height:1.75;background:#fffbeb;border-color:#fde68a">
+        ¿Qué vendes y cuántos productos manejas?<br>¿Cómo llevas hoy el stock y el fiado?<br>¿Cuántas personas venden contigo?
+      </div>
+    </div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part demo">Guía de demo</span><span>12</span></div>
+</section>
+
+<!-- 13 · GUION -->
+<section class="s">
+  <p class="kicker" style="color:var(--amber)">El guion · 15 minutos</p>
+  <h2 style="font-size:58px">Muestra el problema resuelto, no el menú</h2>
+  <style>
+    .step{display:grid;grid-template-columns:96px 300px 1fr 1fr;gap:26px;align-items:start;padding:17px 0;border-top:1px solid var(--line);font-size:20px;line-height:1.4}
+    .step .t{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--amber);font-size:19px}
+    .step b{font-size:22px}
+    .step .go{color:var(--ink)} .step .go code{font-family:"JetBrains Mono",monospace;font-size:17px;background:var(--soft);padding:2px 8px;border-radius:6px}
+    .step .say{color:var(--muted);font-style:italic}
+  </style>
+  <div style="margin-top:24px">
+    <div class="step" style="border-top:none;font-size:15px;letter-spacing:2px;text-transform:uppercase;font-weight:800;color:#94a3b8;padding-bottom:6px"><div>Min</div><div>Paso</div><div>Dónde y qué haces</div><div>Qué dices</div></div>
+    <div class="step"><div class="t">0–2</div><b>Su dolor</b><div class="go">Sin pantalla. Haz las 3 preguntas y elige qué mostrar primero según lo que más le duela.</div><div class="say">«¿Cuánto fiado tienes en el cuaderno ahora mismo? ¿Sabes cuánto ganaste ayer?»</div></div>
+    <div class="step"><div class="t">2–5</div><b>Vender en segundos</b><div class="go"><code>Ventas › Nueva Venta</code> Escanea el producto con la cámara, elige el medio de pago y cobra. Luego abre <code>Stock</code>: ya bajó.</div><div class="say">«Escaneas, cobras y el stock se descuenta solo. Sin anotar nada.»</div></div>
+    <div class="step"><div class="t">5–7</div><b>Stock bajo y pedido</b><div class="go"><code>Reportes › Reportes</code> pestaña «Stock bajo». Genera el pedido al proveedor y muestra el PDF o el envío por WhatsApp.</div><div class="say">«Esto antes lo sabías cuando el cliente ya lo estaba pidiendo.»</div></div>
+    <div class="step"><div class="t">7–9</div><b>Fiado bajo control</b><div class="go"><code>Clientes y proveedores › Clientes</code> Abre un cliente con deuda: límite, botón de WhatsApp con el recordatorio y estado de cuenta en PDF.</div><div class="say">«Un clic y le llega el recordatorio, ya redactado.»</div></div>
+    <div class="step"><div class="t">9–11</div><b>Cierre de caja</b><div class="go"><code>Reportes › Balance</code> Lo cobrado por cada medio de pago y cuánto efectivo debe haber en el cajón.</div><div class="say">«Así cierras en un minuto y sabes si falta algo.»</div></div>
+    <div class="step"><div class="t">11–13</div><b>Equipo y Excel</b><div class="go"><code>Empleados</code> Muestra los permisos del vendedor. Luego <code>Productos › Importar</code> con un Excel.</div><div class="say">«El vendedor no ve tus costos. Y tu lista la subes o la cargamos nosotros.»</div></div>
+    <div class="step"><div class="t">13–15</div><b>Cierre</b><div class="go">Abre <code>eazy-stock.com/registro</code> en su celular y crea su cuenta con él, ahí mismo.</div><div class="say">«Es gratis hasta el 15 de diciembre. Mándame tu lista y te la cargamos.»</div></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part demo">Guía de demo</span><span>13</span></div>
+</section>
+
+<!-- 14 · OBJECIONES -->
+<section class="s soft">
+  <p class="kicker" style="color:var(--amber)">Las dudas de siempre</p>
+  <h2>Qué responder cuando pregunten</h2>
+  <style>.qa{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px 28px}.qa b{font-size:23px;display:block;margin-bottom:8px}.qa span{font-size:19.5px;line-height:1.45;color:var(--muted)}</style>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:36px">
+    <div class="qa"><b>«¿Tengo que comprar un lector o una computadora?»</b><span>No. Funciona en el navegador del celular, la tablet o la PC, y se instala como app. La cámara del celular es el lector de códigos.</span></div>
+    <div class="qa"><b>«Ya tengo todo en Excel, ¿lo pierdo?»</b><span>Al contrario: lo sube tal cual. El importador detecta las columnas y muestra qué va a entrar antes de tocar nada.</span></div>
+    <div class="qa"><b>«Lo tengo en cuaderno, no tengo tiempo de pasarlo»</b><span>Nos manda una foto o el archivo por WhatsApp y lo cargamos nosotros en 24–48 h, sin costo.</span></div>
+    <div class="qa"><b>«Mis empleados van a ver todo»</b><span>No. Hay 14 permisos por persona: vender, descontar, fiar, ver reportes… El vendedor no ve costos ni ganancias.</span></div>
+    <div class="qa"><b>«Es muy complicado para mí»</b><span>Cada pantalla trae un tutorial que se abre solo la primera vez. Si sabe usar WhatsApp, sabe usar Eazy Stock.</span></div>
+    <div class="qa"><b>«¿Y mis datos?»</b><span>Cada negocio vive aislado de los demás, la conexión va cifrada y cada cambio queda registrado con quién y cuándo.</span></div>
+    <div class="qa"><b>«¿Qué pasa si no pago al terminar la prueba?»</b><span>No se borra nada: la cuenta queda en modo lectura hasta que elija un plan.</span></div>
+    <div class="qa"><b>«¿Emite boletas y facturas SUNAT?»</b><span>Todavía no: llega pronto en los planes Pro y AI. Hoy ya imprime cotizaciones, notas de pedido y estados de cuenta.</span></div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock</span><span class="sp"></span><span class="part demo">Guía de demo</span><span>14</span></div>
+</section>
+
+<!-- 15 · CIERRE -->
+<section class="s dark grid-bg">
+  <div style="position:relative;text-align:center;margin-top:120px">
+    <img src="img/logo.png" style="width:110px;height:110px">
+    <h1 style="margin-top:30px;font-size:110px">Tu tienda, ordenada<br><span class="hl">desde esta tarde.</span></h1>
+    <p class="lead" style="margin:34px auto 0;max-width:1100px">Sube tu Excel, vende con el celular y cierra la caja sabiendo cuánto entró. Sin tarjeta y sin compromiso.</p>
+    <div style="display:flex;justify-content:center;gap:24px;margin-top:56px">
+      <div style="background:var(--blue);border-radius:20px;padding:24px 40px;text-align:left"><div style="font-size:16px;letter-spacing:2px;text-transform:uppercase;opacity:.8;font-weight:800">Regístrate gratis</div><div class="mono" style="font-size:32px;font-weight:700;margin-top:6px">eazy-stock.com/registro</div></div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:24px 40px;text-align:left"><div style="font-size:16px;letter-spacing:2px;text-transform:uppercase;opacity:.8;font-weight:800">WhatsApp</div><div class="mono" style="font-size:32px;font-weight:700;margin-top:6px">+49 1551 1384643</div></div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:24px 40px;text-align:left"><div style="font-size:16px;letter-spacing:2px;text-transform:uppercase;opacity:.8;font-weight:800">Correo</div><div class="mono" style="font-size:28px;font-weight:700;margin-top:8px">kontakt.eazylife@gmail.com</div></div>
+    </div>
+  </div>
+  <div class="foot"><img src="img/logo.png"><span>Eazy Stock · una app de Eazy Life Company</span><span class="sp"></span><span>15</span></div>
+</section>
+
+</body>
+</html>
