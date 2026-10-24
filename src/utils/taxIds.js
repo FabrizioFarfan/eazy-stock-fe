@@ -7,10 +7,10 @@
 // Si cambia TaxIds.java, cambia esto y vuelve a copiar la tabla de casos.
 
 /**
- * MX: exigir el dígito verificador de la homoclave (como el backend). Si el API lo
- * pone en false, aquí también: se sigue exigiendo el formato y la fecha.
+ * MX (como el backend desde el 25-oct): el verificador de la homoclave NO bloquea. Solo el
+ * formato, la fecha y los RFC genéricos son obligatorios; si el verificador no cuadra, el API
+ * acepta el registro y deja el negocio «no verificado» (taxIdStatus CHECK_DIGIT_MISMATCH).
  */
-export const MX_ENFORCE_CHECK_DIGIT = true
 
 const PE_AR_WEIGHTS = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2]
 const CO_WEIGHTS = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71]
@@ -100,7 +100,7 @@ export function invalidHint(countryCode) {
     case 'EC': return 'son 13 dígitos (los de tu RUC del SRI, terminados en 001) y deben cuadrar con su verificador.'
     case 'UY': return 'son 12 dígitos (así: 21-123456-001-D) y el último es el verificador.'
     case 'ES': return 'revisa el NIF, NIE o CIF y su letra o dígito de control (por ejemplo B12345674).'
-    case 'MX': return 'son 12 caracteres para persona moral o 13 para persona física (letras, fecha AAMMDD y homoclave) y el último es el verificador.'
+    case 'MX': return 'son 12 caracteres para persona moral o 13 para persona física (letras, fecha AAMMDD y homoclave).'
     case 'VE': return 'es una letra (V, E, J, P o G), 8 dígitos y el verificador, así: J-12345678-D.'
     case 'GT': return 'son los dígitos y el verificador (un número o K), así: 1234567-D, o tu CUI de 13 dígitos.'
     case 'PY': return 'son los dígitos y el dígito verificador, así: 80012345-D.'
@@ -149,6 +149,11 @@ export function isValidFor(countryCode, n) {
 }
 
 /** RUC peruano: 11 dígitos, prefijo 10/15/17/20 (el 16 no: padrón de SUNAT) y verificador módulo 11. */
+/** Válido para el país pero con el verificador mal (hoy solo MX): no bloquea, queda «no verificado». */
+export function checkDigitMismatch(countryCode, n) {
+  return String(countryCode || '').toUpperCase() === 'MX' && n != null && isValidMxRfc(n) && !mxCheckDigitOk(n)
+}
+
 export function isValidPeruRuc(n) {
   if (n == null || !/^\d{11}$/.test(n) || !PE_PREFIXES.has(n.slice(0, 2))) return false
   const check = (11 - weighted(n, PE_AR_WEIGHTS) % 11) % 10
@@ -257,8 +262,11 @@ function isValidMxRfc(n) {
   } else {
     return false
   }
-  if (MX_GENERIC.has(n) || !validYyMmDd(date)) return false
-  if (!MX_ENFORCE_CHECK_DIGIT) return true
+  return !MX_GENERIC.has(n) && validYyMmDd(date)
+}
+
+/** Verificador módulo 11 del SAT (último carácter). Solo tiene sentido si isValidMxRfc da true. */
+function mxCheckDigitOk(n) {
   const base = ('   ' + n.slice(0, -1)).slice(-12)
   let sum = 0
   for (let i = 0; i < 12; i++) sum += MX_ALPHABET.indexOf(base[i]) * (13 - i)

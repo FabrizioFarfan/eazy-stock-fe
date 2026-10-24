@@ -5,7 +5,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
-  normalize, isValidFor, isValidPeruRuc, labelFor, typeFor, duplicateMessage, invalidMessage,
+  normalize, isValidFor, isValidPeruRuc, checkDigitMismatch, labelFor, typeFor, duplicateMessage, invalidMessage,
 } from './taxIds.js'
 
 const table = JSON.parse(readFileSync(new URL('./__fixtures__/tax-ids.json', import.meta.url), 'utf8'))
@@ -17,7 +17,10 @@ for (const c of table.normalize) {
 for (const [country, spec] of Object.entries(table.countries)) {
   test(`${country} etiqueta ${spec.label}`, () => assert.equal(labelFor(country), spec.label))
   for (const v of spec.valid) {
-    test(`${country} válido ${v.value} (${v.holder})`, () => assert.equal(isValidFor(country, normalize(v.value)), true, v.value))
+    test(`${country} válido ${v.value} (${v.holder})`, () => {
+      assert.equal(isValidFor(country, normalize(v.value)), true, v.value)
+      assert.equal(checkDigitMismatch(country, normalize(v.value)), v.checkDigit === false, v.value)
+    })
   }
   for (const v of spec.invalid) {
     test(`${country} inválido ${v.value} (${v.reason})`, () => assert.equal(isValidFor(country, normalize(v.value)), false, v.value))
@@ -34,6 +37,19 @@ test('normalizar no rompe las letras', () => {
   assert.equal(normalize('\t20 131\n312-955 '), '20131312955')
   assert.equal(normalize(' .-  '), null)
   assert.equal(normalize(null), null)
+})
+
+test('RFC mexicano: el verificador mal no bloquea, el formato, la fecha y los genéricos sí', () => {
+  assert.equal(isValidFor('MX', 'NWM9709244W4'), true)
+  assert.equal(checkDigitMismatch('MX', 'NWM9709244W4'), false)
+  assert.equal(isValidFor('MX', 'NWM9709244W5'), true)
+  assert.equal(checkDigitMismatch('MX', 'NWM9709244W5'), true)
+  assert.equal(isValidFor('MX', 'NWM9713244W4'), false)
+  assert.equal(isValidFor('MX', 'XAXX010101000'), false)
+  assert.equal(isValidFor('MX', 'NWM97092'), false)
+  assert.equal(checkDigitMismatch('MX', 'NWM97092'), false)
+  assert.equal(checkDigitMismatch('PE', '20131312956'), false)
+  assert.equal(invalidMessage('MX').includes('verificador'), false)
 })
 
 test('RUC peruano: prefijo 16 rechazado', () => {

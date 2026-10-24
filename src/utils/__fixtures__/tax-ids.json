@@ -123,18 +123,18 @@
     },
     "MX": {
       "label": "RFC",
-      "algorithm": "moral: 3 letras (A-Z, &, Ñ) + AAMMDD + homoclave (12); física: 4 letras + AAMMDD + homoclave (13); último carácter = verificador módulo 11 del SAT sobre el alfabeto 0-9 A-N & O-Z espacio Ñ (moral con un espacio delante); RFC genéricos XAXX010101000 / XEXX010101000 rechazados",
+      "algorithm": "moral: 3 letras (A-Z, &, Ñ) + AAMMDD + homoclave (12); física: 4 letras + AAMMDD + homoclave (13); último carácter = verificador módulo 11 del SAT (NO bloquea: si no cuadra, válido con \"checkDigit\": false y el negocio queda no verificado) sobre el alfabeto 0-9 A-N & O-Z espacio Ñ (moral con un espacio delante); RFC genéricos XAXX010101000 / XEXX010101000 rechazados",
       "valid": [
         { "value": "NWM9709244W4", "holder": "Nueva Wal-Mart de México S. de R.L. de C.V.", "source": "tickets de Walmart publicados en https://es.scribd.com/document/983697542/Ticket" },
         { "value": "SAT970701NN3", "holder": "Servicio de Administración Tributaria (RFC impreso en los CFDI del SAT)", "source": "https://imcp.org.mx/wp-content/uploads/2014/04/Anexo-1-Folio-28-Guías-de-apoyo-relativas-a-trámites-del-RFC-y-uso-del-Sistema-de-Registro-Fiscal-“Mis-Cuentas”.pdf" },
         { "value": "GODE 561231 GR8", "holder": "persona física, ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.mx.rfc" },
-        { "value": "MAB-930714-8T4", "holder": "persona moral, ejemplo de python-stdnum", "source": "idem" }
+        { "value": "MAB-930714-8T4", "holder": "persona moral, ejemplo de python-stdnum", "source": "idem" },
+        { "value": "NWM9709244W5", "holder": "RFC de Walmart con el verificador cambiado: se acepta, queda no verificado", "checkDigit": false },
+        { "value": "VACE460910SX6", "holder": "ejemplo de stdnum con el verificador mal (~1,5 % de los RFC en uso son así): se acepta, queda no verificado", "checkDigit": false }
       ],
       "invalid": [
-        { "value": "NWM9709244W5", "reason": "verificador cambiado" },
         { "value": "NWM9713244W4", "reason": "mes 13" },
         { "value": "XAXX010101000", "reason": "RFC genérico (público en general)" },
-        { "value": "VACE460910SX6", "reason": "ejemplo de stdnum con el verificador mal (stdnum dice que ~1,5 % de los RFC en uso son así; ver TaxIds.MX_ENFORCE_CHECK_DIGIT)" },
         { "value": "NWM97092", "reason": "corto" }
       ]
     },
