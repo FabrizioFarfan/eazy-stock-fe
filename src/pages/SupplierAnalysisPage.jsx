@@ -9,7 +9,7 @@ import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports
 import { formatPrice } from '../utils/formatMoney'
 import { quickRange } from '../utils/dateRanges'
 import { useT, dateLocale } from '../i18n'
-import { taxIdLabel } from '../utils/taxIds'
+import { taxIdLabel } from '../utils/taxIdText'
 
 /**
  * Análisis de proveedores (Frank, 3-oct-2026): quién nos vende más, de quién

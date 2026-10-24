@@ -12,18 +12,26 @@ import EntityModal, { EntityField } from '../../components/common/EntityModal'
 import { BossSwitcher, FlagAvatar, Chip, ConfirmCard } from '../../components/boss/BossKit'
 import { formatDate, isThisMonth } from '../../components/boss/bossUtils'
 import { useT } from '../../i18n'
+import { normalize as normalizeTaxId, typeFor as taxIdTypeFor } from '../../utils/taxIds'
+import { checkTaxId } from '../../utils/taxIdText'
 
 const inputCls =
   'rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 w-full bg-white'
 
 // ── form schema ───────────────────────────────────────────────────────────────
 
-const makeSchema = (t) => z.object({
+const makeSchema = (t, business) => z.object({
   name:        z.string().min(2, t('Mínimo 2 caracteres')),
   countryCode: z.string().min(2).max(3, t('Código de 2-3 letras')),
   currency:    z.string().length(3, t('Requerido')),
   taxIdType:   z.string().min(1, t('Requerido')),
   taxId:       z.string().min(1, t('Requerido')),
+}).superRefine((v, ctx) => {
+  // API 1.15.0: algoritmo del país; al editar, solo si cambian el documento o el país.
+  const taxId = normalizeTaxId(v.taxId)
+  if (business && taxId === business.taxId && v.countryCode === business.countryCode) return
+  const message = checkTaxId(v.countryCode, taxId, { requiredMessage: t('Requerido') })
+  if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['taxId'], message })
 })
 
 const COUNTRIES = [
@@ -46,7 +54,7 @@ const COUNTRIES = [
 ]
 const countryLabel = (code) => COUNTRIES.find((c) => c.code === code)?.label.replace(/ \(\w+\)$/, '') ?? code
 
-const TAX_TYPES = ['RUC', 'CUIT', 'RFC', 'NIT', 'RUT', 'DNI', 'OTRO']
+const TAX_TYPES = ['RUC', 'CUIT', 'RFC', 'NIT', 'RUT', 'NIF', 'RIF', 'RNC', 'RTN', 'DNI', 'OTRO']
 
 // ── Modal de negocio (EntityModal: cabecera azul con vista previa) ───────────
 
@@ -56,7 +64,7 @@ function BusinessFormModal({ business, onClose }) {
   const createBiz = useCreateBusiness()
   const updateBiz = useUpdateBusiness()
   const mutation  = isEdit ? updateBiz : createBiz
-  const schema    = useMemo(() => makeSchema(t), [t])
+  const schema    = useMemo(() => makeSchema(t, business), [t, business])
 
   const { register, handleSubmit, setError, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -71,9 +79,13 @@ function BusinessFormModal({ business, onClose }) {
     // al elegir país, proponer su moneda (se puede corregir a mano)
     const suggested = CURRENCY_BY_COUNTRY[watchedCountry]
     if (suggested && (!isEdit || watchedCountry !== business?.countryCode)) setValue('currency', suggested)
+    // y su documento (RUC, NIT, NIF…) si está en la lista
+    const type = taxIdTypeFor(watchedCountry)
+    if (TAX_TYPES.includes(type) && (!isEdit || watchedCountry !== business?.countryCode)) setValue('taxIdType', type)
   }, [watchedCountry]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const onSubmit = async (values) => {
+  const onSubmit = async (raw) => {
+    const values = { ...raw, taxId: normalizeTaxId(raw.taxId) }
     try {
       if (isEdit) await updateBiz.mutateAsync({ id: business.id, data: values })
       else        await createBiz.mutateAsync(values)

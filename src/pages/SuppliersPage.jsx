@@ -15,7 +15,7 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 import PhoneInput from '../components/inputs/PhoneInput'
 import { isValidPhone, formatPhoneDisplay } from '../utils/phone'
-import { taxIdLabel } from '../utils/taxIds'
+import { taxIdLabel } from '../utils/taxIdText'
 
 const makeSchema = (t) => z.object({
   name:    z.string().min(2, t('Mínimo 2 caracteres')),

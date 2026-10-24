@@ -12,7 +12,7 @@ import { formatPrice } from '../utils/formatMoney'
 import { quickRange } from '../utils/dateRanges'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
-import { taxIdLabel } from '../utils/taxIds'
+import { taxIdLabel } from '../utils/taxIdText'
 
 function formatDate(str) {
   if (!str) return '—'

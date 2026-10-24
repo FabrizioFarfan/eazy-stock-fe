@@ -9,6 +9,7 @@ import { announceToken } from "../services/wsClient";
 import { getMyPermissions } from "../services/endpoints/permissions";
 import { tutorialsApi } from "../services/endpoints/tutorials";
 import { myBusinessesApi } from "../services/endpoints/myBusinesses";
+import { saveSetupPending } from "../utils/setupPendingNotice";
 
 const AuthContext = createContext(null);
 
@@ -154,11 +155,17 @@ export function AuthProvider({ children }) {
 
   // Registro propio (M1 «Planes en serio», 15-oct-2026): crea negocio + OWNER con
   // prueba gratis de 14 días y entra directo al panel (ahí salta el tutorial de bienvenida).
+  // API 1.15.0: con `setupPending` (documento que ya usó su prueba) la cuenta nace sin
+  // prueba → a Ajustes › Tu plan con el aviso, no a «Carga tu catálogo».
   const register = async (payload) => {
     const res = await api.post("/auth/register", payload);
+    if (res.data?.setupPending) {
+      saveSetupPending({ businessId: res.data.user?.businessId, countryCode: payload.countryCode });
+    }
     await _startSession(res.data);
     // Cuenta nueva (20-oct-2026): primero «Carga tu catálogo», no un panel vacío.
-    navigate("/bienvenida");
+    navigate(res.data?.setupPending ? "/settings#plan" : "/bienvenida");
+    return res.data;
   };
 
   // Varios negocios por dueño (15-oct-2026): el token lleva el businessId, así que

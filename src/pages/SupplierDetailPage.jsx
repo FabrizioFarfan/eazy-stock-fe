@@ -18,7 +18,7 @@ import DebtAddModal from '../components/accounts/DebtAddModal'
 import { useT, dateLocale } from '../i18n'
 import { ProfileHero, ActionButton, InfoRow, SectionTitle } from '../components/accounts/AccountKit'
 import { formatPhoneDisplay } from '../utils/phone'
-import { taxIdLabel } from '../utils/taxIds'
+import { taxIdLabel } from '../utils/taxIdText'
 
 function formatDate(str) {
   if (!str) return '—'

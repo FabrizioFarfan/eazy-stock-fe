@@ -12,6 +12,8 @@ import { useT } from '../../i18n'
 import { PlanCards } from '../../pages/landing/Pricing'
 import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
+import { readSetupPending, clearSetupPending } from '../../utils/setupPendingNotice'
+import { taxIdTrialUsedMessage } from '../../utils/taxIdText'
 import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from './subscriptionUtils'
 
 /**
@@ -51,6 +53,13 @@ export default function PlanSection() {
       return () => clearTimeout(timer)
     }
   }, [hash, sub])
+
+  // Registro con un documento que ya usó su prueba (API 1.15.0, setupPending): aviso
+  // arriba hasta que el plan deje de estar en solo lectura.
+  const setupPending = readSetupPending(user?.businessId)
+  useEffect(() => {
+    if (sub && !sub.readOnly && readSetupPending(user?.businessId)) clearSetupPending()
+  }, [sub, user?.businessId])
 
   const current = planKey(sub?.plan)
   const currentPlan = PLANS.find((p) => p.key === current)
@@ -105,6 +114,15 @@ export default function PlanSection() {
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{t('No se pudo cargar tu plan. Intenta de nuevo en un momento.')}</p>
         )}
 
+        {setupPending && sub?.readOnly && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-testid="setup-pending-notice">
+            <Lock size={18} className="mt-0.5 flex-shrink-0 text-amber-600" />
+            <div>
+              <p className="font-bold">{taxIdTrialUsedMessage(setupPending.countryCode ?? biz?.countryCode)}</p>
+              <p className="mt-0.5 text-xs">{t('Tu cuenta ya está creada y tus datos se guardan. Mientras no elijas un plan, la tienda está en solo lectura.')}</p>
+            </div>
+          </div>
+        )}
         {checkoutMsg === 'success' && (
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             <CheckCircle2 size={18} className="mt-0.5 flex-shrink-0 text-emerald-600" />

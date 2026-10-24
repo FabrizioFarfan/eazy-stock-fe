@@ -20,7 +20,7 @@ import { formatPrice } from '../../utils/formatMoney'
 import { formatQty, isDivisibleUnit } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useT } from '../../i18n'
-import { taxIdLabel } from '../../utils/taxIds'
+import { taxIdLabel } from '../../utils/taxIdText'
 
 /**
  * Modal de recepción de mercadería — flujo en 2 pasos:

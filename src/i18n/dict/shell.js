@@ -14,7 +14,6 @@ export default {
     '{n} en stock · vence el {d}': '{n} in stock · expires on {d}',
     // ── 29-sep: Notificaciones y Ajustes rediseñadas
     'Tu nombre y tu correo para entrar': 'Your name and the email you log in with',
-    'Nombre, país, moneda y RUC': 'Name, country, currency and tax ID',
     'Ábrela como una app, sin buscarla en el navegador': 'Open it like an app, without looking for it in the browser',
     'Tu cuenta, tu negocio y cómo se ve la app': 'Your account, your business and how the app looks',
     'Cámbiala si alguien más la conoce': 'Change it if someone else knows it',
@@ -204,8 +203,6 @@ export default {
     'Mi negocio': 'My business',
     'Nombre del negocio': 'Business name',
     'País': 'Country',
-    'Tipo de doc.': 'Tax ID type',
-    'Número': 'Number',
     'Documento': 'Tax ID',
     'Cargando...': 'Loading...',
     '¡Listo! Busca «Eazy Stock» en tu escritorio o pantalla de inicio': 'Done! Look for "Eazy Stock" on your desktop or home screen',
@@ -283,7 +280,6 @@ export default {
     '{n} en stock · vence el {d}': '{n} in magazzino · scade il {d}',
     // ── 29-sep: Notificaciones y Ajustes rediseñadas
     'Tu nombre y tu correo para entrar': 'Il tuo nome e l\'email per entrare',
-    'Nombre, país, moneda y RUC': 'Nome, paese, valuta e partita IVA',
     'Ábrela como una app, sin buscarla en el navegador': 'Aprila come un\'app, senza cercarla nel browser',
     'Tu cuenta, tu negocio y cómo se ve la app': 'Il tuo account, la tua attività e l\'aspetto dell\'app',
     'Cámbiala si alguien más la conoce': 'Cambiala se qualcun altro la conosce',
@@ -473,8 +469,6 @@ export default {
     'Mi negocio': 'La mia attività',
     'Nombre del negocio': 'Nome dell\'attività',
     'País': 'Paese',
-    'Tipo de doc.': 'Tipo di documento',
-    'Número': 'Numero',
     'Documento': 'Documento',
     'Cargando...': 'Caricamento...',
     '¡Listo! Busca «Eazy Stock» en tu escritorio o pantalla de inicio': 'Fatto! Cerca «Eazy Stock» sul desktop o nella schermata Home',

@@ -1,0 +1,212 @@
+{
+  "about": "Casos de prueba del documento fiscal del negocio (Eazy Stock API 1.15.0). Fuente única para el backend (TaxIdsTest), la web y las apps: normalizar con 'normalize' (quitar espacios, puntos y guiones; mayúsculas) y validar con el algoritmo del país. 'valid' = documentos REALES publicados por la propia empresa/organismo o por registros públicos (holder + source); los que salen de ejemplos de documentación lo dicen en 'source'. 'invalid' = el mismo documento con un carácter cambiado, o formatos imposibles.",
+  "version": "1.15.0",
+  "normalize": [
+    { "raw": " 20 100.070-970 ", "normalized": "20100070970" },
+    { "raw": "61.704.000-k", "normalized": "61704000K" },
+    { "raw": "b-58378431", "normalized": "B58378431" },
+    { "raw": "x-2482300w", "normalized": "X2482300W" },
+    { "raw": "j-00006372-9", "normalized": "J000063729" },
+    { "raw": "576937-k", "normalized": "576937K" },
+    { "raw": "nwm 970924 4w4", "normalized": "NWM9709244W4" },
+    { "raw": "ab&c 680524-p76", "normalized": "AB&C680524P76" },
+    { "raw": "   ", "normalized": null }
+  ],
+  "countries": {
+    "PE": {
+      "label": "RUC",
+      "algorithm": "11 dígitos; prefijo 10, 15, 17 o 20; módulo 11 con pesos 5,4,3,2,7,6,5,4,3,2 sobre los 10 primeros, dv = (11 - suma % 11) % 10",
+      "valid": [
+        { "value": "20131312955", "holder": "SUNAT", "source": "https://www.sunat.gob.pe/orientacion/deInteres/politicaPrivacidad-SUNAT.pdf" },
+        { "value": "20100047218", "holder": "Banco de Crédito del Perú", "source": "https://tramitesperu.com/empresas/20100047218/ (padrón RUC de SUNAT)" },
+        { "value": "20 100 047-218", "holder": "Banco de Crédito del Perú, con espacios y guion", "source": "idem" }
+      ],
+      "invalid": [
+        { "value": "20131312956", "reason": "verificador cambiado" },
+        { "value": "16100070972", "reason": "prefijo 16 (verificador correcto): ya no se acepta" },
+        { "value": "30131312955", "reason": "prefijo 30 desconocido" },
+        { "value": "2013131295", "reason": "10 dígitos" },
+        { "value": "2013131295A", "reason": "letra" }
+      ]
+    },
+    "AR": {
+      "label": "CUIT",
+      "algorithm": "11 dígitos; prefijo 20,23,24,27,30,33,34,50,51,55; módulo 11 pesos 5,4,3,2,7,6,5,4,3,2; r = 11 - suma % 11; 11→0, 10→9",
+      "valid": [
+        { "value": "30-54668997-9", "holder": "YPF S.A.", "source": "https://lei.bloomberg.com/leis/view/5493003N7447U18U5U53 (LEI, autoridad AFIP) y Boletín Oficial" },
+        { "value": "30-70308853-4", "holder": "MercadoLibre S.R.L.", "source": "https://ar.vlex.com/vid/mercadolibres-r-l-881038640 (edicto del Boletín Oficial)" },
+        { "value": "33-69345023-9", "holder": "AFIP (prefijo 33)", "source": "https://contadoresenred.com/listado-de-cuits-de-utilidad/" }
+      ],
+      "invalid": [
+        { "value": "30-54668997-8", "reason": "verificador cambiado" },
+        { "value": "40-54668997-9", "reason": "prefijo 40 desconocido" },
+        { "value": "3054668997", "reason": "10 dígitos" }
+      ]
+    },
+    "CL": {
+      "label": "RUT",
+      "algorithm": "7-8 dígitos + dv; suma de dígitos desde la derecha por 2,3,4,5,6,7 (cíclico); dv = 11 - suma % 11; 11→0, 10→K",
+      "valid": [
+        { "value": "61.704.000-K", "holder": "Codelco (verificador K)", "source": "https://codelco.com/memoria2010/es/presentacion/perfil-corporativo/" },
+        { "value": "61704000k", "holder": "Codelco, k minúscula y sin puntos", "source": "idem" },
+        { "value": "89.862.200-2", "holder": "LATAM Airlines Group S.A.", "source": "https://mercantil.com/empresa/lan-airlines/coyhaique/300021581/esp" },
+        { "value": "90.749.000-9", "holder": "S.A.C.I. Falabella", "source": "https://www.genealog.cl/Geneanexus/empresa/CHILE/TOTA3TwNDkwMDAtOQ-jTw/nombre-y-rut/FALABELLA-90749000-9" }
+      ],
+      "invalid": [
+        { "value": "61.704.000-9", "reason": "verificador cambiado (era K)" },
+        { "value": "90.749.000-K", "reason": "verificador cambiado (era 9)" },
+        { "value": "61.704.000-X", "reason": "verificador que no es número ni K" }
+      ]
+    },
+    "CO": {
+      "label": "NIT",
+      "algorithm": "NIT + dígito de verificación; pesos DIAN 3,7,13,17,19,23,29,37,41,43,47,53,59,67,71 desde la derecha; r = suma % 11; dv = r si r < 2, si no 11 - r",
+      "valid": [
+        { "value": "899.999.068-1", "holder": "Ecopetrol S.A.", "source": "https://www.sec.gov/Archives/edgar/data/1444406/000141057822001007/ec-20211231xex4d21.htm" },
+        { "value": "890.903.938-8", "holder": "Bancolombia S.A.", "source": "https://lei.bloomberg.com/leis/view/54930052NWJRPNMP1W58 y certificados del banco en colombiacompra.gov.co" },
+        { "value": "800.197.268-4", "holder": "DIAN", "source": "https://www.dian.gov.co/tramitesservicios/Tramites_Impuestos/RUT/Paginas/default.aspx (pie de página)" }
+      ],
+      "invalid": [
+        { "value": "899.999.068-2", "reason": "DV cambiado" },
+        { "value": "899999068", "reason": "sin el DV (el último dígito no cuadra)" },
+        { "value": "89999906A1", "reason": "letra" }
+      ]
+    },
+    "EC": {
+      "label": "RUC",
+      "algorithm": "13 dígitos; provincia 01-24, 30 o 50; 3.er dígito 0-5 persona natural (cédula módulo 10 coeficientes 2,1,2,1… + establecimiento ≠ 000), 6 entidad pública (módulo 11 pesos 3,2,7,6,5,4,3,2 + dv en la posición 9; establecimiento ≠ 0000), 9 sociedad privada (módulo 11 pesos 4,3,2,7,6,5,4,3,2 + dv en la posición 10; establecimiento ≠ 000)",
+      "valid": [
+        { "value": "0990049459001", "holder": "Banco de Guayaquil S.A. (sociedad privada, 3.er dígito 9)", "source": "https://lei.bloomberg.com/leis/view/5493009PK9GPDCGTV888" },
+        { "value": "1760005620001", "holder": "Escuela Politécnica Nacional (entidad pública, 3.er dígito 6)", "source": "https://atenea.epn.edu.ec/bitstream/25000/1191/1/Certificado%20RUC%20EPN.pdf (certificado RUC del SRI)" },
+        { "value": "1714307103001", "holder": "persona natural (cédula 171430710-3 del ejemplo de python-stdnum + establecimiento 001; no es un RUC comprobado en el SRI)", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.ec.ci" }
+      ],
+      "invalid": [
+        { "value": "0990049458001", "reason": "un dígito cambiado" },
+        { "value": "0990049459000", "reason": "establecimiento 000" },
+        { "value": "2590049459001", "reason": "provincia 25" },
+        { "value": "1714307104001", "reason": "cédula con el verificador cambiado" },
+        { "value": "099004945900", "reason": "12 dígitos" }
+      ]
+    },
+    "UY": {
+      "label": "RUT",
+      "algorithm": "12 dígitos: 01-22 + 6 dígitos (no 000000) + 001 + dv; pesos 4,3,2,9,8,7,6,5,4,3,2; dv = (-suma) % 11 (10 → inválido)",
+      "valid": [
+        { "value": "21-100342-001-7", "holder": "ejemplo de python-stdnum (no encontré un RUT de empresa publicado para contrastarlo)", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.uy.rut" },
+        { "value": "21 140634 001 1", "holder": "ejemplo de python-stdnum", "source": "idem" }
+      ],
+      "invalid": [
+        { "value": "211003420018", "reason": "verificador cambiado" },
+        { "value": "211003420027", "reason": "no lleva 001" },
+        { "value": "231003420017", "reason": "registro 23" },
+        { "value": "UY211406340011", "reason": "prefijo de país: se escribe sin UY" }
+      ]
+    },
+    "ES": {
+      "label": "NIF",
+      "algorithm": "DNI 8 dígitos + letra TRWAGMYFPDXBNJZSQVHLCKE[n % 23]; NIE X/Y/Z → 0/1/2 y la misma letra; K/L/M + 7 dígitos + letra del DNI; CIF letra (ABCDEFGHJNPQRSUVW) + 7 dígitos + control Luhn (dígito o letra JABCDEFGHI)",
+      "valid": [
+        { "value": "A28015865", "holder": "Telefónica, S.A.", "source": "https://www.telefonica.com/en/wp-content/uploads/sites/5/2021/08/2002_annual_financial_statement.pdf" },
+        { "value": "A-46103834", "holder": "Mercadona, S.A.", "source": "https://www.einforma.com/informacion-empresa/mercadona" },
+        { "value": "A15075062", "holder": "Industria de Diseño Textil, S.A. (Inditex)", "source": "https://sede.agenciatributaria.gob.es/static_files/Sede/Tema/Declaraciones_informativas/I_Transacciones_Financieras/RELACION_SOCIEDADES_EJERCICIO_2026.pdf" },
+        { "value": "Q2826000H", "holder": "Agencia Estatal de Administración Tributaria (control con letra)", "source": "https://ted.europa.eu/es/notice/85564-2026/pdf" },
+        { "value": "54362315-K", "holder": "DNI de ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.es.dni" },
+        { "value": "x-2482300w", "holder": "NIE de ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.es.nie" }
+      ],
+      "invalid": [
+        { "value": "A28015866", "reason": "control cambiado" },
+        { "value": "54362315Z", "reason": "letra del DNI cambiada" },
+        { "value": "X2482300A", "reason": "letra del NIE cambiada" },
+        { "value": "O1234567L", "reason": "primera letra no válida" },
+        { "value": "ESA28015865", "reason": "con el prefijo ES del NIF-IVA: se escribe sin ES" }
+      ]
+    },
+    "MX": {
+      "label": "RFC",
+      "algorithm": "moral: 3 letras (A-Z, &, Ñ) + AAMMDD + homoclave (12); física: 4 letras + AAMMDD + homoclave (13); último carácter = verificador módulo 11 del SAT sobre el alfabeto 0-9 A-N & O-Z espacio Ñ (moral con un espacio delante); RFC genéricos XAXX010101000 / XEXX010101000 rechazados",
+      "valid": [
+        { "value": "NWM9709244W4", "holder": "Nueva Wal-Mart de México S. de R.L. de C.V.", "source": "tickets de Walmart publicados en https://es.scribd.com/document/983697542/Ticket" },
+        { "value": "SAT970701NN3", "holder": "Servicio de Administración Tributaria (RFC impreso en los CFDI del SAT)", "source": "https://imcp.org.mx/wp-content/uploads/2014/04/Anexo-1-Folio-28-Guías-de-apoyo-relativas-a-trámites-del-RFC-y-uso-del-Sistema-de-Registro-Fiscal-“Mis-Cuentas”.pdf" },
+        { "value": "GODE 561231 GR8", "holder": "persona física, ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.mx.rfc" },
+        { "value": "MAB-930714-8T4", "holder": "persona moral, ejemplo de python-stdnum", "source": "idem" }
+      ],
+      "invalid": [
+        { "value": "NWM9709244W5", "reason": "verificador cambiado" },
+        { "value": "NWM9713244W4", "reason": "mes 13" },
+        { "value": "XAXX010101000", "reason": "RFC genérico (público en general)" },
+        { "value": "VACE460910SX6", "reason": "ejemplo de stdnum con el verificador mal (stdnum dice que ~1,5 % de los RFC en uso son así; ver TaxIds.MX_ENFORCE_CHECK_DIGIT)" },
+        { "value": "NWM97092", "reason": "corto" }
+      ]
+    },
+    "VE": {
+      "label": "RIF",
+      "algorithm": "V/E/J/P/G + 8 dígitos + dv; letra V=4, E=8, J=12, P=16, G=20 + pesos 3,2,7,6,5,4,3,2; dv = '00987654321'[suma % 11]",
+      "valid": [
+        { "value": "J-00006372-9", "holder": "Cervecería Polar, C.A.", "source": "https://ep-prod.eastus.cloudapp.azure.com/wp-content/uploads/2022/05/Ficha-Tecnica-Pilsen_compressed.pdf" },
+        { "value": "V-11470283-4", "holder": "ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.ve.rif" }
+      ],
+      "invalid": [
+        { "value": "J-00006372-8", "reason": "verificador cambiado" },
+        { "value": "X-00006372-9", "reason": "letra desconocida" },
+        { "value": "J0000637", "reason": "corto" }
+      ]
+    },
+    "GT": {
+      "label": "NIT",
+      "algorithm": "dígitos + dv (0-9 o K): suma desde la derecha por 2,3,4…; dv = (-suma) % 11, 10 → K. También el CUI de 13 dígitos (aceptado como NIT en FEL; solo formato)",
+      "valid": [
+        { "value": "576937-K", "holder": "ejemplo de python-stdnum (verificador K); no encontré un NIT de empresa publicado para contrastarlo", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.gt.nit, algoritmo en https://portal.sat.gob.gt/portal/descarga/6524/factura-electronica-fel/25542/fel-reglas-y-validaciones.pdf (pág. 58)" },
+        { "value": "7108-0", "holder": "ejemplo de python-stdnum", "source": "idem" }
+      ],
+      "invalid": [
+        { "value": "576937-0", "reason": "verificador cambiado (era K)" },
+        { "value": "8977112-0", "reason": "ejemplo inválido de stdnum" },
+        { "value": "57693A-K", "reason": "letra en el cuerpo" }
+      ]
+    },
+    "PY": {
+      "label": "RUC",
+      "algorithm": "hasta 8 dígitos + dv; suma desde la derecha por 2,3,4…; dv = ((-suma) % 11) % 10",
+      "valid": [
+        { "value": "80000519-8", "holder": "Telefónica Celular del Paraguay S.A.E. (Tigo)", "source": "https://contrataciones.gov.py/reporte/codigo-contratacion/CD-12006-22-213727.pdf" },
+        { "value": "80028061-0", "holder": "ejemplo de python-stdnum", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.py.ruc" }
+      ],
+      "invalid": [
+        { "value": "80000519-9", "reason": "dv cambiado" },
+        { "value": "80053249-2", "reason": "ejemplo inválido de stdnum" },
+        { "value": "8012345678-9", "reason": "largo" }
+      ]
+    },
+    "DO": {
+      "label": "RNC",
+      "algorithm": "RNC de 9 dígitos: pesos 7,9,8,6,5,4,3,2; r = suma % 11; dv = (10 - r) % 9 + 1; más los RNC reales que no cuadran (lista de python-stdnum). Cédula de 11 dígitos (persona física): solo formato",
+      "valid": [
+        { "value": "1-01-01063-2", "holder": "Banco Popular Dominicano, S.A. – Banco Múltiple", "source": "https://data.bvrd.com.do/hechos-relevantes/2026/02/BPD-2026-02-02-22-07-43-3q3wa7dr.pdf" },
+        { "value": "101581601", "holder": "RNC real que no cumple el módulo 11 (lista blanca de stdnum)", "source": "https://github.com/arthurdejong/python-stdnum/blob/master/stdnum/do/rnc.py" }
+      ],
+      "invalid": [
+        { "value": "101010633", "reason": "verificador cambiado" },
+        { "value": "1018A0043", "reason": "letra" },
+        { "value": "10101063", "reason": "8 dígitos" }
+      ]
+    },
+    "SV": {
+      "label": "NIT",
+      "algorithm": "14 dígitos (empieza por 0, 1 o 9); correlativo ≤ 100: pesos 14..2 y dv = (suma % 11) % 10; si no: pesos 2,7,6,5,4,3,2,7,6,5,4,3,2 y dv = ((-suma) % 11) % 10. DUI de 9 dígitos (homologado como NIT): solo formato",
+      "valid": [
+        { "value": "0614-050707-104-8", "holder": "ejemplo de python-stdnum; no encontré un NIT de empresa publicado en texto para contrastarlo", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.sv.nit" }
+      ],
+      "invalid": [
+        { "value": "0614-050707-104-0", "reason": "verificador cambiado" },
+        { "value": "5614-050707-104-8", "reason": "empieza por 5" },
+        { "value": "0614-050707-10", "reason": "corto" }
+      ]
+    },
+    "BO": { "label": "NIT", "algorithm": "solo formato: 6-12 dígitos (no hay algoritmo público fiable del dígito)", "valid": [ { "value": "1020269020", "holder": "formato", "source": "formato" } ], "invalid": [ { "value": "12345", "reason": "corto" }, { "value": "10202690A", "reason": "letra" } ] },
+    "CR": { "label": "Cédula jurídica", "algorithm": "solo formato: 9-12 dígitos (física 9, jurídica 10, DIMEX 11-12); no hay dígito verificador", "valid": [ { "value": "3-101-999999", "holder": "ejemplo de python-stdnum (cr.cpj)", "source": "https://arthurdejong.org/python-stdnum/doc/stdnum.cr.cpj" } ], "invalid": [ { "value": "3-101-99", "reason": "corto" } ] },
+    "PA": { "label": "RUC", "algorithm": "solo formato: 5-20 letras o números (persona natural 8-NT-1-12345, jurídica tomo-folio-asiento); el DV panameño se calcula aparte y no forma parte del RUC", "valid": [ { "value": "8-NT-1-12345", "holder": "formato", "source": "formato" } ], "invalid": [ { "value": "8-1", "reason": "corto" } ] },
+    "HN": { "label": "RTN", "algorithm": "solo formato: 14 dígitos", "valid": [ { "value": "0801-1999-123456", "holder": "formato", "source": "formato" } ], "invalid": [ { "value": "0801199912345", "reason": "13 dígitos" } ] },
+    "NI": { "label": "RUC", "algorithm": "solo formato: J + 13 dígitos (persona jurídica) o 13 dígitos + letra (cédula)", "valid": [ { "value": "J0310000000000", "holder": "formato", "source": "formato" }, { "value": "001-230969-0004F", "holder": "formato de cédula", "source": "formato" } ], "invalid": [ { "value": "J03100000", "reason": "corto" } ] },
+    "ZZ": { "label": "TAX_ID", "algorithm": "país sin reglas: 6-20 letras o números", "valid": [ { "value": "AB-123456", "holder": "formato", "source": "formato" } ], "invalid": [ { "value": "12345", "reason": "corto" } ] }
+  }
+}

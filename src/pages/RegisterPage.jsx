@@ -17,13 +17,15 @@ import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import { promoActive, promoVars, trialLine, afterPromoLine } from './landing/plans'
 import { usePlans } from '../hooks/useSubscription'
-import { isValidPeruRuc, TAX_ID_LABEL } from '../utils/taxIds'
+import { normalize as normalizeTaxId, duplicateMessage } from '../utils/taxIds'
+import { TAX_ID_LABEL, checkTaxId, taxIdHelp } from '../utils/taxIdText'
 
 /**
  * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
  * Promo de lanzamiento (Frank + Fabrizio, 19-oct-2026, task 1001): gratis hasta el
  * 15 de diciembre sin tarjeta; los primeros 50 negocios son fundadores (mitad de
- * precio 6 meses). RUC obligatorio, válido y único (task 1002). Regla post-promo
+ * precio 6 meses). RUC obligatorio, válido y único (task 1002); desde el API 1.15.0 validado
+ * con el algoritmo de cada país (utils/taxIds.js) y normalizado al enviar. Regla post-promo
  * (task 1018): después del 15-dic, 1 mes gratis y el segundo mes a mitad de precio.
  * El BE manda en POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
  * Multi-país (24-oct-2026): primer paso «¿Dónde está tu negocio?» (países de
@@ -58,12 +60,9 @@ const makeSchema = (t) => z.object({
   phone:        z.string().trim().optional(),
   accept:       z.boolean().refine((v) => v === true, { message: t('Necesitamos que aceptes la política de privacidad') }),
 }).superRefine((v, ctx) => {
-  // Perú: RUC real de SUNAT (11 dígitos + verificador). Otros países: 6-20 letras o números.
-  const id = v.taxId.replace(/[\s.-]/g, '').toUpperCase()
-  const ok = v.countryCode === 'PE' ? isValidPeruRuc(id) : /^[A-Z0-9]{6,20}$/.test(id)
-  if (!ok) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['taxId'], message: v.countryCode === 'PE'
-    ? t('Ese RUC no es válido: son 11 dígitos y empieza por 10 o 20')
-    : t('Entre 6 y 20 letras o números') })
+  // API 1.15.0: el algoritmo del país (utils/taxIds.js = TaxIds.java) y su mensaje.
+  const message = checkTaxId(v.countryCode, v.taxId, { requiredMessage: t('Requerido') })
+  if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['taxId'], message })
 })
 
 export default function RegisterPage() {
@@ -123,13 +122,16 @@ export default function RegisterPage() {
     setError('')
     setSubmitting(true)
     try {
-      await registerAccount({ ...values, email: values.email.toLowerCase(), phone: phone?.trim() || undefined })
+      await registerAccount({
+        ...values, email: values.email.toLowerCase(), taxId: normalizeTaxId(values.taxId), phone: phone?.trim() || undefined,
+      })
     } catch (err) {
       const field = getErrorField(err)
       if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
         setFieldError('email', { type: 'server', message: 'DUPLICATE_EMAIL' })
       } else if (getErrorCode(err) === 'DUPLICATE_TAX_ID') {
-        setFieldError('taxId', { type: 'server', message: 'DUPLICATE_TAX_ID' })
+        // El mensaje del API tal cual: «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.»
+        setFieldError('taxId', { type: 'server', message: err?.response?.data?.message || duplicateMessage(values.countryCode) })
       } else if (field && ['password', 'name', 'businessName', 'countryCode', 'currency', 'phone', 'taxId'].includes(field)) {
         setFieldError(field, { type: 'server', message: getErrorMessage(err) })
       } else {
@@ -311,18 +313,8 @@ export default function RegisterPage() {
                 <label htmlFor="taxId" className="mb-1.5 block text-sm font-medium text-gray-700">{taxLabel}</label>
                 <input id="taxId" {...register('taxId')} type="text" inputMode={watchedCountry === 'PE' ? 'numeric' : 'text'} autoComplete="off"
                   placeholder={watchedCountry === 'PE' ? '20123456786' : t('Tu número fiscal')} className={inputCls} data-testid="register-tax-id" />
-                <p className="mt-1 text-xs text-gray-400">
-                  {watchedCountry === 'PE'
-                    ? t('El RUC de tu negocio en SUNAT (11 dígitos). Uno por negocio: es lo que hace legal tu cuenta.')
-                    : t('La identificación fiscal de tu negocio. Una por negocio.')}
-                </p>
-                {errors.taxId && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.taxId.message === 'DUPLICATE_TAX_ID'
-                      ? <>{watchedCountry === 'PE' ? t('Ya hay un negocio con ese RUC.') : t('Ya hay un negocio con ese {doc}.', { doc: taxLabel })} <Link to="/login" className="font-semibold underline">{t('Inicia sesión')}</Link></>
-                      : errors.taxId.message}
-                  </p>
-                )}
+                <p className="mt-1 text-xs text-gray-400" data-testid="register-tax-id-help">{taxIdHelp(watchedCountry)}</p>
+                {errors.taxId && <p className="mt-1 text-xs text-red-500" data-testid="register-tax-id-error">{errors.taxId.message}</p>}
               </div>
 
               <div>

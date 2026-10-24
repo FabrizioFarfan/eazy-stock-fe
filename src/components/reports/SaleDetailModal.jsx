@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { orderNoteNumberLabel } from '../../utils/quotePdf'
 import { useT, dateLocale } from '../../i18n'
-import { displayTaxIdType } from '../../utils/taxIds'
+import { displayTaxIdType } from '../../utils/taxIdText'
 
 // Per-line prices may carry up to 6 decimals (extended price precision);
 // aggregates (subtotal/discount/total) are always 2-decimal from the BE.

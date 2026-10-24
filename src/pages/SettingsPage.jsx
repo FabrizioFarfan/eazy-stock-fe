@@ -1,4 +1,4 @@
-import { User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical, Settings } from 'lucide-react'
+import { BadgeCheck, User, Building2, Coins, Mail, Shield, LogOut, MonitorX, Moon, Sun, Loader2, Eye, EyeOff, BookOpen, Package, ChevronRight, Pencil, Globe, FileDigit, MonitorDown, CheckCircle2, Share, MoreVertical, Settings } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -21,7 +21,9 @@ import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 import PlanSection from '../components/subscription/PlanSection'
 import FeedbackSection from '../components/feedback/FeedbackSection'
-import { displayTaxIdType } from '../utils/taxIds'
+import { displayTaxIdType, taxIdLabel, taxIdHelp, checkTaxId, TAX_REGISTRY } from '../utils/taxIdText'
+import { normalize as normalizeTaxId, typeFor as taxIdTypeFor } from '../utils/taxIds'
+import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import PaymentMethodsSection from '../components/settings/PaymentMethodsSection'
 import DeleteAccountSection from '../components/settings/DeleteAccountSection'
 
@@ -43,7 +45,7 @@ const AVATAR_GRADIENT = {
 // El AuthContext normaliza BOSS → SUPER_ADMIN (+ isBoss); acá recuperamos la etiqueta real
 const displayRole = (user) => (user?.isBoss ? 'BOSS' : user?.role)
 
-function InfoRow({ icon: Icon, label, value }) {
+function InfoRow({ icon: Icon, label, value, children }) {
   if (!value) return null
   return (
     <div className="flex items-center gap-3.5 border-b border-gray-50 py-3.5 last:border-0">
@@ -53,6 +55,7 @@ function InfoRow({ icon: Icon, label, value }) {
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-gray-400">{label}</p>
         <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{value}</p>
+        {children}
       </div>
     </div>
   )
@@ -262,32 +265,63 @@ function ProfileSection() {
 
 // COUNTRIES / COUNTRY_NAME viven en utils/countries.js (compartidos con /registro).
 
-const makeBusinessSchema = (t) => z.object({
+const makeBusinessSchema = (t, business) => z.object({
   name:        z.string().min(1, t('Requerido')),
   countryCode: z.string().min(2, t('Requerido')).max(3),
   currency:    z.string().length(3, t('Requerido')),
-  // Opcionales desde el registro propio (15-oct-2026): nadie tiene el RUC a mano al crear la cuenta
-  taxIdType:   z.string().trim().optional(),
+  // Opcional desde el registro propio (15-oct-2026). El tipo sale del país (API 1.15.0).
   taxId:       z.string().trim().optional(),
+}).superRefine((v, ctx) => {
+  // Como el API 1.15.0: se valida con el algoritmo del país solo si el documento o el país
+  // cambian (un documento viejo que no cuadra no impide cambiar el nombre); vacío = quitarlo.
+  const taxId = normalizeTaxId(v.taxId)
+  if (taxId == null || (taxId === business?.taxId && v.countryCode === business?.countryCode)) return
+  const message = checkTaxId(v.countryCode, taxId)
+  if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['taxId'], message })
 })
+
+/**
+ * Verificación del documento con el registro del país (API 1.15.0: taxIdVerified,
+ * taxIdLegalName, taxIdStatus, taxIdCondition). Discreta: «Sin verificar» es lo normal
+ * mientras no haya proveedor conectado y no cambia nada de la cuenta.
+ */
+function TaxIdVerification({ business }) {
+  const t = useT()
+  if (!business?.taxId) return null
+  if (!business.taxIdVerified) {
+    return (
+      <p className="mt-0.5 text-xs text-gray-400" data-testid="tax-id-verification">
+        {t('Sin verificar')} · {t('Tu cuenta funciona igual.')}
+      </p>
+    )
+  }
+  const registry = TAX_REGISTRY[business.countryCode]
+  const state = [business.taxIdStatus, business.taxIdCondition].filter(Boolean).join(' / ')
+  const detail = [business.taxIdLegalName, state].filter(Boolean).join(' · ')
+  return (
+    <p className="mt-0.5 flex items-start gap-1 text-xs text-emerald-700" data-testid="tax-id-verification">
+      <BadgeCheck size={13} className="mt-px flex-shrink-0" />
+      <span>{registry ? t('Verificado con {registry}', { registry }) : t('Verificado')}{detail ? `: ${detail}` : ''}</span>
+    </p>
+  )
+}
 
 function BusinessSection() {
   const t = useT()
-  const businessSchema = useMemo(() => makeBusinessSchema(t), [t])
   const { user, refreshUser } = useAuth()
   const [business, setBusiness] = useState(null)
+  const businessSchema = useMemo(() => makeBusinessSchema(t, business), [t, business])
   const [editing, setEditing]   = useState(false)
   const [pending, setPending]   = useState(false)
 
   const isOwner = user?.role === 'OWNER'
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, setError, formState: { errors } } = useForm({
     resolver: zodResolver(businessSchema),
     values: {
       name:        business?.name ?? '',
       countryCode: business?.countryCode ?? 'PE',
       currency:    business?.currency ?? 'PEN',
-      taxIdType:   business?.taxIdType ?? 'RUC',
       taxId:       business?.taxId ?? '',
     },
   })
@@ -311,13 +345,22 @@ function BusinessSection() {
   const onSubmit = async (data) => {
     setPending(true)
     try {
-      const res = await businessesApi.updateMine(data)
+      // Normalizado al enviar y con el tipo del país (RUC, NIT, NIF…), como el registro.
+      const taxId = normalizeTaxId(data.taxId)
+      const res = await businessesApi.updateMine({
+        ...data, taxId, taxIdType: taxId ? taxIdTypeFor(data.countryCode) : undefined,
+      })
       setBusiness(res.data.data ?? res.data)
       toast.success(t('Datos del negocio actualizados'))
       await refreshUser() // refresca businessName en el header
       setEditing(false)
     } catch (err) {
-      toast.error(err?.response?.data?.message ?? t('Error al actualizar el negocio'))
+      // 409 DUPLICATE_TAX_ID / 400 del documento: el mensaje del API bajo el campo, tal cual.
+      if (getErrorField(err) === 'taxId' || getErrorCode(err) === 'DUPLICATE_TAX_ID') {
+        setError('taxId', { type: 'server', message: getErrorMessage(err) })
+      } else {
+        toast.error(err?.response?.data?.message ?? t('Error al actualizar el negocio'))
+      }
     } finally {
       setPending(false)
     }
@@ -331,7 +374,7 @@ function BusinessSection() {
 
   return (
     <Section
-      icon={Building2} hint={t('Nombre, país, moneda y RUC')}
+      icon={Building2} hint={t('Nombre, país, moneda y {doc}', { doc: taxIdLabel(business?.countryCode ?? user?.countryCode) })}
       title={t('Mi negocio')}
       action={isOwner ? <EditButton editing={editing} onClick={() => (editing ? cancel() : setEditing(true))} /> : null}
     >
@@ -364,17 +407,12 @@ function BusinessSection() {
             <p className="mt-1 text-xs text-gray-400">{t('Solo cambia el símbolo con el que se muestran los importes; no convierte montos.')}</p>
             {errors.currency && <p className="mt-1 text-xs text-red-500">{errors.currency.message}</p>}
           </div>
-          <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Tipo de doc.')}</label>
-              <input {...register('taxIdType')} type="text" placeholder="RUC, CUIT, NIT..." className={inputCls} />
-              {errors.taxIdType && <p className="mt-1 text-xs text-red-500">{errors.taxIdType.message}</p>}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">{t('Número')}</label>
-              <input {...register('taxId')} type="text" className={inputCls} />
-              {errors.taxId && <p className="mt-1 text-xs text-red-500">{errors.taxId.message}</p>}
-            </div>
+          <div>
+            <label htmlFor="business-tax-id" className="mb-1.5 block text-sm font-medium text-gray-700">{taxIdLabel(watchedCountry)}</label>
+            <input id="business-tax-id" {...register('taxId')} type="text" autoComplete="off"
+              inputMode={watchedCountry === 'PE' ? 'numeric' : 'text'} className={inputCls} data-testid="business-tax-id" />
+            <p className="mt-1 text-xs text-gray-400">{taxIdHelp(watchedCountry)}</p>
+            {errors.taxId && <p className="mt-1 text-xs text-red-500" data-testid="business-tax-id-error">{errors.taxId.message}</p>}
           </div>
           <div className="flex justify-end pt-1">
             <button
@@ -392,7 +430,9 @@ function BusinessSection() {
           <InfoRow icon={Building2} label={t('Nombre')} value={business.name} />
           <InfoRow icon={Globe}     label={t('País')}   value={countryLabel} />
           <InfoRow icon={Coins}     label={t('Moneda')} value={`${business.currency ?? 'PEN'} · ${business.currencySymbol ?? CURRENCIES[business.currency ?? 'PEN']?.symbol ?? ''}`} />
-          <InfoRow icon={FileDigit} label={displayTaxIdType(business.taxIdType, business.countryCode)} value={business.taxId || '—'} />
+          <InfoRow icon={FileDigit} label={displayTaxIdType(business.taxIdType, business.countryCode)} value={business.taxId || '—'}>
+            <TaxIdVerification business={business} />
+          </InfoRow>
         </>
       ) : (
         <div className="flex items-center gap-2 py-4 text-sm text-gray-400">

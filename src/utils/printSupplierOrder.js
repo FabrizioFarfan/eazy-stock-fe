@@ -5,7 +5,7 @@
 // actual, el mínimo ni precios, que son información interna del negocio.
 // Mismo enfoque que printQuote: HTML limpio con su propio CSS, sin librería PDF.
 import { t, dateLocale, getLang } from '../i18n'
-import { taxIdLabel } from './taxIds'
+import { taxIdLabel } from './taxIdText'
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => (

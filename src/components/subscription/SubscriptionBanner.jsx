@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useT } from '../../i18n'
 import { formatDay } from './subscriptionUtils'
+import { readSetupPending } from '../../utils/setupPendingNotice'
+import { taxIdTrialUsedMessage } from '../../utils/taxIdText'
 
 /**
  * Franja bajo el Topbar con el estado del plan (M1 «Planes en serio», 15-oct-2026).
@@ -25,6 +27,15 @@ export default function SubscriptionBanner() {
       return (
         <Banner tone="gray" icon={Lock}>
           {t('La tienda está en solo lectura: el dueño debe activar el plan para seguir registrando.')}
+        </Banner>
+      )
+    }
+    // Se registró con un documento que ya usó su prueba (API 1.15.0): no hubo «prueba que terminó».
+    const setupPending = readSetupPending(user.businessId)
+    if (setupPending) {
+      return (
+        <Banner tone="amber" icon={Lock} to={planLink} cta={t('Elegir plan')}>
+          {taxIdTrialUsedMessage(setupPending.countryCode ?? user.countryCode)}
         </Banner>
       )
     }
