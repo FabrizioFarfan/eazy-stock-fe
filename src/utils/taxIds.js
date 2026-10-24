@@ -85,7 +85,7 @@ function thisDoc(countryCode) {
   return (isFeminineDoc(countryCode) ? 'Esta ' : 'Este ') + docName(countryCode)
 }
 
-/** 409 DUPLICATE_TAX_ID: «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.» */
+/** 409 TAX_ID_ALREADY_REGISTERED: «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.» */
 export function duplicateMessage(countryCode) {
   return thisDoc(countryCode) + ' ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.'
 }

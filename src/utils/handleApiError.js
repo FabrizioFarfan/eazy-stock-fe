@@ -10,7 +10,7 @@ const MESSAGE_BY_CODE = {
   DUPLICATE_PROVIDER_CODE_FOR_SUPPLIER: 'Ya existe un producto con ese código de proveedor',
   DUPLICATE_PRODUCT_NAME:  'Ya tienes un producto con ese nombre',
   DUPLICATE_EMAIL:         'Ese email ya está registrado',
-  DUPLICATE_TAX_ID:        'Ya existe un negocio con ese tax ID',
+  TAX_ID_ALREADY_REGISTERED: 'Este documento ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.',
   INVALID_RUC_FORMAT:      'El RUC debe tener 11 dígitos',
   INVALID_EMAIL_FORMAT:    'El email no es válido',
   INVALID_CATEGORY:        'La categoría seleccionada no es válida',

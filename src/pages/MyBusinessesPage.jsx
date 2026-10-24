@@ -17,6 +17,8 @@ import { getErrorMessage } from '../utils/handleApiError'
 import { formatDay } from '../components/subscription/subscriptionUtils'
 import { PLANS } from './landing/plans'
 import { useT, dateLocale } from '../i18n'
+import { normalize as normalizeTaxId } from '../utils/taxIds'
+import { taxIdLabel, taxIdHelp, checkTaxId, taxIdAlreadyRegisteredMessage } from '../utils/taxIdText'
 
 /**
  * «Mis negocios» (M1 «Varios negocios por dueño», Frank 15-oct-2026), solo OWNER:
@@ -35,8 +37,8 @@ function NewBusinessModal({ onClose, onCreated }) {
   const t = useT()
   const create = useCreateBusiness()
   const [limitHit, setLimitHit] = useState(false)
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
-    defaultValues: { name: '', countryCode: 'PE', currency: 'PEN', phone: '' },
+  const { register, handleSubmit, watch, setValue, setError, formState: { errors } } = useForm({
+    defaultValues: { name: '', countryCode: 'PE', currency: 'PEN', phone: '', taxId: '' },
   })
   const name = watch('name')
   const country = watch('countryCode')
@@ -48,15 +50,20 @@ function NewBusinessModal({ onClose, onCreated }) {
   const onSubmit = async (v) => {
     setLimitHit(false)
     try {
+      const taxId = normalizeTaxId(v.taxId) ?? undefined
       const biz = await create.mutateAsync({
         name: v.name.trim(), countryCode: v.countryCode, currency: v.currency,
         phone: v.phone?.trim() || undefined,
+        taxId,
       })
       toast.success(t('{name} ya está creado', { name: biz?.name ?? v.name }))
       onCreated?.(biz)
       onClose()
     } catch (err) {
-      if (err?.response?.data?.code === 'PLAN_LIMIT') setLimitHit(true)
+      const code = err?.response?.data?.code
+      if (code === 'PLAN_LIMIT') setLimitHit(true)
+      else if (code === 'TAX_ID_ALREADY_REGISTERED') setError('taxId', { type: 'server', message: taxIdAlreadyRegisteredMessage(v.countryCode) })
+      else if (err?.response?.data?.field === 'taxId') setError('taxId', { type: 'server', message: getErrorMessage(err) })
       else toast.error(getErrorMessage(err))
     }
   }
@@ -93,6 +100,12 @@ function NewBusinessModal({ onClose, onCreated }) {
           </select>
         </EntityField>
       </div>
+      {/* Documento fiscal opcional, con la misma validación del registro (API 1.15.0). */}
+      <EntityField label={`${taxIdLabel(country)} (${t('opcional')})`} error={errors.taxId?.message} hint={taxIdHelp(country)}>
+        <input {...register('taxId', { validate: (raw) => checkTaxId(country, raw) ?? true })}
+          type="text" inputMode={country === 'PE' ? 'numeric' : 'text'} autoComplete="off" className={inputCls}
+          data-testid="new-business-tax-id" />
+      </EntityField>
       <EntityField label={`${t('WhatsApp del negocio')} (${t('opcional')})`}>
         <input {...register('phone')} type="tel" autoComplete="tel" className={inputCls} placeholder="+51 999 999 999" />
       </EntityField>

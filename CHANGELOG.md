@@ -4,6 +4,9 @@ Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada
 
 
 ## 1.22.0 — 2026-10-24 (documento fiscal validado por país; sube junto al API 1.15.0)
+- **Documento repetido traducido**: el API responde `TAX_ID_ALREADY_REGISTERED` y la web muestra «Este RUC ya tiene una cuenta en Eazy Stock…» en es/en/it (registro, Ajustes y Nuevo negocio).
+- **Sin tutorial con `setupPending`**: quien se registra con un documento que ya usó su prueba va a Tu plan sin el tour encima.
+- **«Nuevo negocio» con documento fiscal opcional**: misma validación y texto del campo que el registro; inválido o de otra cuenta → bajo el campo; vacío → se crea sin documento.
 - **MX RFC: el verificador ya no bloquea** (25-oct, igual que el API): formato, fecha y genéricos siguen obligatorios; un RFC con el verificador mal se envía y el API lo deja «no verificado» (Ajustes muestra «Sin verificar»). `checkDigitMismatch()` nuevo; el aviso de formato de MX ya no habla del verificador (es/en/it).
 - **`utils/taxIds.js` = `TaxIds.java` del API 1.15.0**, misma normalización (sin espacios, puntos ni guiones, en mayúsculas; las letras, «&» y «Ñ» se quedan) y mismos algoritmos: PE RUC (módulo 11, prefijos **10, 15, 17, 20**: el 16 ya no), AR CUIT, CL RUT con K, CO NIT (pesos DIAN), EC RUC, UY RUT, ES NIF/NIE/CIF, MX RFC con homoclave (`MX_ENFORCE_CHECK_DIGIT`), VE RIF, GT NIT, PY RUC, DO RNC (con su lista de excepciones), SV NIT; solo formato BO, CR, PA, HN, NI y el resto. Sin imports, para probarlo con node. Los textos traducidos (etiqueta, ayuda, mensajes) pasan a `utils/taxIdText.js`.
 - **`npm test`** (`node --test`, sin dependencias nuevas): recorre la tabla de casos del API (`src/utils/__fixtures__/tax-ids.json`, copia de `src/test/resources/tax-ids.json`) más los tests sueltos de `TaxIdsTest`: **131 casos, los mismos que en Java, todos en verde**.

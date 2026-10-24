@@ -58,6 +58,17 @@ export function taxIdInvalidMessage(country) {
     : t('Este {doc} no es válido: {hint}', { doc, hint })
 }
 
+/**
+ * 409 TAX_ID_ALREADY_REGISTERED: «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia
+ * sesión o escríbenos.», traducido (el API lo manda en español).
+ */
+export function taxIdAlreadyRegisteredMessage(country) {
+  const doc = taxIdDocName(country)
+  return isFeminineDoc(country)
+    ? t('Esta {doc} ya tiene una cuenta en Eazy Stock. Si es tuya, inicia sesión o escríbenos.', { doc })
+    : t('Este {doc} ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.', { doc })
+}
+
 /** Registro con un documento que ya usó su prueba (AuthResponse.setupPending, API 1.15.0). */
 export function taxIdTrialUsedMessage(country) {
   const doc = taxIdDocName(country)

@@ -33,6 +33,8 @@ export default {
     'son 14 caracteres (por ejemplo J0310000000000).': 'it has 14 characters (for example J0310000000000).',
     'debe tener entre 6 y 20 letras o números.': 'it must have between 6 and 20 letters or numbers.',
     // Registro con un documento que ya usó su prueba (setupPending)
+    'Este {doc} ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.': 'This {doc} already has an Eazy Stock account. If it’s yours, log in or write to us.',
+    'Esta {doc} ya tiene una cuenta en Eazy Stock. Si es tuya, inicia sesión o escríbenos.': 'This {doc} already has an Eazy Stock account. If it’s yours, log in or write to us.',
     'Este {doc} ya usó su periodo gratis. Elige tu plan para continuar.': 'This {doc} has already used its free period. Choose your plan to continue.',
     'Esta {doc} ya usó su periodo gratis. Elige tu plan para continuar.': 'This {doc} has already used its free period. Choose your plan to continue.',
     'Tu cuenta ya está creada y tus datos se guardan. Mientras no elijas un plan, la tienda está en solo lectura.': 'Your account is created and your data is saved. Until you choose a plan, the store is read-only.',
@@ -72,6 +74,8 @@ export default {
     'son 14 dígitos.': 'sono 14 cifre.',
     'son 14 caracteres (por ejemplo J0310000000000).': 'sono 14 caratteri (per esempio J0310000000000).',
     'debe tener entre 6 y 20 letras o números.': 'deve avere tra 6 e 20 lettere o numeri.',
+    'Este {doc} ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.': 'Questo {doc} ha già un account su Eazy Stock. Se è tuo, accedi o scrivici.',
+    'Esta {doc} ya tiene una cuenta en Eazy Stock. Si es tuya, inicia sesión o escríbenos.': 'Questa {doc} ha già un account su Eazy Stock. Se è tua, accedi o scrivici.',
     'Este {doc} ya usó su periodo gratis. Elige tu plan para continuar.': 'Questo {doc} ha già usato il suo periodo gratuito. Scegli il tuo piano per continuare.',
     'Esta {doc} ya usó su periodo gratis. Elige tu plan para continuar.': 'Questa {doc} ha già usato il suo periodo gratuito. Scegli il tuo piano per continuare.',
     'Tu cuenta ya está creada y tus datos se guardan. Mientras no elijas un plan, la tienda está en solo lectura.': 'Il tuo account è creato e i tuoi dati sono salvati. Finché non scegli un piano, il negozio è in sola lettura.',

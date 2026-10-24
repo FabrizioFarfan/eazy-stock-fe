@@ -21,7 +21,7 @@ import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 import PlanSection from '../components/subscription/PlanSection'
 import FeedbackSection from '../components/feedback/FeedbackSection'
-import { displayTaxIdType, taxIdLabel, taxIdHelp, checkTaxId, TAX_REGISTRY } from '../utils/taxIdText'
+import { displayTaxIdType, taxIdLabel, taxIdHelp, checkTaxId, taxIdAlreadyRegisteredMessage, TAX_REGISTRY } from '../utils/taxIdText'
 import { normalize as normalizeTaxId, typeFor as taxIdTypeFor } from '../utils/taxIds'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import PaymentMethodsSection from '../components/settings/PaymentMethodsSection'
@@ -355,8 +355,10 @@ function BusinessSection() {
       await refreshUser() // refresca businessName en el header
       setEditing(false)
     } catch (err) {
-      // 409 DUPLICATE_TAX_ID / 400 del documento: el mensaje del API bajo el campo, tal cual.
-      if (getErrorField(err) === 'taxId' || getErrorCode(err) === 'DUPLICATE_TAX_ID') {
+      // 409 TAX_ID_ALREADY_REGISTERED (traducido) / 400 del documento: bajo el campo.
+      if (getErrorCode(err) === 'TAX_ID_ALREADY_REGISTERED') {
+        setError('taxId', { type: 'server', message: taxIdAlreadyRegisteredMessage(data.countryCode) })
+      } else if (getErrorField(err) === 'taxId') {
         setError('taxId', { type: 'server', message: getErrorMessage(err) })
       } else {
         toast.error(err?.response?.data?.message ?? t('Error al actualizar el negocio'))

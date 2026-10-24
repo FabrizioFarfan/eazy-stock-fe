@@ -17,8 +17,8 @@ import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import { promoActive, promoVars, trialLine, afterPromoLine } from './landing/plans'
 import { usePlans } from '../hooks/useSubscription'
-import { normalize as normalizeTaxId, duplicateMessage } from '../utils/taxIds'
-import { TAX_ID_LABEL, checkTaxId, taxIdHelp } from '../utils/taxIdText'
+import { normalize as normalizeTaxId } from '../utils/taxIds'
+import { TAX_ID_LABEL, checkTaxId, taxIdHelp, taxIdAlreadyRegisteredMessage } from '../utils/taxIdText'
 
 /**
  * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
@@ -129,9 +129,9 @@ export default function RegisterPage() {
       const field = getErrorField(err)
       if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
         setFieldError('email', { type: 'server', message: 'DUPLICATE_EMAIL' })
-      } else if (getErrorCode(err) === 'DUPLICATE_TAX_ID') {
-        // El mensaje del API tal cual: «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.»
-        setFieldError('taxId', { type: 'server', message: err?.response?.data?.message || duplicateMessage(values.countryCode) })
+      } else if (getErrorCode(err) === 'TAX_ID_ALREADY_REGISTERED') {
+        // «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.», en el idioma de la web.
+        setFieldError('taxId', { type: 'server', message: taxIdAlreadyRegisteredMessage(values.countryCode) })
       } else if (field && ['password', 'name', 'businessName', 'countryCode', 'currency', 'phone', 'taxId'].includes(field)) {
         setFieldError(field, { type: 'server', message: getErrorMessage(err) })
       } else {

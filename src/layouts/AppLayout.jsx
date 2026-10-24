@@ -13,6 +13,7 @@ import EmailVerifyBanner from '../components/common/EmailVerifyBanner'
 import { useAuth } from '../context/AuthContext'
 import { useBusinessSocket } from '../hooks/useBusinessSocket'
 import { useT } from '../i18n'
+import { readSetupPending } from '../utils/setupPendingNotice'
 
 function formatCurrency(v) {
   return formatPrice(v ?? 0) // moneda del negocio
@@ -81,8 +82,11 @@ export default function AppLayout({ children }) {
   useEffect(() => {
     if (!seenTutorials || seenTutorials.has(WELCOME_TUTORIAL_KEY)) return
     if (pathname === '/bienvenida') return
+    // Registro con un documento que ya usó su prueba (setupPending): va directo a Tu plan,
+    // sin el tour encima. Sale cuando el plan deja de estar en solo lectura (se borra el aviso).
+    if (readSetupPending(user?.businessId)) return
     setShowTutorial(true)
-  }, [seenTutorials, pathname])
+  }, [seenTutorials, pathname, user?.businessId])
 
   // Listen for manual trigger from SettingsPage
   useEffect(() => {
