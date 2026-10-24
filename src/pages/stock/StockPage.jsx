@@ -115,8 +115,11 @@ const TABS = [
 
 export default function StockPage() {
   const t = useT()
-  const { user }  = useAuth()
+  const { user, can }  = useAuth()
   const isManager = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  // El vendedor con «Recibir mercadería» anota lo que llega (entrada simple, sin precios).
+  const canNoteArrival = !isManager && can('canReceiveMerchandise')
+  const showActions = isManager || canNoteArrival
 
   // Pestaña y producto filtrado viven en la URL: la ficha del producto trae
   // hasta Movimientos con «?tab=movements&product=<id>» ya filtrado.
@@ -146,12 +149,16 @@ export default function StockPage() {
   const { data: pLow } = useProducts({ page: 0, size: 1, active: true, lowStock: true, ...biz })
   const { data: pOut } = useProducts({ page: 0, size: 1, active: true, stockMax: 0, ...biz })
   const { data: rMonth } = useReceipts({ page: 0, size: 1, from: firstOfMonthStr(), to: today, ...biz })
+  // Entradas que anotaron los vendedores y esperan su costo (solo le importa al dueño).
+  const { data: rPending } = useReceipts({ page: 0, size: 1, costPending: true, ...biz }, { enabled: isManager })
+  const pendingCount = isManager ? (rPending?.totalElements ?? 0) : 0
   const setProduct = (p) => {
     setPickedProduct(p)
     setSearchParams(p ? { tab: 'movements', product: p.id } : {}, { replace: true })
   }
   const [modal, setModal]               = useState(null) // null | 'ADJUSTMENT'
   const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [showSimpleModal, setShowSimpleModal]   = useState(false)
 
   return (
     <div className="flex flex-col gap-5">
@@ -214,8 +221,8 @@ export default function StockPage() {
       </div>
 
       {/* Franja del día + accesos grandes */}
-      <div className={`grid grid-cols-1 gap-4 ${isManager ? 'lg:grid-cols-3' : ''}`}>
-        <div className={isManager ? 'lg:col-span-2' : ''}>
+      <div className={`grid grid-cols-1 gap-4 ${showActions ? 'lg:grid-cols-3' : ''}`}>
+        <div className={showActions ? 'lg:col-span-2' : ''}>
           <TodayMovesHero loading={mLoading} total={mAll?.totalElements} entries={mIn?.totalElements}
             sales={mOut?.totalElements} adjustments={mAdj?.totalElements} cobros={cobrosToday?.count}
             onSeeAll={() => goTo('movements')} onSeeCobros={() => goTo('movements', { type: 'COBRO' })} />
@@ -228,7 +235,30 @@ export default function StockPage() {
               onClick={() => setModal('ADJUSTMENT')} />
           </div>
         )}
+        {canNoteArrival && (
+          <div className="grid grid-cols-1 gap-3 lg:content-start">
+            <ActionTile icon={PackagePlus} primary label={t('Anotar lo que llegó')} hint={t('Solo productos y cantidades')}
+              onClick={() => setShowSimpleModal(true)} />
+          </div>
+        )}
       </div>
+
+      {/* Lo que anotaron los vendedores sin precios: al dueño le falta ponerle el costo */}
+      {pendingCount > 0 && (
+        <button type="button" onClick={() => goTo('receipts', { pending: '1' })} data-testid="cost-pending-banner"
+          className="flex items-center gap-3 rounded-2xl bg-amber-50 px-4 py-3 text-left ring-1 ring-amber-200 transition-colors hover:bg-amber-100">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <AlertTriangle size={17} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-amber-900">
+              {pendingCount === 1 ? t('1 entrada espera su costo') : t('{n} entradas esperan su costo', { n: pendingCount })}
+            </p>
+            <p className="text-xs text-amber-800">{t('Tus vendedores anotaron mercadería que llegó. El stock ya subió: falta ponerle el precio y la factura.')}</p>
+          </div>
+          <ArrowRight size={15} className="flex-shrink-0 text-amber-700" />
+        </button>
+      )}
 
       {/* Lo que pide atención, cada tarjeta abre su pestaña ya filtrada */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -263,7 +293,11 @@ export default function StockPage() {
           initialLowStock={searchParams.get('low') === '1'}
           initialStockMax={searchParams.get('out') === '1' ? '0' : ''} />
       )}
-      {activeTab === 'receipts'  && <ReceiptsTab />}
+      {activeTab === 'receipts'  && (
+        <ReceiptsTab key={searchParams.get('pending') ?? ''}
+          initialPending={searchParams.get('pending') === '1'}
+          initialReceiptId={searchParams.get('receipt')} />
+      )}
       {activeTab === 'movements' && (
         <MovementsTab key={typeParam} initialType={typeParam} productId={productId}
           productHint={pickedProduct ?? location.state?.product ?? null}
@@ -272,6 +306,7 @@ export default function StockPage() {
 
       {modal && <MovementModal type={modal} onClose={() => setModal(null)} />}
       {showReceiptModal && <SupplierReceiptModal onClose={() => setShowReceiptModal(false)} />}
+      {showSimpleModal && <SupplierReceiptModal simple onClose={() => setShowSimpleModal(false)} />}
     </div>
   )
 }

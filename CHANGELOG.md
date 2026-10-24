@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.19.0 — 2026-10-24 (el vendedor anota lo que llega sin ver precios; sube junto al API 1.12.0)
+- **«Anotar lo que llegó»** en Stock para el vendedor con «Recibir mercadería» (antes el permiso no le dejaba hacer nada): proveedor, productos (buscador o escáner) y cantidades; ni costo, ni total, ni contado/crédito, ni deuda del proveedor. `SupplierReceiptModal simple` → `POST /api/receipts/simple`. Crear un producto al vuelo solo con «Gestionar productos». Borrador propio en localStorage.
+- **El dueño le pone el costo**: franja ámbar en Stock «N entradas esperan su costo» → Recepciones filtradas («Solo sin costo»), chip «falta el costo» en la lista y, en el detalle, «Ponerle el costo» (`ReceiptCostPanel`: costo por producto precargado con su precio de compra, total autocalculado y editable, contado/crédito, factura con el chequeo de repetidas) → `POST /api/receipts/{id}/cost`. Sin costo no se puede «Devolver productos». Aviso nuevo `RECEIPT_COST_PENDING` en la campana («Falta el costo»), que abre esa recepción (`/stock?tab=receipts&receipt=<id>`).
+- **El vendedor no ve un solo importe en Recepciones**: sin columna Total ni Modalidad (ahora «Estado»), sin filtro de contado/crédito, sin P. unit./Subtotal ni total en el detalle. El API ya no se los manda (antes los veía en la web: «Casco · S/ 15»).
+- Empleados: la ayuda de permisos explica la entrada simple. Textos es/en/it.
+
 ## 1.18.0 — 2026-10-23 (avisos al teléfono; sube junto al API 1.11.0)
 - **El tiempo real va con sesión**: el API ya no deja escuchar el WebSocket sin token. `wsClient` manda `Authorization: Bearer` en el CONNECT de STOMP (lo lee de localStorage en cada reconexión) y `useBusinessSocket` reconecta en cuanto hay token nuevo (renovado en `api.js`, login o cambio de negocio, evento `eazystock:token`); si el API responde «SESSION_EXPIRED» al conectar, fuerza la renovación. **Sin esta versión la web pierde las ventas en vivo con el API 1.11.0.**
 - **Token caducado → 401**: el API responde ahora 401 `{code: SESSION_EXPIRED}` (antes 403 vacío, y la web no renovaba la sesión: «Error al guardar» hasta recargar). `api.js` ya renovaba con 401; no hizo falta tocar la lógica.

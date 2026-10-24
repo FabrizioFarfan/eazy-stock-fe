@@ -25,6 +25,8 @@ const TYPE_CONFIG = {
   STOCK_UPDATE:   { Icon: Package,       color: 'text-amber-600',  iconBg: 'bg-amber-100' },
   LOW_STOCK:      { Icon: TrendingDown,  color: 'text-red-600',    iconBg: 'bg-red-100',    label: 'Stock bajo' },
   EXPIRING:       { Icon: CalendarClock, color: 'text-purple-600', iconBg: 'bg-purple-100', label: 'Por vencer' },
+  // SupplierReceiptService (24-oct): un vendedor anotó mercadería sin precios.
+  RECEIPT_COST_PENDING: { Icon: Package, color: 'text-amber-700', iconBg: 'bg-amber-100', label: 'Falta el costo' },
 }
 
 /**

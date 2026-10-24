@@ -451,6 +451,7 @@ export default function EmployeesPage() {
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🔐 {t('Permisos finos')}</p>
               <p className="mt-1">{t('En el botón "Permisos" de cada empleado activas o desactivas acciones una por una: gestionar productos, recibir mercadería, registrar y cancelar ventas, aplicar descuentos, editar precios, ver reportes, gestionar proveedores y marcas, vender al fiado y gestionar clientes. Lo que no le actives, no lo ve. Los cambios se aplican al instante. El ajuste manual de stock no se delega: es solo del dueño; el vendedor mueve stock con ventas, recepciones y devoluciones.')}</p>
+              <p className="mt-1">{t('Con «Recibir mercadería» el vendedor anota lo que llega del proveedor: productos y cantidades, sin ver ni escribir precios. El stock sube al momento y tú le pones el costo después en Stock › Recepciones (te llega un aviso).')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🧾 {t('Ver cierre de caja (sin ganancias ni costos)')}</p>

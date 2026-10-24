@@ -72,6 +72,7 @@ export default {
     // PERMISSION_META (UsersPage + EmployeesPage)
     'Gestionar productos': 'Manage products',
     'Recibir mercadería': 'Receive goods',
+    'Con «Recibir mercadería» el vendedor anota lo que llega del proveedor: productos y cantidades, sin ver ni escribir precios. El stock sube al momento y tú le pones el costo después en Stock › Recepciones (te llega un aviso).': 'With «Receive goods» the seller logs what arrives from the supplier: products and quantities, without seeing or typing prices. Stock goes up right away and you add the cost later in Stock › Receipts (you get a notification).',
     'Ajuste de stock manual': 'Manual stock adjustment',
     'Registrar ventas': 'Register sales',
     'Cancelar ventas': 'Cancel sales',
@@ -389,6 +390,7 @@ export default {
     // PERMISSION_META
     'Gestionar productos': 'Gestire prodotti',
     'Recibir mercadería': 'Ricevere merce',
+    'Con «Recibir mercadería» el vendedor anota lo que llega del proveedor: productos y cantidades, sin ver ni escribir precios. El stock sube al momento y tú le pones el costo después en Stock › Recepciones (te llega un aviso).': 'Con «Ricevere merce» il venditore annota ciò che arriva dal fornitore: prodotti e quantità, senza vedere né scrivere prezzi. Il magazzino sale subito e tu inserisci il costo dopo in Magazzino › Ricezioni (ricevi un avviso).',
     'Ajuste de stock manual': 'Rettifica manuale dello stock',
     'Registrar ventas': 'Registrare vendite',
     'Cancelar ventas': 'Annullare vendite',

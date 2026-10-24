@@ -7,6 +7,7 @@ import { formatPrice } from '../../utils/formatMoney'
 import ReceiptDetailModal from './ReceiptDetailModal'
 import ProductFilterPicker from './ProductFilterPicker'
 import { useT, dateLocale } from '../../i18n'
+import { useAuth } from '../../context/AuthContext'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -17,8 +18,21 @@ function formatDate(str) {
 
 const PAGE_SIZE = 20
 
-export default function ReceiptsTab() {
+/** «Falta el costo»: entrada simple de un vendedor que el dueño todavía no completó. */
+function CostPendingChip({ t }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wide text-amber-800"
+      title={t('Un vendedor anotó esta mercadería sin precios. El stock ya subió; falta que el dueño ponga el costo.')}>
+      <AlertTriangle size={10} /> {t('falta el costo')}
+    </span>
+  )
+}
+
+export default function ReceiptsTab({ initialPending = false, initialReceiptId = null }) {
   const t = useT()
+  const { user } = useAuth()
+  // El vendedor ve qué llegó y cuánto, nunca lo que costó (el API ni lo manda).
+  const hidesCost = user?.role === 'EMPLOYEE'
   const [page, setPage]                 = useState(0)
   const [supplierId, setSupplierId]     = useState('')
   const [from, setFrom]                 = useState('')
@@ -26,13 +40,14 @@ export default function ReceiptsTab() {
   const [reference, setReference]       = useState('')
   const [paymentMode, setPaymentMode]   = useState('')
   const [product, setProduct]           = useState(null)
-  const [selectedReceiptId, setSelectedReceiptId] = useState(null)
+  const [onlyPending, setOnlyPending]   = useState(initialPending)
+  const [selectedReceiptId, setSelectedReceiptId] = useState(initialReceiptId)
   const debouncedReference = useDebounce(reference, 350)
 
   const { data: suppliersData } = useSuppliers({ size: 200 })
   const suppliers = suppliersData?.content ?? []
 
-  const hasFilters = !!(supplierId || from || to || reference || paymentMode || product)
+  const hasFilters = !!(supplierId || from || to || reference || paymentMode || product || onlyPending)
 
   // Fechas planas yyyy-MM-dd: el BE las interpreta como día en la zona del
   // usuario (ClientDay). El `T00:00:00` viejo era hora del SERVER (Berlín) y
@@ -45,6 +60,7 @@ export default function ReceiptsTab() {
     ...(debouncedReference.trim() && { reference: debouncedReference.trim() }),
     ...(paymentMode && { paymentMode }),
     ...(product && { productId: product.id }),
+    ...(onlyPending && { costPending: true }),
   }
 
   const { data, isLoading, isFetching, isError } = useReceipts(params)
@@ -108,15 +124,23 @@ export default function ReceiptsTab() {
           />
         </div>
 
-        <select value={paymentMode} onChange={(e) => { setPaymentMode(e.target.value); setPage(0) }}
-          className={`${selectCls} w-full sm:w-auto`}>
-          <option value="">{t('Contado y crédito')}</option>
-          <option value="CASH">{t('Al contado')}</option>
-          <option value="CREDIT">{t('A crédito')}</option>
-        </select>
+        {!hidesCost && (
+          <select value={paymentMode} onChange={(e) => { setPaymentMode(e.target.value); setPage(0) }}
+            className={`${selectCls} w-full sm:w-auto`}>
+            <option value="">{t('Contado y crédito')}</option>
+            <option value="CASH">{t('Al contado')}</option>
+            <option value="CREDIT">{t('A crédito')}</option>
+          </select>
+        )}
+
+        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-600">
+          <input type="checkbox" checked={onlyPending} onChange={(e) => { setOnlyPending(e.target.checked); setPage(0) }}
+            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500" />
+          {t('Solo sin costo')}
+        </label>
 
         {hasFilters && (
-          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setProduct(null); setPage(0) }}
+          <button onClick={() => { setSupplierId(''); setFrom(''); setTo(''); setReference(''); setPaymentMode(''); setProduct(null); setOnlyPending(false); setPage(0) }}
             className="text-sm font-medium text-blue-600 hover:text-blue-700">
             {t('Limpiar')}
           </button>
@@ -149,10 +173,12 @@ export default function ReceiptsTab() {
                         {formatDate(r.createdAt)} · <span className="font-mono">{r.referenceDocument ?? '—'}</span>
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                          r.paymentMode === 'CREDIT' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
-                        </span>
+                        {r.costPending ? <CostPendingChip t={t} /> : r.paymentMode && (
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                            r.paymentMode === 'CREDIT' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
+                          </span>
+                        )}
                         <span className="text-[11px] text-gray-500">{t('{n} productos', { n: r.movements?.length ?? 0 })}</span>
                         {isRepeated(r) && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">
@@ -161,12 +187,14 @@ export default function ReceiptsTab() {
                         )}
                       </div>
                     </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-base font-bold text-gray-900">{formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}</p>
-                      {r.returns?.length > 0 && (
-                        <p className="text-[11px] font-semibold text-purple-600">{t('con devolución')}</p>
-                      )}
-                    </div>
+                    {!hidesCost && !r.costPending && (
+                      <div className="flex-shrink-0 text-right">
+                        <p className="text-base font-bold text-gray-900">{formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}</p>
+                        {r.returns?.length > 0 && (
+                          <p className="text-[11px] font-semibold text-purple-600">{t('con devolución')}</p>
+                        )}
+                      </div>
+                    )}
                   </button>
                 </li>
               ))}
@@ -182,17 +210,17 @@ export default function ReceiptsTab() {
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Proveedor')}</th>
                 <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Factura/Guía')}</th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('# Productos')}</th>
-                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Modalidad')}</th>
-                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Total')}</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-gray-400">{hidesCost ? t('Estado') : t('Modalidad')}</th>
+                {!hidesCost && <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Total')}</th>}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></td></tr>
+                <tr><td colSpan={hidesCost ? 5 : 6} className="py-10 text-center"><Loader2 size={20} className="mx-auto animate-spin text-gray-400" /></td></tr>
               ) : isError ? (
                 // Un error NO es "no tienes recepciones": decir la verdad.
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={hidesCost ? 5 : 6}>
                     <div className="flex flex-col items-center gap-3 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50">
                         <AlertTriangle size={28} className="text-amber-600" />
@@ -204,7 +232,7 @@ export default function ReceiptsTab() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={hidesCost ? 5 : 6}>
                     <div className="flex flex-col items-center gap-3 py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
                         <PackagePlus size={28} className="text-gray-400" />
@@ -241,22 +269,24 @@ export default function ReceiptsTab() {
                     </td>
                     <td className="px-4 py-3.5 text-center font-mono text-gray-700">{r.movements?.length ?? 0}</td>
                     <td className="px-4 py-3.5 text-center">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        r.paymentMode === 'CREDIT'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
-                      </span>
+                      {r.costPending ? <CostPendingChip t={t} /> : r.paymentMode ? (
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                          r.paymentMode === 'CREDIT'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}
+                        </span>
+                      ) : <span className="text-xs text-gray-400">{t('Registrada')}</span>}
                     </td>
-                    <td className="px-4 py-3.5 text-right font-bold text-gray-900">
-                      {formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}
+                    {!hidesCost && <td className="px-4 py-3.5 text-right font-bold text-gray-900">
+                      {r.costPending ? <span className="font-normal text-gray-400">—</span> : formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}
                       {r.returns?.length > 0 && (
                         <span className="block text-[11px] font-semibold text-purple-600" title={t('Se devolvieron productos de esta recepción al proveedor')}>
                           {t('con devolución')} −{formatPrice(r.returnedAmount)}
                         </span>
                       )}
-                    </td>
+                    </td>}
                   </tr>
                 ))
               )}

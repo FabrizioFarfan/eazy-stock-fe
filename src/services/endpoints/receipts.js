@@ -10,4 +10,8 @@ export const receiptsApi = {
   annul:           (id)                  => api.delete(`/receipts/${id}`),
   // Devolver al proveedor parte de lo recibido. body: { items: [{ productId, quantity }], notes }
   returnItems:     (id, data)            => api.post(`/receipts/${id}/returns`, data),
+  // Entrada simple del vendedor (sin precios). body: { supplierId, items: [{ productId, quantity }], referenceDocument, notes }
+  createSimple:    (data)                => api.post('/receipts/simple', data),
+  // El dueño completa el costo. body: { items: [{ productId, unitCost, salePrice }], totalAmount, paymentMode, referenceDocument, notes }
+  completeCost:    (id, data)            => api.post(`/receipts/${id}/cost`, data),
 }

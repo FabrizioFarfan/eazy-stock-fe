@@ -8,6 +8,7 @@ import {
 } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
 import ReceiptReturnPanel from './ReceiptReturnPanel'
+import ReceiptCostPanel from './ReceiptCostPanel'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
@@ -36,7 +37,12 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
   const t = useT()
   const { user } = useAuth()
   const isOwner = user?.role === 'OWNER'
+  // El vendedor ve qué llegó y cuánto, nunca lo que costó (el API ni lo manda).
+  const hidesCost = user?.role === 'EMPLOYEE'
   const { data: receipt, isLoading, isError } = useReceiptDetail(receiptId)
+  const pending = !!receipt?.costPending
+  // ── Completar el costo de una entrada simple (solo el dueño) ──
+  const [costing, setCosting] = useState(false)
 
   // ── Cambiar número ──
   const [editingRef, setEditingRef] = useState(false)
@@ -101,7 +107,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
             <h3 className="font-semibold text-gray-900">
-              {annulling ? t('Anular recepción') : returning ? t('Devolver productos al proveedor') : t('Detalle de recepción')}
+              {annulling ? t('Anular recepción') : returning ? t('Devolver productos al proveedor') : costing ? t('Ponerle el costo') : t('Detalle de recepción')}
             </h3>
             {receipt && (
               <p className="mt-0.5 text-xs text-gray-400">{formatDate(receipt.createdAt)}</p>
@@ -194,6 +200,9 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           ) : returning ? (
             <ReceiptReturnPanel receipt={receipt}
               onDone={() => setReturning(false)} onCancel={() => setReturning(false)} />
+          ) : costing ? (
+            <ReceiptCostPanel receipt={receipt}
+              onDone={() => setCosting(false)} onCancel={() => setCosting(false)} />
           ) : (
             /* ── Detalle normal ── */
             <>
@@ -202,14 +211,33 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                   <Truck size={16} className="text-blue-600" />
                   <span className="text-base font-semibold text-gray-900">{receipt.supplierName}</span>
                 </div>
-                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                  receipt.paymentMode === 'CREDIT'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-emerald-100 text-emerald-700'
-                }`}>
-                  {receipt.paymentMode === 'CREDIT' ? t('A crédito') : t('Al contado')}
-                </span>
+                {!pending && receipt.paymentMode && (
+                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    receipt.paymentMode === 'CREDIT'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    {receipt.paymentMode === 'CREDIT' ? t('A crédito') : t('Al contado')}
+                  </span>
+                )}
               </div>
+
+              {pending && (
+                <div className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm ring-1 ring-amber-200" data-testid="cost-pending-note">
+                  <p className="flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle size={15} /> {t('Falta el costo')}</p>
+                  <p className="mt-0.5 text-xs text-amber-800">
+                    {isOwner
+                      ? t('{who} anotó esta mercadería sin precios. El stock ya subió; ponle el costo para que tus compras y la deuda con el proveedor cuadren.', { who: receipt.createdByName })
+                      : t('Anotada por {who}. El stock ya subió; el dueño pondrá el costo.', { who: receipt.createdByName })}
+                  </p>
+                  {isOwner && (
+                    <button type="button" onClick={() => setCosting(true)}
+                      className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
+                      {t('Ponerle el costo')} <ArrowRight size={13} />
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="mb-4 space-y-1 rounded-xl bg-gray-50 px-4 py-3 text-sm">
                 {editingRef ? (
@@ -257,8 +285,8 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                   <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
                     <th className="pb-2">{t('Producto')}</th>
                     <th className="pb-2 text-center">{t('Cant.')}</th>
-                    <th className="pb-2 text-right">{t('P. unit.')}</th>
-                    <th className="pb-2 text-right">{t('Subtotal')}</th>
+                    {!hidesCost && !pending && <th className="pb-2 text-right">{t('P. unit.')}</th>}
+                    {!hidesCost && !pending && <th className="pb-2 text-right">{t('Subtotal')}</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -274,14 +302,14 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                           <span className="block whitespace-nowrap text-[11px] font-semibold text-purple-600">{t('devuelto −{n}', { n: formatQty(returnedByProduct[m.productId]) })}</span>
                         )}
                       </td>
-                      <td className="py-2.5 text-right text-gray-600">{formatPrice(m.unitCost)}</td>
-                      <td className="py-2.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>
+                      {!hidesCost && !pending && <td className="py-2.5 text-right text-gray-600">{formatPrice(m.unitCost)}</td>}
+                      {!hidesCost && !pending && <td className="py-2.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>}
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              {isOwner && (
+              {isOwner && !pending && (
                 <button type="button" onClick={() => setReturning(true)}
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                   <Undo2 size={15} /> {t('Devolver productos al proveedor')}
@@ -298,7 +326,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                           <span className="font-mono font-semibold">−{formatQty(m.quantity)}</span> {m.productName}
                           <span className="ml-1 text-purple-500">· {formatDate(m.createdAt)}</span>
                         </span>
-                        <span className="flex-shrink-0 font-mono font-semibold">−{formatAmount(m.subtotal)}</span>
+                        {!hidesCost && <span className="flex-shrink-0 font-mono font-semibold">−{formatAmount(m.subtotal)}</span>}
                       </li>
                     ))}
                   </ul>
@@ -319,7 +347,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           )}
         </div>
 
-        {receipt && !returning && (
+        {receipt && !returning && !costing && (
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-b-2xl border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
             {annulling ? (
               <>
@@ -343,11 +371,13 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                     <Trash2 size={14} /> {t('Anular recepción')}
                   </button>
                 ) : <span />}
-                <div className="ml-auto flex items-baseline gap-2 whitespace-nowrap">
-                  <span className="text-sm font-semibold text-gray-500">{t('Total recepción')}</span>
-                  {hasReturns && <span className="text-sm text-gray-400 line-through">{formatPrice(receipt.totalAmount)}</span>}
-                  <span className="text-lg font-bold text-gray-900">{formatPrice(hasReturns ? receipt.netAmount : receipt.totalAmount)}</span>
-                </div>
+                {!hidesCost && !pending && (
+                  <div className="ml-auto flex items-baseline gap-2 whitespace-nowrap">
+                    <span className="text-sm font-semibold text-gray-500">{t('Total recepción')}</span>
+                    {hasReturns && <span className="text-sm text-gray-400 line-through">{formatPrice(receipt.totalAmount)}</span>}
+                    <span className="text-lg font-bold text-gray-900">{formatPrice(hasReturns ? receipt.netAmount : receipt.totalAmount)}</span>
+                  </div>
+                )}
               </>
             )}
           </div>

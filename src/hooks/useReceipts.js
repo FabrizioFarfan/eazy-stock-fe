@@ -87,6 +87,24 @@ export function useReturnReceiptItems() {
   })
 }
 
+/** Entrada simple del vendedor: qué llegó y cuánto, sin precios. El stock sube al momento. */
+export function useCreateSimpleReceipt() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => receiptsApi.createSimple(data).then((r) => r.data.data),
+    onSuccess: (_, vars) => invalidateAfterReceiptChange(qc, vars.supplierId),
+  })
+}
+
+/** El dueño pone la plata de una entrada simple: costos, total, contado/crédito y factura. */
+export function useCompleteReceiptCost() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }) => receiptsApi.completeCost(id, data).then((r) => r.data.data),
+    onSuccess: (_, vars) => invalidateAfterReceiptChange(qc, vars.supplierId),
+  })
+}
+
 /** Corregir el número de factura / guía de una recepción ya registrada. */
 export function useUpdateReceiptReference() {
   const qc = useQueryClient()

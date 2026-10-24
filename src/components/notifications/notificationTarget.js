@@ -16,6 +16,9 @@ export function notificationTarget(n, role) {
       return id && role === 'OWNER' ? `/products?edit=${encodeURIComponent(id)}` : '/stock?tab=inventory&low=1'
     case 'EXPIRING':
       return id && role === 'OWNER' ? `/products?edit=${encodeURIComponent(id)}` : '/reports?tab=expiring'
+    case 'RECEIPT_COST_PENDING':
+      // Un vendedor anotó mercadería sin precios: el dueño abre esa recepción para ponerle el costo.
+      return id ? `/stock?tab=receipts&receipt=${encodeURIComponent(id)}` : '/stock?tab=receipts&pending=1'
     default:
       return null
   }
