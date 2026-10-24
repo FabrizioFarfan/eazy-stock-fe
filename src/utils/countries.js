@@ -1,7 +1,7 @@
 // Países que ofrecemos al crear o editar un negocio (Ajustes › Mi negocio y /registro).
 // Latinoamérica primero; Europa (Frank, sep-2026): los mercados donde ya hay clientes o contactos.
 export const COUNTRIES = [
-  ['PE', 'Perú'], ['AR', 'Argentina'], ['BO', 'Bolivia'], ['BR', 'Brasil'],
+  ['PE', 'Perú'], ['AR', 'Argentina'], ['BO', 'Bolivia'],
   ['CL', 'Chile'], ['CO', 'Colombia'], ['EC', 'Ecuador'], ['MX', 'México'],
   ['PY', 'Paraguay'], ['UY', 'Uruguay'], ['VE', 'Venezuela'],
   // Resto de LatAm (multi-país, 24-oct-2026)
@@ -28,7 +28,6 @@ export const FALLBACK_COUNTRY_CONFIGS = [
   cfg('PE', 'Perú',            'PEN', 'S/',  2, '51',  'es-PE'),
   cfg('AR', 'Argentina',       'ARS', '$',   2, '54',  'es-AR'),
   cfg('BO', 'Bolivia',         'BOB', 'Bs',  2, '591', 'es-BO'),
-  cfg('BR', 'Brasil',          'BRL', 'R$',  2, '55',  'pt-BR'),
   cfg('CL', 'Chile',           'CLP', '$',   0, '56',  'es-CL'),
   cfg('CO', 'Colombia',        'COP', '$',   0, '57',  'es-CO'),
   cfg('CR', 'Costa Rica',      'CRC', '₡',   2, '506', 'es-CR'),

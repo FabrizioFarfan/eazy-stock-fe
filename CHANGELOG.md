@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.20.1 — 2026-10-24 (sube junto al API 1.13.1)
+- **Brasil fuera** de «¿Dónde está tu negocio?» y de la lista de países del negocio (por ahora la app es en español). Los teléfonos de clientes siguen aceptando +55.
+
 ## 1.20.0 — 2026-10-24 (multi-país LatAm + España y medios de pago por negocio; sube junto al API 1.13.0)
 - **Registro por país**: primer paso «¿Dónde está tu negocio?» con los países de `GET /api/countries` (respaldo local en `utils/countries.js` si el API no responde), preseleccionado por `navigator.languages` (es-CO → Colombia, es-ES → España; sin región o no soportado → Perú). Luego el formulario con la moneda del país propuesta, la etiqueta del documento fiscal (RUC, NIF, NIT, CUIT…) y el prefijo de WhatsApp del país. Se ve qué medios de pago trae el país.
 - **Formato del negocio en toda la app**: el AuthContext toma de `/auth/me` `currencySymbol`, `currencyDecimals`, `locale`, `dateFormat` y el país. `formatAmount` muestra los decimales del negocio (0 en CLP/COP/PYG) y `formatPrice` al menos esos y hasta 6 si el precio los tiene; las fechas usan el locale del negocio en español (es-ES, es-CO…) y día/mes en inglés (en-GB); `formatNumericDate` sigue el `dateFormat` (dd/MM/yyyy). Llega a los PDFs (cotización/presupuesto, nota de pedido, estado de cuenta, pedido al proveedor) y a los mensajes de WhatsApp (el prefijo del negocio si el número no lo trae, como ya hacía `phone.js`). El documento del proveedor se rotula con el del país (NIF en España) y el `TAX_ID` genérico del API se muestra con la etiqueta del país.
