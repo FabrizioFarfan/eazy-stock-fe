@@ -20,6 +20,7 @@ import { formatPrice } from '../../utils/formatMoney'
 import { formatQty, isDivisibleUnit } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
 import { useT } from '../../i18n'
+import { taxIdLabel } from '../../utils/taxIds'
 
 /**
  * Modal de recepción de mercadería — flujo en 2 pasos:
@@ -403,7 +404,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                   <Truck size={16} className="text-blue-600" />
                   <span className="flex-1 text-sm font-semibold text-blue-900">{supplier.name}</span>
                   {supplier.ruc && (
-                    <span className="font-mono text-xs text-blue-700">RUC {supplier.ruc}</span>
+                    <span className="font-mono text-xs text-blue-700">{taxIdLabel()} {supplier.ruc}</span>
                   )}
                   {!simple && Number(supplier.currentDebt ?? 0) > 0 && (
                     <span className="text-xs font-mono text-red-600">
@@ -431,7 +432,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-blue-50 first:rounded-t-xl last:rounded-b-xl">
                             <div>
                               <p className="font-semibold text-gray-900">{s.name}</p>
-                              {s.ruc && <p className="font-mono text-xs text-gray-400">RUC {s.ruc}</p>}
+                              {s.ruc && <p className="font-mono text-xs text-gray-400">{taxIdLabel()} {s.ruc}</p>}
                             </div>
                             {!simple && Number(s.currentDebt ?? 0) > 0 && (
                               <span className="text-xs font-mono text-red-600">

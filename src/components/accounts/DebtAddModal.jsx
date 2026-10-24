@@ -9,7 +9,8 @@ import { useReferenceCheck } from '../../hooks/useReceipts'
 import ReferenceCheckHint from '../stock/ReferenceCheckHint'
 
 /**
- * Registrar manualmente "el proveedor X nos entregó mercadería al fiado por S/ Y".
+ * Registrar manualmente "el proveedor X nos entregó mercadería al fiado por <importe>"
+ * (en la moneda del negocio: PriceInput y formatPrice la toman del AuthContext).
  * Solo aplica a proveedores (para clientes la deuda se genera vía venta al fiado).
  *
  * Props:

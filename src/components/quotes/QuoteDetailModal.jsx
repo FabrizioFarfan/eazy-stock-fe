@@ -95,7 +95,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
     try {
       localStorage.setItem(saleDraftKey(user?.id), JSON.stringify({
         cart, notes: '', discountType: 'PERCENTAGE', discountValue: '', onCredit: false, customer: null,
-        payMethod: 'Efectivo', payOther: '', fromQuote: { id: q.id, number: q.number }, savedAt: Date.now(),
+        payKey: null, fromQuote: { id: q.id, number: q.number }, savedAt: Date.now(),
       }))
     } catch { toast.error(t('No se pudo preparar la venta (almacenamiento del navegador bloqueado)')); return }
     if (skipped > 0) toast.warning(t('{n} producto(s) ya no están en el catálogo y no se pasaron a la venta', { n: skipped }))

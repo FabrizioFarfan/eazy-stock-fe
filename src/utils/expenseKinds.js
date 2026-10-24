@@ -1,6 +1,8 @@
 // Tipos de gasto y medios de pago de «Compras y gastos» (William, 10-oct-2026).
 // Las claves viajan al backend (ExpenseService.CATEGORIES / PAYMENT_METHODS);
 // las etiquetas se traducen con t().
+import { getDefaultCountry } from './phone'
+
 export const EXPENSE_CATEGORIES = [
   { key: 'RENT',        label: 'Alquiler',            emoji: '🏠' },
   { key: 'UTILITIES',   label: 'Luz, agua, internet', emoji: '💡' },
@@ -15,7 +17,8 @@ export const EXPENSE_CATEGORIES = [
 
 export const PAYMENT_METHODS = [
   { key: 'CASH',      label: 'Efectivo' },
-  { key: 'YAPE_PLIN', label: 'Yape / Plin' },
+  // La clave sigue siendo YAPE_PLIN en el BE; fuera de Perú se lee «Billetera digital» (multi-país, 24-oct-2026).
+  { key: 'YAPE_PLIN', get label() { return getDefaultCountry() === 'PE' ? 'Yape / Plin' : 'Billetera digital' } },
   { key: 'TRANSFER',  label: 'Transferencia' },
   { key: 'CARD',      label: 'Tarjeta' },
   { key: 'OTHER',     label: 'Otro' },

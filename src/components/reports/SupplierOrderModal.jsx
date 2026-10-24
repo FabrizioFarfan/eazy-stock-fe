@@ -6,6 +6,7 @@ import ProductThumb from '../products/ProductThumb'
 import { useDebounce } from '../../hooks/useDebounce'
 import { printSupplierOrder } from '../../utils/printSupplierOrder'
 import { useT } from '../../i18n'
+import { formatNumericDate } from '../../utils/formatDate'
 
 /**
  * Previsual EDITABLE de la orden de pedido antes de generar el PDF (pedido de
@@ -168,7 +169,7 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
               </div>
               <div className="text-right">
                 <p className="text-xl font-black tracking-wide text-blue-600">{t('ORDEN DE PEDIDO')}</p>
-                <p className="text-xs text-gray-500">{t('Fecha')}: <strong className="text-gray-800">{new Date().toLocaleDateString()}</strong></p>
+                <p className="text-xs text-gray-500">{t('Fecha')}: <strong className="text-gray-800">{formatNumericDate(new Date())}</strong></p>
               </div>
             </div>
             <div className="mt-4">

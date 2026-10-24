@@ -26,7 +26,7 @@ function formatCurrency(v) {
 
 function formatNumber(v) {
   if (v == null) return '0'
-  return new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 }).format(v)
+  return new Intl.NumberFormat(dateLocale(), { maximumFractionDigits: 2 }).format(v)
 }
 
 function formatDay(str) {

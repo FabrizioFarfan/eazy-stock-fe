@@ -5,6 +5,7 @@
 // actual, el mínimo ni precios, que son información interna del negocio.
 // Mismo enfoque que printQuote: HTML limpio con su propio CSS, sin librería PDF.
 import { t, dateLocale, getLang } from '../i18n'
+import { taxIdLabel } from './taxIds'
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => (
@@ -89,7 +90,7 @@ export function printSupplierOrder({ businessName, authorName, supplier = {}, it
           <p class="value">${escapeHtml(supplier.name || '—')}</p>
           ${supplier.contact ? `<p class="sub">${e('Atención')}: ${escapeHtml(supplier.contact)}</p>` : ''}
           ${supplier.phone ? `<p class="sub">Tel: ${escapeHtml(supplier.phone)}</p>` : ''}
-          ${supplier.ruc ? `<p class="sub">RUC: ${escapeHtml(supplier.ruc)}</p>` : ''}
+          ${supplier.ruc ? `<p class="sub">${escapeHtml(taxIdLabel())}: ${escapeHtml(supplier.ruc)}</p>` : ''}
         </div>
       </div>
 

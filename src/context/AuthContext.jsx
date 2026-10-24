@@ -1,5 +1,6 @@
-import { setCurrentCurrency } from "../utils/formatMoney";
+import { setBusinessCurrency } from "../utils/formatMoney";
 import { setDefaultCountry } from "../utils/phone";
+import { setRegion, setBusinessLocale } from "../i18n/region";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,12 +26,19 @@ const ALWAYS_ALLOWED = ["OWNER", "SUPER_ADMIN"];
 const normalizeUser = (u) => {
   // La moneda y el país del negocio viven en /auth/me: se fijan como valores
   // globales para que formatPrice() y los teléfonos no tengan que pasarlos.
-  if (u) {
-    setCurrentCurrency(u.currency);
-    setDefaultCountry(u.countryCode);
-  }
+  // Multi-país (24-oct-2026): también decimales, símbolo, locale, formato de
+  // fecha y la capa de textos de España (usuario sin negocio → la del navegador).
+  if (u) applyBusinessFormat(u);
+
   return u && u.role === "BOSS" ? { ...u, role: "SUPER_ADMIN", isBoss: true } : u;
 };
+
+function applyBusinessFormat(u) {
+  setBusinessCurrency(u);
+  setDefaultCountry(u?.countryCode);
+  setBusinessLocale(u ? { locale: u.locale, dateFormat: u.dateFormat } : null);
+  setRegion(u?.countryCode || null);
+}
 
 // Flags de tutoriales que antes vivían solo en localStorage. Se migran al BE
 // una vez para que los usuarios existentes no vuelvan a ver todo tras el cambio.
@@ -181,6 +189,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setPermissions(null);
     setSeenTutorials(null);
+    applyBusinessFormat(null);
     navigate("/login");
   };
 

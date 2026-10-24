@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { orderNoteNumberLabel } from '../../utils/quotePdf'
 import { useT, dateLocale } from '../../i18n'
+import { displayTaxIdType } from '../../utils/taxIds'
 
 // Per-line prices may carry up to 6 decimals (extended price precision);
 // aggregates (subtotal/discount/total) are always 2-decimal from the BE.
@@ -84,7 +85,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
       createdAt: sale.createdAt,
       number: orderNoteNumberLabel(sale),
       businessName: business?.name || sale.businessName || user?.businessName,
-      businessTaxLabel: taxId ? `${business?.taxIdType?.trim() || 'RUC'} ${taxId}` : '',
+      businessTaxLabel: taxId ? `${displayTaxIdType(business?.taxIdType)} ${taxId}` : '',
       authorName: sale.employeeName || user?.name,
       customer: {
         name: sale.customerName ?? customer?.name ?? '',

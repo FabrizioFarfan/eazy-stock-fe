@@ -15,6 +15,7 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 import PhoneInput from '../components/inputs/PhoneInput'
 import { isValidPhone, formatPhoneDisplay } from '../utils/phone'
+import { taxIdLabel } from '../utils/taxIds'
 
 const makeSchema = (t) => z.object({
   name:    z.string().min(2, t('Mínimo 2 caracteres')),
@@ -86,7 +87,7 @@ function SupplierModal({ supplier, onClose }) {
               <input {...register('name')} placeholder={t('Ej. Distribuidora Lima SAC')} className={inputCls} />
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label={t('RUC')} error={errors.ruc?.message}>
+              <Field label={taxIdLabel()} error={errors.ruc?.message}>
                 <input {...register('ruc')} placeholder="20123456789" className={inputCls} />
               </Field>
               <Field label={t('Teléfono')} error={errors.phone?.message}>
@@ -147,7 +148,7 @@ function SupplierCard({ supplier, debt, onEdit, onDelete }) {
         </div>
       )}
       title={supplier.name}
-      subtitle={supplier.ruc ? <span className="font-mono">RUC {supplier.ruc}</span> : null}
+      subtitle={supplier.ruc ? <span className="font-mono">{taxIdLabel()} {supplier.ruc}</span> : null}
       onEdit={onEdit} onDelete={onDelete}
       actions={[
         { to: `/suppliers/${supplier.id}`, icon: HandCoins, label: t('Cuenta y pagos') },

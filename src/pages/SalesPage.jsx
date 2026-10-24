@@ -1,11 +1,13 @@
 import { formatPrice } from '../utils/formatMoney'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound, TrendingDown, TrendingUp, ArrowRight, History, Banknote, Smartphone, Landmark, HandCoins, MoreHorizontal, SlidersHorizontal } from 'lucide-react'
+import { Plus, ShoppingCart, ChevronLeft, ChevronRight, X, Tag, FileText, UserRound, TrendingDown, TrendingUp, ArrowRight, History, HandCoins, SlidersHorizontal } from 'lucide-react'
 import DateRangeQuick from '../components/common/DateRangeQuick'
 import PageTitle from '../components/common/PageTitle'
 import ColumnFilter from '../components/common/ColumnFilter'
 import { useAuth } from '../context/AuthContext'
+import { usePaymentMethods } from '../hooks/usePaymentMethods'
+import { paymentMethodIcon } from '../utils/paymentMethods'
 import { useSales } from '../hooks/useSales'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useProductSearch } from '../hooks/useProducts'
@@ -124,15 +126,9 @@ function ActionTile({ icon: Icon, label, hint, onClick, primary, className = '' 
   )
 }
 
-// Cómo pagaron: un toque filtra (feedback William).
-const PAY_SHORTCUTS = [
-  { value: '',              label: 'Todas',          icon: ShoppingCart },
-  { value: 'Efectivo',      label: 'Efectivo',       icon: Banknote },
-  { value: 'Yape',          label: 'Yape',           icon: Smartphone },
-  { value: 'Transferencia', label: 'Transferencia',  icon: Landmark },
-  { value: 'FIADO',         label: 'Fiado',          icon: HandCoins },
-  { value: '__otro__',      label: 'Otro...',        icon: MoreHorizontal },
-]
+// Cómo pagaron: un toque filtra (feedback William). Multi-país (24-oct-2026):
+// los botones son los medios del negocio (también los desactivados, que tienen
+// ventas viejas) y filtran por id (?paymentMethodId=); «Fiado» sigue por nombre.
 
 // Burbujas de una venta: fiado / cómo pagó / bajo precio / descuento / devolución.
 function SaleBadges({ sale }) {
@@ -266,10 +262,15 @@ export default function SalesPage() {
   const [employeeId, setEmployeeId] = useState('')
   // Forma de pago: valores comunes + "FIADO" (especial: filtra onCredit) +
   // texto libre para lo que el cajero haya escrito en "Otro".
+  // '' = todas · 'FIADO' · id del medio de pago
   const [payFilter, setPayFilter]       = useState('')
-  const [payFilterText, setPayFilterText] = useState('')
-  const debPayText = useDebounce(payFilterText, 350)
-  const effectivePayFilter = payFilter === '__otro__' ? debPayText.trim() : payFilter
+  const effectivePayFilter = payFilter
+  const { data: allPayMethods = [] } = usePaymentMethods({ includeInactive: true })
+  const payShortcuts = [
+    { value: '', label: t('Todas'), icon: ShoppingCart },
+    ...allPayMethods.map((m) => ({ value: m.id, label: t(m.name), icon: paymentMethodIcon(m).Icon, inactive: m.active === false })),
+    { value: 'FIADO', label: t('Fiado'), icon: HandCoins },
+  ]
   const [totalMin, setTotalMin]     = useState('')
   const [totalMax, setTotalMax]     = useState('')
   const [sort, setSort]             = useState({ key: 'createdAt', dir: 'desc' })
@@ -326,7 +327,8 @@ export default function SalesPage() {
     ...(employeeId && { employeeId }),
     ...(debTotalMin !== '' && { totalMin: debTotalMin }),
     ...(debTotalMax !== '' && { totalMax: debTotalMax }),
-    ...(effectivePayFilter !== '' && { paymentMethod: effectivePayFilter }),
+    ...(payFilter === 'FIADO' && { paymentMethod: 'FIADO' }),
+    ...(payFilter && payFilter !== 'FIADO' && { paymentMethodId: payFilter }),
     ...(customerFilter && { customerId: customerFilter.id }),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
@@ -360,7 +362,7 @@ export default function SalesPage() {
   const clearAll = () => {
     setFrom(''); setTo(''); setSelectedProducts([]); setSupplierId('')
     setEmployeeId(''); setTotalMin(''); setTotalMax('')
-    setPayFilter(''); setPayFilterText(''); setCustomerFilter(null); setPage(0)
+    setPayFilter(''); setCustomerFilter(null); setPage(0)
   }
 
   return (
@@ -422,11 +424,12 @@ export default function SalesPage() {
 
         {/* Forma de pago (feedback William: poder filtrar cómo pagaron) */}
         <div className="-mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-1 sm:-mx-4 sm:flex-wrap sm:overflow-visible sm:px-4 sm:pb-0">
-          {PAY_SHORTCUTS.map(({ value, label, icon: Icon }) => {
+          {payShortcuts.map(({ value, label, icon: Icon, inactive }) => {
             const on = payFilter === value
             return (
               <button key={value || 'all'} type="button"
-                onClick={() => { setPayFilter(value); setPayFilterText(''); setPage(0) }}
+                onClick={() => { setPayFilter(value); setPage(0) }}
+                title={inactive ? t('Desactivado') : undefined}
                 aria-pressed={on}
                 className={`flex flex-shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all active:scale-[0.98] ${
                   on
@@ -434,19 +437,10 @@ export default function SalesPage() {
                     : 'border-gray-200 bg-white text-gray-700 hover:border-blue-200 hover:bg-gray-50'
                 }`}>
                 <Icon size={15} className={on ? 'text-white' : 'text-gray-400'} />
-                {label === 'Yape' ? label : t(label)}
+                <span className={inactive && !on ? 'text-gray-400' : ''}>{label}</span>
               </button>
             )
           })}
-          {payFilter === '__otro__' && (
-            <input
-              value={payFilterText}
-              onChange={(e) => { setPayFilterText(e.target.value); setPage(0) }}
-              placeholder={t('Escribe la forma de pago...')}
-              className={`${inputCls} w-48 flex-shrink-0`}
-              autoFocus
-            />
-          )}
         </div>
 
         <div className="border-t border-gray-100 pt-4">

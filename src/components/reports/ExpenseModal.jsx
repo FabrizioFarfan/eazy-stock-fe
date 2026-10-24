@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, Receipt } from 'lucide-react'
 import { useSuppliers } from '../../hooks/useSuppliers'
-import { formatPrice, currencySymbol } from '../../utils/formatMoney'
+import { formatAmount } from '../../utils/formatMoney'
 import { useT } from '../../i18n'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, categoryOf } from '../../utils/expenseKinds'
 
@@ -68,7 +68,7 @@ export default function ExpenseModal({ expense, onClose, onSubmit, submitting, e
           <div className="relative mt-3 flex items-center gap-4">
             <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl">{categoryOf(category).emoji}</span>
             <div className="min-w-0">
-              <p className={`text-2xl font-extrabold leading-tight ${amountOk ? '' : 'text-white/50'}`}>{amountOk ? formatPrice(amountNum) : `${currencySymbol()} 0.00`}</p>
+              <p className={`text-2xl font-extrabold leading-tight ${amountOk ? '' : 'text-white/50'}`}>{formatAmount(amountOk ? amountNum : 0)}</p>
               <p className="mt-0.5 text-xs text-white/80">{concept.trim() || t('¿En qué se fue la plata?')}</p>
             </div>
           </div>

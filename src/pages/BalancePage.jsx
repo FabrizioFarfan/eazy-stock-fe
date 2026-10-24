@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Scale, TrendingUp, TrendingDown, Loader2,
   Wallet, PackageOpen, PiggyBank, ShoppingCart, Undo2, AlertTriangle,
-  Banknote, Smartphone, Landmark, CreditCard, HandCoins,
+  Banknote, HandCoins,
 } from 'lucide-react'
 import { useSalesBalance, useCashBalance, useBusinessOverview, useCashClosing } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
@@ -13,6 +13,7 @@ import { quickRange } from '../utils/dateRanges'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { useT, dateLocale } from '../i18n'
+import { paymentMethodIcon } from '../utils/paymentMethods'
 
 function S({ title, children }) {
   return (
@@ -39,7 +40,7 @@ function BalanceHelp() {
       </S>
       <S title={t('2 · Cierre de caja — cuánto entró por cada medio de pago')}>
         <p>
-          {t('Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. Sirve para cerrar la caja del día: el número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy.')}
+          {t('Es la primera card de la página. Separa las ventas al contado del período por cómo te pagaron, con los medios de pago de tu negocio (Ajustes › Medios de pago). Sirve para cerrar la caja del día: el número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy.')}
         </p>
         <p>
           {t('Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.')}
@@ -93,7 +94,7 @@ function CashClosingHelp() {
       </S>
       <S title={t('2 · El confronto de fin de día')}>
         <p>
-          {t('Compara lo que anotaste a mano con lo que dice el sistema: Efectivo, Yape, Transferencia o lo que hayas escrito al vender. El número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.')}
+          {t('Compara lo que anotaste a mano con lo que dice el sistema, medio de pago por medio de pago. El número grande de Efectivo es la plata que debe haber en el cajón por las ventas de hoy. Si coincide, la caja cierra bien.')}
         </p>
         <p>
           {t('Si hubo devoluciones en dinero, ya están restadas: cada medio muestra lo que DEBE HABER (vendido − devuelto) y debajo el detalle. La línea final «Debe haber en caja» es el total contra el que cuentas la plata.')}
@@ -125,15 +126,8 @@ function BalanceLine({ label, value, negative = false, muted = false }) {
   )
 }
 
-// Ícono por medio de pago: se adivina por el texto que escribió el cajero.
-function methodIcon(method) {
-  const m = (method || '').toLowerCase()
-  if (m.includes('efectivo') || m.includes('cash'))   return { Icon: Banknote,   cls: 'bg-emerald-50 text-emerald-600' }
-  if (m.includes('yape') || m.includes('plin'))       return { Icon: Smartphone, cls: 'bg-purple-50 text-purple-600' }
-  if (m.includes('transfer') || m.includes('banco'))  return { Icon: Landmark,   cls: 'bg-blue-50 text-blue-600' }
-  if (m.includes('tarjeta') || m.includes('pos'))     return { Icon: CreditCard, cls: 'bg-amber-50 text-amber-600' }
-  return { Icon: Wallet, cls: 'bg-gray-100 text-gray-500' }
-}
+// Ícono por medio de pago: el efectivo por `cash` (API 1.13.0); el resto por el nombre.
+const methodIcon = (line) => paymentMethodIcon({ name: line.method, cash: line.cash })
 
 function CashClosingCard({ report, isLoading, isError, hasRange }) {
   const t = useT()
@@ -156,11 +150,11 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           {cc.byMethod.map((line) => {
-            const { Icon, cls } = methodIcon(line.method)
+            const { Icon, cls } = methodIcon(line)
             const refunded = Number(line.refunded) > 0
             const pct = Math.max(refunded || Number(line.net) > 0 ? 4 : 0, Math.round((Number(line.net) / max) * 100))
             return (
-              <div key={line.method} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+              <div key={line.paymentMethodId ?? line.method} className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${cls}`}>
                     <Icon size={19} />
@@ -262,7 +256,7 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
               <span className="flex items-center gap-1.5 text-sm text-gray-600">
                 <HandCoins size={14} className="text-emerald-500" />
                 {t('De eso, en el cajón (efectivo + fondo)')}
-                <span className="text-xs text-gray-400">{t('— Yape y transferencias no están en el cajón')}</span>
+                <span className="text-xs text-gray-400">{t('— los demás medios no están en el cajón')}</span>
               </span>
               <span className="font-semibold tabular-nums text-emerald-700">{formatPrice(cc.drawerExpected)}</span>
             </div>

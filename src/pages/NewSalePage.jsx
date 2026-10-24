@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
-import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Banknote, Smartphone, Landmark, Zap } from 'lucide-react'
+import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Zap } from 'lucide-react'
 import QuickProductModal from '../components/products/QuickProductModal'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext'
 import { useProductSearch, PRODUCTS_KEY } from '../hooks/useProducts'
 import LoadMoreRow from '../components/common/LoadMoreRow'
 import { useCreateSale } from '../hooks/useSales'
+import { usePaymentMethods, PAYMENT_METHODS_KEY } from '../hooks/usePaymentMethods'
+import { paymentMethodIcon, fallbackPaymentMethods, methodKey } from '../utils/paymentMethods'
 import { useQueryClient } from '@tanstack/react-query'
 import { quotesApi } from '../services/endpoints/quotes'
 import { QUOTES_KEY } from '../hooks/useQuotes'
@@ -565,8 +567,6 @@ function CustomerSection({ customer, onSelectCustomer, creditEnabled, onToggleCr
 
 const saleDraftKey = (userId) => `eazystock_sale_draft_${userId || 'anon'}`
 
-// Íconos de los medios de pago de siempre (los guardados por el negocio van sin ícono).
-const METHOD_ICONS = { Efectivo: Banknote, Yape: Smartphone, Transferencia: Landmark }
 
 function loadSaleDraft(userId) {
   try {
@@ -602,34 +602,18 @@ export default function NewSalePage() {
   const [discountValue, setDiscountValue] = useState('')
   const [onCredit, setOnCredit]           = useState(false)
   const [customer, setCustomer]           = useState(null)
-  // Cómo pagó (William): chips comunes + texto libre; se guarda con la venta
-  // y sale como burbuja en el historial (él lo anotaba en las notas).
-  const [payMethod, setPayMethod]         = useState('Efectivo')
-  const [payOther, setPayOther]           = useState('')
-  // Métodos escritos en "Otro" quedan guardados POR NEGOCIO como chips
-  // reutilizables (Frank: "en la vida real es más práctico" — Plin se escribe
-  // una vez y queda de botón; cada chip guardado se quita con su X).
-  const payMethodsKey = `eazystock_pay_methods_${user?.businessId ?? 'default'}`
-  const [customMethods, setCustomMethods] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(payMethodsKey)) ?? [] } catch { return [] }
-  })
-  const DEFAULT_METHODS = ['Efectivo', 'Yape', 'Transferencia']
-  const rememberMethod = (m) => {
-    const clean = m.trim()
-    if (!clean) return
-    const exists = [...DEFAULT_METHODS, ...customMethods]
-      .some((x) => x.toLowerCase() === clean.toLowerCase())
-    if (exists) return
-    const next = [...customMethods, clean].slice(-8) // tope sano de chips
-    setCustomMethods(next)
-    localStorage.setItem(payMethodsKey, JSON.stringify(next))
-  }
-  const forgetMethod = (m) => {
-    const next = customMethods.filter((x) => x !== m)
-    setCustomMethods(next)
-    localStorage.setItem(payMethodsKey, JSON.stringify(next))
-    if (payMethod === m) setPayMethod('Efectivo')
-  }
+  // Cómo pagó (William): se guarda con la venta y sale como burbuja en el
+  // historial. Multi-país (24-oct-2026): los botones son los medios de pago
+  // ACTIVOS del negocio, en el orden del dueño (Ajustes › Medios de pago); ya
+  // no hay «Otro…» de texto libre ni chips en localStorage. `payKey` = id del
+  // medio (o «name:…» si el API es viejo y se usa el respaldo del país).
+  const paymentMethodsQuery = usePaymentMethods()
+  const payMethods = paymentMethodsQuery.data?.length
+    ? paymentMethodsQuery.data.filter((m) => m.active !== false)
+    : (paymentMethodsQuery.isError ? fallbackPaymentMethods() : [])
+  const [payKey, setPayKey]               = useState(null)
+  const defaultPay = payMethods.find((m) => m.cash) ?? payMethods[0] ?? null
+  const chosenMethod = payMethods.find((m) => methodKey(m) === payKey) ?? defaultPay
   // null = cerrado; string (incluso vacío) = abierto con ese nombre prellenado.
   const [pendingLeave, setPendingLeave]       = useState(false)
   // Venta que nace de una cotización del historial: al cobrar se enlaza y la
@@ -651,8 +635,8 @@ export default function NewSalePage() {
     setDiscountValue(d.discountValue ?? '')
     setOnCredit(!!d.onCredit)
     setCustomer(d.customer ?? null)
-    setPayMethod(d.payMethod ?? 'Efectivo')
-    setPayOther(d.payOther ?? '')
+    // Borradores de antes guardaban el nombre (payMethod): se busca por nombre al cobrar.
+    setPayKey(d.payKey ?? (d.payMethod && d.payMethod !== '__otro__' ? `name:${d.payMethod}` : null))
     setFromQuote(d.fromQuote ?? null)
     if (d.fromQuote?.number) {
       toast.info(t('Venta armada desde la cotización N.º {n} ({c} producto(s)) — revisa cantidades y cobra', { n: d.fromQuote.number, c: d.cart.length }))
@@ -667,9 +651,9 @@ export default function NewSalePage() {
     if (!user?.id || !draftRestoredRef.current) return
     if (cart.length === 0) { localStorage.removeItem(saleDraftKey(user.id)); return }
     localStorage.setItem(saleDraftKey(user.id), JSON.stringify({
-      cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, fromQuote, savedAt: Date.now(),
+      cart, notes, discountType, discountValue, onCredit, customer, payKey, fromQuote, savedAt: Date.now(),
     }))
-  }, [cart, notes, discountType, discountValue, onCredit, customer, payMethod, payOther, fromQuote, user?.id])
+  }, [cart, notes, discountType, discountValue, onCredit, customer, payKey, fromQuote, user?.id])
 
   const discardDraft = () => {
     if (user?.id) localStorage.removeItem(saleDraftKey(user.id))
@@ -829,12 +813,15 @@ export default function NewSalePage() {
       })
 
       const includeTotalDiscount = canApplyDiscount && numericDiscount > 0
-      const chosenPay = payMethod === '__otro__' ? payOther.trim() : payMethod
-      // Un método nuevo escrito a mano queda de chip para la próxima venta.
-      if (!isFiado && payMethod === '__otro__' && chosenPay) rememberMethod(chosenPay)
+      // Medio elegido; un borrador viejo con el nombre se casa con el medio de ese nombre.
+      const pay = payKey?.startsWith('name:')
+        ? (payMethods.find((m) => m.name.toLowerCase() === payKey.slice(5).toLowerCase()) ?? chosenMethod)
+        : chosenMethod
       const sale = await createSale.mutateAsync({
         items,
-        ...(!isFiado && chosenPay && { paymentMethod: chosenPay }),
+        // paymentMethodId manda (API 1.13.0); el nombre va también para un API anterior.
+        ...(!isFiado && pay?.id && { paymentMethodId: pay.id }),
+        ...(!isFiado && pay && { paymentMethod: pay.name }),
         ...(notes.trim() && { notes: notes.trim() }),
         ...(includeTotalDiscount && {
           discountType,
@@ -864,7 +851,14 @@ export default function NewSalePage() {
       }
       discardDraft()
       navigate('/sales')
-    } catch { /* error shown via createSale.isError */ }
+    } catch (err) {
+      // El dueño desactivó el medio mientras se cobraba (400 PAYMENT_METHOD_INACTIVE): se recarga la lista.
+      if (['PAYMENT_METHOD_INACTIVE', 'NOT_FOUND'].includes(err?.response?.data?.code)) {
+        qc.invalidateQueries({ queryKey: [PAYMENT_METHODS_KEY] })
+        setPayKey(null)
+      }
+      /* el error se muestra con createSale.isError */
+    }
   }
 
   return (
@@ -916,7 +910,7 @@ export default function NewSalePage() {
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">{t('💳 ¿Cómo pagó?')}</p>
-            <p className="mt-1">{t('Elige Efectivo, Yape, Transferencia u «Otro…» (Plin, tarjeta…). Lo que escribas en «Otro» queda guardado como botón para las próximas ventas; quítalo con su X. El medio de pago sale como burbuja en el historial y en el cierre de caja.')}</p>
+            <p className="mt-1">{t('Toca el medio con el que te pagó. Los botones son los medios de pago de tu negocio, en el orden que eligió el dueño (los cambia en Ajustes › Medios de pago). El medio de pago sale como burbuja en el historial y en el cierre de caja.')}</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">{t('🧾 Vender al fiado')}</p>
@@ -1077,65 +1071,29 @@ export default function NewSalePage() {
           {cart.length > 0 && !isFiado && (
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
               <h3 className="mb-2.5 text-sm font-bold text-gray-900">{t('¿Cómo pagó?')}</h3>
-              <div className="mb-2 grid grid-cols-3 gap-2">
-                {DEFAULT_METHODS.map((m) => {
-                  const Icon = METHOD_ICONS[m] ?? Wallet
-                  return (
-                    <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
-                      className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-bold transition-all active:scale-[0.97] ${
-                        payMethod === m
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
-                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                      }`}>
-                      <Icon size={18} />
-                      {m === 'Yape' ? m : t(m)}
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {/* Chips guardados del negocio: un click y listo, X para quitar */}
-                {customMethods.map((m) => (
-                  <span key={m}
-                    className={`group inline-flex items-center overflow-hidden rounded-xl border text-xs font-semibold transition-colors ${
-                      payMethod === m
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-200 bg-white text-gray-600'
-                    }`}>
-                    <button type="button" onClick={() => setPayMethod(m)}
-                      className="px-3 py-1.5 hover:bg-gray-50">
-                      {m}
-                    </button>
-                    <button type="button" onClick={() => forgetMethod(m)}
-                      title={t('Quitar "{m}" de los métodos guardados', { m })}
-                      className="border-l border-gray-100 px-1.5 py-1.5 text-gray-300 hover:bg-red-50 hover:text-red-500">
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-                <button type="button" onClick={() => setPayMethod('__otro__')}
-                  className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    payMethod === '__otro__'
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                  }`}>
-                  {t('Otro...')}
-                </button>
-              </div>
-              {payMethod === '__otro__' && (
-                <>
-                  <input
-                    value={payOther}
-                    onChange={(e) => setPayOther(e.target.value)}
-                    maxLength={40}
-                    placeholder={t('Escribe cómo pagó (ej. Plin, tarjeta...)')}
-                    autoFocus
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-                  />
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    {t('Al confirmar la venta queda guardado como botón para las próximas')}
-                  </p>
-                </>
+              {payMethods.length === 0 ? (
+                <div className="flex justify-center py-3"><Loader2 size={16} className="animate-spin text-gray-400" /></div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2" data-testid="pay-methods">
+                  {payMethods.map((m) => {
+                    const { Icon } = paymentMethodIcon(m)
+                    const on = chosenMethod && methodKey(chosenMethod) === methodKey(m)
+                    return (
+                      <button key={methodKey(m)} type="button" onClick={() => setPayKey(methodKey(m))} aria-pressed={!!on}
+                        className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-xs font-bold transition-all active:scale-[0.97] ${
+                          on
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
+                            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                        }`}>
+                        <Icon size={18} />
+                        <span className="max-w-full truncate">{t(m.name)}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {user?.role === 'OWNER' && (
+                <p className="mt-2 text-[11px] text-gray-400">{t('¿Falta uno? Agrégalo en Ajustes › Medios de pago.')}</p>
               )}
             </div>
           )}
@@ -1167,13 +1125,15 @@ export default function NewSalePage() {
               <span className="text-xs font-semibold uppercase tracking-widest text-white/80">{t('Total a cobrar')}</span>
               <p className="text-3xl font-extrabold tracking-tight xl:text-4xl">{formatAmount(total)}</p>
               {cart.length > 0 && (
-                <p className="text-xs text-white/75">{t('{n} producto(s)', { n: cart.length })}{isFiado ? ` · ${t('al fiado')}` : payMethod && payMethod !== '__otro__' ? ` · ${payMethod === 'Yape' ? payMethod : t(payMethod)}` : ''}</p>
+                <p className="text-xs text-white/75">{t('{n} producto(s)', { n: cart.length })}{isFiado ? ` · ${t('al fiado')}` : chosenMethod ? ` · ${t(chosenMethod.name)}` : ''}</p>
               )}
             </div>
 
             {createSale.isError && (
               <p className="relative mb-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-xs text-red-600 ring-1 ring-red-100">
-                {createSale.error?.response?.data?.message ?? t('Error al registrar la venta')}
+                {createSale.error?.response?.data?.code === 'PAYMENT_METHOD_INACTIVE'
+                  ? t('Ese medio de pago se desactivó: elige otro y vuelve a cobrar')
+                  : createSale.error?.response?.data?.message ?? t('Error al registrar la venta')}
               </p>
             )}
 

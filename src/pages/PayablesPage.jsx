@@ -12,6 +12,7 @@ import { formatPrice } from '../utils/formatMoney'
 import { quickRange } from '../utils/dateRanges'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT, dateLocale } from '../i18n'
+import { taxIdLabel } from '../utils/taxIds'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -170,7 +171,7 @@ export default function PayablesPage() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/60">
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Proveedor')}</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('RUC')}</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{taxIdLabel()}</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Teléfono')}</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Le debemos')}</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-gray-400">{t('% Crédito')}</th>

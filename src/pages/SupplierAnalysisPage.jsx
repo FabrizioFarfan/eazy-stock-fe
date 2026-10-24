@@ -9,6 +9,7 @@ import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports
 import { formatPrice } from '../utils/formatMoney'
 import { quickRange } from '../utils/dateRanges'
 import { useT, dateLocale } from '../i18n'
+import { taxIdLabel } from '../utils/taxIds'
 
 /**
  * Análisis de proveedores (Frank, 3-oct-2026): quién nos vende más, de quién
@@ -204,7 +205,7 @@ export default function SupplierAnalysisPage() {
                   <td className="px-4 py-3.5"><RankBadge n={i + 1} /></td>
                   <td className="px-4 py-3.5">
                     <p className="font-semibold text-gray-900">{r.name}</p>
-                    <p className="text-[11px] text-gray-400">{r.ruc ? <span className="font-mono">RUC {r.ruc}</span> : null}{r.ruc ? ' · ' : ''}{r.productsCount} {t('productos')}</p>
+                    <p className="text-[11px] text-gray-400">{r.ruc ? <span className="font-mono">{taxIdLabel()} {r.ruc}</span> : null}{r.ruc ? ' · ' : ''}{r.productsCount} {t('productos')}</p>
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <span className="font-bold text-gray-900">{formatPrice(r.purchased)}</span>

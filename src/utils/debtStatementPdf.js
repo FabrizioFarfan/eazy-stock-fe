@@ -2,11 +2,11 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatPrice, formatAmount } from './formatMoney'
 import { t, dateLocale } from '../i18n'
+import { formatNumericDate } from './formatDate'
 
+// Fecha de cada movimiento con el formato del negocio (dd/MM/yyyy).
 function fmtDate(str) {
-  if (!str) return '—'
-  return new Intl.DateTimeFormat(dateLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
-    .format(new Date(str))
+  return formatNumericDate(str)
 }
 function fmtLongDate(str) {
   if (!str) return '—'

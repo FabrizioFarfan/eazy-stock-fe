@@ -1,4 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { spainVariant } from './esES'
+import { getRegion, localeFor, subscribeRegion, regionSnapshot } from './region'
 
 /**
  * i18n de EAZY STOCK — el ESPAÑOL es la llave.
@@ -11,6 +13,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
  * con el texto español EXACTO como llave. Si falta la traducción se devuelve el
  * español (nunca se rompe la UI). Fuera de React (utils, toasts en hooks) usar
  * `t` exportado abajo, que lee el idioma activo.
+ *
+ * Multi-país (24-oct-2026): en español, si el negocio es de España (o, sin
+ * sesión, el navegador está en es-ES) los textos pasan por la capa `esES.js`
+ * («móvil», «ordenador», «presupuesto»). La fecha y los números siguen el
+ * locale del negocio (`setBusinessLocale`, lo fija el AuthContext).
  */
 
 export const LANGS = [
@@ -20,7 +27,7 @@ export const LANGS = [
 ]
 export const STORAGE_KEY = 'eazystock_lang'
 
-// Intl locales por idioma (la moneda sigue siendo PEN: el mercado es Perú)
+// Intl locales por idioma; en español manda el del negocio (es-PE, es-CO, es-ES…).
 export const LOCALE = { es: 'es-PE', en: 'en-US', it: 'it-IT' }
 
 const modules = import.meta.glob('./dict/*.js', { eager: true })
@@ -42,7 +49,14 @@ function detectLang() {
 
 let currentLang = detectLang()
 export function getLang() { return currentLang }
-export function dateLocale() { return LOCALE[currentLang] ?? 'es-PE' }
+
+export function dateLocale() { return localeFor(currentLang) }
+
+function lookup(lang, key) {
+  if (lang === 'es') return getRegion() === 'ES' ? spainVariant(key) : key
+  const dict = DICT[lang]
+  return dict ? (dict[key] ?? key) : key
+}
 
 function interpolate(str, vars) {
   if (!vars) return str
@@ -51,15 +65,15 @@ function interpolate(str, vars) {
 
 /** Traduce con el idioma activo (uso fuera de componentes). */
 export function t(key, vars) {
-  const dict = DICT[currentLang]
-  const out = dict ? (dict[key] ?? key) : key
-  return interpolate(out, vars)
+  return interpolate(lookup(currentLang, key), vars)
 }
 
 const LangContext = createContext({ lang: 'es', setLang: () => {}, t })
 
 export function LangProvider({ children }) {
   const [lang, setLangState] = useState(currentLang)
+  // País del negocio: cambia los textos de España y el locale de fechas.
+  const regionKey = useSyncExternalStore(subscribeRegion, regionSnapshot, regionSnapshot)
 
   useEffect(() => {
     currentLang = lang
@@ -74,12 +88,10 @@ export function LangProvider({ children }) {
   const value = useMemo(() => ({
     lang,
     setLang,
-    locale: LOCALE[lang],
-    t: (key, vars) => {
-      const dict = DICT[lang]
-      return interpolate(dict ? (dict[key] ?? key) : key, vars)
-    },
-  }), [lang, setLang])
+    region: regionKey.split('|')[0],
+    locale: localeFor(lang),
+    t: (key, vars) => interpolate(lookup(lang, key), vars),
+  }), [lang, setLang, regionKey]) // regionKey: re-crear t al cambiar de país
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>
 }

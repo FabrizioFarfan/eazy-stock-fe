@@ -6,7 +6,9 @@ import { LANGS, useLang } from './index'
  * por defecto pinta los tres como segmentos (Ajustes).
  */
 export default function LangSwitcher({ compact = false, className = '' }) {
-  const { lang, setLang } = useLang()
+  const { lang, setLang, region } = useLang()
+  // Español de España (negocio o navegador es-ES): la bandera acompaña a los textos.
+  const flagOf = (l) => (l.code === 'es' && region === 'ES' ? '🇪🇸' : l.flag)
 
   if (compact) {
     return (
@@ -19,7 +21,7 @@ export default function LangSwitcher({ compact = false, className = '' }) {
           aria-label="Idioma"
         >
           {LANGS.map((l) => (
-            <option key={l.code} value={l.code}>{l.flag} {l.code.toUpperCase()}</option>
+            <option key={l.code} value={l.code}>{flagOf(l)} {l.code.toUpperCase()}</option>
           ))}
         </select>
       </label>
@@ -39,7 +41,7 @@ export default function LangSwitcher({ compact = false, className = '' }) {
             lang === l.code ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-100' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
-          <span>{l.flag}</span>{l.label}
+          <span>{flagOf(l)}</span>{l.label}
         </button>
       ))}
     </div>

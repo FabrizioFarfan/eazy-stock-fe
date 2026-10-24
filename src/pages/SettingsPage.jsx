@@ -21,6 +21,8 @@ import LogoutConfirm from '../components/common/LogoutConfirm'
 import { GUIDES, GUIDE_ORDER } from '../components/tutorial/guides'
 import PlanSection from '../components/subscription/PlanSection'
 import FeedbackSection from '../components/feedback/FeedbackSection'
+import { displayTaxIdType } from '../utils/taxIds'
+import PaymentMethodsSection from '../components/settings/PaymentMethodsSection'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -388,8 +390,8 @@ function BusinessSection() {
         <>
           <InfoRow icon={Building2} label={t('Nombre')} value={business.name} />
           <InfoRow icon={Globe}     label={t('País')}   value={countryLabel} />
-          <InfoRow icon={Coins}     label={t('Moneda')} value={`${business.currency ?? 'PEN'} · ${CURRENCIES[business.currency ?? 'PEN']?.symbol ?? ''}`} />
-          <InfoRow icon={FileDigit} label={business.taxIdType || t('Documento')} value={business.taxId || '—'} />
+          <InfoRow icon={Coins}     label={t('Moneda')} value={`${business.currency ?? 'PEN'} · ${business.currencySymbol ?? CURRENCIES[business.currency ?? 'PEN']?.symbol ?? ''}`} />
+          <InfoRow icon={FileDigit} label={displayTaxIdType(business.taxIdType, business.countryCode)} value={business.taxId || '—'} />
         </>
       ) : (
         <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
@@ -559,6 +561,9 @@ export default function SettingsPage() {
 
       {/* Business info (editable por OWNER) */}
       <BusinessSection />
+
+      {/* Medios de pago del negocio (multi-país, 24-oct-2026): solo el dueño */}
+      {user?.role === 'OWNER' && <PaymentMethodsSection />}
 
       {/* Tu opinión (16-oct-2026): feedback real, lo ven TODOS los roles; /settings#feedback */}
       <FeedbackSection />

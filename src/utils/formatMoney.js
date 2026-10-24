@@ -43,81 +43,121 @@ export const CURRENCY_BY_COUNTRY = {
   GB: 'GBP', CH: 'CHF', CA: 'CAD', DO: 'DOP', GT: 'GTQ', CR: 'CRC', HN: 'HNL', NI: 'NIO',
 }
 
+/**
+ * Decimales a mostrar en IMPORTES por moneda (contrato multi-país, 24-oct-2026):
+ * CLP, COP y PYG sin céntimos; el resto 2. El negocio los trae en
+ * `currencyDecimals` (/auth/me) y manda sobre esta tabla, que es el respaldo.
+ */
+export const CURRENCY_DECIMALS = { CLP: 0, COP: 0, PYG: 0 }
+
 let currentCurrency = 'PEN'
+// Lo que manda el negocio (/auth/me): símbolo, decimales y locale de Intl.
+let business = { symbol: null, decimals: null, locale: null }
 
 /** La fija el AuthContext con la moneda del negocio del usuario logueado. */
 export function setCurrentCurrency(code) {
-  currentCurrency = CURRENCIES[code] ? code : 'PEN'
+  currentCurrency = /^[A-Z]{3}$/.test(code ?? '') ? code : 'PEN'
 }
 export function getCurrentCurrency() { return currentCurrency }
 
+/**
+ * Moneda + formato del negocio en una llamada (AuthContext, con el usuario de /auth/me):
+ * { currency, currencySymbol, currencyDecimals, locale }. null = vuelve a PEN.
+ */
+export function setBusinessCurrency(u) {
+  setCurrentCurrency(u?.currency)
+  business = {
+    symbol: u?.currencySymbol || null,
+    decimals: Number.isInteger(u?.currencyDecimals) ? u.currencyDecimals : null,
+    locale: u?.locale || null,
+  }
+}
+
+/** Decimales de los importes en la moneda activa (o la que se pase): 2, o 0 en CLP/COP/PYG. */
+export function currencyDecimals(currency = currentCurrency) {
+  if (currency === currentCurrency && business.decimals != null) return business.decimals
+  return CURRENCY_DECIMALS[currency] ?? 2
+}
+
+function intlFor(currency) {
+  const known = CURRENCIES[currency]
+  const locale = (currency === currentCurrency && business.locale) || known?.locale || 'es-PE'
+  return { code: known?.code ?? currency ?? 'PEN', locale }
+}
+
 /** Símbolo corto ("S/", "$", "€") de la moneda activa o de la que se pase. */
 export function currencySymbol(currency = currentCurrency) {
-  return (CURRENCIES[currency] ?? CURRENCIES.PEN).symbol
+  if (currency === currentCurrency && business.symbol) return business.symbol
+  return CURRENCIES[currency]?.symbol ?? currency ?? CURRENCIES.PEN.symbol
+}
+
+function intlFormat(n, currency, decimals) {
+  const { code, locale } = intlFor(currency)
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency', currency: code, minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+    }).format(n)
+  } catch {
+    // Código que Intl no conoce: número con el símbolo delante.
+    return `${currencySymbol(currency)} ${n.toFixed(decimals)}`
+  }
 }
 
 /**
  * Format a money value for display.
  *
- *  - If the value has 2 decimals or fewer, render with exactly 2 decimals
- *    ("S/ 25.50") so totals always look like prices.
- *  - If the value has 3-6 decimals, render with as many decimals as the value
- *    actually carries ("S/ 0.0357"), no trailing-zero padding.
+ *  - At least the business decimals (2, or 0 for CLP/COP/PYG): "S/ 25.50", "$ 1.500".
+ *  - If the value carries more (up to 6), as many as it actually has
+ *    ("S/ 0.0357"), no trailing-zero padding.
  *  - `currency` defaults to the business currency set by the AuthContext.
  *  - Null/undefined/NaN renders as "—".
  *
  * Used for *unit* prices, line subtotals and similar — i.e. anywhere a value
- * coming from the DECIMAL(15,6) columns might surface. Aggregates that are
- * always 2-decimal (sale.total, daily revenue) just round naturally to 2.
+ * coming from the DECIMAL(15,6) columns might surface.
  */
 export function formatPrice(value, currency = currentCurrency) {
   if (value == null) return '—'
   const n = typeof value === 'number' ? value : parseFloat(value)
   if (!Number.isFinite(n)) return '—'
-
-  const { code, locale } = CURRENCIES[currency] ?? CURRENCIES.PEN
-  const decimals = significantDecimals(n)
-
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: code,
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(n)
+  return intlFormat(n, currency, significantDecimals(n, currencyDecimals(currency)))
 }
 
 /**
- * Money AMOUNTS (a line subtotal, a sale total, a discount, a debt) are always
- * 2 decimals HALF_UP — 12 × 0.1666 = 1.9992 reads «S/ 2.00». Unit prices keep
- * their 3-6 decimals through formatPrice(); amounts never show them
- * (William, 16-sep: «antes me lo redondeaba a 2 soles»).
+ * Money AMOUNTS (a line subtotal, a sale total, a discount, a debt) always
+ * show the business decimals HALF_UP — 12 × 0.1666 = 1.9992 reads «S/ 2.00»
+ * (William, 16-sep: «antes me lo redondeaba a 2 soles»); in CLP/COP/PYG, no
+ * decimals. Unit prices keep their 3-6 decimals through formatPrice().
  */
 export function formatAmount(value, currency = currentCurrency) {
   if (value == null) return '—'
   const n = typeof value === 'number' ? value : parseFloat(value)
   if (!Number.isFinite(n)) return '—'
-  const { code, locale } = CURRENCIES[currency] ?? CURRENCIES.PEN
-  return new Intl.NumberFormat(locale, {
-    style: 'currency', currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2,
-  }).format(round2(n))
+  const d = currencyDecimals(currency)
+  return intlFormat(roundTo(n, d), currency, d)
 }
 
 /** Half-up rounding to cents, defeating float noise (1.005 → 1.01, 1.9992 → 2). */
 export function round2(n) {
+  return roundTo(n, 2)
+}
+
+/** Half-up rounding to `d` decimals (0 for CLP: 1499.5 → 1500). */
+export function roundTo(n, d) {
   const x = Number(n) || 0
-  return Math.round((x + Number.EPSILON) * 100) / 100
+  const f = 10 ** d
+  return Math.round((x + Number.EPSILON) * f) / f
 }
 
 /**
  * Returns the number of decimals needed to faithfully render `n`:
- *  - 2 if the value has 0-2 meaningful decimals
+ *  - `min` (the business decimals) if the value has no more than that
  *  - up to 6 otherwise, dropping trailing zeros (25.5037 → 4, 0.5 → 2, 0.05037 → 5)
  */
-function significantDecimals(n) {
+function significantDecimals(n, min = 2) {
   // Use toFixed(6) to defeat floating-point noise like 0.1 + 0.2 = 0.30000000000000004,
   // then strip trailing zeros.
   const fixed = n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')
   const dot   = fixed.indexOf('.')
-  if (dot < 0) return 2
-  return Math.max(2, Math.min(6, fixed.length - dot - 1))
+  if (dot < 0) return min
+  return Math.max(min, Math.min(6, fixed.length - dot - 1))
 }

@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Check, ArrowLeft, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award } from 'lucide-react'
+import { Check, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award, MapPin } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT, dateLocale } from '../i18n'
+import { browserRegions, setRegion } from '../i18n/region'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { usePageSeo } from './landing/site'
-import { CURRENCIES, CURRENCY_OPTIONS, CURRENCY_BY_COUNTRY } from '../utils/formatMoney'
-import { COUNTRIES } from '../utils/countries'
+import { CURRENCIES, CURRENCY_OPTIONS } from '../utils/formatMoney'
+import { suggestedCountry } from '../utils/countries'
+import { COUNTRIES as PHONE_COUNTRIES } from '../utils/phone'
+import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import { promoActive, promoVars, trialLine, afterPromoLine } from './landing/plans'
 import { usePlans } from '../hooks/useSubscription'
@@ -23,7 +26,12 @@ import { isValidPeruRuc, TAX_ID_LABEL } from '../utils/taxIds'
  * precio 6 meses). RUC obligatorio, válido y único (task 1002). Regla post-promo
  * (task 1018): después del 15-dic, 1 mes gratis y el segundo mes a mitad de precio.
  * El BE manda en POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
+ * Multi-país (24-oct-2026): primer paso «¿Dónde está tu negocio?» (países de
+ * GET /api/countries, preseleccionado por el navegador); luego el formulario con
+ * la moneda del país y su documento fiscal.
  */
+
+const FLAG = Object.fromEntries(PHONE_COUNTRIES.map((c) => [c.iso, c.flag]))
 
 const PERKS_PROMO = [
   [Clock,       'Gratis hasta el {date} con tu negocio real, sin tarjeta'],
@@ -45,7 +53,7 @@ const makeSchema = (t) => z.object({
   password:     z.string().min(6, t('Mínimo 6 caracteres')),
   businessName: z.string().trim().min(2, t('Mínimo 2 caracteres')),
   countryCode:  z.string().min(2, t('Requerido')).max(3),
-  taxId:        z.string().trim().min(1, t('El RUC es obligatorio')),
+  taxId:        z.string().trim().min(1, t('Requerido')),
   currency:     z.string().length(3, t('Requerido')),
   phone:        z.string().trim().optional(),
   accept:       z.boolean().refine((v) => v === true, { message: t('Necesitamos que aceptes la política de privacidad') }),
@@ -77,17 +85,36 @@ export default function RegisterPage() {
     path: '/registro',
   })
 
+  const { countries } = useCountries()
+  // Paso 1 = «¿Dónde está tu negocio?»; paso 2 = el formulario.
+  const [step, setStep] = useState(1)
+  const initialCountry = useMemo(() => suggestedCountry(browserRegions(), countries.map((c) => c.code)), [countries])
+
   const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', password: '', businessName: '', countryCode: 'PE', taxId: '', currency: 'PEN', phone: '', accept: false },
+    defaultValues: { name: '', email: '', password: '', businessName: '', countryCode: initialCountry, taxId: '', currency: 'PEN', phone: '', accept: false },
   })
 
-  // Al cambiar el país se propone su moneda (se puede corregir).
-  const watchedCountry = watch('countryCode')
+  // La lista llega del API después del primer render: mientras el usuario no
+  // haya tocado nada, se re-propone el país del navegador.
+  const touchedCountryRef = useRef(false)
   useEffect(() => {
-    const suggested = CURRENCY_BY_COUNTRY[watchedCountry]
-    if (suggested) setValue('currency', suggested)
-  }, [watchedCountry, setValue])
+    if (!touchedCountryRef.current) setValue('countryCode', initialCountry)
+  }, [initialCountry, setValue])
+
+  // Al cambiar el país se propone su moneda (se puede corregir) y, en español,
+  // los textos de España si es España.
+  const watchedCountry = watch('countryCode')
+  const countryCfg = countries.find((c) => c.code === watchedCountry)
+  useEffect(() => {
+    if (countryCfg?.currency) setValue('currency', countryCfg.currency)
+    setRegion(watchedCountry === 'ES' ? 'ES' : watchedCountry ? watchedCountry : null)
+  }, [watchedCountry, countryCfg?.currency, setValue])
+  // Al salir sin registrarse, los textos vuelven a los del navegador.
+  useEffect(() => () => { if (!localStorage.getItem('eazystock_token')) setRegion(null) }, [])
+  const currencyOptions = countryCfg?.currency && !CURRENCY_OPTIONS.includes(countryCfg.currency)
+    ? [countryCfg.currency, ...CURRENCY_OPTIONS] : CURRENCY_OPTIONS
+  const symbolOf = (code) => (code === countryCfg?.currency && countryCfg?.currencySymbol) || CURRENCIES[code]?.symbol || code
 
   if (!isLoading && token) return <Navigate to="/dashboard" replace />
 
@@ -114,7 +141,9 @@ export default function RegisterPage() {
   }
 
   const perks = promo ? PERKS_PROMO : PERKS_AFTER
-  const taxLabel = TAX_ID_LABEL[watchedCountry] ?? t('Identificación fiscal')
+  // Etiqueta del documento: la del API (CountryConfig.taxIdLabel) salvo el genérico TAX_ID; si no, la local.
+  const apiTaxLabel = countryCfg?.taxIdLabel && countryCfg.taxIdLabel !== 'TAX_ID' ? countryCfg.taxIdLabel : null
+  const taxLabel = apiTaxLabel ?? TAX_ID_LABEL[watchedCountry] ?? t('Identificación fiscal')
 
   return (
     <div className="flex min-h-screen">
@@ -197,8 +226,50 @@ export default function RegisterPage() {
             <p className="mt-2 text-sm text-gray-500">{t('Un minuto y ya estás vendiendo.')} {trialLine(t, dateLocale())}.</p>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8">
+          {step === 1 && (
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" data-testid="register-country-step">
+              <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900"><MapPin size={18} className="text-blue-600" /> {t('¿Dónde está tu negocio?')}</h3>
+              <p className="mt-1 text-sm text-gray-500">{t('Así te proponemos la moneda, el documento fiscal y los medios de pago de tu país.')}</p>
+              <div className="mt-5 grid max-h-[22rem] grid-cols-2 gap-2 overflow-y-auto pr-1" role="radiogroup" aria-label={t('País')}>
+                {countries.map((c) => {
+                  const on = watchedCountry === c.code
+                  return (
+                    <button key={c.code} type="button" role="radio" aria-checked={on} data-country={c.code}
+                      onClick={() => { touchedCountryRef.current = true; setValue('countryCode', c.code) }}
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition-all active:scale-[0.98] ${
+                        on ? 'border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-600/20' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      }`}>
+                      <span className="text-lg leading-none">{FLAG[c.code] ?? '🌎'}</span>
+                      <span className="min-w-0 truncate">{t(c.name)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {countryCfg && (
+                <p className="mt-4 rounded-xl bg-gray-50 px-3.5 py-2.5 text-xs text-gray-500">
+                  {t('Moneda')}: <strong className="text-gray-800">{countryCfg.currency} · {countryCfg.currencySymbol}</strong>
+                  {Array.isArray(countryCfg.defaultPaymentMethods) && countryCfg.defaultPaymentMethods.length > 0 && (
+                    <> · {t('Medios de pago')}: <strong className="text-gray-800">{countryCfg.defaultPaymentMethods.map((m) => t(m)).join(', ')}</strong></>
+                  )}
+                </p>
+              )}
+              <button type="button" onClick={() => setStep(2)} disabled={!watchedCountry} data-testid="register-country-next"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60">
+                {t('Continuar')} <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+
+          <div className={`rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8 ${step === 1 ? 'hidden' : ''}`}>
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2 font-semibold text-gray-800">
+                  <span className="text-lg leading-none">{FLAG[watchedCountry] ?? '🌎'}</span>
+                  <span className="truncate">{countryCfg ? t(countryCfg.name) : watchedCountry}</span>
+                </span>
+                <button type="button" onClick={() => setStep(1)} className="flex-shrink-0 text-xs font-semibold text-blue-600 hover:underline">{t('Cambiar')}</button>
+              </div>
+              {errors.countryCode && <p className="-mt-2 text-xs text-red-500">{errors.countryCode.message}</p>}
               <div>
                 <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Tu nombre')}</label>
                 <input id="name" {...register('name')} type="text" autoComplete="name" placeholder={t('María García')} className={inputCls} />
@@ -248,32 +319,24 @@ export default function RegisterPage() {
                 {errors.taxId && (
                   <p className="mt-1 text-xs text-red-500">
                     {errors.taxId.message === 'DUPLICATE_TAX_ID'
-                      ? <>{t('Ya hay un negocio con ese RUC.')} <Link to="/login" className="font-semibold underline">{t('Inicia sesión')}</Link></>
+                      ? <>{watchedCountry === 'PE' ? t('Ya hay un negocio con ese RUC.') : t('Ya hay un negocio con ese {doc}.', { doc: taxLabel })} <Link to="/login" className="font-semibold underline">{t('Inicia sesión')}</Link></>
                       : errors.taxId.message}
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="countryCode" className="mb-1.5 block text-sm font-medium text-gray-700">{t('País')}</label>
-                  <select id="countryCode" {...register('countryCode')} className={inputCls}>
-                    {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{t(label)}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="currency" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Moneda')}</label>
-                  <select id="currency" {...register('currency')} className={inputCls}>
-                    {CURRENCY_OPTIONS.map((code) => <option key={code} value={code}>{code} · {CURRENCIES[code].symbol}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label htmlFor="currency" className="mb-1.5 block text-sm font-medium text-gray-700">{t('Moneda')}</label>
+                <select id="currency" {...register('currency')} className={inputCls}>
+                  {currencyOptions.map((code) => <option key={code} value={code}>{code} · {symbolOf(code)}</option>)}
+                </select>
               </div>
 
               <div>
                 <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700">
                   {t('WhatsApp')} <span className="font-normal text-gray-400">({t('opcional')})</span>
                 </label>
-                <input id="phone" {...register('phone')} type="tel" autoComplete="tel" placeholder="+51 999 999 999" className={inputCls} />
+                <input id="phone" {...register('phone')} type="tel" autoComplete="tel" placeholder={`+${countryCfg?.dialCode ?? '51'} ${PHONE_COUNTRIES.find((c) => c.iso === watchedCountry)?.example ?? '999 999 999'}`} className={inputCls} />
                 <p className="mt-1 text-xs text-gray-400">{t('Solo para ayudarte a arrancar y avisarte cuando termine la prueba.')}</p>
                 {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
               </div>

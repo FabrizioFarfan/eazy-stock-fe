@@ -18,6 +18,7 @@ import DebtAddModal from '../components/accounts/DebtAddModal'
 import { useT, dateLocale } from '../i18n'
 import { ProfileHero, ActionButton, InfoRow, SectionTitle } from '../components/accounts/AccountKit'
 import { formatPhoneDisplay } from '../utils/phone'
+import { taxIdLabel } from '../utils/taxIds'
 
 function formatDate(str) {
   if (!str) return '—'
@@ -89,7 +90,7 @@ export default function SupplierDetailPage() {
       <ProfileHero
         name={supplier.name}
         chips={[
-          supplier.ruc && { icon: FileText, text: `RUC ${supplier.ruc}` },
+          supplier.ruc && { icon: FileText, text: `${taxIdLabel()} ${supplier.ruc}` },
           supplier.phone && { icon: Phone, text: formatPhoneDisplay(supplier.phone) },
           supplier.contact && { icon: User, text: supplier.contact },
         ].filter(Boolean)}
