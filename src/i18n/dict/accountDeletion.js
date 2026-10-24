@@ -11,7 +11,7 @@ export default {
     'Tus empleados dejan de poder entrar desde ese momento.': 'Your employees can no longer sign in from that moment on.',
     'Se borra solo tu usuario. Las ventas que hiciste se quedan en el negocio y el dueño las sigue viendo.': 'Only your user is deleted. The sales you made stay with the business and the owner can still see them.',
     '¿Eliminar tu cuenta?': 'Delete your account?',
-    'Tu suscripción se cancela en ese momento: no se te vuelve a cobrar. Lo ya pagado no se devuelve.': 'Your subscription is cancelled right away: you won\'t be charged again. What you already paid is not refunded.',
+    'Tu suscripción deja de renovarse: no se te vuelve a cobrar y lo ya pagado sigue vigente hasta el final del período.': 'Your subscription stops renewing: you won\'t be charged again, and what you already paid stays valid until the end of the period.',
     'Tienes 30 días para arrepentirte: en ese tiempo nadie puede usar la cuenta y, si vuelves a entrar con tu correo y contraseña, la reactivamos. Pasados los 30 días se borra para siempre.': 'You have 30 days to change your mind: during that time nobody can use the account, and if you sign in again with your email and password we reactivate it. After 30 days it is deleted for good.',
     'Escribe tu contraseña para confirmar': 'Type your password to confirm',
     'La contraseña no es correcta.': 'That password is not correct.',
@@ -23,7 +23,7 @@ export default {
     '↩️ Cómo cancelarlo': '↩️ How to cancel it',
     'Vuelve a entrar con tu correo y contraseña antes de esa fecha: la cuenta se reactiva sola y todo queda como estaba.': 'Sign in again with your email and password before that date: the account reactivates on its own and everything stays as it was.',
     '💳 Tu suscripción': '💳 Your subscription',
-    'Se cancela al pedir el borrado y no se te vuelve a cobrar. Si vuelves, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.': 'It is cancelled when you request the deletion and you won\'t be charged again. If you come back, the plan doesn\'t reactivate on its own: choose it again in Settings › Your plan.',
+    'Al pedir el borrado deja de renovarse y no se te vuelve a cobrar. Si vuelves a entrar dentro de los 30 días, vuelve a renovarse y recuperas tu plan tal como estaba.': 'When you request the deletion it stops renewing and you won\'t be charged again. If you sign in again within the 30 days, it renews again and you get your plan back as it was.',
     'Más sobre el borrado de cuentas': 'More about account deletion',
 
     // Login
@@ -58,7 +58,7 @@ export default {
     'Te respondemos para confirmarlo.': 'We\'ll reply to confirm it.',
     '2. Qué se borra': '2. What gets deleted',
     'Si eres el dueño del negocio': 'If you own the business',
-    'Tu suscripción se cancela en ese momento y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.': 'Your subscription is cancelled right away and you won\'t be charged again. Your employees can no longer sign in.',
+    'Tu suscripción deja de renovarse y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.': 'Your subscription stops renewing and you won\'t be charged again. Your employees can no longer sign in.',
     'Si eres empleado': 'If you are an employee',
     'Se borra solo tu usuario y tu correo queda libre. Las ventas que hiciste se quedan en el negocio, porque son del negocio.': 'Only your user is deleted and your email becomes free to use again. The sales you made stay with the business, because they belong to it.',
     'Solo guardamos lo que la ley nos obliga a conservar, como los registros de pagos de la suscripción. Si quieres quedarte con tus productos, expórtalos a Excel antes de pedir el borrado.': 'We only keep what the law requires us to keep, such as the payment records of the subscription. If you want to keep your products, export them to Excel before requesting the deletion.',
@@ -67,7 +67,7 @@ export default {
     'A los 30 días se borra para siempre y ya no se puede recuperar.': 'After 30 days it is deleted for good and can no longer be recovered.',
     '4. Cómo cancelarlo': '4. How to cancel it',
     'Vuelve a entrar con tu correo y contraseña antes de que pasen los 30 días: la cuenta se reactiva sola y todo queda como estaba.': 'Sign in again with your email and password before the 30 days are up: the account reactivates on its own and everything stays as it was.',
-    'Si eras el dueño, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.': 'If you were the owner, the plan doesn\'t reactivate on its own: choose it again in Settings › Your plan.',
+    'Si eras el dueño, tu suscripción vuelve a renovarse y recuperas tu plan tal como estaba.': 'If you were the owner, your subscription renews again and you get your plan back as it was.',
     '¿Dudas sobre tus datos?': 'Questions about your data?',
     'Escríbenos o lee nuestra': 'Write to us or read our',
 
@@ -87,7 +87,7 @@ export default {
     'Tus empleados dejan de poder entrar desde ese momento.': 'Da quel momento i tuoi dipendenti non possono più entrare.',
     'Se borra solo tu usuario. Las ventas que hiciste se quedan en el negocio y el dueño las sigue viendo.': 'Viene eliminato solo il tuo utente. Le vendite che hai fatto restano all\'attività e il titolare continua a vederle.',
     '¿Eliminar tu cuenta?': 'Eliminare il tuo account?',
-    'Tu suscripción se cancela en ese momento: no se te vuelve a cobrar. Lo ya pagado no se devuelve.': 'Il tuo abbonamento viene annullato subito: non ti verrà più addebitato nulla. Quanto già pagato non viene rimborsato.',
+    'Tu suscripción deja de renovarse: no se te vuelve a cobrar y lo ya pagado sigue vigente hasta el final del período.': 'Il tuo abbonamento non si rinnova più: non ti verrà più addebitato nulla e quanto già pagato resta valido fino alla fine del periodo.',
     'Tienes 30 días para arrepentirte: en ese tiempo nadie puede usar la cuenta y, si vuelves a entrar con tu correo y contraseña, la reactivamos. Pasados los 30 días se borra para siempre.': 'Hai 30 giorni per ripensarci: in quel periodo nessuno può usare l\'account e, se rientri con email e password, lo riattiviamo. Dopo 30 giorni viene eliminato per sempre.',
     'Escribe tu contraseña para confirmar': 'Scrivi la tua password per confermare',
     'La contraseña no es correcta.': 'La password non è corretta.',
@@ -99,7 +99,7 @@ export default {
     '↩️ Cómo cancelarlo': '↩️ Come annullarla',
     'Vuelve a entrar con tu correo y contraseña antes de esa fecha: la cuenta se reactiva sola y todo queda como estaba.': 'Rientra con email e password prima di quella data: l\'account si riattiva da solo e tutto resta com\'era.',
     '💳 Tu suscripción': '💳 Il tuo abbonamento',
-    'Se cancela al pedir el borrado y no se te vuelve a cobrar. Si vuelves, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.': 'Viene annullato quando richiedi l\'eliminazione e non ti verrà più addebitato nulla. Se torni, il piano non si riattiva da solo: sceglilo di nuovo in Impostazioni › Il tuo piano.',
+    'Al pedir el borrado deja de renovarse y no se te vuelve a cobrar. Si vuelves a entrar dentro de los 30 días, vuelve a renovarse y recuperas tu plan tal como estaba.': 'Quando richiedi l\'eliminazione non si rinnova più e non ti verrà più addebitato nulla. Se rientri entro i 30 giorni, torna a rinnovarsi e recuperi il tuo piano com\'era.',
     'Más sobre el borrado de cuentas': 'Di più sull\'eliminazione degli account',
 
     // Login
@@ -134,7 +134,7 @@ export default {
     'Te respondemos para confirmarlo.': 'Ti rispondiamo per confermarlo.',
     '2. Qué se borra': '2. Cosa viene eliminato',
     'Si eres el dueño del negocio': 'Se sei il titolare dell\'attività',
-    'Tu suscripción se cancela en ese momento y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.': 'Il tuo abbonamento viene annullato subito e non ti verrà più addebitato nulla. I tuoi dipendenti non possono più entrare.',
+    'Tu suscripción deja de renovarse y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.': 'Il tuo abbonamento non si rinnova più e non ti verrà più addebitato nulla. I tuoi dipendenti non possono più entrare.',
     'Si eres empleado': 'Se sei un dipendente',
     'Se borra solo tu usuario y tu correo queda libre. Las ventas que hiciste se quedan en el negocio, porque son del negocio.': 'Viene eliminato solo il tuo utente e la tua email torna libera. Le vendite che hai fatto restano all\'attività, perché sono sue.',
     'Solo guardamos lo que la ley nos obliga a conservar, como los registros de pagos de la suscripción. Si quieres quedarte con tus productos, expórtalos a Excel antes de pedir el borrado.': 'Conserviamo solo ciò che la legge ci obbliga a conservare, come i registri dei pagamenti dell\'abbonamento. Se vuoi tenere i tuoi prodotti, esportali in Excel prima di richiedere l\'eliminazione.',
@@ -143,7 +143,7 @@ export default {
     'A los 30 días se borra para siempre y ya no se puede recuperar.': 'Dopo 30 giorni viene eliminato per sempre e non si può più recuperare.',
     '4. Cómo cancelarlo': '4. Come annullarla',
     'Vuelve a entrar con tu correo y contraseña antes de que pasen los 30 días: la cuenta se reactiva sola y todo queda como estaba.': 'Rientra con email e password prima che passino i 30 giorni: l\'account si riattiva da solo e tutto resta com\'era.',
-    'Si eras el dueño, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.': 'Se eri il titolare, il piano non si riattiva da solo: sceglilo di nuovo in Impostazioni › Il tuo piano.',
+    'Si eras el dueño, tu suscripción vuelve a renovarse y recuperas tu plan tal como estaba.': 'Se eri il titolare, il tuo abbonamento torna a rinnovarsi e recuperi il tuo piano com\'era.',
     '¿Dudas sobre tus datos?': 'Dubbi sui tuoi dati?',
     'Escríbenos o lee nuestra': 'Scrivici o leggi la nostra',
 

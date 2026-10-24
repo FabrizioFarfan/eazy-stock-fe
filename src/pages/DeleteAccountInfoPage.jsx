@@ -79,7 +79,7 @@ export default function DeleteAccountInfoPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <Card icon={Store} title={t('Si eres el dueño del negocio')}>
                   <p>{t('Se borran tu cuenta y tu negocio con todos sus datos: productos, stock, ventas, clientes, fiado, proveedores y empleados. Si tienes más negocios, también.')}</p>
-                  <p>{t('Tu suscripción se cancela en ese momento y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.')}</p>
+                  <p>{t('Tu suscripción deja de renovarse y no se te vuelve a cobrar. Tus empleados dejan de poder entrar.')}</p>
                 </Card>
                 <Card icon={User} title={t('Si eres empleado')}>
                   <p>{t('Se borra solo tu usuario y tu correo queda libre. Las ventas que hiciste se quedan en el negocio, porque son del negocio.')}</p>
@@ -99,7 +99,7 @@ export default function DeleteAccountInfoPage() {
               </Card>
               <Card icon={RotateCcw} title={t('4. Cómo cancelarlo')}>
                 <p>{t('Vuelve a entrar con tu correo y contraseña antes de que pasen los 30 días: la cuenta se reactiva sola y todo queda como estaba.')}</p>
-                <p>{t('Si eras el dueño, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.')}</p>
+                <p>{t('Si eras el dueño, tu suscripción vuelve a renovarse y recuperas tu plan tal como estaba.')}</p>
               </Card>
             </div>
           </Reveal>

@@ -70,7 +70,7 @@ function ConfirmDeletion({ isOwner, onClose }) {
         </div>
         <div className="mt-3 space-y-2 text-sm leading-relaxed text-gray-600">
           <WhatGetsDeleted isOwner={isOwner} />
-          {isOwner && <p>{t('Tu suscripción se cancela en ese momento: no se te vuelve a cobrar. Lo ya pagado no se devuelve.')}</p>}
+          {isOwner && <p>{t('Tu suscripción deja de renovarse: no se te vuelve a cobrar y lo ya pagado sigue vigente hasta el final del período.')}</p>}
         </div>
         <div className="mt-3 flex gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900">
           <CalendarClock size={17} className="mt-0.5 flex-shrink-0" />
@@ -146,7 +146,7 @@ export default function DeleteAccountSection() {
           {isOwner && (
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('💳 Tu suscripción')}</p>
-              <p className="mt-1">{t('Se cancela al pedir el borrado y no se te vuelve a cobrar. Si vuelves, el plan no se reactiva solo: lo eliges de nuevo en Ajustes › Tu plan.')}</p>
+              <p className="mt-1">{t('Al pedir el borrado deja de renovarse y no se te vuelve a cobrar. Si vuelves a entrar dentro de los 30 días, vuelve a renovarse y recuperas tu plan tal como estaba.')}</p>
             </div>
           )}
           <p>
