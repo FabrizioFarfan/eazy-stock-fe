@@ -4,12 +4,15 @@ import { CreditCard, Clock, CalendarCheck, Lock, MessageCircle, Mail, Sparkles, 
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { billingApi } from '../../services/endpoints/billing'
-import { getErrorMessage } from '../../utils/handleApiError'
+import { getErrorMessage, getErrorCode } from '../../utils/handleApiError'
+import { subscriptionApi } from '../../services/endpoints/subscription'
+import { isDowngrade } from '../../utils/planKeep'
+import KeepSelectionModal from './KeepSelectionModal'
 import { useAuth } from '../../context/AuthContext'
 import { useSubscription, SUBSCRIPTION_KEY } from '../../hooks/useSubscription'
-import { useMyBusiness } from '../../hooks/useMyBusinesses'
+import { useMyBusiness, useMyBusinesses, MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY } from '../../hooks/useMyBusinesses'
 import { useT } from '../../i18n'
-import { PlanCards } from '../../pages/landing/Pricing'
+import { PlanCards, NewFeaturesNote } from '../../pages/landing/Pricing'
 import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
 import { readSetupPending, clearSetupPending } from '../../utils/setupPendingNotice'
@@ -63,22 +66,89 @@ export default function PlanSection() {
 
   const current = planKey(sub?.plan)
   const currentPlan = PLANS.find((p) => p.key === current)
-  const waLink = whatsappActivateLink({ businessName: user?.businessName, plan: currentPlan?.name ?? sub?.plan, t })
+  // API 1.16.0: el plan de la cuenta (elegido al registrarse) viene preseleccionado; /planes puede
+  // traer otro con ?plan=. Se puede cambiar; AI («llega pronto») no se elige.
+  const [picked, setPicked] = useState(() => new URLSearchParams(search).get('plan'))
+  const sellable = (k) => PLANS.some((p) => p.key === k && !p.comingSoon)
+  const selected = sellable(picked) ? picked : sellable(current) ? current : 'pro'
+  const selectedPlan = PLANS.find((p) => p.key === selected)
+  const waLink = whatsappActivateLink({ businessName: user?.businessName, plan: selectedPlan?.name ?? currentPlan?.name ?? sub?.plan, t })
+  const { data: myBusinesses } = useMyBusinesses()
+  const lockedCount = (Array.isArray(myBusinesses) ? myBusinesses : []).filter((b) => b.planLocked).length
+  // Modal «Elige qué queda activo»: { mode: 'checkout', plan, interval } antes de pagar un plan
+  // más pequeño, o { mode: 'activeSet' } para corregirlo con el plan actual.
+  const [keepFor, setKeepFor] = useState(null)
+  const [keepError, setKeepError] = useState('')
   const hasDiscount = sub?.discountPercent > 0 && sub?.priceMonthly != null && sub?.listPriceMonthly != null && sub.priceMonthly < sub.listPriceMonthly
   const customPrice = sub?.customPriceMonthly != null
   const stripe = !!sub?.stripeEnabled
 
+  const openKeepModal = async (target, mode, extra = {}) => {
+    const r = await subscriptionApi.downgradePreview(target)
+    const preview = r.data?.data ?? r.data
+    setKeepError('')
+    setKeepFor({ mode, plan: target, preview, ...extra })
+    return preview
+  }
+
+  const checkout = async (plan, interval, keep) => {
+    const r = await billingApi.checkout(keep ? { plan, interval, keep } : { plan, interval })
+    const url = r.data?.data?.url ?? r.data?.url
+    if (!url) throw new Error('no url')
+    window.location.assign(url)
+  }
+
+  // Bajar de plan (API 1.16.0): antes de abrir Checkout, si el plan nuevo no da para todo,
+  // el dueño elige qué queda activo (el resto a solo lectura, nada se borra).
   const payWithCard = async (plan, interval) => {
     setPaying(`${plan}-${interval}`)
     try {
-      const r = await billingApi.checkout({ plan, interval })
-      const url = r.data?.data?.url ?? r.data?.url
-      if (!url) throw new Error('no url')
-      window.location.assign(url)
+      if (isDowngrade(sub?.plan, plan)) {
+        const r = await subscriptionApi.downgradePreview(plan)
+        const preview = r.data?.data ?? r.data
+        if (preview?.needsSelection) {
+          setKeepError('')
+          setKeepFor({ mode: 'checkout', plan, interval, preview })
+          setPaying(null)
+          return
+        }
+      }
+      await checkout(plan, interval)
     } catch (err) {
-      toast.error(getErrorMessage(err))
+      if (getErrorCode(err) === 'KEEP_SELECTION_REQUIRED') {
+        try { await openKeepModal(plan, 'checkout', { interval }) } catch (e2) { toast.error(getErrorMessage(e2)) }
+      } else {
+        toast.error(getErrorMessage(err))
+      }
       setPaying(null)
     }
+  }
+
+  const confirmKeep = async (keep) => {
+    setPaying('keep')
+    setKeepError('')
+    try {
+      if (keepFor.mode === 'checkout') {
+        await checkout(keepFor.plan, keepFor.interval, keep)
+        return // se va a Stripe
+      }
+      await subscriptionApi.setActiveSet(keep)
+      for (const key of [MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY, SUBSCRIPTION_KEY, 'employees']) {
+        qc.invalidateQueries({ queryKey: [key] })
+      }
+      toast.success(t('Listo: ya está activo lo que elegiste.'))
+      setKeepFor(null)
+      setPaying(null)
+    } catch (err) {
+      setKeepError(getErrorMessage(err))
+      setPaying(null)
+    }
+  }
+
+  const chooseActiveSet = async () => {
+    setPaying('activeSet')
+    try { await openKeepModal(sub.plan, 'activeSet') } catch (err) { toast.error(getErrorMessage(err)) }
+    setPaying(null)
   }
   const openPortal = async () => {
     setPaying('portal')
@@ -121,6 +191,19 @@ export default function PlanSection() {
               <p className="font-bold">{taxIdTrialUsedMessage(setupPending.countryCode ?? biz?.countryCode)}</p>
               <p className="mt-0.5 text-xs">{t('Tu cuenta ya está creada y tus datos se guardan. Mientras no elijas un plan, la tienda está en solo lectura.')}</p>
             </div>
+          </div>
+        )}
+        {lockedCount > 0 && sub && (
+          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center" data-testid="plan-locked-notice">
+            <Lock size={18} className="flex-shrink-0 text-amber-600" />
+            <p className="min-w-0 flex-1">
+              <span className="font-bold">{t('{n} negocio(s) en solo lectura por el límite de tu plan.', { n: lockedCount })}</span>{' '}
+              <span className="text-xs">{t('Nada se borró. Sube de plan o elige qué negocios y trabajadores quedan activos.')}</span>
+            </p>
+            <button type="button" onClick={chooseActiveSet} disabled={!!paying}
+              className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-800 shadow-sm ring-1 ring-amber-200 hover:bg-amber-100 disabled:opacity-60">
+              {paying === 'activeSet' && <Loader2 size={13} className="animate-spin" />} {t('Elegir qué queda activo')}
+            </button>
           </div>
         )}
         {checkoutMsg === 'success' && (
@@ -195,7 +278,8 @@ export default function PlanSection() {
             {/* Tarjetas de planes (las de /planes, compactas) */}
             <div className="mt-8">
               <p className="mb-5 text-xs font-bold uppercase tracking-widest text-gray-400">{t('Los planes')}</p>
-              <PlanCards compact current={current} ctaTo={waLink} currency={currency} period={period} onPeriodChange={setPeriod} />
+              <NewFeaturesNote className="mb-6" />
+              <PlanCards compact current={current} selected={selected} onSelect={setPicked} ctaTo={waLink} currency={currency} period={period} onPeriodChange={setPeriod} />
             </div>
 
             {/* Pago con tarjeta (Stripe, M2) si el BE lo tiene configurado */}
@@ -218,37 +302,35 @@ export default function PlanSection() {
                     {paying === 'portal' ? <Loader2 size={16} className="animate-spin" /> : <Receipt size={16} />} {t('Gestionar pago y facturas')} <ExternalLink size={13} />
                   </button>
                 ) : (
-                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    {PLANS.map((p) => {
-                      const interval = per.interval
-                      const key = `${p.key.toUpperCase()}-${interval}`
-                      const total = periodPrice(p, per.key, currency)
-                      return (
-                        <div key={p.key} className={`rounded-xl border bg-white p-3 ${p.key === current ? 'border-emerald-300 ring-2 ring-emerald-600/15' : 'border-gray-200'}`}>
-                          <p className="text-sm font-bold text-gray-900">{p.name} <span className="text-xs font-semibold text-gray-400">· {fmtMoney(periodPrice(p, 'monthly', currency), currency)}/{t('mes')}</span></p>
-                          <div className="mt-2 flex flex-col gap-1.5">
-                            {p.comingSoon ? (
-                              <button type="button" disabled
-                                className="inline-flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-xs font-bold text-gray-400">
-                                <Clock size={13} /> {t('Llega pronto')}
-                              </button>
-                            ) : (
-                              <button type="button" onClick={() => payWithCard(p.key.toUpperCase(), interval)} disabled={!!paying}
-                                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60">
-                                {paying === key ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
-                                {' '}{t('Pagar {total} · {period}', { total: fmtMoney(total, currency), period: t(per.label).toLowerCase() })}
-                              </button>
-                            )}
-                            {per.discount > 0 && !p.comingSoon && (
-                              <p className="text-center text-[11px] text-gray-500">{t('{pct} % menos que mes a mes', { pct: per.discount })}</p>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
+                  <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-200 bg-white p-4 sm:flex-row sm:items-center" data-testid="pay-selected-plan">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{t('Plan elegido')}</p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {selectedPlan.name} · {t(per.label)}{' '}
+                        <span className="text-xs font-semibold text-gray-400">· {fmtMoney(periodPrice(selectedPlan, 'monthly', currency), currency)}/{t('mes')}</span>
+                      </p>
+                      {selected !== current && current && (
+                        <p className="mt-0.5 text-xs text-gray-500">{t('Hoy tienes {plan}. Puedes cambiar el plan elegido en las tarjetas de arriba.', { plan: currentPlan?.name ?? sub.plan })}</p>
+                      )}
+                      {per.discount > 0 && <p className="mt-0.5 text-[11px] text-gray-500">{t('{pct} % menos que mes a mes', { pct: per.discount })}</p>}
+                    </div>
+                    <button type="button" onClick={() => payWithCard(selected.toUpperCase(), per.interval)} disabled={!!paying}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/30 transition-colors hover:bg-emerald-700 disabled:opacity-60">
+                      {paying === `${selected.toUpperCase()}-${per.interval}` ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+                      {' '}{t('Pagar {total} · {period}', { total: fmtMoney(periodPrice(selectedPlan, per.key, currency), currency), period: t(per.label).toLowerCase() })}
+                    </button>
                   </div>
                 )}
               </div>
+            )}
+
+            {keepFor && (
+              <KeepSelectionModal
+                preview={keepFor.preview}
+                planName={PLANS.find((p) => p.key === planKey(keepFor.plan))?.name ?? keepFor.plan}
+                confirmLabel={keepFor.mode === 'checkout' ? t('Continuar al pago') : t('Guardar')}
+                busy={paying === 'keep'} serverError={keepError}
+                onConfirm={confirmKeep} onClose={() => { if (paying !== 'keep') setKeepFor(null) }} />
             )}
 
             {/* Cómo activar o pagar (manual; único camino si Stripe no está configurado) */}

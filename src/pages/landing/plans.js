@@ -281,6 +281,16 @@ export const COMPARE = [
   ['Promociones por WhatsApp a tus clientes',   false, false, 'soon'],
 ]
 
+/**
+ * Hueco para un texto del dueño sobre funciones nuevas (PLANS-SPEC.md, 25-oct-2026). Vacío = no se
+ * ve; con texto, /planes y Ajustes › Tu plan lo muestran en una nota sobre las tarjetas. Va en
+ * español; si se escribe aquí, añadir su traducción en i18n/dict/planLimits.js (en, it).
+ */
+export const PLANS_NEW_FEATURES_NOTE = ''
+
+/** Planes que se pueden elegir al registrarse en la web (AI se ve con «Pronto»). `null` → el API pone PRO. */
+export const REGISTER_DEFAULT_PLAN = 'PRO'
+
 /** Ofertas vigentes: se muestran en la landing y en /planes. */
 export const OFFERS = [
   {

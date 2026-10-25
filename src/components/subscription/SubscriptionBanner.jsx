@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Clock, AlertTriangle, Lock, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useSubscription } from '../../hooks/useSubscription'
+import { useMyBusiness } from '../../hooks/useMyBusinesses'
 import { useT } from '../../i18n'
 import { formatDay } from './subscriptionUtils'
 import { readSetupPending } from '../../utils/setupPendingNotice'
@@ -17,10 +18,22 @@ export default function SubscriptionBanner() {
   const t = useT()
   const { user } = useAuth()
   const { data: sub } = useSubscription()
+  const { data: biz } = useMyBusiness({ enabled: !!user && (user.role === 'OWNER' || user.role === 'EMPLOYEE') })
   if (!sub || !user) return null
 
   const isOwner = user.role === 'OWNER'
   const planLink = '/settings#plan'
+
+  // Negocio en solo lectura por el límite del plan (API 1.16.0, bajar de plan): nada se borró.
+  if (biz?.planLocked && !sub.readOnly) {
+    return isOwner ? (
+      <Banner tone="amber" icon={Lock} to={planLink} cta={t('Ver mi plan')}>
+        {t('Este negocio está en solo lectura por el límite de tu plan. Puedes verlo todo; para volver a registrar, sube de plan o elige qué negocios quedan activos.')}
+      </Banner>
+    ) : (
+      <Banner tone="gray" icon={Lock}>{t('Este negocio está en solo lectura: el dueño debe cambiar su plan para seguir registrando.')}</Banner>
+    )
+  }
 
   if (sub.readOnly) {
     if (!isOwner) {

@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, Check, Store, Users, Sparkles } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import { Reveal, SectionHead, GridPattern, GlowOrbs, LandingStyles } from './landing/shared'
-import { PlanCards, OffersGrid, CompareTable } from './landing/Pricing'
+import { PlanCards, OffersGrid, CompareTable, NewFeaturesNote } from './landing/Pricing'
+import { useAuth } from '../context/AuthContext'
+import { useSubscription } from '../hooks/useSubscription'
 import { PLAN_FAQS, promoActive, promoVars, trialLine } from './landing/plans'
 import { Navbar, Footer, CtaBanner } from './LandingPage'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
@@ -57,6 +59,12 @@ export default function PlansPage() {
   useNoAppDarkMode()
   useSeo()
   useEffect(() => { window.scrollTo(0, 0) }, [])
+  // Dueño con sesión (API 1.16.0): su plan preseleccionado y los botones van a Tu plan con el
+  // plan elegido (se puede cambiar allí); precios en la moneda de su cuenta.
+  const { user } = useAuth()
+  const isOwner = user?.role === 'OWNER'
+  const { data: sub } = useSubscription({ enabled: isOwner })
+  const accountPlan = isOwner && sub?.plan ? String(sub.plan).toLowerCase() : null
 
   const steps = [
     [Users,    'Elige tu plan',            'Basic para una tienda, Pro para varias, AI si quieres que la inteligencia artificial trabaje contigo.'],
@@ -90,7 +98,9 @@ export default function PlansPage() {
               {t('Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.')}
             </p>
           </Reveal>
-          <PlanCards dark />
+          <NewFeaturesNote dark className="mx-auto mb-10 max-w-3xl" />
+          <PlanCards dark selected={accountPlan} currency={isOwner ? sub?.currency : undefined}
+            ctaTo={isOwner ? (p) => `/settings?plan=${p.key}#plan` : CTA} />
         </div>
       </section>
 

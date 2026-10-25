@@ -578,10 +578,12 @@ export default function EmployeesPage() {
                     <p className="break-words font-bold leading-snug text-gray-900">{emp.name}</p>
                     <p className="truncate text-xs text-gray-400" title={emp.email}>{emp.email}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                        emp.active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500'
+                      {/* Bajar de plan (API 1.16.0): el que sobró queda desactivado, no borrado */}
+                      <span data-testid={emp.planDeactivated ? 'employee-plan-deactivated' : undefined} className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                        emp.active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                          : emp.planDeactivated ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {emp.active ? t('Activo') : t('Dado de baja')}
+                        {emp.active ? t('Activo') : emp.planDeactivated ? t('Desactivado por el plan') : t('Dado de baja')}
                       </span>
                       <span className="text-[11px] text-gray-400">{t('Desde')} {formatDate(emp.createdAt)}</span>
                     </div>
@@ -615,6 +617,12 @@ export default function EmployeesPage() {
                       <Shield size={15} />{t('Permisos')}
                     </button>
                   )}
+                  {!emp.active && emp.planDeactivated ? (
+                    <Link to="/settings#plan" title={t('Vuelve solo al subir de plan, o elige quién queda activo en Tu plan')}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/30 transition-colors hover:bg-blue-700">
+                      <RotateCcw size={13} />{t('Elegir en Tu plan')}
+                    </Link>
+                  ) : (
                   <button onClick={() => setToggleTarget(emp)} disabled={isSelf || isToggling}
                     title={isSelf ? t('No puedes darte de baja a ti mismo') : emp.active ? t('Dar de baja: pierde el acceso, se conserva su historial') : t('Reactivar: vuelve a entrar con su mismo correo')}
                     className={`flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
@@ -623,6 +631,7 @@ export default function EmployeesPage() {
                     {isToggling ? <Loader2 size={13} className="animate-spin" /> : emp.active ? <Power size={13} /> : <RotateCcw size={13} />}
                     {emp.active ? t('Dar de baja') : t('Reactivar')}
                   </button>
+                  )}
                   {!emp.active && (
                     <button onClick={() => setDeleteTarget(emp)} disabled={emp.hasActivity}
                       title={emp.hasActivity

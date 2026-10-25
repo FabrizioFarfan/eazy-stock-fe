@@ -3,7 +3,7 @@ import { Navigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Check, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award, MapPin } from 'lucide-react'
+import { Check, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award, MapPin, Store, Users, Crown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT, dateLocale } from '../i18n'
 import { browserRegions, setRegion } from '../i18n/region'
@@ -15,7 +15,8 @@ import { suggestedCountry } from '../utils/countries'
 import { COUNTRIES as PHONE_COUNTRIES } from '../utils/phone'
 import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
-import { promoActive, promoVars, trialLine, afterPromoLine } from './landing/plans'
+import { promoActive, promoVars, trialLine, afterPromoLine, PLANS, REGISTER_DEFAULT_PLAN, periodPrice, fmtMoney, currencyForCountry } from './landing/plans'
+import { SoonMini } from './landing/Pricing'
 import { usePlans } from '../hooks/useSubscription'
 import { normalize as normalizeTaxId } from '../utils/taxIds'
 import { TAX_ID_LABEL, checkTaxId, taxIdHelp, taxIdAlreadyRegisteredMessage } from '../utils/taxIdText'
@@ -31,6 +32,8 @@ import { TAX_ID_LABEL, checkTaxId, taxIdHelp, taxIdAlreadyRegisteredMessage } fr
  * Multi-país (24-oct-2026): primer paso «¿Dónde está tu negocio?» (países de
  * GET /api/countries, preseleccionado por el navegador); luego el formulario con
  * la moneda del país y su documento fiscal.
+ * Web 1.23.0 / API 1.16.0 (PLANS-SPEC.md): entre el país y los datos, «Elige tu plan» (Basic, Pro
+ * preseleccionado, AI con «Pronto»): la prueba gratis es del plan elegido y se manda `plan`.
  */
 
 const FLAG = Object.fromEntries(PHONE_COUNTRIES.map((c) => [c.iso, c.flag]))
@@ -85,8 +88,10 @@ export default function RegisterPage() {
   })
 
   const { countries } = useCountries()
-  // Paso 1 = «¿Dónde está tu negocio?»; paso 2 = el formulario.
+  // Paso 1 = «¿Dónde está tu negocio?»; paso 2 = «Elige tu plan»; paso 3 = el formulario.
   const [step, setStep] = useState(1)
+  const [plan, setPlan] = useState(REGISTER_DEFAULT_PLAN)
+  const [planError, setPlanError] = useState('')
   const initialCountry = useMemo(() => suggestedCountry(browserRegions(), countries.map((c) => c.code)), [countries])
 
   const { register, handleSubmit, watch, setValue, setError: setFieldError, formState: { errors } } = useForm({
@@ -123,11 +128,15 @@ export default function RegisterPage() {
     setSubmitting(true)
     try {
       await registerAccount({
-        ...values, email: values.email.toLowerCase(), taxId: normalizeTaxId(values.taxId), phone: phone?.trim() || undefined,
+        ...values, email: values.email.toLowerCase(), taxId: normalizeTaxId(values.taxId), phone: phone?.trim() || undefined, plan,
       })
     } catch (err) {
       const field = getErrorField(err)
-      if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
+      if (getErrorCode(err) === 'PLAN_NOT_AVAILABLE' || field === 'plan') {
+        setPlan(REGISTER_DEFAULT_PLAN)
+        setPlanError(t('El plan AI llega pronto: todavía no se puede elegir.'))
+        setStep(2)
+      } else if (getErrorCode(err) === 'DUPLICATE_EMAIL' || field === 'email') {
         setFieldError('email', { type: 'server', message: 'DUPLICATE_EMAIL' })
       } else if (getErrorCode(err) === 'TAX_ID_ALREADY_REGISTERED') {
         // «Este RUC ya tiene una cuenta en Eazy Stock. Si es tuyo, inicia sesión o escríbenos.», en el idioma de la web.
@@ -262,7 +271,12 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className={`rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8 ${step === 1 ? 'hidden' : ''}`}>
+          {step === 2 && (
+            <PlanStep plan={plan} currency={currencyForCountry(watchedCountry)} error={planError}
+              onPick={(k) => { setPlan(k); setPlanError('') }} onBack={() => setStep(1)} onNext={() => setStep(3)} />
+          )}
+
+          <div className={`rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8 ${step !== 3 ? 'hidden' : ''}`}>
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2 font-semibold text-gray-800">
@@ -270,6 +284,13 @@ export default function RegisterPage() {
                   <span className="truncate">{countryCfg ? t(countryCfg.name) : watchedCountry}</span>
                 </span>
                 <button type="button" onClick={() => setStep(1)} className="flex-shrink-0 text-xs font-semibold text-blue-600 hover:underline">{t('Cambiar')}</button>
+              </div>
+              <div className="-mt-2 flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5 text-sm" data-testid="register-plan-summary">
+                <span className="flex min-w-0 items-center gap-2 font-semibold text-gray-800">
+                  <Crown size={15} className="flex-shrink-0 text-amber-500" />
+                  <span className="truncate">{t('Plan {plan}', { plan: PLANS.find((p) => p.key === plan.toLowerCase())?.name ?? plan })} · <span className="font-normal text-gray-500">{trialLine(t, dateLocale())}</span></span>
+                </span>
+                <button type="button" onClick={() => setStep(2)} className="flex-shrink-0 text-xs font-semibold text-blue-600 hover:underline">{t('Cambiar')}</button>
               </div>
               {errors.countryCode && <p className="-mt-2 text-xs text-red-500">{errors.countryCode.message}</p>}
               <div>
@@ -375,6 +396,79 @@ export default function RegisterPage() {
             <Link to="/terminos" className="hover:text-gray-600">{t('Términos')}</Link>
           </p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Paso «Elige tu plan» del registro (PLANS-SPEC.md): Basic, Pro (preseleccionado) y AI con «Pronto»
+ * sin poder elegirlo; lo que incluye cada uno (landing/plans.js) y el precio al mes en la moneda del
+ * país (PEN en Perú, USD el resto, como Pricing). La prueba gratis es del plan elegido, sin tarjeta.
+ */
+function PlanStep({ plan, currency, error, onPick, onBack, onNext }) {
+  const t = useT()
+  return (
+    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8" data-testid="register-plan-step">
+      <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900"><Crown size={18} className="text-blue-600" /> {t('Elige tu plan')}</h3>
+      <p className="mt-1 text-sm text-gray-500">
+        <strong className="font-semibold text-gray-700">{trialLine(t, dateLocale())}</strong>. {t('Pruebas el plan que elijas y lo puedes cambiar cuando quieras.')}
+      </p>
+      <div className="mt-5 space-y-3" role="radiogroup" aria-label={t('Plan')}>
+        {PLANS.map((p) => {
+          const key = p.key.toUpperCase()
+          const soon = !!p.comingSoon
+          const on = !soon && plan === key
+          const Icon = p.key === 'ai' ? Sparkles : p.key === 'pro' ? Store : Users
+          return (
+            <button key={p.key} type="button" role="radio" aria-checked={on} aria-disabled={soon || undefined} disabled={soon}
+              onClick={() => onPick(key)} data-plan={key}
+              className={`relative block w-full rounded-2xl border p-4 text-left transition-all ${
+                soon ? 'cursor-not-allowed border-dashed border-gray-200 bg-gray-50/60'
+                  : on ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20' : 'border-gray-200 bg-white hover:bg-gray-50 active:scale-[0.99]'}`}>
+              <div className="flex items-start gap-3">
+                <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow ${p.tone} ${soon ? 'opacity-60' : ''}`}><Icon size={18} /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`text-base font-extrabold ${soon ? 'text-gray-500' : 'text-gray-900'}`}>{p.name}</span>
+                    {p.highlight && !soon && <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">{t(p.badge)}</span>}
+                    {soon && <SoonMini />}
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">{p.limits.map(([n, label]) => `${n} ${t(label)}`).join(' · ')}</p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className={`font-mono text-lg font-extrabold leading-none ${soon ? 'text-gray-400' : 'text-gray-900'}`}>{fmtMoney(periodPrice(p, 'monthly', currency), currency)}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-400">/ {t('mes')}</p>
+                </div>
+                <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300'}`}>
+                  {on && <Check size={12} strokeWidth={3} />}
+                </span>
+              </div>
+              <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3">
+                {p.features.map((raw) => {
+                  const f = typeof raw === 'string' ? { text: raw } : raw
+                  return (
+                    <li key={f.text} className={`flex items-start gap-2 text-xs leading-snug ${f.soon || soon ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {f.soon ? <Clock size={12} className="mt-0.5 flex-shrink-0 text-amber-500" /> : <Check size={12} strokeWidth={3} className="mt-0.5 flex-shrink-0 text-emerald-500" />}
+                      <span>{t(f.text)} {f.soon && !soon && <SoonMini />}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </button>
+          )
+        })}
+      </div>
+      {error && <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">{error}</p>}
+      <div className="mt-5 flex gap-2">
+        <button type="button" onClick={onBack}
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <ArrowLeft size={15} /> {t('Atrás')}
+        </button>
+        <button type="button" onClick={onNext} data-testid="register-plan-next"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm shadow-blue-600/30 transition-all hover:bg-blue-700 active:scale-[0.98]">
+          {t('Continuar con {plan}', { plan: PLANS.find((p) => p.key === plan.toLowerCase())?.name ?? plan })} <ArrowRight size={16} />
+        </button>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Store, Plus, LogIn, Check, Loader2, ShoppingCart, Wallet, HandCoins, Package, AlertTriangle, Users, Crown, Clock } from 'lucide-react'
+import { Store, Plus, LogIn, Check, Loader2, ShoppingCart, Wallet, HandCoins, Package, AlertTriangle, Users, Crown, Clock, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { useMyBusinesses, useBusinessesOverview, useCreateBusiness } from '../hooks/useMyBusinesses'
@@ -166,6 +166,8 @@ function BusinessCard({ biz, onEnter, entering }) {
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate font-bold leading-tight text-gray-900">{biz.name}</p>
             {biz.current && <Chip icon={Check} tone="blue">{t('Estás aquí')}</Chip>}
+            {/* Bajar de plan (API 1.16.0): se lee y se entra, pero no se escribe */}
+            {biz.planLocked && <span data-testid="business-plan-locked"><Chip icon={Lock} tone="amber">{t('Solo lectura')}</Chip></span>}
           </div>
           <p className="mt-0.5 text-xs text-gray-400">
             {cur}{biz.employeesActive != null ? ` · ${t('{n} trabajadores', { n: biz.employeesActive })}` : ''}
@@ -210,7 +212,9 @@ export default function MyBusinessesPage() {
 
   const businesses = useMemo(() => {
     const fromOverview = data?.businesses ?? []
-    if (fromOverview.length > 0) return fromOverview
+    // `planLocked` viene en /me/businesses (y quizá no en la vista general): se cruza por id.
+    const lockedById = Object.fromEntries((Array.isArray(list) ? list : []).map((b) => [b.id, !!b.planLocked]))
+    if (fromOverview.length > 0) return fromOverview.map((b) => ({ ...b, planLocked: b.planLocked ?? lockedById[b.id] ?? false }))
     // mientras carga la vista general, al menos los nombres
     return (Array.isArray(list) ? list : []).map((b) => ({ ...b, current: b.current || b.id === user?.businessId }))
   }, [data, list, user])

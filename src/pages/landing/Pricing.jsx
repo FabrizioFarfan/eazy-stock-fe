@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users, Clock } from 'lucide-react'
+import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users, Clock, Megaphone } from 'lucide-react'
 import { useT, dateLocale } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, afterPromoLine } from './plans'
+import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, afterPromoLine, PLANS_NEW_FEATURES_NOTE } from './plans'
 
 // Registro propio desde el 15-oct-2026 (antes todo iba al login).
 const CTA = '/registro'
@@ -49,6 +49,20 @@ export function PeriodSelector({ period, onChange, dark = false, compact = false
   )
 }
 
+/** Nota del dueño sobre funciones nuevas (PLANS_NEW_FEATURES_NOTE): no se pinta si está vacía. */
+export function NewFeaturesNote({ dark = false, className = '' }) {
+  const t = useT()
+  const note = PLANS_NEW_FEATURES_NOTE.trim()
+  if (!note) return null
+  return (
+    <div data-testid="plans-new-features-note" className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
+      dark ? 'border-white/15 bg-white/5 text-slate-200' : 'border-blue-100 bg-blue-50/60 text-gray-700'} ${className}`}>
+      <Megaphone size={16} className={`mt-0.5 flex-shrink-0 ${dark ? 'text-amber-300' : 'text-blue-600'}`} />
+      <p className="whitespace-pre-line leading-relaxed">{t(note)}</p>
+    </div>
+  )
+}
+
 /** Chip chico «Pronto» para una función que aún no está (20-oct-2026). */
 export function SoonMini() {
   const t = useT()
@@ -74,7 +88,7 @@ export function ComingSoonChip({ className = '' }) {
  * Muestra el precio POR MES del período elegido, el total a pagar de una vez y
  * cuánto ahorra frente al mensual. El plan AI «llega pronto»: chip y botón apagado.
  */
-function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, compact = false }) {
+function PlanCard({ plan, period, currency, dark, current = false, selected = false, onSelect, ctaTo = CTA, compact = false }) {
   const t = useT()
   const hi = plan.highlight
   const per = periodOf(period)
@@ -91,13 +105,20 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
   const line = hi ? 'border-gray-100' : dark ? 'border-white/10' : 'border-gray-100'
   const saveTone = hi ? 'text-emerald-600' : 'text-emerald-400'
   return (
-    <div className={`relative flex h-full flex-col rounded-3xl transition-transform hover:-translate-y-1 ${compact ? 'p-5' : 'p-7 sm:p-8'} ${shell} ${current ? 'ring-2 ring-emerald-500' : ''}`}>
+    <div data-plan={plan.key} data-selected={selected || undefined}
+      className={`relative flex h-full flex-col rounded-3xl transition-transform hover:-translate-y-1 ${compact ? 'p-5' : 'p-7 sm:p-8'} ${shell} ${current ? 'ring-2 ring-emerald-500' : selected ? 'ring-4 ring-blue-500' : ''}`}>
+      {/* Plan de la cuenta (elegido al registrarse), preseleccionado para pagar (API 1.16.0) */}
+      {selected && !current && (
+        <span className="absolute -top-3 right-7 rounded-full bg-blue-600 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+          {t('Elegido')}
+        </span>
+      )}
       {current && (
         <span className="absolute -top-3 right-7 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg">
           {t('Tu plan actual')}
         </span>
       )}
-      {soon && !current && <ComingSoonChip className="absolute -top-3 right-7" />}
+      {soon && !current && !selected && <ComingSoonChip className="absolute -top-3 right-7" />}
       {plan.badge && (
         <span className={`absolute -top-3 left-7 rounded-full bg-gradient-to-r px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg ${plan.tone}`}>
           {t(plan.badge)}
@@ -154,7 +175,14 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
         })}
       </ul>
 
-      {current ? (
+      {onSelect && !soon ? (
+        <button type="button" onClick={() => onSelect(plan.key)} aria-pressed={selected} data-testid={`select-plan-${plan.key}`}
+          className={`mt-8 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition-all ${
+            selected ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : hi ? 'border border-gray-200 text-gray-700 hover:bg-gray-50' : dark ? 'border border-white/15 text-white hover:bg-white/10' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+          }`}>
+          {selected ? <><Check size={15} /> {t('Elegido')}</> : t('Elegir {plan}', { plan: plan.name })}
+        </button>
+      ) : current ? (
         <span className={`mt-8 inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3.5 text-sm font-bold ${hi ? 'border-gray-200 text-gray-500' : dark ? 'border-white/15 text-slate-300' : 'border-gray-200 text-gray-500'}`}>
           <Check size={15} /> {t('Es tu plan')}
         </span>
@@ -164,7 +192,7 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
         </span>
       ) : (
       <Link
-        to={ctaTo}
+        to={typeof ctaTo === 'function' ? ctaTo(plan) : ctaTo}
         className={`group mt-8 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold transition-all ${
           hi
             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200 hover:scale-[1.02]'
@@ -173,7 +201,7 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
               : 'bg-[#0a0e1a] text-white hover:bg-gray-800'
         }`}
       >
-        {t(plan.cta)} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        {selected ? t('Seguir con {plan}', { plan: plan.name }) : t(plan.cta)} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
       </Link>
       )}
       {!compact && (
@@ -191,9 +219,11 @@ function PlanCard({ plan, period, currency, dark, current = false, ctaTo = CTA, 
  * lleva el botón (en la app, el WhatsApp/plan); `compact` = tarjetas más chicas y sin
  * letra chica (Ajustes › Tu plan); `currency` = 'PEN' | 'USD' (por defecto la de la web
  * según el navegador); `period`/`onPeriodChange` = controlado desde fuera (Ajustes), si
- * no se pasan el selector lleva su propio estado.
+ * no se pasan el selector lleva su propio estado. API 1.16.0: `selected` = key del plan
+ * preseleccionado (el de la cuenta); con `onSelect` el botón elige en vez de navegar;
+ * `ctaTo` puede ser una función (plan) => ruta.
  */
-export function PlanCards({ dark = false, current = null, ctaTo = CTA, compact = false, currency, period, onPeriodChange }) {
+export function PlanCards({ dark = false, current = null, selected = null, onSelect, ctaTo = CTA, compact = false, currency, period, onPeriodChange }) {
   const [own, setOwn] = useState(DEFAULT_PERIOD)
   const cur = currency ?? siteCurrency()
   const per = period ?? own
@@ -204,7 +234,7 @@ export function PlanCards({ dark = false, current = null, ctaTo = CTA, compact =
       <div className={`grid gap-6 pt-3 lg:grid-cols-3 ${compact ? 'lg:gap-4' : 'lg:gap-5'}`}>
         {PLANS.map((p, i) => (
           <Reveal key={p.key} delay={i * 110} className="h-full">
-            <PlanCard plan={p} period={per} currency={cur} dark={dark} current={current === p.key} ctaTo={ctaTo} compact={compact} />
+            <PlanCard plan={p} period={per} currency={cur} dark={dark} current={current === p.key} selected={selected === p.key} onSelect={onSelect} ctaTo={ctaTo} compact={compact} />
           </Reveal>
         ))}
       </div>
