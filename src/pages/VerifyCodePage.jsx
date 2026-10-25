@@ -21,8 +21,9 @@ const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLO
  * Fuera del AppLayout: ni menú, ni tutorial, ni WebSocket.
  */
 export default function VerifyCodePage() {
-  const { token, user, isLoading } = useAuth()
-  if (isLoading || (token && !user)) {
+  const { token, user, isLoading, justVerified } = useAuth()
+  // Recién confirmado aquí: el AuthContext ya navega a /bienvenida o Tu plan.
+  if (isLoading || (token && !user) || (justVerified && !isEmailGated(user))) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />

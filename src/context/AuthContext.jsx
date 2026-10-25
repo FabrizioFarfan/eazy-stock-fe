@@ -160,11 +160,14 @@ export function AuthProvider({ children }) {
 
   // Código correcto → UserResponse sin el bloqueo; se cargan permisos y tutoriales y se sigue
   // el camino de siempre (/bienvenida, o Tu plan con setupPending).
-  // setUser y navigate van juntos (mismo render): si no, ProtectedRoute vería un instante la ruta vieja.
+  // react-router navega en una transición (después de setUser): `justVerified` le dice a la
+  // pantalla del código que no redirija ella al inicio mientras llega la navegación.
+  const [justVerified, setJustVerified] = useState(false);
   const _finishVerification = useCallback(async (userData) => {
     clearCodeSent();
     const u = { ...userData, emailVerificationRequired: false };
     await Promise.all([loadPermissions(), loadTutorials(u)]);
+    setJustVerified(true);
     setUser(normalizeUser(u));
     navigate(afterVerifyPath(u), { replace: true });
   }, [loadPermissions, loadTutorials, navigate]);
@@ -277,7 +280,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, verifyEmailCode, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, verifyEmailCode, justVerified, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>
