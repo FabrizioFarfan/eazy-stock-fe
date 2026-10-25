@@ -82,6 +82,13 @@ api.interceptors.response.use(
       }
     }
 
+    // Correo sin confirmar (API 1.16.0): el AuthContext marca al usuario y ProtectedRoute lo
+    // lleva a la pantalla del código. Sin toast: la pantalla ya lo explica.
+    if (status === 403 && data?.code === 'EMAIL_NOT_VERIFIED') {
+      window.dispatchEvent(new CustomEvent('eazystock:email-not-verified'))
+      return Promise.reject(error)
+    }
+
     // Granular permission denial — show friendly toast, don't redirect
     if (status === 403 && data?.code === 'FORBIDDEN_BY_PERMISSION') {
       toast.error(data.message ?? t('No tienes permiso para realizar esta acción'))
@@ -95,6 +102,16 @@ api.interceptors.response.use(
       toast.error(t('Tu plan no está activo'), {
         id: 'plan-required',
         description: data.message ?? t('Tu prueba terminó: la tienda está en solo lectura hasta que actives un plan.'),
+        action: { label: t('Ver mi plan'), onClick: () => { window.location.href = '/settings#plan' } },
+        duration: 8000,
+      })
+      return Promise.reject(error)
+    }
+    // Negocio en solo lectura por el límite del plan (API 1.16.0, bajar de plan): se lee y se
+    // cambia de negocio, pero no se escribe. Un solo toast con el atajo a Tu plan.
+    if (status === 402 && data?.code === 'BUSINESS_LOCKED_BY_PLAN') {
+      toast.error(t('Este negocio está en solo lectura por el límite de tu plan.'), {
+        id: 'business-locked',
         action: { label: t('Ver mi plan'), onClick: () => { window.location.href = '/settings#plan' } },
         duration: 8000,
       })

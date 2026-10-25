@@ -3,6 +3,14 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.23.0 — 2026-10-25 (confirmar el correo con código y elegir plan; sube junto al API 1.16.0)
+- **Confirmar el correo con un código de 6 dígitos** (EMAIL-CODE-SPEC.md): un dueño que se registró solo no entra a nada hasta ponerlo. Tras registrarse o entrar con `emailVerificationRequired: true`, y ante cualquier 403 `EMAIL_NOT_VERIFIED` (api.js avisa al AuthContext y `ProtectedRoute` lo manda allí), pantalla **/confirmar-correo**: «Te enviamos un código a tu correo», el email, 6 casillas (pegar el código entero rellena las 6, la 6.ª lo envía sola, borrar vuelve atrás, flechas), «Reenviar código» deshabilitado con cuenta atrás (`retryAfterSeconds`) y «Cerrar sesión». Errores traducidos por `code`: `INVALID_CODE` (con `attemptsLeft`), `CODE_LOCKED`, `CODE_EXPIRED`, `RESEND_TOO_SOON`, `TOO_MANY_REQUESTS`. Fuera del AppLayout: sin menú, sin tutorial, sin WebSocket; con el correo sin confirmar no se piden permisos ni tutoriales.
+- Al abrir la pantalla no se pide otro código si login/registro ya mandaron uno hace menos de 15 min (se recuerda en localStorage; pedir uno nuevo anula el anterior); si no (sesión abierta antes del 1.16.0), se pide uno solo. Si confirma con el enlace en otra pestaña, al volver sigue sola.
+- Al confirmar: el camino de siempre (`/bienvenida`, o Ajustes › Tu plan con `setupPending`). El enlace `/verificar?token=` sigue funcionando (y lleva por el mismo camino a un dueño bloqueado).
+- Fuera la franja vieja «Confirma tu correo» que no bloqueaba (`EmailVerifyBanner`).
+- `npm test` corre todos los `src/utils/*.test.mjs` (casillas, errores y reenvío en `utils/emailCode.test.mjs`).
+- Textos es/en/it (`dict/emailCode.js`).
+
 ## 1.22.0 — 2026-10-24 (documento fiscal validado por país; sube junto al API 1.15.0)
 - **Documento repetido traducido**: el API responde `TAX_ID_ALREADY_REGISTERED` y la web muestra «Este RUC ya tiene una cuenta en Eazy Stock…» en es/en/it (registro, Ajustes y Nuevo negocio).
 - **Sin tutorial con `setupPending`**: quien se registra con un documento que ya usó su prueba va a Tu plan sin el tour encima.

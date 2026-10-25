@@ -32,6 +32,18 @@ const MESSAGE_BY_CODE = {
   // Borrado de cuenta (24-oct-2026, API 1.14.0)
   WRONG_PASSWORD:            'La contraseña no es correcta.',
   BUSINESS_PENDING_DELETION: 'Este negocio está en proceso de baja.',
+  // Confirmar el correo con código (API 1.16.0); la pantalla del código traduce por su cuenta (utils/emailCode.js)
+  EMAIL_NOT_VERIFIED:        'Confirma tu correo para continuar.',
+  INVALID_CODE:              'El código no es correcto.',
+  CODE_LOCKED:               'Fallaste 5 veces. Pide un código nuevo.',
+  CODE_EXPIRED:              'El código caducó. Pide uno nuevo.',
+  RESEND_TOO_SOON:           'Espera unos segundos para pedir otro código.',
+  // Planes: elegir al registrarse y bajar de plan (API 1.16.0)
+  PLAN_NOT_AVAILABLE:        'El plan AI llega pronto: todavía no se puede elegir.',
+  KEEP_SELECTION_REQUIRED:   'Elige qué negocios y trabajadores quedan activos con el plan nuevo.',
+  KEEP_SELECTION_INVALID:    'Lo elegido no entra en el plan nuevo. Revisa los negocios y trabajadores marcados.',
+  BUSINESS_LOCKED_BY_PLAN:   'Este negocio está en solo lectura por el límite de tu plan.',
+  USER_DEACTIVATED_BY_PLAN:  'Tu usuario está desactivado. Habla con el dueño del negocio.',
 }
 
 /**

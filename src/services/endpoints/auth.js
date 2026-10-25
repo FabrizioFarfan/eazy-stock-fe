@@ -9,8 +9,14 @@ export const authApi = {
   // → 200 ok; 400 INVALID_TOKEN si el enlace no vale o venció
 
   verifyEmail: (token) => api.post('/auth/verify', { token }),
-  // → 200 ok; 400 INVALID_TOKEN
+  // → 200 ok; 400 INVALID_TOKEN (el enlace del correo, público; sigue valiendo 24 h)
+
+  // Código de 6 dígitos (API 1.16.0, EMAIL-CODE-SPEC.md), con el JWT del dueño:
+  verifyCode: (code) => api.post('/auth/verify/code', { code }),
+  // → 200 UserResponse (emailVerified: true, emailVerificationRequired: false)
+  //   400 INVALID_CODE {attemptsLeft} | CODE_LOCKED | CODE_EXPIRED
 
   resendVerification: () => api.post('/auth/verify/resend'),
-  // autenticado → 200; 429 TOO_MANY_REQUESTS (3 cada 15 min)
+  // → 200 { retryAfterSeconds: 60 } (correo con código + enlace nuevos; anula los anteriores)
+  //   429 RESEND_TOO_SOON {retryAfterSeconds} | TOO_MANY_REQUESTS {retryAfterSeconds}
 }

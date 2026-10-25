@@ -6,6 +6,7 @@ import { usePageSeo } from './landing/site'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/endpoints/auth'
 import { getErrorMessage } from '../utils/handleApiError'
+import { isEmailGated, afterVerifyPath } from '../utils/emailGate'
 import AuthShell, { primaryBtnCls, errorBoxCls } from '../components/common/AuthShell'
 
 /** /verificar?token=… (22-oct-2026): llama al BE al abrir, muestra el resultado y un enlace a entrar. */
@@ -18,6 +19,8 @@ export default function VerifyEmailPage() {
   const [state, setState] = useState(token ? 'loading' : 'error')
   const [error, setError] = useState(token ? '' : t('Este enlace no es válido o ya venció. Pide uno nuevo.'))
   const called = useRef(false)
+  // Dueño bloqueado por el código que confirma con el enlace: sigue el camino de siempre.
+  const [wasGated] = useState(() => isEmailGated(user))
 
   useEffect(() => {
     if (!token || called.current) return
@@ -27,7 +30,7 @@ export default function VerifyEmailPage() {
       .catch((err) => { setError(getErrorMessage(err)); setState('error') })
   }, [token, session, refreshUser])
 
-  const home = user ? (user.isBoss ? '/boss' : user.role === 'EMPLOYEE' ? '/sales/new' : '/dashboard') : '/login'
+  const home = user && wasGated ? afterVerifyPath(user) : user ? (user.isBoss ? '/boss' : user.role === 'EMPLOYEE' ? '/sales/new' : '/dashboard') : '/login'
 
   if (state === 'loading') {
     return (
@@ -57,7 +60,7 @@ export default function VerifyEmailPage() {
           <MailWarning size={22} />
         </span>
         <div className={errorBoxCls}>{error}</div>
-        <p className="text-sm text-gray-600">{t('Entra a tu cuenta y toca «Reenviar» en la franja de arriba para recibir otro.')}</p>
+        <p className="text-sm text-gray-600">{t('Entra a tu cuenta y pide un código nuevo: te llega al correo.')}</p>
         <Link to={home} className={`${primaryBtnCls} block text-center`}>{session ? t('Ir a la app') : t('Ingresar')}</Link>
       </div>
     </AuthShell>

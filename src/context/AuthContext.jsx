@@ -1,7 +1,7 @@
 import { setBusinessCurrency } from "../utils/formatMoney";
 import { setDefaultCountry } from "../utils/phone";
 import { setRegion, setBusinessLocale } from "../i18n/region";
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
@@ -10,6 +10,8 @@ import { getMyPermissions } from "../services/endpoints/permissions";
 import { tutorialsApi } from "../services/endpoints/tutorials";
 import { myBusinessesApi } from "../services/endpoints/myBusinesses";
 import { saveSetupPending } from "../utils/setupPendingNotice";
+import { markCodeSent, clearCodeSent } from "../utils/emailCode";
+import { VERIFY_CODE_PATH, isEmailGated, afterVerifyPath } from "../utils/emailGate";
 
 const AuthContext = createContext(null);
 
@@ -120,7 +122,8 @@ export function AuthProvider({ children }) {
         // Sync access token in case the interceptor refreshed it during /me
         const currentToken = localStorage.getItem("eazystock_token");
         if (currentToken !== token) setToken(currentToken);
-        await Promise.all([loadPermissions(), loadTutorials(userData)]);
+        // Sin el código, el API responde 403 EMAIL_NOT_VERIFIED a todo menos /auth/**: no se pide nada más.
+        if (!isEmailGated(userData)) await Promise.all([loadPermissions(), loadTutorials(userData)]);
       })
       .catch(() => {
         localStorage.removeItem("eazystock_token");
@@ -132,18 +135,52 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Login y registro devuelven el mismo shape: { accessToken, refreshToken, user }.
+  // API 1.16.0: `emailVerificationRequired` viene en el AuthResponse (y en el user); con true
+  // la sesión existe pero solo sirve para la pantalla del código (el API ya mandó uno).
   const _startSession = async (data) => {
-    const { accessToken, refreshToken, user: userData } = data;
+    const { accessToken, refreshToken, user: rawUser } = data;
+    const gated = (data.emailVerificationRequired ?? rawUser?.emailVerificationRequired) === true;
+    const userData = { ...rawUser, emailVerificationRequired: gated };
 
     localStorage.setItem("eazystock_token", accessToken);
     localStorage.setItem("eazystock_refresh_token", refreshToken);
     announceToken();
     setToken(accessToken);
     setUser(normalizeUser(userData));
+
+    if (gated) {
+      markCodeSent(userData.id ?? userData.email);
+      navigate(VERIFY_CODE_PATH);
+      return;
+    }
     await Promise.all([loadPermissions(), loadTutorials(userData)]);
 
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
   };
+
+  // Código correcto → UserResponse sin el bloqueo; se cargan permisos y tutoriales y se sigue
+  // el camino de siempre (/bienvenida, o Tu plan con setupPending).
+  // setUser y navigate van juntos (mismo render): si no, ProtectedRoute vería un instante la ruta vieja.
+  const _finishVerification = useCallback(async (userData) => {
+    clearCodeSent();
+    const u = { ...userData, emailVerificationRequired: false };
+    await Promise.all([loadPermissions(), loadTutorials(u)]);
+    setUser(normalizeUser(u));
+    navigate(afterVerifyPath(u), { replace: true });
+  }, [loadPermissions, loadTutorials, navigate]);
+
+  const verifyEmailCode = async (code) => {
+    const res = await api.post("/auth/verify/code", { code });
+    await _finishVerification(res.data?.data ?? res.data);
+  };
+
+  // Cualquier 403 EMAIL_NOT_VERIFIED (api.js lo avisa con este evento): se marca al usuario y
+  // ProtectedRoute lo manda a la pantalla del código.
+  useEffect(() => {
+    const onGated = () => setUser((u) => (u && !isEmailGated(u) ? { ...u, emailVerificationRequired: true } : u));
+    window.addEventListener("eazystock:email-not-verified", onGated);
+    return () => window.removeEventListener("eazystock:email-not-verified", onGated);
+  }, []);
 
   // Devuelve el AuthResponse: la pantalla de login mira `accountReactivated`
   // (borrado de cuenta cancelado al volver a entrar, API 1.14.0).
@@ -163,6 +200,9 @@ export function AuthProvider({ children }) {
       saveSetupPending({ businessId: res.data.user?.businessId, countryCode: payload.countryCode });
     }
     await _startSession(res.data);
+    // API 1.16.0: con el correo sin confirmar, _startSession ya fue a la pantalla del código;
+    // el camino de abajo lo sigue _finishVerification al poner el código.
+    if ((res.data?.emailVerificationRequired ?? res.data?.user?.emailVerificationRequired) === true) return res.data;
     // Cuenta nueva (20-oct-2026): primero «Carga tu catálogo», no un panel vacío.
     navigate(res.data?.setupPending ? "/settings#plan" : "/bienvenida");
     return res.data;
@@ -207,13 +247,24 @@ export function AuthProvider({ children }) {
     navigate("/login");
   };
 
-  // Re-fetch del perfil (tras editar nombre, negocio, etc.)
-  const refreshUser = useCallback(async () => {
+  // Re-fetch del perfil (tras editar nombre, negocio, etc.). Devuelve el usuario o null.
+  // Si estaba bloqueado por el correo y ya no (confirmó con el enlace), carga permisos y tutoriales;
+  // con `continueIfVerified` (pantalla del código) además sigue el camino de siempre.
+  const gatedRef = useRef(false);
+  useEffect(() => { gatedRef.current = isEmailGated(user); }, [user]);
+  const refreshUser = useCallback(async ({ continueIfVerified = false } = {}) => {
     try {
       const res = await api.get("/auth/me");
-      setUser(normalizeUser(res.data.data ?? res.data));
-    } catch { /* ignore — la sesión sigue con los datos previos */ }
-  }, []);
+      const userData = res.data.data ?? res.data;
+      if (gatedRef.current && !isEmailGated(userData)) {
+        if (continueIfVerified) { await _finishVerification(userData); return userData; }
+        clearCodeSent();
+        await Promise.all([loadPermissions(), loadTutorials(userData)]);
+      }
+      setUser(normalizeUser(userData));
+      return userData;
+    } catch { return null; /* la sesión sigue con los datos previos */ }
+  }, [loadPermissions, loadTutorials, _finishVerification]);
 
   const can = useCallback(
     (permission) => {
@@ -226,7 +277,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, verifyEmailCode, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

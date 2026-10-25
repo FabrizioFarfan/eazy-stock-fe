@@ -14,6 +14,7 @@ import DeleteAccountInfoPage from '../pages/DeleteAccountInfoPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage  from '../pages/ResetPasswordPage'
 import VerifyEmailPage    from '../pages/VerifyEmailPage'
+import VerifyCodePage     from '../pages/VerifyCodePage'
 
 // Alias en inglés que conservan el ?token=… del correo
 function ResetRedirect()  { return <Navigate to={{ pathname: '/restablecer', search: window.location.search }} replace /> }
@@ -80,6 +81,9 @@ export default function AppRouter() {
       <Route path="/olvide" element={<ForgotPasswordPage />} />
       <Route path="/restablecer" element={<ResetPasswordPage />} />
       <Route path="/verificar" element={<VerifyEmailPage />} />
+      {/* Código de 6 dígitos (API 1.16.0): el dueño no entra a nada hasta confirmarlo */}
+      <Route path="/confirmar-correo" element={<VerifyCodePage />} />
+      <Route path="/verify-code" element={<Navigate to="/confirmar-correo" replace />} />
       <Route path="/forgot" element={<Navigate to="/olvide" replace />} />
       <Route path="/reset" element={<ResetRedirect />} />
       <Route path="/verify" element={<VerifyRedirect />} />

@@ -46,6 +46,8 @@ export default function LoginPage() {
     } catch (err) {
       setError(
         getErrorCode(err) === 'BUSINESS_PENDING_DELETION' ? t('Este negocio está en proceso de baja.') :
+        // Trabajador que sobró al bajar de plan (API 1.16.0)
+        getErrorCode(err) === 'USER_DEACTIVATED_BY_PLAN' ? t('Tu usuario está desactivado. Habla con el dueño del negocio.') :
         err.response?.data?.message ??
         err.response?.data?.error ??
         t('Credenciales incorrectas'),
