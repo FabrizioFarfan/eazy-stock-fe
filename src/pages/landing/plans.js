@@ -329,6 +329,6 @@ export const PLAN_FAQS = [
   ['Tengo dos tiendas, ¿necesito dos cuentas?', 'No. Con Pro o AI manejas todos tus negocios desde una sola cuenta y un solo panel; cada tienda tiene su stock, su caja y su gente por separado.'],
   ['¿Qué cuenta como trabajador?', 'Cada persona con su propio usuario: vendedores, almacenero, contador. El dueño no cuenta. Un trabajador dado de baja libera su lugar.'],
   ['¿La IA registra ventas sola?', 'Nunca. La IA prepara el borrador de la venta o de la oferta y una persona lo confirma. Si un producto no existe o no hay stock, te lo dice antes de registrar nada.'],
-  ['¿Cómo se paga?', 'Con tarjeta desde Ajustes › Tu plan, mensual, trimestral ({q} % menos) o anual ({y} % menos): se cobra el día {day}, de una sola vez por período. También por transferencia o billetera digital escribiéndonos por WhatsApp. Los precios están en soles para Perú y en dólares para los demás países.'],
+  ['¿Cómo se paga?', 'Con tarjeta desde Ajustes › Tu plan, mensual, trimestral ({q} % menos) o anual ({y} % menos): el primer cobro es el día que termina tu prueba gratis y se renueva desde esa fecha, de una sola vez por período. También por transferencia o billetera digital escribiéndonos por WhatsApp. Los precios están en soles para Perú y en dólares para los demás países.'],
   ['¿Cuándo llega el plan AI?', 'Pronto. Las funciones de inteligencia artificial están en desarrollo; mientras tanto eliges Basic o Pro y te pasas a AI cuando salga, sin perder nada y sin volver a empezar.'],
 ]
