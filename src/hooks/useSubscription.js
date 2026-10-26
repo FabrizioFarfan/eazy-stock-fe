@@ -62,3 +62,6 @@ export function useMarkPaid() {
 export function useExtendTrial() {
   return useBossMutation(({ ownerId, days }) => bossApi.extendTrial(ownerId, days).then(unwrap))
 }
+export function useSetCoupon() {
+  return useBossMutation(({ ownerId, couponId }) => bossApi.setCoupon(ownerId, couponId).then(unwrap))
+}

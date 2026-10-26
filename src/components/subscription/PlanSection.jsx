@@ -7,13 +7,14 @@ import { billingApi } from '../../services/endpoints/billing'
 import { getErrorMessage, getErrorCode } from '../../utils/handleApiError'
 import { subscriptionApi } from '../../services/endpoints/subscription'
 import { isDowngrade } from '../../utils/planKeep'
+import { billingMode, planAction, billingPayload, trialRunning } from '../../utils/billingFlow'
 import KeepSelectionModal from './KeepSelectionModal'
 import { useAuth } from '../../context/AuthContext'
 import { useSubscription, SUBSCRIPTION_KEY } from '../../hooks/useSubscription'
 import { useMyBusiness, useMyBusinesses, MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY } from '../../hooks/useMyBusinesses'
 import { useT } from '../../i18n'
 import { PlanCards, NewFeaturesNote } from '../../pages/landing/Pricing'
-import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, BILLING_DAY, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
+import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
 import { readSetupPending, clearSetupPending } from '../../utils/setupPendingNotice'
 import { taxIdTrialUsedMessage } from '../../utils/taxIdText'
@@ -26,15 +27,20 @@ import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SU
  * correo hasta que llegue la pasarela). Se llega con /settings#plan desde el banner.
  * Desde el 20-oct-2026 (task 1015): selector Mensual · Trimestral −10 % · Anual −20 %
  * y moneda del negocio (soles en Perú, dólares en el resto); el plan AI llega pronto.
+ * Web 1.24.0 (API 1.17.0, STRIPE-SPEC.md): en prueba «Guardar tarjeta» (no cobra hasta que acaba,
+ * con «Código promocional»); con tarjeta guardada o pagando, cambiar de plan/período es
+ * POST /billing/change-plan (pagando: se cobra o abona la diferencia hoy); cupón de Stripe visible.
  */
 export default function PlanSection() {
   const t = useT()
   const { user } = useAuth()
   const { data: sub, isLoading, isError } = useSubscription()
   const { data: biz } = useMyBusiness()
-  // Moneda del negocio activo; el BE manda en `sub.currency` (precio especial = soles).
+  // Moneda del negocio activo; el BE manda en `sub.currency`.
   const currency = sub?.currency ?? currencyForCountry(biz?.countryCode)
-  const [period, setPeriod] = useState(DEFAULT_PERIOD)
+  // Período: el que elija el dueño o, si ya paga / guardó la tarjeta, el de su suscripción.
+  const [periodPicked, setPeriod] = useState(null)
+  const period = periodPicked ?? (sub?.interval ? periodOf(sub.interval).key : DEFAULT_PERIOD)
   const per = periodOf(period)
   const ref = useRef(null)
   const { hash, search } = useLocation()
@@ -44,10 +50,17 @@ export default function PlanSection() {
   // Se lee una vez al montar; el efecto solo refresca la suscripción y limpia la URL.
   const [checkoutMsg] = useState(() => new URLSearchParams(search).get('checkout'))
   const [paying, setPaying] = useState(null)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoError, setPromoError] = useState('')
   useEffect(() => {
     if (!checkoutMsg) return
-    if (checkoutMsg === 'success') qc.invalidateQueries({ queryKey: [SUBSCRIPTION_KEY] })
     navigate({ pathname: '/settings', search: '', hash: '#plan' }, { replace: true })
+    if (checkoutMsg !== 'success') return
+    // El webhook de Stripe puede llegar unos segundos después: se vuelve a pedir un par de veces.
+    const refresh = () => qc.invalidateQueries({ queryKey: [SUBSCRIPTION_KEY] })
+    refresh()
+    const timers = [3000, 8000].map((ms) => setTimeout(refresh, ms))
+    return () => timers.forEach(clearTimeout)
   }, [checkoutMsg, qc, navigate])
 
   useEffect(() => {
@@ -80,8 +93,12 @@ export default function PlanSection() {
   const [keepFor, setKeepFor] = useState(null)
   const [keepError, setKeepError] = useState('')
   const hasDiscount = sub?.discountPercent > 0 && sub?.priceMonthly != null && sub?.listPriceMonthly != null && sub.priceMonthly < sub.listPriceMonthly
-  const customPrice = sub?.customPriceMonthly != null
   const stripe = !!sub?.stripeEnabled
+  // Modo de pago (utils/billingFlow.js): 'subscription' | 'cardOnFile' | 'setup' | 'pay'
+  const mode = billingMode(sub)
+  const action = sub ? planAction(sub, selected, per.interval) : 'checkout'
+  // Vuelta de Checkout en modo setup: la prueba sigue (o ya llegó cardOnFile) y no hay suscripción.
+  const savedCardReturn = !sub?.stripeSubscriptionId && (sub?.cardOnFile || trialRunning(sub))
 
   const openKeepModal = async (target, mode, extra = {}) => {
     const r = await subscriptionApi.downgradePreview(target)
@@ -91,32 +108,55 @@ export default function PlanSection() {
     return preview
   }
 
-  const checkout = async (plan, interval, keep) => {
-    const r = await billingApi.checkout(keep ? { plan, interval, keep } : { plan, interval })
+  const refreshAfterPlanChange = () => {
+    for (const key of [MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY, SUBSCRIPTION_KEY, 'employees']) {
+      qc.invalidateQueries({ queryKey: [key] })
+    }
+  }
+
+  // act = 'checkout' (se va a Stripe) | 'changePlan' (se queda aquí). Devuelve true si se queda.
+  const runPlan = async (act, plan, interval, keep) => {
+    if (act === 'changePlan') {
+      await billingApi.changePlan(billingPayload({ plan, interval, keep }))
+      refreshAfterPlanChange()
+      toast.success(t('Listo: ahora tienes {plan} · {period}.', {
+        plan: PLANS.find((p) => p.key === planKey(plan))?.name ?? plan,
+        period: t(periodOf(interval).label).toLowerCase(),
+      }))
+      return true
+    }
+    const r = await billingApi.checkout(billingPayload({ plan, interval, keep, promotionCode: mode === 'setup' ? promoCode : null }))
     const url = r.data?.data?.url ?? r.data?.url
     if (!url) throw new Error('no url')
     window.location.assign(url)
+    return false
   }
 
-  // Bajar de plan (API 1.16.0): antes de abrir Checkout, si el plan nuevo no da para todo,
-  // el dueño elige qué queda activo (el resto a solo lectura, nada se borra).
-  const payWithCard = async (plan, interval) => {
+  // Bajar de plan (API 1.16.0): antes de abrir Checkout o de cambiar el plan, si el plan nuevo no
+  // da para todo, el dueño elige qué queda activo (el resto a solo lectura, nada se borra).
+  const applyPlan = async (plan, interval) => {
+    const act = planAction(sub, plan, interval)
+    if (act === 'none') return
     setPaying(`${plan}-${interval}`)
+    setPromoError('')
     try {
       if (isDowngrade(sub?.plan, plan)) {
         const r = await subscriptionApi.downgradePreview(plan)
         const preview = r.data?.data ?? r.data
         if (preview?.needsSelection) {
           setKeepError('')
-          setKeepFor({ mode: 'checkout', plan, interval, preview })
+          setKeepFor({ mode: act, plan, interval, preview })
           setPaying(null)
           return
         }
       }
-      await checkout(plan, interval)
+      if (await runPlan(act, plan, interval)) setPaying(null)
     } catch (err) {
-      if (getErrorCode(err) === 'KEEP_SELECTION_REQUIRED') {
-        try { await openKeepModal(plan, 'checkout', { interval }) } catch (e2) { toast.error(getErrorMessage(e2)) }
+      const code = getErrorCode(err)
+      if (code === 'KEEP_SELECTION_REQUIRED') {
+        try { await openKeepModal(plan, act, { interval }) } catch (e2) { toast.error(getErrorMessage(e2)) }
+      } else if (code === 'PROMO_CODE_INVALID') {
+        setPromoError(getErrorMessage(err))
       } else {
         toast.error(getErrorMessage(err))
       }
@@ -128,19 +168,25 @@ export default function PlanSection() {
     setPaying('keep')
     setKeepError('')
     try {
-      if (keepFor.mode === 'checkout') {
-        await checkout(keepFor.plan, keepFor.interval, keep)
-        return // se va a Stripe
+      if (keepFor.mode === 'checkout' || keepFor.mode === 'changePlan') {
+        const stays = await runPlan(keepFor.mode, keepFor.plan, keepFor.interval, keep)
+        if (!stays) return // se va a Stripe
+        setKeepFor(null)
+        setPaying(null)
+        return
       }
       await subscriptionApi.setActiveSet(keep)
-      for (const key of [MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY, SUBSCRIPTION_KEY, 'employees']) {
-        qc.invalidateQueries({ queryKey: [key] })
-      }
+      refreshAfterPlanChange()
       toast.success(t('Listo: ya está activo lo que elegiste.'))
       setKeepFor(null)
       setPaying(null)
     } catch (err) {
-      setKeepError(getErrorMessage(err))
+      if (getErrorCode(err) === 'PROMO_CODE_INVALID') {
+        setKeepFor(null)
+        setPromoError(getErrorMessage(err))
+      } else {
+        setKeepError(getErrorMessage(err))
+      }
       setPaying(null)
     }
   }
@@ -207,12 +253,19 @@ export default function PlanSection() {
           </div>
         )}
         {checkoutMsg === 'success' && (
-          <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" data-testid="checkout-success">
             <CheckCircle2 size={18} className="mt-0.5 flex-shrink-0 text-emerald-600" />
-            <div>
-              <p className="font-bold">{t('Pago recibido: tu plan está activo')}</p>
-              <p className="mt-0.5 text-xs">{t('Gracias. Si el estado tarda unos segundos en cambiar, es Stripe avisándonos; se actualiza solo.')}</p>
-            </div>
+            {savedCardReturn ? (
+              <div>
+                <p className="font-bold">{t('Tarjeta guardada: no se cobró nada')}</p>
+                <p className="mt-0.5 text-xs">{t('El primer cobro es el {date}. Si el estado tarda unos segundos en cambiar, es Stripe avisándonos; se actualiza solo.', { date: formatDay(sub?.firstChargeAt ?? sub?.trialEndsAt) })}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="font-bold">{t('Pago recibido: tu plan está activo')}</p>
+                <p className="mt-0.5 text-xs">{t('Gracias. Si el estado tarda unos segundos en cambiar, es Stripe avisándonos; se actualiza solo.')}</p>
+              </div>
+            )}
           </div>
         )}
         {checkoutMsg === 'cancel' && (
@@ -252,7 +305,7 @@ export default function PlanSection() {
                 )}
                 sub={hasDiscount
                   ? (sub.discountUntil ? t('{pct} % de descuento hasta el {date}', { pct: sub.discountPercent, date: formatDay(sub.discountUntil) }) : t('{pct} % de descuento', { pct: sub.discountPercent }))
-                  : customPrice ? t('Precio especial acordado') : sub.launchPriceLocked ? t('Precio de lanzamiento, para siempre') : null}
+                  : sub.launchPriceLocked ? t('Precio de lanzamiento, para siempre') : null}
                 tone={hasDiscount ? 'emerald' : undefined} />
               {/* Promo de lanzamiento (19-oct-2026): SÍ / NO entre los primeros 50, nunca la posición */}
               <Stat icon={Award} label={t('Primeros {n}', { n: FOUNDERS_LIMIT })}
@@ -262,6 +315,12 @@ export default function PlanSection() {
                   : t('Los primeros {n} negocios ya entraron', { n: FOUNDERS_LIMIT })}
                 tone={sub.founder ? 'emerald' : undefined} />
             </div>
+
+            {sub.couponName && (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100" data-testid="plan-coupon">
+                <Tag size={12} /> {t('Descuento: {couponName}', { couponName: sub.couponName })}
+              </p>
+            )}
 
             {/* Varios negocios por dueño (15-oct-2026): cuántos tiene y cuántos admite el plan */}
             <Link to="/negocios" className="mt-4 flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 px-4 py-3 text-sm transition-colors hover:bg-gray-100">
@@ -282,53 +341,20 @@ export default function PlanSection() {
               <PlanCards compact current={current} selected={selected} onSelect={setPicked} ctaTo={waLink} currency={currency} period={period} onPeriodChange={setPeriod} />
             </div>
 
-            {/* Pago con tarjeta (Stripe, M2) si el BE lo tiene configurado */}
+            {/* Pago con tarjeta (Stripe) si el BE lo tiene configurado */}
             {stripe && (
-              <div className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
-                <div className="flex items-center gap-2">
-                  <CreditCard size={16} className="text-emerald-700" />
-                  <p className="text-sm font-bold text-gray-900">{sub.stripeSubscriptionId ? t('Tu pago con tarjeta') : t('Pagar con tarjeta')}</p>
-                </div>
-                <p className="mt-1 text-xs text-gray-600">
-                  {sub.stripeSubscriptionId
-                    ? t('Se cobra solo cada período. Desde el portal cambias la tarjeta, descargas facturas o cancelas.')
-                    : sub.status === 'TRIAL'
-                      ? t('Pago seguro con Stripe. Guardas la tarjeta hoy y el primer cobro es el {day} después de que termine tu período gratis; luego, cada período. Trimestral −{q} %, anual −{y} %.', { day: BILLING_DAY, q: PERIODS[1].discount, y: PERIODS[2].discount })
-                      : t('Pago seguro con Stripe. Se cobra el {day} (hoy, la parte proporcional) y luego cada período. Trimestral −{q} %, anual −{y} %. Se activa al instante.', { day: BILLING_DAY, q: PERIODS[1].discount, y: PERIODS[2].discount })}
-                </p>
-                {sub.stripeSubscriptionId ? (
-                  <button type="button" onClick={openPortal} disabled={!!paying}
-                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/30 transition-colors hover:bg-emerald-700 disabled:opacity-60">
-                    {paying === 'portal' ? <Loader2 size={16} className="animate-spin" /> : <Receipt size={16} />} {t('Gestionar pago y facturas')} <ExternalLink size={13} />
-                  </button>
-                ) : (
-                  <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-200 bg-white p-4 sm:flex-row sm:items-center" data-testid="pay-selected-plan">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{t('Plan elegido')}</p>
-                      <p className="text-sm font-bold text-gray-900">
-                        {selectedPlan.name} · {t(per.label)}{' '}
-                        <span className="text-xs font-semibold text-gray-400">· {fmtMoney(periodPrice(selectedPlan, 'monthly', currency), currency)}/{t('mes')}</span>
-                      </p>
-                      {selected !== current && current && (
-                        <p className="mt-0.5 text-xs text-gray-500">{t('Hoy tienes {plan}. Puedes cambiar el plan elegido en las tarjetas de arriba.', { plan: currentPlan?.name ?? sub.plan })}</p>
-                      )}
-                      {per.discount > 0 && <p className="mt-0.5 text-[11px] text-gray-500">{t('{pct} % menos que mes a mes', { pct: per.discount })}</p>}
-                    </div>
-                    <button type="button" onClick={() => payWithCard(selected.toUpperCase(), per.interval)} disabled={!!paying}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/30 transition-colors hover:bg-emerald-700 disabled:opacity-60">
-                      {paying === `${selected.toUpperCase()}-${per.interval}` ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-                      {' '}{t('Pagar {total} · {period}', { total: fmtMoney(periodPrice(selectedPlan, per.key, currency), currency), period: t(per.label).toLowerCase() })}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <StripeBox t={t} sub={sub} mode={mode} action={action} paying={paying}
+                selected={selected} selectedPlan={selectedPlan} current={current} currentPlan={currentPlan}
+                per={per} currency={currency}
+                promoCode={promoCode} onPromoCode={(v) => { setPromoCode(v); setPromoError('') }} promoError={promoError}
+                onApply={() => applyPlan(selected.toUpperCase(), per.interval)} onPortal={openPortal} />
             )}
 
             {keepFor && (
               <KeepSelectionModal
                 preview={keepFor.preview}
                 planName={PLANS.find((p) => p.key === planKey(keepFor.plan))?.name ?? keepFor.plan}
-                confirmLabel={keepFor.mode === 'checkout' ? t('Continuar al pago') : t('Guardar')}
+                confirmLabel={keepFor.mode === 'checkout' ? (mode === 'setup' ? t('Continuar a guardar la tarjeta') : t('Continuar al pago')) : keepFor.mode === 'changePlan' ? t('Cambiar de plan') : t('Guardar')}
                 busy={paying === 'keep'} serverError={keepError}
                 onConfirm={confirmKeep} onClose={() => { if (paying !== 'keep') setKeepFor(null) }} />
             )}
@@ -356,6 +382,97 @@ export default function PlanSection() {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+const STRIPE_TITLE = {
+  subscription: 'Tu pago con tarjeta',
+  cardOnFile:   'Tu pago con tarjeta',
+  setup:        'Guardar tarjeta',
+  pay:          'Pagar con tarjeta',
+}
+
+/** Caja del pago con tarjeta: qué se paga, cuándo, y el botón según el modo (utils/billingFlow.js). */
+function StripeBox({ t, sub, mode, action, paying, selected, selectedPlan, current, currentPlan, per, currency, promoCode, onPromoCode, promoError, onApply, onPortal }) {
+  const vars = { q: PERIODS[1].discount, y: PERIODS[2].discount }
+  const firstCharge = formatDay(sub.firstChargeAt ?? sub.trialEndsAt)
+  const intro = {
+    subscription: t('Se cobra solo cada período. Desde el portal cambias la tarjeta, descargas facturas o cancelas.'),
+    cardOnFile:   t('Hasta entonces no pagas nada. Puedes cambiar de plan o de período sin coste.'),
+    setup:        t('Pago seguro con Stripe. Guardas la tarjeta hoy y no se cobra nada mientras dure tu prueba; luego, cada período. Trimestral −{q} %, anual −{y} %.', vars),
+    pay:          t('Pago seguro con Stripe. Se cobra hoy y luego cada período desde hoy. Trimestral −{q} %, anual −{y} %. Se activa al instante.', vars),
+  }[mode]
+  const busy = paying === `${selected.toUpperCase()}-${per.interval}`
+  const total = fmtMoney(periodPrice(selectedPlan, per.key, currency), currency)
+  const label = action === 'changePlan'
+    ? t('Cambiar a {plan} · {period}', { plan: selectedPlan.name, period: t(per.label).toLowerCase() })
+    : mode === 'setup' ? t('Guardar tarjeta') : t('Pagar {total} · {period}', { total, period: t(per.label).toLowerCase() })
+
+  return (
+    <div className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5" data-testid={`stripe-box-${mode}`}>
+      <div className="flex items-center gap-2">
+        <CreditCard size={16} className="text-emerald-700" />
+        <p className="text-sm font-bold text-gray-900">{t(STRIPE_TITLE[mode])}</p>
+      </div>
+      {mode === 'cardOnFile' && (
+        <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-emerald-800" data-testid="card-on-file">
+          <CheckCircle2 size={14} /> {t('Tarjeta guardada · primer cobro el {date}', { date: firstCharge })}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-gray-600">{intro}</p>
+
+      <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4" data-testid="pay-selected-plan">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{action === 'none' ? t('Tu plan') : t('Plan elegido')}</p>
+            <p className="text-sm font-bold text-gray-900">
+              {selectedPlan.name} · {t(per.label)}{' '}
+              <span className="text-xs font-semibold text-gray-400">· {fmtMoney(periodPrice(selectedPlan, 'monthly', currency), currency)}/{t('mes')}</span>
+            </p>
+            {action === 'none' ? (
+              <p className="mt-0.5 text-xs text-gray-500">{t('Para cambiar, elige otro plan o período arriba.')}</p>
+            ) : selected !== current && current && (
+              <p className="mt-0.5 text-xs text-gray-500">{t('Hoy tienes {plan}. Puedes cambiar el plan elegido en las tarjetas de arriba.', { plan: currentPlan?.name ?? sub.plan })}</p>
+            )}
+            {per.discount > 0 && <p className="mt-0.5 text-[11px] text-gray-500">{t('{pct} % menos que mes a mes', { pct: per.discount })}</p>}
+          </div>
+          {action !== 'none' && (
+            <button type="button" onClick={onApply} disabled={!!paying} data-testid="pay-button"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/30 transition-colors hover:bg-emerald-700 disabled:opacity-60">
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}{' '}{label}
+            </button>
+          )}
+        </div>
+        {action === 'changePlan' && (
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800" data-testid="change-plan-note">
+            {mode === 'subscription'
+              ? t('Se cobra o abona la diferencia hoy.')
+              : t('Hoy no se cobra nada: el primer cobro del {date} será con el plan nuevo.', { date: firstCharge })}
+          </p>
+        )}
+        {mode === 'setup' && (
+          <>
+            <p className="mt-3 text-xs font-semibold text-emerald-800" data-testid="first-charge-note">
+              {t('Primer cobro el {fecha}. Hasta entonces no pagas nada.', { fecha: formatDay(sub.trialEndsAt) })}
+            </p>
+            <label className="mt-3 block max-w-xs">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">{t('Código promocional')} <span className="normal-case tracking-normal text-gray-300">({t('opcional')})</span></span>
+              <input type="text" value={promoCode} onChange={(e) => onPromoCode(e.target.value)} disabled={!!paying}
+                autoComplete="off" spellCheck={false} data-testid="promo-code"
+                className={`mt-1 w-full rounded-xl border px-3.5 py-2.5 text-sm text-gray-900 outline-none transition focus:ring-2 ${promoError ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-emerald-600 focus:ring-emerald-600/20'}`} />
+              {promoError && <span className="mt-1 block text-xs text-red-600" data-testid="promo-error">{promoError}</span>}
+            </label>
+          </>
+        )}
+      </div>
+
+      {mode === 'subscription' && (
+        <button type="button" onClick={onPortal} disabled={!!paying}
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 disabled:opacity-60">
+          {paying === 'portal' ? <Loader2 size={16} className="animate-spin" /> : <Receipt size={16} />} {t('Gestionar pago y facturas')} <ExternalLink size={13} />
+        </button>
+      )}
     </div>
   )
 }

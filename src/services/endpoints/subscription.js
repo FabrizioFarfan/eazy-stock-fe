@@ -17,6 +17,8 @@ export const subscriptionApi = {
   setActiveSet: (keep) => api.put('/me/subscription/active-set', keep),
   // { ownerId, plan: 'BASIC'|'PRO'|'AI', status: 'TRIAL'|'ACTIVE'|'PAST_DUE'|'EXPIRED'|'CANCELED',
   //   trialEndsAt, paidUntil, daysLeft, listPriceMonthly, discountPercent, discountUntil,
-  //   customPriceMonthly, priceMonthly, currency, launchPriceLocked, readOnly, maxEmployees, note,
-  //   maxBusinesses, businessesCount, stripeEnabled, stripeSubscriptionId, interval: 'MONTHLY'|'YEARLY'|null }
+  //   priceMonthly, currency, launchPriceLocked, readOnly, maxEmployees, note,
+  //   maxBusinesses, businessesCount, stripeEnabled, stripeSubscriptionId,
+  //   interval: 'MONTHLY'|'QUARTERLY'|'YEARLY'|null,
+  //   cardOnFile, firstChargeAt, couponId, couponName }   (API 1.17.0: sin customPriceMonthly)
 }

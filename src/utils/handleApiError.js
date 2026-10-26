@@ -44,6 +44,10 @@ const MESSAGE_BY_CODE = {
   KEEP_SELECTION_INVALID:    'Lo elegido no entra en el plan nuevo. Revisa los negocios y trabajadores marcados.',
   BUSINESS_LOCKED_BY_PLAN:   'Este negocio está en solo lectura por el límite de tu plan.',
   USER_DEACTIVATED_BY_PLAN:  'Tu usuario está desactivado. Habla con el dueño del negocio.',
+  // Pagos con Stripe (API 1.17.0)
+  PROMO_CODE_INVALID:        'Ese código no es válido o ya caducó.',
+  COUPON_INVALID:            'Ese cupón no existe en Stripe o ya no es válido.',
+  PAYMENT_FAILED:            'No pudimos cobrar la diferencia. Revisa tu tarjeta en «Gestionar pago».',
 }
 
 /**

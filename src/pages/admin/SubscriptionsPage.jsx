@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { CreditCard, Search, MessageCircle, Mail, CalendarPlus, Clock, Pencil, Loader2, RefreshCw, Filter, Store } from 'lucide-react'
+import { CreditCard, Search, MessageCircle, Mail, CalendarPlus, Clock, Pencil, Loader2, RefreshCw, Filter, Store, Tag, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { useBossSubscriptions, useUpdateSubscription, useMarkPaid, useExtendTrial } from '../../hooks/useSubscription'
+import { useBossSubscriptions, useUpdateSubscription, useMarkPaid, useExtendTrial, useSetCoupon } from '../../hooks/useSubscription'
 import EntityModal, { EntityField } from '../../components/common/EntityModal'
 import { ReportHeader, ReportHero, BigSearch } from '../../components/reports/ReportKit'
 import { BossSwitcher, FlagAvatar, Chip } from '../../components/boss/BossKit'
 import { getErrorMessage } from '../../utils/handleApiError'
+import { couponPayload } from '../../utils/billingFlow'
 import { whatsappDigits } from '../../utils/phone'
 import { CURRENCY, PLANS, fmtMoney } from '../landing/plans'
 import { formatDay, STATUS_TONE, STATUS_LABEL } from '../../components/subscription/subscriptionUtils'
@@ -17,7 +18,9 @@ import { useT } from '../../i18n'
  * suscripción es de la cuenta; sus negocios se listan en la fila) con su prueba,
  * plan, estado y precio; acciones rápidas «Marcar pagado +1 mes» y
  * «Extender prueba +7 días» (hasta que llegue la pasarela, el cobro es manual) y
- * un modal para tocar plan, estado, fechas, descuento, precio especial y nota.
+ * un modal para tocar plan, estado, fechas, descuento y nota.
+ * Web 1.24.0 (API 1.17.0, STRIPE-SPEC.md §3): fuera el precio especial; el descuento con tarjeta es
+ * un «Cupón de Stripe» (id) que se aplica o quita aparte con PUT /boss/subscriptions/{id}/coupon.
  */
 
 const PLAN_KEYS = ['BASIC', 'PRO', 'AI']
@@ -39,7 +42,6 @@ function EditSubscriptionModal({ row, onClose }) {
       paidUntil: toDateInput(row.paidUntil),
       discountPercent: row.discountPercent ?? 0,
       discountUntil: toDateInput(row.discountUntil),
-      customPriceMonthly: row.customPriceMonthly ?? '',
       launchPriceLocked: !!row.launchPriceLocked,
       founder: !!row.founder,
       note: row.note ?? '',
@@ -54,7 +56,6 @@ function EditSubscriptionModal({ row, onClose }) {
       paidUntil: v.paidUntil || null,
       discountPercent: v.discountPercent === '' ? 0 : Number(v.discountPercent),
       discountUntil: v.discountUntil || null,
-      customPriceMonthly: v.customPriceMonthly === '' ? null : Number(v.customPriceMonthly),
       launchPriceLocked: !!v.launchPriceLocked,
       founder: !!v.founder,
       note: v.note?.trim() || null,
@@ -102,9 +103,7 @@ function EditSubscriptionModal({ row, onClose }) {
           <input type="date" {...register('discountUntil')} className={inputCls} />
         </EntityField>
       </div>
-      <EntityField label={t('Precio especial al mes ({cur})', { cur: CURRENCY })} hint={t('Vacío = precio de lista del plan (menos el descuento). Ej.: William paga 29.')}>
-        <input type="number" min="0" step="0.01" {...register('customPriceMonthly')} className={inputCls} placeholder="—" />
-      </EntityField>
+      <CouponField row={row} />
       <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-3 text-sm text-gray-700">
         <input type="checkbox" {...register('launchPriceLocked')} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
         {t('Precio de lanzamiento bloqueado para siempre')}
@@ -117,6 +116,60 @@ function EditSubscriptionModal({ row, onClose }) {
         <textarea rows={2} {...register('note')} className={inputCls} placeholder={t('Paga todos los 15 por Yape…')} />
       </EntityField>
     </EntityModal>
+  )
+}
+
+/**
+ * «Cupón de Stripe» (id del cupón en el Dashboard): se aplica o se quita al momento, aparte del
+ * «Guardar cambios». Con suscripción o tarjeta guardada se aplica ya en Stripe; si no, en el
+ * próximo pago. 400 COUPON_INVALID si no existe o no es válido.
+ */
+function CouponField({ row }) {
+  const t = useT()
+  const setCoupon = useSetCoupon()
+  const [applied, setApplied] = useState({ id: row.couponId ?? null, name: row.couponName ?? null })
+  const [value, setValue] = useState(row.couponId ?? '')
+  const [error, setError] = useState('')
+  const who = row.ownerName ?? row.businessName
+
+  const save = async (raw) => {
+    const { couponId } = couponPayload(raw)
+    setError('')
+    try {
+      const res = await setCoupon.mutateAsync({ ownerId: row.ownerId, couponId })
+      setApplied({ id: res?.couponId ?? couponId, name: res?.couponName ?? null })
+      setValue(couponId ?? '')
+      toast.success(couponId ? t('{name}: cupón {coupon} aplicado', { name: who, coupon: couponId }) : t('{name}: cupón quitado', { name: who }))
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+  const dirty = (couponPayload(value).couponId ?? null) !== (applied.id ?? null)
+
+  return (
+    <EntityField label={t('Cupón de Stripe')} error={error}
+      hint={applied.id
+        ? t('Aplicado: {coupon}. Con suscripción o tarjeta guardada se aplica ya en Stripe; si no, en el próximo pago.', { coupon: applied.name ? `${applied.name} (${applied.id})` : applied.id })
+        : t('Id del cupón en Stripe (ej.: eazy-launch-founder). Se aplica al momento, aparte de «Guardar cambios».')}>
+      <div className="flex gap-2" data-testid="coupon-field">
+        <div className="relative flex-1">
+          <Tag size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" value={value} onChange={(e) => { setValue(e.target.value); setError('') }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (dirty && value.trim()) save(value) } }}
+            autoComplete="off" spellCheck={false} placeholder="—" className={`${inputCls} pl-8`} data-testid="coupon-input" />
+        </div>
+        <button type="button" onClick={() => save(value)} disabled={setCoupon.isPending || !dirty || !value.trim()}
+          className="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50" data-testid="coupon-apply">
+          {setCoupon.isPending ? <Loader2 size={13} className="animate-spin" /> : null} {t('Aplicar')}
+        </button>
+        {applied.id && (
+          <button type="button" onClick={() => save(null)} disabled={setCoupon.isPending}
+            className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50" data-testid="coupon-remove">
+            <X size={13} /> {t('Quitar')}
+          </button>
+        )}
+      </div>
+    </EntityField>
   )
 }
 
@@ -167,7 +220,7 @@ function Row({ row, onEdit }) {
             <span className="mx-1.5 text-gray-300">·</span>
             <span className="font-semibold text-gray-700">{fmtMoney(row.priceMonthly, row.currency ?? 'PEN')}/{t('mes')}</span>
             {row.discountPercent > 0 && <span className="ml-1 text-emerald-600">−{row.discountPercent}%{row.discountUntil ? ` ${t('hasta')} ${formatDay(row.discountUntil)}` : ''}</span>}
-            {row.customPriceMonthly != null && <span className="ml-1 text-amber-700">({t('especial')})</span>}
+            {row.couponId && <span className="ml-1 text-emerald-700">· {t('Cupón')}: {row.couponName || row.couponId}</span>}
           </p>
           {row.note && <p className="mt-1 truncate text-xs italic text-gray-400">“{row.note}”</p>}
         </div>

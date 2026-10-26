@@ -12,4 +12,6 @@ export const bossApi = {
   updateSubscription: (ownerId, data) => api.patch(`/boss/subscriptions/${ownerId}`, data),
   markPaid:           (ownerId, months = 1) => api.post(`/boss/subscriptions/${ownerId}/mark-paid`, { months }),
   extendTrial:        (ownerId, days = 7) => api.post(`/boss/subscriptions/${ownerId}/extend-trial`, { days }),
+  // API 1.17.0 (super admin): { couponId: 'ABC' | null } — cupón de Stripe de la cuenta; null lo quita. 400 COUPON_INVALID
+  setCoupon:          (ownerId, couponId) => api.put(`/boss/subscriptions/${ownerId}/coupon`, { couponId }),
 }

@@ -1,0 +1,71 @@
+// Pagos con Stripe en producción (web 1.24.0 · API 1.17.0, STRIPE-SPEC.md): Tu plan («Guardar
+// tarjeta», código promocional, tarjeta guardada, cambiar de plan pagando, cupón) y el «Cupón de
+// Stripe» del panel del boss.
+export default {
+  en: {
+    // Tu plan
+    'Guardar tarjeta': 'Save card',
+    'Tarjeta guardada': 'Card saved',
+    'Primer cobro el {fecha}. Hasta entonces no pagas nada.': 'First charge on {fecha}. Until then you pay nothing.',
+    'Código promocional': 'Promo code',
+    'Tarjeta guardada · primer cobro el {date}': 'Card saved · first charge on {date}',
+    'Hasta entonces no pagas nada. Puedes cambiar de plan o de período sin coste.': 'Until then you pay nothing. You can change plan or billing period at no cost.',
+    'Pago seguro con Stripe. Guardas la tarjeta hoy y no se cobra nada mientras dure tu prueba; luego, cada período. Trimestral −{q} %, anual −{y} %.': 'Secure payment with Stripe. You save your card today and nothing is charged while your trial lasts; then, every period. Quarterly −{q} %, yearly −{y} %.',
+    'Pago seguro con Stripe. Se cobra hoy y luego cada período desde hoy. Trimestral −{q} %, anual −{y} %. Se activa al instante.': 'Secure payment with Stripe. You are charged today and then every period from today. Quarterly −{q} %, yearly −{y} %. It activates instantly.',
+    'Cambiar a {plan} · {period}': 'Switch to {plan} · {period}',
+    'Se cobra o abona la diferencia hoy.': 'The difference is charged or credited today.',
+    'Hoy no se cobra nada: el primer cobro del {date} será con el plan nuevo.': 'Nothing is charged today: the first charge on {date} will be with the new plan.',
+    'Para cambiar, elige otro plan o período arriba.': 'To change it, pick another plan or period above.',
+    'Listo: ahora tienes {plan} · {period}.': 'Done: you now have {plan} · {period}.',
+    'Descuento: {couponName}': 'Discount: {couponName}',
+    'Cambiar de plan': 'Change plan',
+    'Continuar a guardar la tarjeta': 'Continue to save the card',
+    'Tarjeta guardada: no se cobró nada': 'Card saved: nothing was charged',
+    'El primer cobro es el {date}. Si el estado tarda unos segundos en cambiar, es Stripe avisándonos; se actualiza solo.': 'The first charge is on {date}. If the status takes a few seconds to change, that\'s Stripe notifying us; it updates by itself.',
+    // Errores
+    'Ese código no es válido o ya caducó.': 'That code isn\'t valid or has expired.',
+    'Ese cupón no existe en Stripe o ya no es válido.': 'That coupon doesn\'t exist in Stripe or is no longer valid.',
+    'No pudimos cobrar la diferencia. Revisa tu tarjeta en «Gestionar pago».': 'We couldn\'t charge the difference. Check your card in “Manage payment”.',
+    // Boss
+    'Cupón de Stripe': 'Stripe coupon',
+    'Cupón': 'Coupon',
+    'Aplicar': 'Apply',
+    'Aplicado: {coupon}. Con suscripción o tarjeta guardada se aplica ya en Stripe; si no, en el próximo pago.': 'Applied: {coupon}. With a subscription or saved card it is applied in Stripe right away; otherwise, on the next payment.',
+    'Id del cupón en Stripe (ej.: eazy-launch-founder). Se aplica al momento, aparte de «Guardar cambios».': 'Coupon id in Stripe (e.g. eazy-launch-founder). It is applied right away, separately from “Save changes”.',
+    '{name}: cupón {coupon} aplicado': '{name}: coupon {coupon} applied',
+    '{name}: cupón quitado': '{name}: coupon removed',
+  },
+  it: {
+    // Tu plan
+    'Guardar tarjeta': 'Salva la carta',
+    'Tarjeta guardada': 'Carta salvata',
+    'Primer cobro el {fecha}. Hasta entonces no pagas nada.': 'Primo addebito il {fecha}. Fino ad allora non paghi nulla.',
+    'Código promocional': 'Codice promozionale',
+    'Tarjeta guardada · primer cobro el {date}': 'Carta salvata · primo addebito il {date}',
+    'Hasta entonces no pagas nada. Puedes cambiar de plan o de período sin coste.': 'Fino ad allora non paghi nulla. Puoi cambiare piano o periodo senza costi.',
+    'Pago seguro con Stripe. Guardas la tarjeta hoy y no se cobra nada mientras dure tu prueba; luego, cada período. Trimestral −{q} %, anual −{y} %.': 'Pagamento sicuro con Stripe. Salvi la carta oggi e non viene addebitato nulla finché dura la prova; poi, ogni periodo. Trimestrale −{q} %, annuale −{y} %.',
+    'Pago seguro con Stripe. Se cobra hoy y luego cada período desde hoy. Trimestral −{q} %, anual −{y} %. Se activa al instante.': 'Pagamento sicuro con Stripe. L\'addebito è oggi e poi ogni periodo da oggi. Trimestrale −{q} %, annuale −{y} %. Si attiva all\'istante.',
+    'Cambiar a {plan} · {period}': 'Passa a {plan} · {period}',
+    'Se cobra o abona la diferencia hoy.': 'La differenza viene addebitata o accreditata oggi.',
+    'Hoy no se cobra nada: el primer cobro del {date} será con el plan nuevo.': 'Oggi non si paga nulla: il primo addebito del {date} sarà con il nuovo piano.',
+    'Para cambiar, elige otro plan o período arriba.': 'Per cambiarlo, scegli un altro piano o periodo qui sopra.',
+    'Listo: ahora tienes {plan} · {period}.': 'Fatto: ora hai {plan} · {period}.',
+    'Descuento: {couponName}': 'Sconto: {couponName}',
+    'Cambiar de plan': 'Cambia piano',
+    'Continuar a guardar la tarjeta': 'Continua per salvare la carta',
+    'Tarjeta guardada: no se cobró nada': 'Carta salvata: nessun addebito',
+    'El primer cobro es el {date}. Si el estado tarda unos segundos en cambiar, es Stripe avisándonos; se actualiza solo.': 'Il primo addebito è il {date}. Se lo stato impiega qualche secondo a cambiare, è Stripe che ci avvisa; si aggiorna da solo.',
+    // Errores
+    'Ese código no es válido o ya caducó.': 'Questo codice non è valido o è scaduto.',
+    'Ese cupón no existe en Stripe o ya no es válido.': 'Questo coupon non esiste in Stripe o non è più valido.',
+    'No pudimos cobrar la diferencia. Revisa tu tarjeta en «Gestionar pago».': 'Non siamo riusciti ad addebitare la differenza. Controlla la carta in «Gestisci pagamento».',
+    // Boss
+    'Cupón de Stripe': 'Coupon Stripe',
+    'Cupón': 'Coupon',
+    'Aplicar': 'Applica',
+    'Aplicado: {coupon}. Con suscripción o tarjeta guardada se aplica ya en Stripe; si no, en el próximo pago.': 'Applicato: {coupon}. Con un abbonamento o una carta salvata si applica subito in Stripe; altrimenti, al prossimo pagamento.',
+    'Id del cupón en Stripe (ej.: eazy-launch-founder). Se aplica al momento, aparte de «Guardar cambios».': 'Id del coupon in Stripe (es.: eazy-launch-founder). Si applica subito, a parte da «Salva modifiche».',
+    '{name}: cupón {coupon} aplicado': '{name}: coupon {coupon} applicato',
+    '{name}: cupón quitado': '{name}: coupon rimosso',
+  },
+}
