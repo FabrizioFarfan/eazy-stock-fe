@@ -3,7 +3,7 @@ import { Navigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Check, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, Award, MapPin, Store, Users, Crown } from 'lucide-react'
+import { Check, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Sparkles, ShieldCheck, Clock, MapPin, Store, Users, Crown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT, dateLocale } from '../i18n'
 import { browserRegions, setRegion } from '../i18n/region'
@@ -15,19 +15,18 @@ import { suggestedCountry } from '../utils/countries'
 import { COUNTRIES as PHONE_COUNTRIES } from '../utils/phone'
 import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
-import { promoActive, promoVars, trialLine, afterPromoLine, PLANS, REGISTER_DEFAULT_PLAN, periodPrice, fmtMoney, currencyForCountry } from './landing/plans'
+import { promoActive, promoVars, trialLine, PLANS, REGISTER_DEFAULT_PLAN, periodPrice, fmtMoney, currencyForCountry } from './landing/plans'
 import { SoonMini } from './landing/Pricing'
-import { usePlans } from '../hooks/useSubscription'
 import { normalize as normalizeTaxId } from '../utils/taxIds'
 import { TAX_ID_LABEL, checkTaxId, taxIdHelp, taxIdAlreadyRegisteredMessage } from '../utils/taxIdText'
 
 /**
  * /registro — registro propio con prueba gratis (M1 «Planes en serio», 15-oct-2026).
  * Promo de lanzamiento (Frank + Fabrizio, 19-oct-2026, task 1001): gratis hasta el
- * 15 de diciembre sin tarjeta; los primeros 50 negocios son fundadores (mitad de
- * precio 6 meses). RUC obligatorio, válido y único (task 1002); desde el API 1.15.0 validado
+ * 15 de diciembre sin tarjeta (sin descuento de lanzamiento desde el 27-oct-2026: fuera los
+ * fundadores y el segundo mes rebajado). RUC obligatorio, válido y único (task 1002); desde el API 1.15.0 validado
  * con el algoritmo de cada país (utils/taxIds.js) y normalizado al enviar. Regla post-promo
- * (task 1018): después del 15-dic, 1 mes gratis y el segundo mes a mitad de precio.
+ * (task 1018): después del 15-dic, {trial} gratis sin tarjeta.
  * El BE manda en POST /auth/register. Mismo chrome oscuro que el login: panel izquierdo + formulario.
  * Multi-país (24-oct-2026): primer paso «¿Dónde está tu negocio?» (países de
  * GET /api/countries, preseleccionado por el navegador); luego el formulario con
@@ -40,13 +39,13 @@ const FLAG = Object.fromEntries(PHONE_COUNTRIES.map((c) => [c.iso, c.flag]))
 
 const PERKS_PROMO = [
   [Clock,       'Gratis hasta el {date} con tu negocio real, sin tarjeta'],
-  [Award,       'Los primeros {n} negocios pagan la mitad los primeros {months} meses'],
+  [Sparkles,    'Eliges tu plan solo cuando termina la prueba'],
   [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
 ]
-/** Después de la promo: {trial} = «1 mes»; la 2.ª ventaja es afterPromoLine (segundo mes a mitad de precio). */
+/** Después de la promo: {trial} = «1 mes». */
 const PERKS_AFTER = [
   [Clock,       '{trial} gratis con tu negocio real, sin tarjeta'],
-  [Sparkles,    (t) => afterPromoLine(t, { capital: true }) || t('Eliges tu plan solo cuando termina la prueba')],
+  [Sparkles,    'Eliges tu plan solo cuando termina la prueba'],
   [ShieldCheck, 'Tus datos se quedan contigo: si no sigues, no se borra nada'],
 ]
 
@@ -75,7 +74,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const { data: plans } = usePlans()
   const promo = promoActive()
   const vars = promoVars(dateLocale())
   useNoAppDarkMode()
@@ -190,15 +188,10 @@ export default function RegisterPage() {
                 <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-600/20">
                   <Icon size={13} className="text-blue-400" />
                 </span>
-                <span className="text-sm text-slate-300">{typeof text === 'function' ? text(t) : t(text, vars)}</span>
+                <span className="text-sm text-slate-300">{t(text, vars)}</span>
               </li>
             ))}
           </ul>
-          {promo && plans && (
-            <p className={`mt-5 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold ${plans.foundersAvailable ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/5 text-slate-400'}`}>
-              <Award size={13} /> {plans.foundersAvailable ? t('Aún hay lugar entre los primeros {n}', vars) : t('Los primeros {n} ya entraron', vars)}
-            </p>
-          )}
         </div>
 
         <p className="relative text-xs text-slate-500">

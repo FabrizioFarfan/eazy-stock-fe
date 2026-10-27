@@ -2,7 +2,7 @@ import api from '../api'
 
 /**
  * Planes y suscripción (M1 «Planes en serio», 15-oct-2026).
- * GET /plans es público (catálogo + prueba + descuento de lanzamiento);
+ * GET /plans es público (catálogo + prueba; los campos viejos del descuento de lanzamiento ya no se muestran);
  * GET /me/subscription devuelve el estado del negocio del usuario logueado.
  */
 export const subscriptionApi = {

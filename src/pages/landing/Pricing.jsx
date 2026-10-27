@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Minus, Sparkles, Lock, CalendarClock, Store, Users, Clock, Megaphone } from 'lucide-react'
+import { ArrowRight, Check, Minus, Sparkles, CalendarClock, Store, Users, Clock, Megaphone } from 'lucide-react'
 import { useT, dateLocale } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, afterPromoLine, PLANS_NEW_FEATURES_NOTE } from './plans'
+import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, PLANS_NEW_FEATURES_NOTE } from './plans'
 
 // Registro propio desde el 15-oct-2026 (antes todo iba al login).
 const CTA = '/registro'
-const OFFER_ICONS = { Sparkles, Lock, CalendarClock }
+const OFFER_ICONS = { Sparkles, CalendarClock }
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Precios y ofertas — sección de la landing (#precios) y piezas de /planes
@@ -42,7 +42,7 @@ export function PeriodSelector({ period, onChange, dark = false, compact = false
       </div>
       {!compact && (
         <p className={`text-xs ${dark ? 'text-slate-500' : 'text-gray-500'}`}>
-          {t('Todos los planes empiezan con la prueba gratis:')} {trialLine(t, dateLocale()).toLowerCase()}{promoActive() ? '' : `, ${afterPromoLine(t)}`}.
+          {t('Todos los planes empiezan con la prueba gratis:')} {trialLine(t, dateLocale()).toLowerCase()}.
         </p>
       )}
     </div>
@@ -246,10 +246,10 @@ export function PlanCards({ dark = false, current = null, selected = null, onSel
 export function OffersGrid({ dark = false }) {
   const t = useT()
   return (
-    <div className="grid gap-5 md:grid-cols-3">
+    <div className="grid gap-5 md:grid-cols-2">
       {OFFERS.map(({ key, icon, tone, title, desc, afterPromo }, i) => {
         const Icon = OFFER_ICONS[icon] ?? Sparkles
-        // La oferta «gratis hasta el 15-dic» se convierte en «1 mes gratis + segundo mes al 50 %» cuando pasa la promo.
+        // La oferta «gratis hasta el 15-dic» se convierte en «{trial} gratis, sin tarjeta» cuando pasa la promo.
         if (afterPromo && !promoActive()) ({ title, desc } = afterPromo)
         const OFFER_VARS = promoVars(dateLocale())
         return (
@@ -328,8 +328,8 @@ export function PricingSection() {
             kicker={t('Precios y ofertas')}
             title={t('Un plan para cada tamaño de negocio')}
             sub={promoActive()
-              ? t('Gratis hasta el {date}, sin tarjeta, y los primeros {n} negocios pagan la mitad los primeros {months} meses. Pagas por el tamaño de tu negocio, no por funciones escondidas.', promoVars(dateLocale()))
-              : t('{trial} gratis, sin tarjeta, y el segundo mes al {apct} %. Pagas por el tamaño de tu negocio, no por funciones escondidas.', promoVars(dateLocale()))}
+              ? t('Gratis hasta el {date}, sin tarjeta. Pagas por el tamaño de tu negocio, no por funciones escondidas.', promoVars(dateLocale()))
+              : t('{trial} gratis, sin tarjeta. Pagas por el tamaño de tu negocio, no por funciones escondidas.', promoVars(dateLocale()))}
           />
         </Reveal>
         <PlanCards dark />

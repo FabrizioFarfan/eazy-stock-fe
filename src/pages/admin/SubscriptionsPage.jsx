@@ -18,9 +18,12 @@ import { useT } from '../../i18n'
  * suscripción es de la cuenta; sus negocios se listan en la fila) con su prueba,
  * plan, estado y precio; acciones rápidas «Marcar pagado +1 mes» y
  * «Extender prueba +7 días» (hasta que llegue la pasarela, el cobro es manual) y
- * un modal para tocar plan, estado, fechas, descuento y nota.
+ * un modal para tocar plan, estado, fechas y nota.
  * Web 1.24.0 (API 1.17.0, STRIPE-SPEC.md §3): fuera el precio especial; el descuento con tarjeta es
  * un «Cupón de Stripe» (id) que se aplica o quita aparte con PUT /boss/subscriptions/{id}/coupon.
+ * Web 1.25.0 (27-oct-2026): sin descuento de lanzamiento. Fuera del modal «Descuento %», «Descuento
+ * hasta», «Precio de lanzamiento bloqueado» y «Fundador», y de la fila sus chips y el «−50 %». Esos
+ * campos del API se reenvían tal cual llegan en el PUT (no se editan ni se muestran).
  */
 
 const PLAN_KEYS = ['BASIC', 'PRO', 'AI']
@@ -40,10 +43,6 @@ function EditSubscriptionModal({ row, onClose }) {
       status: row.status ?? 'TRIAL',
       trialEndsAt: toDateInput(row.trialEndsAt),
       paidUntil: toDateInput(row.paidUntil),
-      discountPercent: row.discountPercent ?? 0,
-      discountUntil: toDateInput(row.discountUntil),
-      launchPriceLocked: !!row.launchPriceLocked,
-      founder: !!row.founder,
       note: row.note ?? '',
     },
   })
@@ -54,10 +53,11 @@ function EditSubscriptionModal({ row, onClose }) {
       status: v.status,
       trialEndsAt: v.trialEndsAt || null,
       paidUntil: v.paidUntil || null,
-      discountPercent: v.discountPercent === '' ? 0 : Number(v.discountPercent),
-      discountUntil: v.discountUntil || null,
-      launchPriceLocked: !!v.launchPriceLocked,
-      founder: !!v.founder,
+      // Campos viejos del descuento de lanzamiento: sin UI, se devuelven como llegaron.
+      discountPercent: row.discountPercent ?? 0,
+      discountUntil: row.discountUntil ?? null,
+      launchPriceLocked: !!row.launchPriceLocked,
+      founder: !!row.founder,
       note: v.note?.trim() || null,
     }
     try {
@@ -91,27 +91,11 @@ function EditSubscriptionModal({ row, onClose }) {
         <EntityField label={t('Prueba hasta')} error={errors.trialEndsAt?.message}>
           <input type="date" {...register('trialEndsAt')} className={inputCls} />
         </EntityField>
-        <EntityField label={t('Pagado hasta')} hint={t('Vacío = sin vencimiento (cuenta de lanzamiento)')}>
+        <EntityField label={t('Pagado hasta')} hint={t('Vacío = sin vencimiento')}>
           <input type="date" {...register('paidUntil')} className={inputCls} />
         </EntityField>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <EntityField label={t('Descuento %')}>
-          <input type="number" min="0" max="100" step="1" {...register('discountPercent')} className={inputCls} />
-        </EntityField>
-        <EntityField label={t('Descuento hasta')}>
-          <input type="date" {...register('discountUntil')} className={inputCls} />
-        </EntityField>
-      </div>
       <CouponField row={row} />
-      <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-3 text-sm text-gray-700">
-        <input type="checkbox" {...register('launchPriceLocked')} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
-        {t('Precio de lanzamiento bloqueado para siempre')}
-      </label>
-      <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-3 text-sm text-gray-700">
-        <input type="checkbox" {...register('founder')} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
-        {t('Fundador (entre los primeros 50 de la promo)')}
-      </label>
       <EntityField label={t('Nota')} hint={t('La ve el dueño en Ajustes › Tu plan')}>
         <textarea rows={2} {...register('note')} className={inputCls} placeholder={t('Paga todos los 15 por Yape…')} />
       </EntityField>
@@ -150,7 +134,7 @@ function CouponField({ row }) {
     <EntityField label={t('Cupón de Stripe')} error={error}
       hint={applied.id
         ? t('Aplicado: {coupon}. Con suscripción o tarjeta guardada se aplica ya en Stripe; si no, en el próximo pago.', { coupon: applied.name ? `${applied.name} (${applied.id})` : applied.id })
-        : t('Id del cupón en Stripe (ej.: eazy-launch-founder). Se aplica al momento, aparte de «Guardar cambios».')}>
+        : t('Id del cupón en Stripe (ej.: bienvenida-10). Se aplica al momento, aparte de «Guardar cambios».')}>
       <div className="flex gap-2" data-testid="coupon-field">
         <div className="relative flex-1">
           <Tag size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -204,8 +188,6 @@ function Row({ row, onEdit }) {
             <p className="truncate font-bold leading-tight text-gray-900">{row.ownerName || row.businessName}</p>
             <Chip tone={STATUS_TONE[row.status] ?? 'gray'}>{t(STATUS_LABEL[row.status] ?? row.status)}</Chip>
             <Chip tone="blue">{planName(row.plan)}</Chip>
-            {row.launchPriceLocked && <Chip tone="amber">{t('Precio bloqueado')}</Chip>}
-            {row.founder && <Chip tone="emerald">{t('Fundador')}</Chip>}
           </div>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500">
             <Store size={12} className="text-gray-400" />
@@ -218,8 +200,7 @@ function Row({ row, onEdit }) {
           <p className="mt-0.5 text-xs text-gray-500">
             {when}{days ? ` (${days})` : ''}
             <span className="mx-1.5 text-gray-300">·</span>
-            <span className="font-semibold text-gray-700">{fmtMoney(row.priceMonthly, row.currency ?? 'PEN')}/{t('mes')}</span>
-            {row.discountPercent > 0 && <span className="ml-1 text-emerald-600">−{row.discountPercent}%{row.discountUntil ? ` ${t('hasta')} ${formatDay(row.discountUntil)}` : ''}</span>}
+            <span className="font-semibold text-gray-700">{fmtMoney(row.listPriceMonthly ?? row.priceMonthly, row.currency ?? 'PEN')}/{t('mes')}</span>
             {row.couponId && <span className="ml-1 text-emerald-700">· {t('Cupón')}: {row.couponName || row.couponId}</span>}
           </p>
           {row.note && <p className="mt-1 truncate text-xs italic text-gray-400">“{row.note}”</p>}

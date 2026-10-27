@@ -292,11 +292,11 @@ export const PRIVACY = {
  * El ESPAÑOL es la versión que vale (el cliente es el dueño de negocio hispanohablante);
  * alemán e inglés son traducciones de cortesía. Ley alemana, fuero Berlín (como en
  * EAZY PROJECT). Datos: suscripción por dueño, mensual/anual, PEN en Perú y USD fuera,
- * tarjeta por Stripe (primer cobro al terminar la prueba) o pago manual (transferencia/Yape), promo de
- * lanzamiento gratis hasta el 15-dic-2026, fundadores 50 % 6 meses, después 30 días
- * gratis + primer mes al 50 %; al vencer → SOLO LECTURA, nada se borra.
+ * tarjeta por Stripe (primer cobro al terminar la prueba) o pago manual (transferencia/Yape), gratis
+ * hasta el 15-dic-2026, después 30 días gratis; sin descuento de lanzamiento ni fundadores (27-oct-2026);
+ * al vencer → SOLO LECTURA, nada se borra.
  */
-export const TERMS_UPDATED = { de: 'Stand: 26. Oktober 2026', es: 'Última actualización: 26 de octubre de 2026', en: 'Last updated: October 26, 2026' }
+export const TERMS_UPDATED = { de: 'Stand: 27. Oktober 2026', es: 'Última actualización: 27 de octubre de 2026', en: 'Last updated: October 27, 2026' }
 
 export const TERMS_LANGS = [
   { code: 'es', label: 'Español' },
@@ -327,10 +327,9 @@ export const TERMS = {
         'Eazy Stock funciona por suscripción por dueño de negocio, con plan mensual o anual. Los precios y lo que incluye cada plan están en la página de planes y dentro de la app.',
         'Los precios se muestran en soles (PEN) si tu negocio está en Perú y en dólares (USD) en el resto de países. El precio que ves es el que pagas.',
       ] },
-      { h: '5. Promoción de lanzamiento', p: [
+      { h: '5. Prueba gratis', p: [
         'Hasta el 15 de diciembre de 2026 Eazy Stock es gratis para todos y no pedimos tarjeta.',
-        'Los primeros 50 negocios que se registren («fundadores») pagan la mitad del precio durante sus primeros 6 meses de suscripción de pago.',
-        'Quien se registre después de la promoción tiene 30 días gratis y el primer mes al 50 %. Mientras la promoción esté vigente, sus condiciones se pueden consultar en la página de planes.',
+        'Quien se registre después de la promoción tiene 30 días gratis, sin tarjeta. Mientras la promoción esté vigente, sus condiciones se pueden consultar en la página de planes.',
       ] },
       { h: '6. Cómo se paga', p: [
         'Con tarjeta: el pago lo procesa Stripe (Stripe Payments Europe, Ltd., Dublín, Irlanda). Nosotros no vemos ni guardamos el número de tu tarjeta. El primer cobro con tarjeta se hace el día en que termina tu prueba gratis y después se renueva en esa misma fecha de cada período (cada mes, cada trimestre o cada año, según el período que elijas).',
@@ -401,10 +400,9 @@ export const TERMS = {
         'Eazy Stock works as a subscription per business owner, with a monthly or an annual plan. Prices and what each plan includes are shown on the plans page and inside the app.',
         'Prices are shown in soles (PEN) if your business is in Peru and in US dollars (USD) in all other countries. The price you see is the price you pay.',
       ] },
-      { h: '5. Launch promotion', p: [
+      { h: '5. Free trial', p: [
         'Until 15 December 2026 Eazy Stock is free for everyone and we do not ask for a card.',
-        'The first 50 businesses to register ("founders") pay half price during their first 6 months of paid subscription.',
-        'Anyone who registers after the promotion gets 30 days free and the first month at 50 %. While the promotion runs, its conditions can be checked on the plans page.',
+        'Anyone who registers after the promotion gets 30 days free, with no card. While the promotion runs, its conditions can be checked on the plans page.',
       ] },
       { h: '6. How you pay', p: [
         'By card: payments are processed by Stripe (Stripe Payments Europe, Ltd., Dublin, Ireland). We never see or store your card number. The first card charge is made on the day your free trial ends, and it then renews on that same date every period (every month, quarter or year, depending on the period you choose).',
@@ -475,10 +473,9 @@ export const TERMS = {
         'Eazy Stock wird als Abonnement pro Geschäftsinhaber angeboten, mit monatlichem oder jährlichem Plan. Die Preise und der Umfang jedes Plans stehen auf der Seite „Pläne“ und in der App.',
         'Die Preise werden in Soles (PEN) angezeigt, wenn Ihr Geschäft in Peru ist, und in US-Dollar (USD) in allen anderen Ländern. Der angezeigte Preis ist der Preis, den Sie zahlen.',
       ] },
-      { h: '5. Einführungsaktion', p: [
+      { h: '5. Kostenlose Testphase', p: [
         'Bis zum 15. Dezember 2026 ist Eazy Stock für alle kostenlos, und wir verlangen keine Karte.',
-        'Die ersten 50 registrierten Geschäfte („Gründer“) zahlen in den ersten 6 Monaten des bezahlten Abonnements den halben Preis.',
-        'Wer sich nach der Aktion registriert, erhält 30 Tage kostenlos und den ersten Monat zu 50 %. Solange die Aktion läuft, sind ihre Bedingungen auf der Seite „Pläne“ einsehbar.',
+        'Wer sich nach der Aktion registriert, erhält 30 Tage kostenlos, ohne Karte. Solange die Aktion läuft, sind ihre Bedingungen auf der Seite „Pläne“ einsehbar.',
       ] },
       { h: '6. Bezahlung', p: [
         'Per Karte: Die Zahlung wird von Stripe abgewickelt (Stripe Payments Europe, Ltd., Dublin, Irland). Wir sehen und speichern Ihre Kartennummer nicht. Die erste Kartenabbuchung erfolgt an dem Tag, an dem Ihre kostenlose Testphase endet, und verlängert sich danach jeweils am selben Datum jedes Zeitraums (monatlich, vierteljährlich oder jährlich, je nach gewähltem Zeitraum).',

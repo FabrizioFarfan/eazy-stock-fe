@@ -52,7 +52,7 @@ test('payloads', () => {
   assert.deepEqual(billingPayload({ plan: 'BASIC', interval: 'YEARLY', keep: { businessIds: ['b'], employeeIds: [] }, promotionCode: ' X1 ' }),
     { plan: 'BASIC', interval: 'YEARLY', keep: { businessIds: ['b'], employeeIds: [] }, promotionCode: 'X1' })
   assert.deepEqual(billingPayload({ plan: 'PRO', interval: 'MONTHLY', promotionCode: '' }), { plan: 'PRO', interval: 'MONTHLY' })
-  assert.deepEqual(couponPayload(' eazy-launch-founder '), { couponId: 'eazy-launch-founder' })
+  assert.deepEqual(couponPayload(' bienvenida-10 '), { couponId: 'bienvenida-10' })
   assert.deepEqual(couponPayload(''), { couponId: null })
   assert.deepEqual(couponPayload(null), { couponId: null })
 })

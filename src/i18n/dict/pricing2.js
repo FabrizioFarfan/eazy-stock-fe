@@ -4,7 +4,6 @@
 export default {
   en: {
     'Período de pago': 'Billing period',
-    'Los primeros {n} negocios pagan la mitad {months} meses': 'The first {n} businesses pay half for {months} months',
     'Trimestral': 'Quarterly',
     'trimestre': 'quarter',
     'cada mes': 'every month',
@@ -24,7 +23,6 @@ export default {
   },
   it: {
     'Período de pago': 'Periodo di pagamento',
-    'Los primeros {n} negocios pagan la mitad {months} meses': 'Le prime {n} attività pagano la metà per {months} mesi',
     'Trimestral': 'Trimestrale',
     'trimestre': 'trimestre',
     'cada mes': 'ogni mese',

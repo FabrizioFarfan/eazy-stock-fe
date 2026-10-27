@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { CreditCard, Clock, CalendarCheck, Lock, MessageCircle, Mail, Sparkles, Loader2, Tag, Store, CheckCircle2, ExternalLink, Receipt, Award } from 'lucide-react'
+import { CreditCard, Clock, CalendarCheck, Lock, MessageCircle, Mail, Sparkles, Loader2, Tag, Store, CheckCircle2, ExternalLink, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { billingApi } from '../../services/endpoints/billing'
@@ -14,7 +14,7 @@ import { useSubscription, SUBSCRIPTION_KEY } from '../../hooks/useSubscription'
 import { useMyBusiness, useMyBusinesses, MY_BUSINESSES_KEY, BUSINESSES_OVERVIEW_KEY, MY_BUSINESS_KEY } from '../../hooks/useMyBusinesses'
 import { useT } from '../../i18n'
 import { PlanCards, NewFeaturesNote } from '../../pages/landing/Pricing'
-import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry, FOUNDERS_LIMIT, LAUNCH_DISCOUNT_MONTHS } from '../../pages/landing/plans'
+import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, currencyForCountry } from '../../pages/landing/plans'
 import { Chip } from '../boss/BossKit'
 import { readSetupPending, clearSetupPending } from '../../utils/setupPendingNotice'
 import { taxIdTrialUsedMessage } from '../../utils/taxIdText'
@@ -22,7 +22,7 @@ import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SU
 
 /**
  * Ajustes › Tu plan (M1 «Planes en serio», 15-oct-2026), solo OWNER: estado de la
- * suscripción, precio efectivo (con el descuento de lanzamiento), las tres tarjetas
+ * suscripción, precio de lista (sin descuento de lanzamiento desde el 27-oct-2026), las tres tarjetas
  * de /planes con el actual marcado y cómo activar o pagar (manual por WhatsApp o
  * correo hasta que llegue la pasarela). Se llega con /settings#plan desde el banner.
  * Desde el 20-oct-2026 (task 1015): selector Mensual · Trimestral −10 % · Anual −20 %
@@ -92,7 +92,6 @@ export default function PlanSection() {
   // más pequeño, o { mode: 'activeSet' } para corregirlo con el plan actual.
   const [keepFor, setKeepFor] = useState(null)
   const [keepError, setKeepError] = useState('')
-  const hasDiscount = sub?.discountPercent > 0 && sub?.priceMonthly != null && sub?.listPriceMonthly != null && sub.priceMonthly < sub.listPriceMonthly
   const stripe = !!sub?.stripeEnabled
   // Modo de pago (utils/billingFlow.js): 'subscription' | 'cardOnFile' | 'setup' | 'pay'
   const mode = billingMode(sub)
@@ -277,7 +276,7 @@ export default function PlanSection() {
         {sub && (
           <>
             {/* Estado + precio */}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <Stat icon={Sparkles} label={t('Plan')} value={currentPlan?.name ?? sub.plan}
                 sub={sub.maxEmployees != null ? t('Hasta {n} trabajadores', { n: sub.maxEmployees }) : t('Trabajadores ilimitados')} />
               {sub.status === 'TRIAL' && (
@@ -287,7 +286,7 @@ export default function PlanSection() {
               {sub.status === 'ACTIVE' && (
                 <Stat icon={CalendarCheck} label={sub.paidUntil ? t('Pagado hasta') : t('Estado')}
                   value={sub.paidUntil ? formatDay(sub.paidUntil) : t('Activo')}
-                  sub={sub.paidUntil ? (sub.daysLeft != null ? t('Quedan {n} días', { n: Math.max(0, sub.daysLeft) }) : null) : t('Cuenta de lanzamiento')} tone="emerald" />
+                  sub={sub.paidUntil ? (sub.daysLeft != null ? t('Quedan {n} días', { n: Math.max(0, sub.daysLeft) }) : null) : null} tone="emerald" />
               )}
               {sub.status === 'PAST_DUE' && (
                 <Stat icon={CalendarCheck} label={t('Pago vencido el')} value={formatDay(sub.paidUntil)}
@@ -296,24 +295,9 @@ export default function PlanSection() {
               {(sub.status === 'EXPIRED' || sub.status === 'CANCELED') && (
                 <Stat icon={Lock} label={t('Estado')} value={t(STATUS_LABEL[sub.status])} sub={t('Solo lectura: tus datos siguen intactos')} tone="red" />
               )}
-              <Stat icon={Tag} label={t('Precio al mes')}
-                value={(
-                  <span className="flex items-baseline gap-2">
-                    <span>{fmtMoney(sub.priceMonthly, currency)}</span>
-                    {hasDiscount && <span className="text-sm font-semibold text-gray-400 line-through">{fmtMoney(sub.listPriceMonthly, currency)}</span>}
-                  </span>
-                )}
-                sub={hasDiscount
-                  ? (sub.discountUntil ? t('{pct} % de descuento hasta el {date}', { pct: sub.discountPercent, date: formatDay(sub.discountUntil) }) : t('{pct} % de descuento', { pct: sub.discountPercent }))
-                  : sub.launchPriceLocked ? t('Precio de lanzamiento, para siempre') : null}
-                tone={hasDiscount ? 'emerald' : undefined} />
-              {/* Promo de lanzamiento (19-oct-2026): SÍ / NO entre los primeros 50, nunca la posición */}
-              <Stat icon={Award} label={t('Primeros {n}', { n: FOUNDERS_LIMIT })}
-                value={sub.founder ? t('Sí') : t('No')}
-                sub={sub.founder
-                  ? t('Fundador: {pct} % menos los primeros {months} meses y precio bloqueado', { pct: sub.discountPercent ?? 50, months: LAUNCH_DISCOUNT_MONTHS })
-                  : t('Los primeros {n} negocios ya entraron', { n: FOUNDERS_LIMIT })}
-                tone={sub.founder ? 'emerald' : undefined} />
+              {/* Sin descuento de lanzamiento (27-oct-2026): precio de lista; discountPercent, founder y
+                  launchPriceLocked del API ya no se muestran. Un cupón se ve solo por couponName. */}
+              <Stat icon={Tag} label={t('Precio al mes')} value={fmtMoney(sub.listPriceMonthly ?? sub.priceMonthly, currency)} />
             </div>
 
             {sub.couponName && (

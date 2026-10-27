@@ -22,7 +22,7 @@ export function useSubscription(options = {}) {
   })
 }
 
-/** Catálogo público de planes del BE (precios, límites, prueba, descuento de lanzamiento). */
+/** Catálogo público de planes del BE (precios, límites, prueba). Sus campos del descuento de lanzamiento ya no se usan. */
 export function usePlans(options = {}) {
   return useQuery({
     queryKey: [PLANS_KEY],

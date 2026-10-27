@@ -1108,7 +1108,7 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis y el segundo mes al {apct} %. Hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Los primeros {n} negocios pagan la mitad los primeros {months} meses.'],
+  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis. Hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial).'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -1435,7 +1435,7 @@ function PricingTeaser() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">{t('Precios')}</p>
                 <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{trialLine(t, dateLocale())}</h2>
-                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio. Los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))}</p>
+                <p className="mt-2 max-w-md text-sm text-slate-400">{t('Después, un plan según el tamaño de tu negocio.')}</p>
                 {promoActive() && <Countdown />}
               </div>
               <div className="flex flex-shrink-0 flex-col items-center gap-4 lg:items-end">

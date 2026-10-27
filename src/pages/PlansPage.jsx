@@ -28,8 +28,8 @@ function useSeo() {
     const prevCanon = canon?.getAttribute('href')
     document.title = t('Planes y precios — Eazy Stock')
     desc?.setAttribute('content', promoActive()
-      ? t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta; los primeros {n} negocios pagan la mitad los primeros {months} meses.', promoVars(dateLocale()))
-      : t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {trial} gratis sin tarjeta y el segundo mes al {apct} %.', promoVars(dateLocale())))
+      ? t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta.', promoVars(dateLocale()))
+      : t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {trial} gratis sin tarjeta.', promoVars(dateLocale())))
     canon?.setAttribute('href', 'https://eazy-stock.com/planes')
     return () => {
       document.title = prevTitle
@@ -88,7 +88,7 @@ export default function PlansPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              {trialLine(t, dateLocale())} · {t('los primeros {n} pagan la mitad {months} meses', promoVars(dateLocale()))}
+              {trialLine(t, dateLocale())}
             </span>
             <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t('Planes y precios')}<br />

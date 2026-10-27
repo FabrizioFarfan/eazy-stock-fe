@@ -5,7 +5,6 @@ export default {
     'Planes y precios': 'Plans & pricing',
     'Precios y ofertas': 'Pricing & offers',
     'Un plan para cada tamaño de negocio': 'A plan for every size of business',
-    'Hoy, durante el lanzamiento, todo es gratis. Estos son los planes que vienen: entra ahora y conserva el precio de lanzamiento.': 'Today, during the launch, everything is free. These are the plans to come: join now and keep the launch price.',
     'Ofertas vigentes': 'Current offers',
     'Comparar los planes en detalle': 'Compare the plans in detail',
     'Mensual': 'Monthly',
@@ -60,9 +59,7 @@ export default {
     'Análisis de ventas con IA': 'AI sales analysis',
     'Ofertas sugeridas y envío a clientes': 'Suggested offers sent to customers',
     // ofertas
-    'Gratis durante el lanzamiento': 'Free during the launch',
     'Hoy usas todo Eazy Stock sin pagar y sin tarjeta. Cuando salgan los planes te avisamos con tiempo: nadie se queda sin su tienda de un día para otro.': 'Today you use all of Eazy Stock without paying and without a card. When the plans arrive we\'ll tell you well in advance: nobody loses their store overnight.',
-    'Precio de lanzamiento para siempre': 'Launch price forever',
     'Los negocios que entren antes de que salgan los planes conservan estos precios mientras no cancelen. Los que lleguen después pagarán el precio de lista.': 'Businesses that join before the plans go live keep these prices for as long as they stay. Those who come later pay list price.',
     // FAQ de planes
     '¿Qué pasa cuando terminen los {days} días de prueba?': 'What happens when the {days}-day trial ends?',
@@ -79,7 +76,6 @@ export default {
     'Con tarjeta o billetera digital, mensual o anual. Cada cobro genera su recibo. Los precios están en soles; en otros países se cobra el equivalente.': 'By card or digital wallet, monthly or yearly. Every charge comes with its receipt. Prices are in Peruvian soles; other countries are charged the equivalent.',
     // página /planes
     'Planes y precios — Eazy Stock': 'Plans & pricing — Eazy Stock',
-    'Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis durante el lanzamiento, {days} días de prueba sin tarjeta.': 'Eazy Stock Basic, Pro and AI plans: from 1 business and 5 workers to unlimited businesses with artificial intelligence. Free during the launch, {days}-day trial with no card.',
     'claros como tu caja.': 'as clear as your till.',
     'Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.': 'You pay for the size of your business, not for hidden features. Everything Eazy Stock does is in every plan; what changes is how many stores, how many people, and whether AI works with you.',
     'Compara': 'Compare',
@@ -97,14 +93,12 @@ export default {
     'Preguntas sobre los planes': 'Questions about the plans',
     'Antes de elegir': 'Before you choose',
     // FAQ de la landing (respuesta nueva)
-    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'During the launch you try it free, no card. Then there are three plans: Basic (1 business, up to 5 workers), Pro (up to 3 businesses and 20 workers) and AI (everything in Pro, no limits, with artificial intelligence). All with a 30-day trial, and whoever joins during the launch keeps the price.',
   },
   it: {
     'Precios': 'Prezzi',
     'Planes y precios': 'Piani e prezzi',
     'Precios y ofertas': 'Prezzi e offerte',
     'Un plan para cada tamaño de negocio': 'Un piano per ogni dimensione di attività',
-    'Hoy, durante el lanzamiento, todo es gratis. Estos son los planes que vienen: entra ahora y conserva el precio de lanzamiento.': 'Oggi, durante il lancio, è tutto gratis. Questi sono i piani in arrivo: entra ora e mantieni il prezzo di lancio.',
     'Ofertas vigentes': 'Offerte in corso',
     'Comparar los planes en detalle': 'Confronta i piani nel dettaglio',
     'Mensual': 'Mensile',
@@ -155,9 +149,7 @@ export default {
     'Ventas por nota de voz': 'Vendite con nota vocale',
     'Análisis de ventas con IA': 'Analisi delle vendite con IA',
     'Ofertas sugeridas y envío a clientes': 'Offerte suggerite e invio ai clienti',
-    'Gratis durante el lanzamiento': 'Gratis durante il lancio',
     'Hoy usas todo Eazy Stock sin pagar y sin tarjeta. Cuando salgan los planes te avisamos con tiempo: nadie se queda sin su tienda de un día para otro.': 'Oggi usi tutto Eazy Stock senza pagare e senza carta. Quando arriveranno i piani ti avviseremo per tempo: nessuno resta senza il suo negozio da un giorno all\'altro.',
-    'Precio de lanzamiento para siempre': 'Prezzo di lancio per sempre',
     'Los negocios que entren antes de que salgan los planes conservan estos precios mientras no cancelen. Los que lleguen después pagarán el precio de lista.': 'Le attività che entrano prima dell\'uscita dei piani mantengono questi prezzi finché non disdicono. Chi arriva dopo pagherà il prezzo di listino.',
     '¿Qué pasa cuando terminen los {days} días de prueba?': 'Cosa succede alla fine dei {days} giorni di prova?',
     'Eliges tu plan y sigues donde estabas: no se borra nada. Si no eliges, tu cuenta queda en modo lectura hasta que decidas, con todos tus datos intactos.': 'Scegli il tuo piano e continui da dove eri: non si cancella nulla. Se non scegli, l\'account resta in sola lettura finché non decidi, con tutti i dati intatti.',
@@ -172,7 +164,6 @@ export default {
     '¿Cómo se paga?': 'Come si paga?',
     'Con tarjeta o billetera digital, mensual o anual. Cada cobro genera su recibo. Los precios están en soles; en otros países se cobra el equivalente.': 'Con carta o portafoglio digitale, mensile o annuale. Ogni addebito genera la sua ricevuta. I prezzi sono in soles peruviani; negli altri paesi si addebita l\'equivalente.',
     'Planes y precios — Eazy Stock': 'Piani e prezzi — Eazy Stock',
-    'Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis durante el lanzamiento, {days} días de prueba sin tarjeta.': 'Piani Basic, Pro e AI di Eazy Stock: da 1 attività e 5 collaboratori ad attività illimitate con intelligenza artificiale. Gratis durante il lancio, {days} giorni di prova senza carta.',
     'claros como tu caja.': 'chiari come la tua cassa.',
     'Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.': 'Paghi per la dimensione della tua attività, non per funzioni nascoste. Tutto ciò che fa Eazy Stock è in tutti i piani; cambia quanti negozi, quante persone e se l\'IA lavora con te.',
     'Compara': 'Confronta',
@@ -189,6 +180,5 @@ export default {
     'Subes o bajas de plan desde Ajustes. Tus datos no se tocan nunca.': 'Sali o scendi di piano da Impostazioni. I tuoi dati non si toccano mai.',
     'Preguntas sobre los planes': 'Domande sui piani',
     'Antes de elegir': 'Prima di scegliere',
-    'Durante el lanzamiento lo pruebas gratis, sin tarjeta. Después hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial). Todos con 30 días de prueba, y quien entra durante el lanzamiento conserva el precio.': 'Durante il lancio lo provi gratis, senza carta. Poi ci sono tre piani: Basic (1 attività, fino a 5 collaboratori), Pro (attività e collaboratori illimitati) e AI (tutto Pro più intelligenza artificiale). Tutti con 30 giorni di prova, e chi entra durante il lancio mantiene il prezzo.',
   },
 }
