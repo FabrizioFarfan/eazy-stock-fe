@@ -86,7 +86,7 @@ export default function DeleteAccountInfoPage() {
                 </Card>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-gray-500">
-                {t('Solo guardamos lo que la ley nos obliga a conservar, como los registros de pagos de la suscripción. Si quieres quedarte con tus productos, expórtalos a Excel antes de pedir el borrado.')}
+                {t('Solo guardamos lo que la ley nos obliga a conservar, como los registros de pagos de la suscripción, y un identificador cifrado del documento fiscal del negocio, para evitar abusos de la prueba gratis. Si quieres quedarte con tus productos, expórtalos a Excel antes de pedir el borrado.')}
               </p>
             </Block>
           </Reveal>

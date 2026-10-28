@@ -97,7 +97,7 @@ export const IMPRESSUM = {
 }
 
 /** Fecha de la Datenschutz; se muestra en cada idioma. */
-export const PRIVACY_UPDATED = { de: 'Stand: 22. Oktober 2026', es: 'Última actualización: 22 de octubre de 2026', en: 'Last updated: October 22, 2026' }
+export const PRIVACY_UPDATED = { de: 'Stand: 28. Oktober 2026', es: 'Última actualización: 28 de octubre de 2026', en: 'Last updated: October 28, 2026' }
 
 export const PRIVACY_LANGS = [
   { code: 'de', label: 'Deutsch' },
@@ -139,7 +139,9 @@ export const PRIVACY = {
       ] },
       { h: '6. Registrierung und Nutzerkonto', p: [
         'Um Eazy Stock zu nutzen, legen Sie ein Konto an. Dabei verarbeiten wir: Name, E-Mail-Adresse, Passwort (nur als Hash gespeichert), Name und Land/Währung Ihres Geschäfts sowie optional Telefonnummer und Logo. Außerdem speichern wir Anmeldezeitpunkte und die von Ihnen in der Anwendung ausgeführten Aktionen (z. B. wer einen Verkauf registriert hat), weil dies Teil der Funktion des Dienstes ist.',
-        'Die Verarbeitung erfolgt zur Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Die Daten bleiben gespeichert, solange Ihr Konto besteht; danach werden sie gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten bestehen. Die Löschung Ihres Kontos können Sie jederzeit per E-Mail an die oben genannte Adresse verlangen.',
+        'Die Verarbeitung erfolgt zur Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Die Daten bleiben gespeichert, solange Ihr Konto besteht; danach werden sie gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten bestehen. Sie können Ihr Konto jederzeit selbst in der App oder im Web unter „Einstellungen › Konto löschen“ löschen (oder uns an die oben genannte Adresse schreiben). Das Konto wird dann 30 Tage lang pausiert – melden Sie sich in dieser Zeit wieder an, wird die Löschung abgebrochen – und danach mit allen Daten des Geschäfts gelöscht.',
+        'Wenn Sie Ihre E-Mail-Adresse ändern, speichern wir zusätzlich die bisherige Adresse und das Datum der Änderung, solange das Konto besteht, um Ihr Konto zu schützen (z. B. um Ihnen helfen zu können, falls jemand die Adresse ohne Ihre Erlaubnis geändert hat). Sie werden zusammen mit dem Konto gelöscht. Grundlage ist Art. 6 Abs. 1 lit. f DSGVO.',
+        'Steuernummer nach der Löschung: Wird ein Konto endgültig gelöscht, bewahren wir von der Steuernummer des Geschäfts (RUC, NIT, CUIT, RFC usw.) nur eine verschlüsselte Kennung auf – einen mit einem geheimen Schlüssel berechneten HMAC-SHA256-Wert, aus dem sich die Nummer nicht zurückgewinnen lässt – sowie das Löschdatum. Mehr nicht: weder die Nummer noch den Namen des Geschäfts noch das Konto. Die Kennung dient ausschließlich dazu, den Missbrauch der kostenlosen Testphase zu verhindern: Wer sich mit dieser Steuernummer erneut registriert, kann Eazy Stock nutzen, aber ohne kostenlose Testphase. Grundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Verhinderung des Missbrauchs der Testphase). Wir bewahren sie auf, solange Eazy Stock eine kostenlose Testphase anbietet.',
       ] },
       { h: '7. Daten, die Sie in Eazy Stock eingeben (Auftragsverarbeitung)', p: [
         'In der Anwendung erfassen Sie Daten Ihres Geschäfts: Produkte, Bestände, Verkäufe, Kassenabschlüsse, Angebote, Kunden (Name, Telefon, Kundenkredit), Lieferanten und Mitarbeiter. Für diese Daten sind Sie als Inhaber des Geschäfts der Verantwortliche im Sinne der DSGVO; wir verarbeiten sie ausschließlich in Ihrem Auftrag als Auftragsverarbeiter (Art. 28 DSGVO), um Ihnen den Dienst bereitzustellen.',
@@ -149,20 +151,25 @@ export const PRIVACY = {
         'Eazy Stock bietet Schaltflächen, um Angebote, Kontoauszüge oder Zahlungserinnerungen per WhatsApp an Ihre Kunden zu senden. Dabei öffnet sich lediglich ein Link zu WhatsApp (wa.me) mit dem vorbereiteten Text; die Übermittlung erfolgt erst, wenn Sie sie in WhatsApp selbst bestätigen. Wir übertragen keine Daten automatisch an WhatsApp/Meta. Für die Verarbeitung durch WhatsApp gelten die Datenschutzhinweise der WhatsApp Ireland Limited.',
         'PDF-Dokumente (Angebote, Bestellungen, Kontoauszüge) werden in Ihrem Browser erzeugt und nur dort gespeichert oder geteilt, wo Sie es veranlassen.',
       ] },
-      { h: '9. Keine Analyse-Tools, kein Tracking, keine Werbung', p: [
+      { h: '9. Push-Benachrichtigungen (mobile App)', p: [
+        'Wenn Sie sich in der Eazy-Stock-App anmelden, speichern wir das Benachrichtigungs-Token Ihres Telefons zusammen mit dem Betriebssystem (iOS oder Android), der App-Version, der Zeitzone und dem Zeitpunkt der letzten Nutzung. Wir verwenden es nur, um Ihnen Hinweise zu Ihrem Geschäft zu senden (z. B. niedriger Bestand oder bald ablaufende Produkte). Im Web verwenden wir keine Push-Benachrichtigungen.',
+        'Die Hinweise werden über Firebase Cloud Messaging von Google (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland) und auf dem iPhone über den Benachrichtigungsdienst von Apple (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Irland) zugestellt. Diese Anbieter können Daten in den USA verarbeiten; sie stützen sich dafür auf die Standardvertragsklauseln der Europäischen Kommission und das EU-US Data Privacy Framework.',
+        'Grundlage ist die Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Ob Hinweise auf dem Telefon angezeigt werden, entscheiden Sie in den Einstellungen des Telefons und können es jederzeit ändern. Das Token wird gelöscht, wenn Sie sich auf diesem Telefon abmelden oder die Löschung Ihres Kontos beantragen.',
+      ] },
+      { h: '10. Keine Analyse-Tools, kein Tracking, keine Werbung', p: [
         'Auf eazy-stock.com werden keine Web-Analyse-Dienste (z. B. Google Analytics), keine Social-Media-Plugins, keine eingebetteten Videos und keine Werbenetzwerke eingesetzt. Es findet keine Profilbildung statt. Deshalb zeigen wir auch kein Cookie-Banner.',
       ] },
-      { h: '10. Zahlungen (Stripe)', p: [
+      { h: '11. Zahlungen (Stripe)', p: [
         'Kartenzahlungen für die kostenpflichtigen Pläne von Eazy Stock werden über Stripe abgewickelt (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Irland). Beim Bezahlen geben Sie Ihre Kartendaten in ein Formular von Stripe ein; wir selbst sehen und speichern Ihre Kartennummer zu keinem Zeitpunkt.',
         'Stripe verarbeitet dafür die Kartendaten, Betrag und Währung, Ihren Namen und Ihre E-Mail-Adresse sowie technische Daten wie die IP-Adresse, um die Zahlung auszuführen und Betrug zu verhindern. Wir speichern lediglich Ihre Kundenkennung bei Stripe, den gewählten Plan, den Status des Abonnements (aktiv, abgelaufen, gekündigt) und das Datum der letzten Zahlung.',
         'Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Durchführung des Abonnementvertrags) sowie Art. 6 Abs. 1 lit. c DSGVO (steuer- und handelsrechtliche Pflicht zur Aufbewahrung von Zahlungsbelegen). Stripe kann Daten in Länder außerhalb der Europäischen Union übermitteln, insbesondere in die USA; Grundlage dafür sind die Standardvertragsklauseln der Europäischen Kommission. Näheres in der Datenschutzerklärung von Stripe: https://stripe.com/privacy.',
         'Stripe sendet Ihnen für jede Abbuchung eine Quittung per E-Mail. Wenn Sie per Überweisung oder Yape bezahlen, trägt unser Team die Zahlung manuell ein; in diesem Fall speichern wir nur Datum, Betrag und Zahlungsweg.',
       ] },
-      { h: '11. Ihre Rechte', p: [
+      { h: '12. Ihre Rechte', p: [
         'Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Verarbeitung (Art. 15 DSGVO) sowie ein Recht auf Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21 DSGVO).',
         `Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten können Sie sich jederzeit an uns wenden: ${LEGAL_ENTITY.email}.`,
       ] },
-      { h: '12. Änderungen dieser Datenschutzerklärung', p: [
+      { h: '13. Änderungen dieser Datenschutzerklärung', p: [
         'Wir behalten uns vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen umzusetzen, z. B. bei der Einführung neuer Funktionen. Für Ihren erneuten Besuch gilt dann die neue Datenschutzerklärung.',
       ] },
     ],
@@ -198,7 +205,9 @@ export const PRIVACY = {
       ] },
       { h: '6. Registro y cuenta de usuario', p: [
         'Para usar Eazy Stock creas una cuenta. Tratamos: nombre, correo, contraseña (guardada solo como hash), nombre y país/moneda de tu negocio y, opcionalmente, teléfono y logo. También guardamos las horas de inicio de sesión y las acciones que haces en la app (por ejemplo, quién registró una venta), porque forman parte del servicio.',
-        'El tratamiento se hace para ejecutar el contrato de uso (art. 6.1.b RGPD). Los datos se conservan mientras exista tu cuenta; después se borran, salvo obligación legal de conservarlos. Puedes pedir el borrado de tu cuenta en cualquier momento escribiendo al correo de arriba.',
+        'El tratamiento se hace para ejecutar el contrato de uso (art. 6.1.b RGPD). Los datos se conservan mientras exista tu cuenta; después se borran, salvo obligación legal de conservarlos. Puedes borrar tu cuenta tú mismo en cualquier momento en la app o en la web, en Ajustes › Eliminar mi cuenta (o escribiéndonos al correo de arriba). La cuenta queda en pausa 30 días —si vuelves a entrar en ese plazo, el borrado se cancela— y después se borra con todos los datos del negocio.',
+        'Si cambias tu correo, guardamos también el correo anterior y la fecha del cambio mientras exista la cuenta, para protegerla (por ejemplo, para poder ayudarte si alguien lo cambió sin tu permiso). Se borran junto con la cuenta. Base: art. 6.1.f RGPD.',
+        'Documento fiscal tras el borrado: cuando una cuenta se borra definitivamente, del documento fiscal de su negocio (RUC, NIT, CUIT, RFC…) conservamos solo un identificador cifrado —una huella HMAC-SHA256 calculada con una clave secreta, de la que no se puede sacar el número— y la fecha del borrado. Nada más: ni el número, ni el nombre del negocio, ni la cuenta. Sirve únicamente para evitar abusos de la prueba gratis: quien se registre otra vez con ese documento puede usar Eazy Stock, pero sin prueba gratis. Base: art. 6.1.f RGPD (interés legítimo en evitar el uso abusivo de la prueba gratis). Lo conservamos mientras Eazy Stock ofrezca una prueba gratis.',
       ] },
       { h: '7. Datos que cargas en Eazy Stock (encargo de tratamiento)', p: [
         'En la aplicación registras datos de tu negocio: productos, stock, ventas, cierres de caja, cotizaciones, clientes (nombre, teléfono, fiado), proveedores y empleados. De esos datos el responsable eres tú, como dueño del negocio; nosotros los tratamos solo por encargo tuyo, como encargado del tratamiento (art. 28 RGPD), para prestarte el servicio.',
@@ -208,20 +217,25 @@ export const PRIVACY = {
         'Eazy Stock tiene botones para enviar cotizaciones, estados de cuenta o recordatorios de pago por WhatsApp a tus clientes. Solo se abre un enlace a WhatsApp (wa.me) con el texto preparado; el envío ocurre cuando tú lo confirmas en WhatsApp. No transmitimos nada automáticamente a WhatsApp/Meta. Al tratamiento por parte de WhatsApp se aplican las políticas de WhatsApp Ireland Limited.',
         'Los PDF (cotizaciones, pedidos, estados de cuenta) se generan en tu navegador y solo se guardan o comparten donde tú lo decidas.',
       ] },
-      { h: '9. Sin analítica, sin rastreo, sin publicidad', p: [
+      { h: '9. Notificaciones push (app móvil)', p: [
+        'Cuando entras con la app de Eazy Stock, guardamos el token de notificaciones de tu teléfono, junto con el sistema (iOS o Android), la versión de la app, la zona horaria y la última vez que la usaste. Lo usamos solo para enviarte avisos de tu negocio (por ejemplo, stock bajo o productos por vencer). En la web no usamos notificaciones push.',
+        'Los avisos se envían a través de Firebase Cloud Messaging de Google (Google Ireland Limited, Gordon House, Barrow Street, Dublín 4, Irlanda) y, en iPhone, del servicio de notificaciones de Apple (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Irlanda). Estos proveedores pueden tratar datos en Estados Unidos; para ello se apoyan en las cláusulas contractuales tipo de la Comisión Europea y en el EU-US Data Privacy Framework.',
+        'Base legal: la ejecución del contrato de uso (art. 6.1.b RGPD). Si los avisos se muestran o no en tu teléfono lo decides tú en los ajustes del teléfono, y puedes cambiarlo cuando quieras. El token se borra al cerrar sesión en ese teléfono y al pedir el borrado de la cuenta.',
+      ] },
+      { h: '10. Sin analítica, sin rastreo, sin publicidad', p: [
         'En eazy-stock.com no hay servicios de analítica web (por ejemplo Google Analytics), ni plugins de redes sociales, ni vídeos incrustados, ni redes publicitarias. No se crean perfiles. Por eso tampoco mostramos un banner de cookies.',
       ] },
-      { h: '10. Pagos (Stripe)', p: [
+      { h: '11. Pagos (Stripe)', p: [
         'Los pagos con tarjeta de los planes de Eazy Stock los procesa Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublín 2, Irlanda). Cuando pagas, escribes los datos de tu tarjeta en un formulario de Stripe; nosotros nunca vemos ni guardamos el número de tu tarjeta.',
         'Para ello Stripe trata los datos de la tarjeta, el importe y la moneda, tu nombre y tu correo, y datos técnicos como la dirección IP, para ejecutar el pago y prevenir el fraude. Nosotros guardamos solo tu identificador de cliente en Stripe, el plan contratado, el estado de la suscripción (activa, vencida, cancelada) y la fecha del último pago.',
         'Base legal: art. 6.1.b RGPD (ejecución del contrato de suscripción) y art. 6.1.c RGPD (obligación fiscal y contable de conservar los registros de pago). Stripe puede transferir datos a países fuera de la Unión Europea, en particular a Estados Unidos; para ello se apoya en las cláusulas contractuales tipo de la Comisión Europea. Más información en la política de privacidad de Stripe: https://stripe.com/privacy.',
         'Stripe te envía por correo el recibo de cada cobro. Si pagas por transferencia o Yape, nuestro equipo registra el pago a mano; en ese caso guardamos solo la fecha, el importe y el medio de pago.',
       ] },
-      { h: '11. Tus derechos', p: [
+      { h: '12. Tus derechos', p: [
         'Tienes derecho, en todo momento y gratis, a saber qué datos personales tuyos guardamos, de dónde vienen, a quién se envían y para qué (art. 15 RGPD), y derecho a rectificación (art. 16), supresión (art. 17), limitación del tratamiento (art. 18), portabilidad (art. 20) y oposición (art. 21 RGPD).',
         `Para ejercerlos o para cualquier otra pregunta sobre tus datos, escríbenos a ${LEGAL_ENTITY.email}.`,
       ] },
-      { h: '12. Cambios en esta política', p: [
+      { h: '13. Cambios en esta política', p: [
         'Podemos adaptar esta política para que cumpla siempre la ley vigente o para reflejar cambios en nuestros servicios, por ejemplo al añadir funciones nuevas. En tu próxima visita se aplicará la versión nueva.',
       ] },
     ],
@@ -257,7 +271,9 @@ export const PRIVACY = {
       ] },
       { h: '6. Registration and user account', p: [
         'To use Eazy Stock you create an account. We process: name, email, password (stored only as a hash), your business\'s name and country/currency and, optionally, phone and logo. We also store login times and the actions you perform in the app (for example who recorded a sale), as they are part of the service.',
-        'Processing is carried out to perform the usage contract (Art. 6(1)(b) GDPR). Data is kept as long as your account exists and is then deleted unless a legal retention duty applies. You can request deletion of your account at any time by email to the address above.',
+        'Processing is carried out to perform the usage contract (Art. 6(1)(b) GDPR). Data is kept as long as your account exists and is then deleted unless a legal retention duty applies. You can delete your account yourself at any time in the app or on the web under Settings › Delete my account (or by writing to the address above). The account is then paused for 30 days — if you log in again during that time, the deletion is cancelled — and afterwards it is deleted together with all business data.',
+        'If you change your email address, we also keep the previous address and the date of the change for as long as the account exists, to protect your account (for example, to help you if someone changed it without your permission). They are deleted together with the account. Legal basis: Art. 6(1)(f) GDPR.',
+        'Tax ID after deletion: when an account is permanently deleted, of its business tax ID (RUC, NIT, CUIT, RFC, etc.) we keep only an encrypted identifier — an HMAC-SHA256 value computed with a secret key, from which the number cannot be recovered — and the deletion date. Nothing else: neither the number, nor the business name, nor the account. It serves only to prevent abuse of the free trial: anyone who registers again with that tax ID can use Eazy Stock, but without a free trial. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in preventing abuse of the free trial). We keep it for as long as Eazy Stock offers a free trial.',
       ] },
       { h: '7. Data you enter in Eazy Stock (processing on your behalf)', p: [
         'In the application you record your business\'s data: products, stock, sales, cash closings, quotes, customers (name, phone, store credit), suppliers and employees. For that data you, as the business owner, are the controller under the GDPR; we process it solely on your behalf as processor (Art. 28 GDPR) to provide the service.',
@@ -267,20 +283,25 @@ export const PRIVACY = {
         'Eazy Stock offers buttons to send quotes, account statements or payment reminders to your customers via WhatsApp. This only opens a WhatsApp link (wa.me) with the prepared text; the message is sent only when you confirm it in WhatsApp. We transmit nothing to WhatsApp/Meta automatically. WhatsApp Ireland Limited\'s privacy policy applies to its processing.',
         'PDF documents (quotes, purchase orders, statements) are generated in your browser and are only saved or shared where you choose.',
       ] },
-      { h: '9. No analytics, no tracking, no advertising', p: [
+      { h: '9. Push notifications (mobile app)', p: [
+        'When you log in to the Eazy Stock app, we store your phone\'s notification token together with the operating system (iOS or Android), the app version, the time zone and the time of last use. We use it only to send you notices about your business (for example low stock or products about to expire). We do not use push notifications on the web.',
+        'Notices are delivered through Google\'s Firebase Cloud Messaging (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland) and, on iPhone, through Apple\'s notification service (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Ireland). These providers may process data in the United States; they rely on the European Commission\'s standard contractual clauses and the EU-US Data Privacy Framework.',
+        'Legal basis: performance of the usage contract (Art. 6(1)(b) GDPR). Whether notices are shown on your phone is up to you in the phone\'s settings, and you can change it at any time. The token is deleted when you log out on that phone and when you request deletion of your account.',
+      ] },
+      { h: '10. No analytics, no tracking, no advertising', p: [
         'eazy-stock.com uses no web analytics services (such as Google Analytics), no social media plugins, no embedded videos and no advertising networks. No profiling takes place. That is why we show no cookie banner.',
       ] },
-      { h: '10. Payments (Stripe)', p: [
+      { h: '11. Payments (Stripe)', p: [
         'Card payments for Eazy Stock\'s paid plans are processed by Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Ireland). When you pay, you enter your card details in a form provided by Stripe; we never see or store your card number.',
         'For this purpose Stripe processes the card details, the amount and currency, your name and email, and technical data such as the IP address, in order to execute the payment and prevent fraud. We store only your Stripe customer identifier, the plan you chose, the subscription status (active, expired, cancelled) and the date of the last payment.',
         'Legal basis: Art. 6(1)(b) GDPR (performance of the subscription contract) and Art. 6(1)(c) GDPR (tax and accounting duty to keep payment records). Stripe may transfer data to countries outside the European Union, in particular to the United States; it relies on the European Commission\'s standard contractual clauses for this. More in Stripe\'s privacy policy: https://stripe.com/privacy.',
         'Stripe emails you a receipt for every charge. If you pay by bank transfer or Yape, our team records the payment manually; in that case we store only the date, the amount and the payment method.',
       ] },
-      { h: '11. Your rights', p: [
+      { h: '12. Your rights', p: [
         'You have the right, at any time and free of charge, to information about your stored personal data, its origin and recipients and the purpose of processing (Art. 15 GDPR), as well as the rights to rectification (Art. 16), erasure (Art. 17), restriction of processing (Art. 18), data portability (Art. 20) and objection (Art. 21 GDPR).',
         `For these and any other questions about personal data, contact us at ${LEGAL_ENTITY.email}.`,
       ] },
-      { h: '12. Changes to this policy', p: [
+      { h: '13. Changes to this policy', p: [
         'We may update this privacy policy so that it always meets current legal requirements or reflects changes to our services, for example when new features are introduced. The new version applies from your next visit.',
       ] },
     ],
@@ -296,7 +317,7 @@ export const PRIVACY = {
  * hasta el 15-dic-2026, después 30 días gratis; sin descuento de lanzamiento ni fundadores (27-oct-2026);
  * al vencer → SOLO LECTURA, nada se borra.
  */
-export const TERMS_UPDATED = { de: 'Stand: 27. Oktober 2026', es: 'Última actualización: 27 de octubre de 2026', en: 'Last updated: October 27, 2026' }
+export const TERMS_UPDATED = { de: 'Stand: 28. Oktober 2026', es: 'Última actualización: 28 de octubre de 2026', en: 'Last updated: October 28, 2026' }
 
 export const TERMS_LANGS = [
   { code: 'es', label: 'Español' },
@@ -350,11 +371,11 @@ export const TERMS = {
       { h: '10. Qué pasa si la suscripción vence sin pagar', p: [
         'Si tu suscripción vence y no hay pago, tu cuenta pasa a solo lectura: puedes entrar, ver todo y exportar tus datos, pero no registrar ventas ni cambiar nada. No se borra nada.',
         'Cuando vuelves a pagar, la cuenta se reactiva con todos tus datos tal como estaban.',
-        'Si no quieres seguir, puedes pedirnos por correo que borremos tu cuenta y todos los datos de tu negocio; lo hacemos en un plazo de 30 días.',
+        'Si no quieres seguir, puedes borrar tu cuenta tú mismo en la app o en la web, en Ajustes › Eliminar mi cuenta (o pedírnoslo por correo). La cuenta queda en pausa 30 días: si vuelves a entrar en ese plazo, el borrado se cancela; si no, se borran tu cuenta y todos los datos de tu negocio.',
       ] },
       { h: '11. Tus datos', p: [
         'Los datos que cargas en Eazy Stock (productos, ventas, clientes, proveedores, empleados) son tuyos. Nosotros los guardamos y procesamos solo para prestarte el servicio, como encargados del tratamiento. No los vendemos ni los usamos para otros fines.',
-        'Puedes exportar tus datos en cualquier momento. Si borras la cuenta, borramos los datos de tu negocio, salvo lo que la ley nos obligue a conservar (por ejemplo, los registros de pagos).',
+        'Puedes exportar tus datos en cualquier momento. Si borras la cuenta, borramos los datos de tu negocio, salvo lo que la ley nos obligue a conservar (por ejemplo, los registros de pagos) y un identificador cifrado de tu documento fiscal, que guardamos solo para evitar abusos de la prueba gratis: si te registras otra vez con ese documento, puedes usar Eazy Stock, pero sin prueba gratis. Los detalles están en la Política de privacidad.',
         'Cómo tratamos los datos personales está explicado en la Política de privacidad.',
       ] },
       { h: '12. Uso correcto', p: [
@@ -423,11 +444,11 @@ export const TERMS = {
       { h: '10. What happens if the subscription expires unpaid', p: [
         'If your subscription expires and no payment is received, your account switches to read-only: you can log in, see everything and export your data, but you cannot record sales or change anything. Nothing is deleted.',
         'When you pay again, the account is reactivated with all your data exactly as it was.',
-        'If you do not want to continue, you can ask us by email to delete your account and all your business data; we do it within 30 days.',
+        'If you do not want to continue, you can delete your account yourself in the app or on the web under Settings › Delete my account (or ask us by email). The account is paused for 30 days: if you log in again during that time, the deletion is cancelled; otherwise your account and all your business data are deleted.',
       ] },
       { h: '11. Your data', p: [
         'The data you enter in Eazy Stock (products, sales, customers, suppliers, employees) is yours. We store and process it only to provide the service, as a processor on your behalf. We do not sell it or use it for other purposes.',
-        'You can export your data at any time. If you delete the account, we delete your business data, except what the law requires us to keep (for example payment records).',
+        'You can export your data at any time. If you delete the account, we delete your business data, except what the law requires us to keep (for example payment records) and an encrypted identifier of your tax ID, which we keep only to prevent abuse of the free trial: if you register again with that tax ID, you can use Eazy Stock, but without a free trial. Details are in the Privacy policy.',
         'How we handle personal data is explained in the Privacy policy.',
       ] },
       { h: '12. Acceptable use', p: [
@@ -496,11 +517,11 @@ export const TERMS = {
       { h: '10. Was passiert, wenn das Abonnement unbezahlt abläuft', p: [
         'Läuft Ihr Abonnement ab und geht keine Zahlung ein, wechselt Ihr Konto in den Nur-Lese-Modus: Sie können sich anmelden, alles ansehen und Ihre Daten exportieren, aber keine Verkäufe erfassen und nichts ändern. Es wird nichts gelöscht.',
         'Sobald Sie wieder zahlen, wird das Konto mit allen Daten genau so reaktiviert, wie sie waren.',
-        'Wenn Sie nicht weitermachen möchten, können Sie uns per E-Mail bitten, Ihr Konto und alle Daten Ihres Geschäfts zu löschen; wir erledigen das innerhalb von 30 Tagen.',
+        'Wenn Sie nicht weitermachen möchten, können Sie Ihr Konto selbst in der App oder im Web unter „Einstellungen › Konto löschen“ löschen (oder uns per E-Mail darum bitten). Das Konto wird 30 Tage lang pausiert: Melden Sie sich in dieser Zeit wieder an, wird die Löschung abgebrochen; andernfalls werden Ihr Konto und alle Daten Ihres Geschäfts gelöscht.',
       ] },
       { h: '11. Ihre Daten', p: [
         'Die Daten, die Sie in Eazy Stock erfassen (Produkte, Verkäufe, Kunden, Lieferanten, Mitarbeiter), gehören Ihnen. Wir speichern und verarbeiten sie ausschließlich zur Erbringung des Dienstes als Auftragsverarbeiter. Wir verkaufen sie nicht und nutzen sie nicht für andere Zwecke.',
-        'Sie können Ihre Daten jederzeit exportieren. Wenn Sie das Konto löschen, löschen wir die Daten Ihres Geschäfts, mit Ausnahme dessen, was wir gesetzlich aufbewahren müssen (z. B. Zahlungsbelege).',
+        'Sie können Ihre Daten jederzeit exportieren. Wenn Sie das Konto löschen, löschen wir die Daten Ihres Geschäfts, mit Ausnahme dessen, was wir gesetzlich aufbewahren müssen (z. B. Zahlungsbelege), und einer verschlüsselten Kennung Ihrer Steuernummer, die wir nur aufbewahren, um den Missbrauch der kostenlosen Testphase zu verhindern: Registrieren Sie sich erneut mit dieser Steuernummer, können Sie Eazy Stock nutzen, aber ohne kostenlose Testphase. Einzelheiten stehen in der Datenschutzerklärung.',
         'Wie wir personenbezogene Daten verarbeiten, erklärt die Datenschutzerklärung.',
       ] },
       { h: '12. Zulässige Nutzung', p: [
