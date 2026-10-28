@@ -3,9 +3,10 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
-## 1.26.3 — 2026-10-28 (lo que aún no existe no se enseña)
+## 1.26.4 / 1.26.3 — 2026-10-28 (lo que aún no existe no se enseña)
 - **Frank: «son cosas que pondremos, pero ahora no están: que no lo vea la gente; poco a poco lo soltamos».** Interruptor `SHOW_UPCOMING = false` en `pages/landing/plans.js` y versiones para enseñar: `SHOWN_PLANS` (sin el plan AI «Llega pronto» y sin funciones `soon`), `SHOWN_COMPARE` (2 columnas, sin filas de apps, SUNAT, voz, consejos ni promociones con IA) y `SHOWN_PLAN_FAQS` (sin «¿La IA registra ventas sola?» ni «¿Cuándo llega el plan AI?»; «dos tiendas» habla solo de Pro). `PLANS` sigue completo para lo interno (nombres, panel del boss, plan contratado).
 - Landing: la cabecera ya no dice «IA integrada: pronto…» ni «Apps … ya casi listas» (en su lugar, venta rápida con escáner y cierre de caja); el resumen de precios y las tarjetas de planes enseñan Basic y Pro (2 columnas centradas); la FAQ «¿Cuánto cuesta?» habla de dos planes. /preguntas sin la sección «Lo que viene». /planes: textos de la cabecera y de los pasos sin la IA. Registro: elegir Basic o Pro.
+- `index.html` (JSON-LD para buscadores): fuera la oferta «AI · Pro + inteligencia artificial, llega pronto» (1.26.4).
 - Para soltar algo: quitar `soon` a lo que ya exista, o `SHOW_UPCOMING = true` para pre-anunciarlo todo como antes. Textos nuevos en en/it (`dict/upcoming.js`).
 
 ## 1.26.2 — 2026-10-28 (bienvenida sin promesas de IA)
