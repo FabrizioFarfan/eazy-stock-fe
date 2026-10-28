@@ -27,9 +27,14 @@ function useSeo() {
     const prevDesc = desc?.getAttribute('content')
     const prevCanon = canon?.getAttribute('href')
     document.title = t('Planes y precios — Eazy Stock')
-    desc?.setAttribute('content', promoActive()
-      ? t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta.', promoVars(dateLocale()))
-      : t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {trial} gratis sin tarjeta.', promoVars(dateLocale())))
+    // 28-oct: la descripción para buscadores tampoco anuncia la IA mientras no exista (SHOW_UPCOMING).
+    desc?.setAttribute('content', SHOW_UPCOMING
+      ? (promoActive()
+        ? t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. Gratis hasta el {date} sin tarjeta.', promoVars(dateLocale()))
+        : t('Planes Basic, Pro y AI de Eazy Stock: desde 1 negocio y 5 trabajadores hasta negocios ilimitados con inteligencia artificial. {trial} gratis sin tarjeta.', promoVars(dateLocale())))
+      : (promoActive()
+        ? t('Planes Basic y Pro de Eazy Stock: de 1 negocio y 5 trabajadores a 3 negocios y 20 trabajadores en una sola cuenta. Gratis hasta el {date} sin tarjeta.', promoVars(dateLocale()))
+        : t('Planes Basic y Pro de Eazy Stock: de 1 negocio y 5 trabajadores a 3 negocios y 20 trabajadores en una sola cuenta. {trial} gratis sin tarjeta.', promoVars(dateLocale()))))
     canon?.setAttribute('href', 'https://eazy-stock.com/planes')
     return () => {
       document.title = prevTitle
