@@ -24,7 +24,7 @@ import {
 } from './landing/mockups'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 import { usePageSeo } from './landing/site'
-import { PLANS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, siteCurrency, trialLine, promoVars, promoActive, PROMO_FREE_UNTIL } from './landing/plans'
+import { SHOWN_PLANS, SHOW_UPCOMING, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, siteCurrency, trialLine, promoVars, promoActive, PROMO_FREE_UNTIL } from './landing/plans'
 import { PeriodSelector, ComingSoonChip } from './landing/Pricing'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
@@ -215,9 +215,15 @@ export function Navbar() {
 
 export function Hero() {
   const t = useT()
+  // 28-oct (Frank): lo que aún no existe no se promete (SHOW_UPCOMING en landing/plans.js).
   const promises = [
-    [Bot,        'IA integrada: pronto, pregúntale a tu negocio'],
-    [Smartphone, 'Apps para Android e iOS: ya casi listas'],
+    ...(SHOW_UPCOMING ? [
+      [Bot,        'IA integrada: pronto, pregúntale a tu negocio'],
+      [Smartphone, 'Apps para Android e iOS: ya casi listas'],
+    ] : [
+      [ScanLine,   'Venta rápida con escáner y medios de pago a tu medida'],
+      [Wallet,     'Cierre de caja y fondo de caja'],
+    ]),
     [BarChart2,  'Reportes que te dicen qué vender más'],
     [Check,      'Sin tarjeta · te ayudamos a cargar tus productos'],
   ]
@@ -1108,7 +1114,9 @@ export function ComingSoon() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FAQS = [
-  ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis. Hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial).'],
+  SHOW_UPCOMING
+    ? ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis. Hay tres planes: Basic (1 negocio, hasta 5 trabajadores), Pro (hasta 3 negocios y 20 trabajadores) y AI (todo lo de Pro, sin límites y con inteligencia artificial).']
+    : ['¿Cuánto cuesta Eazy Stock?', 'Gratis hasta el {date} para quien se registra antes, sin tarjeta; después, {trial} gratis. Hay dos planes: Basic (1 negocio, hasta 5 trabajadores) y Pro (hasta 3 negocios y 20 trabajadores).'],
   ['¿Necesito instalar algo o comprar un lector?', 'No. Funciona en el navegador de tu PC, tablet o celular, y puedes instalarlo como app desde el mismo navegador. La cámara del celular es tu lector de códigos de barras y QR.'],
   ['Ya tengo mi inventario en Excel, ¿lo pierdo?', 'Al contrario: lo subes tal cual. El importador detecta tus columnas, corrige tildes rotas y te muestra fila por fila qué va a entrar antes de tocar nada. Incluye vencimiento, código de barras y unidad.'],
   ['¿Sirve si vendo cosas que vencen?', 'Sí. Cada producto puede tener fecha de vencimiento; la tabla marca «vence en X días» y hay un reporte «Por vencer» a 30 días para que lo saques a promoción antes de perderlo.'],
@@ -1440,8 +1448,8 @@ function PricingTeaser() {
               </div>
               <div className="flex flex-shrink-0 flex-col items-center gap-4 lg:items-end">
                 <PeriodSelector period={period} onChange={setPeriod} dark compact />
-                <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
-                  {PLANS.map((p) => {
+                <div className={`grid w-full gap-2 sm:gap-3 ${SHOWN_PLANS.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {SHOWN_PLANS.map((p) => {
                     const save = savings(p, per.key, currency)
                     return (
                       <div key={p.key} className="relative rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-3 text-center sm:px-4">

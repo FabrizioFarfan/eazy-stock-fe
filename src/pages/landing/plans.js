@@ -301,3 +301,36 @@ export const PLAN_FAQS = [
   ['¿Cómo se paga?', 'Con tarjeta desde Ajustes › Tu plan, mensual, trimestral ({q} % menos) o anual ({y} % menos): el primer cobro es el día que termina tu prueba gratis y se renueva desde esa fecha, de una sola vez por período. También por transferencia o billetera digital escribiéndonos por WhatsApp. Los precios están en soles para Perú y en dólares para los demás países.'],
   ['¿Cuándo llega el plan AI?', 'Pronto. Las funciones de inteligencia artificial están en desarrollo; mientras tanto eliges Basic o Pro y te pasas a AI cuando salga, sin perder nada y sin volver a empezar.'],
 ]
+
+// ── Lo que todavía no está (Frank, 28-oct-2026) ──────────────────────────────
+/**
+ * «Son cosas que pondremos, pero ahora no están: que no lo vea la gente; poco a poco lo soltamos.» Con `false`, ninguna
+ * pantalla pública ni del registro enseña lo que aún no existe: el plan AI («Llega pronto»), las funciones con
+ * `soon: true` (apps, SUNAT, ventas por voz, consejos y promociones con IA), sus filas de la tabla, las preguntas de la
+ * IA ni la sección «Lo que viene». Para soltar algo: quitarle `soon` cuando exista, o poner esto en `true` para
+ * pre-anunciarlo todo. `PLANS` sigue completo para lo interno (nombres, panel del boss, un plan ya contratado).
+ */
+export const SHOW_UPCOMING = false
+
+const isSoon = (v) => v === 'soon' || (v && typeof v === 'object' && v.soon)
+const shownFeatures = (features = []) => features.filter((f) => !isSoon(f))
+
+/** Los planes que se enseñan (sin el que «llega pronto») y, en cada uno, solo lo que ya existe. */
+export const SHOWN_PLANS = SHOW_UPCOMING
+  ? PLANS
+  : PLANS.filter((p) => !p.comingSoon).map((p) => ({ ...p, features: shownFeatures(p.features) }))
+
+/** La tabla comparativa con una columna por plan enseñado, sin filas de cosas que aún no están. */
+export const SHOWN_COMPARE = SHOW_UPCOMING
+  ? COMPARE
+  : COMPARE
+      .map(([label, ...vals]) => [label, ...vals.slice(0, SHOWN_PLANS.length)])
+      .filter(([, ...vals]) => !vals.some(isSoon) && vals.some((v) => v !== false))
+
+/** Preguntas de /planes sin las de la IA mientras no exista. */
+const AI_FAQS = ['¿La IA registra ventas sola?', '¿Cuándo llega el plan AI?']
+export const SHOWN_PLAN_FAQS = SHOW_UPCOMING ? PLAN_FAQS : PLAN_FAQS
+  .filter(([q]) => !AI_FAQS.includes(q))
+  .map(([q, a]) => (q === '¿Tengo dos tiendas, ¿necesito dos cuentas?' || q === 'Tengo dos tiendas, ¿necesito dos cuentas?')
+    ? [q, 'No. Con Pro manejas hasta 3 negocios desde una sola cuenta y un solo panel; cada tienda tiene su stock, su caja y su gente por separado.']
+    : [q, a])

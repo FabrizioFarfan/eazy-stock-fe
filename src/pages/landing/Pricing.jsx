@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Minus, Sparkles, CalendarClock, Store, Users, Clock, Megaphone } from 'lucide-react'
 import { useT, dateLocale } from '../../i18n'
 import { Reveal, SectionHead, GridPattern } from './shared'
-import { PLANS, OFFERS, COMPARE, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, PLANS_NEW_FEATURES_NOTE } from './plans'
+import { SHOWN_PLANS, SHOWN_COMPARE, OFFERS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, perMonth, savings, fmtMoney, moneyParts, siteCurrency, promoActive, promoVars, trialLine, PLANS_NEW_FEATURES_NOTE } from './plans'
 
 // Registro propio desde el 15-oct-2026 (antes todo iba al login).
 const CTA = '/registro'
@@ -231,8 +231,8 @@ export function PlanCards({ dark = false, current = null, selected = null, onSel
   return (
     <>
       <Reveal className={`flex justify-center ${compact ? 'mb-6' : 'mb-10'}`}><PeriodSelector period={per} onChange={setPer} dark={dark} compact={compact} /></Reveal>
-      <div className={`grid gap-6 pt-3 lg:grid-cols-3 ${compact ? 'lg:gap-4' : 'lg:gap-5'}`}>
-        {PLANS.map((p, i) => (
+      <div className={`grid gap-6 pt-3 ${SHOWN_PLANS.length === 2 ? 'mx-auto w-full max-w-4xl lg:grid-cols-2' : 'lg:grid-cols-3'} ${compact ? 'lg:gap-4' : 'lg:gap-5'}`}>
+        {SHOWN_PLANS.map((p, i) => (
           <Reveal key={p.key} delay={i * 110} className="h-full">
             <PlanCard plan={p} period={per} currency={cur} dark={dark} current={current === p.key} selected={selected === p.key} onSelect={onSelect} ctaTo={ctaTo} compact={compact} />
           </Reveal>
@@ -289,7 +289,7 @@ export function CompareTable() {
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-5 py-4 text-xs font-bold uppercase tracking-widest text-gray-500">{t('Qué incluye')}</th>
-            {PLANS.map((p) => (
+            {SHOWN_PLANS.map((p) => (
               <th key={p.key} className="px-4 py-4 text-center">
                 <span className={`inline-block rounded-full bg-gradient-to-r px-3 py-1 text-xs font-extrabold text-white ${p.tone}`}>{p.name}</span>
                 <p className="mt-1 font-mono text-xs text-gray-500">{fmtMoney(periodPrice(p, 'monthly', siteCurrency()), siteCurrency())} / {t('mes')}</p>
@@ -299,7 +299,7 @@ export function CompareTable() {
           </tr>
         </thead>
         <tbody>
-          {COMPARE.map(([label, ...vals], i) => (
+          {SHOWN_COMPARE.map(([label, ...vals], i) => (
             <tr key={label} className={`border-b border-gray-100 last:border-0 ${i % 2 ? 'bg-gray-50/60' : ''}`}>
               <td className="px-5 py-3.5 text-sm text-gray-700">{t(label)}</td>
               {vals.map((v, j) => <td key={j} className="px-4 py-3.5 text-center">{cell(v)}</td>)}

@@ -6,7 +6,7 @@ import { Reveal, SectionHead, GridPattern, GlowOrbs, LandingStyles } from './lan
 import { PlanCards, OffersGrid, CompareTable, NewFeaturesNote } from './landing/Pricing'
 import { useAuth } from '../context/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
-import { PLAN_FAQS, promoActive, promoVars, trialLine } from './landing/plans'
+import { SHOWN_PLAN_FAQS, SHOW_UPCOMING, promoActive, promoVars, trialLine } from './landing/plans'
 import { Navbar, Footer, CtaBanner } from './LandingPage'
 import { useNoAppDarkMode } from './landing/useNoAppDarkMode'
 
@@ -67,7 +67,9 @@ export default function PlansPage() {
   const accountPlan = isOwner && sub?.plan ? String(sub.plan).toLowerCase() : null
 
   const steps = [
-    [Users,    'Elige tu plan',            'Basic para una tienda, Pro para varias, AI si quieres que la inteligencia artificial trabaje contigo.'],
+    [Users,    'Elige tu plan',            SHOW_UPCOMING
+      ? 'Basic para una tienda, Pro para varias, AI si quieres que la inteligencia artificial trabaje contigo.'
+      : 'Basic para una tienda, Pro para varias tiendas o un equipo grande.'],
     [Store,    'Pruébalo gratis hasta el {date}', 'Sin tarjeta. Sube tu Excel, vende, cierra la caja: la prueba es con tu negocio real.'],
     [Sparkles, 'Cambia cuando quieras',    'Subes o bajas de plan desde Ajustes. Tus datos no se tocan nunca.'],
   ]
@@ -95,7 +97,9 @@ export default function PlansPage() {
               <span className="text-slate-400">{t('claros como tu caja.')}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
-              {t('Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.')}
+              {SHOW_UPCOMING
+                ? t('Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas, cuánta gente y si la IA trabaja contigo.')
+                : t('Pagas por el tamaño de tu negocio, no por funciones escondidas. Todo lo que hace Eazy Stock está en todos los planes; lo que cambia es cuántas tiendas y cuánta gente.')}
             </p>
           </Reveal>
           <NewFeaturesNote dark className="mx-auto mb-10 max-w-3xl" />
@@ -150,7 +154,7 @@ export default function PlansPage() {
           <Reveal><SectionHead kicker={t('Preguntas sobre los planes')} title={t('Antes de elegir')} /></Reveal>
           <Reveal delay={100}>
             <div className="space-y-3">
-              {PLAN_FAQS.map(([q, a], i) => (
+              {SHOWN_PLAN_FAQS.map(([q, a], i) => (
                 <FaqItem key={q} q={t(q, promoVars(dateLocale()))} a={t(a, promoVars(dateLocale()))} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? -1 : i)} />
               ))}
             </div>

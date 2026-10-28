@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Mail, MessageCircle } from 'lucide-react'
 import { useT } from '../i18n'
 import { Navbar, Footer, CtaBanner, Faq, ComingSoon } from './LandingPage'
+import { SHOW_UPCOMING } from './landing/plans'
 import { PageHero, usePublicPage } from './landing/site'
 import { Reveal } from './landing/shared'
 
@@ -45,7 +46,7 @@ export default function FaqPage() {
           </Reveal>
         </div>
       </section>
-      <ComingSoon />
+      {SHOW_UPCOMING && <ComingSoon />}
       <CtaBanner />
       <Footer />
     </div>

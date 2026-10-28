@@ -15,7 +15,7 @@ import { suggestedCountry } from '../utils/countries'
 import { COUNTRIES as PHONE_COUNTRIES } from '../utils/phone'
 import { useCountries } from '../hooks/useCountries'
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
-import { promoActive, promoVars, trialLine, PLANS, REGISTER_DEFAULT_PLAN, periodPrice, fmtMoney, currencyForCountry } from './landing/plans'
+import { promoActive, promoVars, trialLine, PLANS, SHOWN_PLANS, REGISTER_DEFAULT_PLAN, periodPrice, fmtMoney, currencyForCountry } from './landing/plans'
 import { SoonMini } from './landing/Pricing'
 import { normalize as normalizeTaxId } from '../utils/taxIds'
 import { TAX_ID_LABEL, checkTaxId, taxIdHelp, taxIdAlreadyRegisteredMessage } from '../utils/taxIdText'
@@ -408,7 +408,7 @@ function PlanStep({ plan, currency, error, onPick, onBack, onNext }) {
         <strong className="font-semibold text-gray-700">{trialLine(t, dateLocale())}</strong>. {t('Pruebas el plan que elijas y lo puedes cambiar cuando quieras.')}
       </p>
       <div className="mt-5 space-y-3" role="radiogroup" aria-label={t('Plan')}>
-        {PLANS.map((p) => {
+        {SHOWN_PLANS.map((p) => {
           const key = p.key.toUpperCase()
           const soon = !!p.comingSoon
           const on = !soon && plan === key
