@@ -2,10 +2,14 @@
 export default {
   en: {
     'Ya tengo mis productos': 'I already have my products',
-    'Ya tengo mis productos · Ir al panel': 'I already have my products · Go to the dashboard',
+    '¿Ya tienes tus productos cargados?': 'Are your products already loaded?',
+    'Marca este paso como hecho y no volverá a aparecer en tu panel.': 'Mark this step as done and it won’t show up on your dashboard again.',
+    'Listo, ya los tengo': 'Done, I have them',
   },
   it: {
     'Ya tengo mis productos': 'Ho già i miei prodotti',
-    'Ya tengo mis productos · Ir al panel': 'Ho già i miei prodotti · Vai al pannello',
+    '¿Ya tienes tus productos cargados?': 'Hai già caricato i tuoi prodotti?',
+    'Marca este paso como hecho y no volverá a aparecer en tu panel.': 'Segna questo passo come fatto e non comparirà più nel tuo pannello.',
+    'Listo, ya los tengo': 'Fatto, li ho già',
   },
 }

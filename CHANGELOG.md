@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.26.2 — 2026-10-28 (bienvenida sin promesas de IA)
+- **/bienvenida**: fuera la franja «Pronto: foto del cuaderno o PDF del proveedor y la inteligencia artificial arma los productos sola» (no existe todavía, task 941). En su lugar, una tarjeta verde «¿Ya tienes tus productos cargados?» con **«Listo, ya los tengo»**: marca el paso como hecho y lleva al panel, donde el «Primer paso» ya no vuelve a salir. «Lo cargamos nosotros» (por WhatsApp, a mano) se queda.
+
 ## 1.26.1 — 2026-10-28 («Primer paso» solo para quien de verdad no tiene productos)
 - **Frank: a William, con su Excel cargado, le salía «Primer paso · Carga tu catálogo» en el Dashboard.** La condición contaba como «0 productos» también una consulta que fallaba o no llegaba. Ahora (`utils/catalogDone.js`, con tests): solo sale con 0 productos CONFIRMADOS por el servidor; en cuanto se ve que hay productos queda marcado como listo para ese negocio (`localStorage eazystock_catalog_done_<businessId>`) y no vuelve.
 - **«Ya tengo mis productos»**: botón en el aviso del Dashboard y «Ya tengo mis productos · Ir al panel» en /bienvenida, para marcarlo como hecho a mano. Textos en/it (`dict/catalogDone.js`).

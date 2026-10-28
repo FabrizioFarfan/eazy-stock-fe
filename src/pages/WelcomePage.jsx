@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { FileSpreadsheet, MessageCircle, Zap, ArrowRight, Camera, Mail, CheckCircle2, Package } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { FileSpreadsheet, MessageCircle, Zap, ArrowRight, Mail, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
 import { markCatalogDone } from '../utils/catalogDone'
@@ -70,12 +70,6 @@ export default function WelcomePage() {
               <CheckCircle2 size={13} /> {t('Ya tienes {n} productos cargados', { n: total })}
             </p>
           )}
-          {/* 28-oct (Frank): marcar el paso como hecho; el aviso del panel ya no vuelve a salir en este negocio. */}
-          <button type="button" data-testid="welcome-catalog-done"
-            onClick={() => { markCatalogDone(user?.businessId); navigate('/dashboard') }}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-gray-900 hover:bg-blue-50">
-            <CheckCircle2 size={13} className="text-emerald-600" /> {t('Ya tengo mis productos · Ir al panel')}
-          </button>
         </div>
       </div>
 
@@ -104,16 +98,21 @@ export default function WelcomePage() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+      {/* 28-oct (Frank): fuera el «Pronto: la IA arma los productos» (no existe todavía, task 941). En su lugar, cerrar
+          este paso: el aviso «Primer paso» del panel deja de salir en este negocio. */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-white text-gray-500 ring-1 ring-gray-200"><Camera size={16} /></span>
-          <p className="text-sm text-gray-600">
-            <span className="font-semibold text-gray-800">{t('Pronto:')}</span> {t('foto del cuaderno o PDF del proveedor y la inteligencia artificial arma los productos sola. Mientras tanto, mándanoslo y lo hacemos nosotros.')}
-          </p>
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 ring-1 ring-emerald-200"><CheckCircle2 size={18} /></span>
+          <div>
+            <p className="font-bold text-gray-900">{t('¿Ya tienes tus productos cargados?')}</p>
+            <p className="mt-0.5 text-sm text-gray-600">{t('Marca este paso como hecho y no volverá a aparecer en tu panel.')}</p>
+          </div>
         </div>
-        <Link to="/dashboard" className="inline-flex flex-shrink-0 items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900">
-          <Package size={14} /> {t('Ir al panel')}
-        </Link>
+        <button type="button" data-testid="welcome-catalog-done-bottom"
+          onClick={() => { markCatalogDone(user?.businessId); navigate('/dashboard') }}
+          className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700">
+          <CheckCircle2 size={15} /> {t('Listo, ya los tengo')}
+        </button>
       </div>
     </div>
   )
