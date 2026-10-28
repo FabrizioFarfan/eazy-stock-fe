@@ -158,6 +158,24 @@ export function AuthProvider({ children }) {
     navigate(REDIRECT_BY_ROLE[userData.role] ?? "/dashboard");
   };
 
+  // Cambiar el correo (API 1.18.0, EMAIL-CHANGE-SPEC.md): el JWT lleva el correo, así que el API
+  // devuelve una sesión nueva que reemplaza a la vieja (el token viejo ya da 401). Sin navegar:
+  // la pantalla que lo pidió sigue donde está. Devuelve el usuario nuevo.
+  const replaceSession = useCallback((data) => {
+    const { accessToken, refreshToken, user: rawUser } = data ?? {};
+    if (!accessToken || !refreshToken || !rawUser) throw new Error("AuthResponse incompleto");
+    const gated = (data.emailVerificationRequired ?? rawUser.emailVerificationRequired) === true;
+    const userData = { ...rawUser, emailVerificationRequired: gated };
+    localStorage.setItem("eazystock_token", accessToken);
+    localStorage.setItem("eazystock_refresh_token", refreshToken);
+    announceToken();
+    setToken(accessToken);
+    setUser(normalizeUser(userData));
+    // Sin confirmar: el API ya mandó el código al correo nuevo (recargar no debe pedir otro).
+    if (gated) markCodeSent(userData.id ?? userData.email);
+    return userData;
+  }, []);
+
   // Código correcto → UserResponse sin el bloqueo; se cargan permisos y tutoriales y se sigue
   // el camino de siempre (/bienvenida, o Tu plan con setupPending).
   // react-router navega en una transición (después de setUser): `justVerified` le dice a la
@@ -280,7 +298,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, verifyEmailCode, justVerified, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, replaceSession, verifyEmailCode, justVerified, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

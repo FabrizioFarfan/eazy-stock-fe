@@ -26,6 +26,8 @@ import { normalize as normalizeTaxId, typeFor as taxIdTypeFor } from '../utils/t
 import { getErrorCode, getErrorField, getErrorMessage } from '../utils/handleApiError'
 import PaymentMethodsSection from '../components/settings/PaymentMethodsSection'
 import DeleteAccountSection from '../components/settings/DeleteAccountSection'
+import ChangeEmailDialog from '../components/email/ChangeEmailDialog'
+import { profilePayload } from '../utils/emailChange'
 
 const ROLE_LABEL = {
   BOSS: '👑 Boss',
@@ -175,36 +177,31 @@ function ChangePasswordForm() {
   )
 }
 
-// ── Mi perfil (editar nombre / email propios) ──────────────────────────────
+// ── Mi perfil (editar nombre; el correo, con «Cambiar correo») ─────────────
+// Web 1.27.0 (API 1.18.0, EMAIL-CHANGE-SPEC.md): el correo ya no se edita aquí. PATCH /users/me
+// solo lleva el nombre; el correo se cambia con contraseña + código al correo nuevo (ChangeEmailDialog).
 
 const makeProfileSchema = (t) => z.object({
-  name:  z.string().min(1, t('Requerido')),
-  email: z.string().email(t('Email inválido')),
+  name: z.string().min(1, t('Requerido')),
 })
 
 function ProfileSection() {
   const t = useT()
   const profileSchema = useMemo(() => makeProfileSchema(t), [t])
-  const { user, refreshUser, logout } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [editing, setEditing] = useState(false)
   const [pending, setPending] = useState(false)
+  const [changingEmail, setChangingEmail] = useState(false)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(profileSchema),
-    values: { name: user?.name ?? '', email: user?.email ?? '' },
+    values: { name: user?.name ?? '' },
   })
 
-  const onSubmit = async ({ name, email }) => {
+  const onSubmit = async (values) => {
     setPending(true)
     try {
-      const emailChanged = email.trim().toLowerCase() !== (user?.email ?? '').toLowerCase()
-      await usersApi.updateMe({ name, email })
-      if (emailChanged) {
-        // El JWT usa el email: la sesión actual deja de ser válida
-        toast.success(t('Email actualizado. Inicia sesión de nuevo con tu nuevo email.'))
-        await logout()
-        return
-      }
+      await usersApi.updateMe(profilePayload(values))
       toast.success(t('Perfil actualizado'))
       await refreshUser()
       setEditing(false)
@@ -230,14 +227,6 @@ function ProfileSection() {
             <input {...register('name')} type="text" className={inputCls} />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
-            <input {...register('email')} type="email" className={inputCls} />
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
-            <p className="mt-1 text-xs text-gray-400">
-              {t('Si cambias tu email tendrás que iniciar sesión de nuevo.')}
-            </p>
-          </div>
           <div className="flex justify-end pt-1">
             <button
               type="submit"
@@ -252,10 +241,19 @@ function ProfileSection() {
       ) : (
         <>
           <InfoRow icon={User}      label={t('Nombre')}  value={user?.name} />
-          <InfoRow icon={Mail}      label="Email"        value={user?.email} />
+          <InfoRow icon={Mail}      label="Email"        value={user?.email}>
+            <button type="button" onClick={() => setChangingEmail(true)} data-testid="profile-change-email"
+              className="mt-1 text-xs font-semibold text-blue-600 hover:underline">
+              {t('Cambiar correo')}
+            </button>
+          </InfoRow>
           <InfoRow icon={Shield}    label={t('Rol')}     value={t(ROLE_LABEL[displayRole(user)] ?? user?.role)} />
           <InfoRow icon={Building2} label={t('Negocio')} value={user?.businessName} />
         </>
+      )}
+      {changingEmail && (
+        <ChangeEmailDialog verified currentEmail={user?.email} onClose={() => setChangingEmail(false)}
+          onChanged={(email) => toast.success(t('Listo: tu correo ahora es {email}.', { email }))} />
       )}
     </Section>
   )

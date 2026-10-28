@@ -11,7 +11,7 @@ export const usersApi = {
   // body: { name?, email?, password? }
 
   updateMe: (data) => api.patch('/users/me', data),
-  // body: { name?, email? } — cambiar email invalida la sesión (re-login)
+  // body: { name } — API 1.18.0: un email distinto → 400 USE_EMAIL_CHANGE (el correo se cambia en /me/email/*, utils/emailChange.js)
 
   toggleActive: (id) => api.put(`/users/${id}/activate`),
 

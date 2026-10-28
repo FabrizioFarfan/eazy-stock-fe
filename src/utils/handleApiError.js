@@ -48,6 +48,13 @@ const MESSAGE_BY_CODE = {
   PROMO_CODE_INVALID:        'Ese código no es válido o ya caducó.',
   COUPON_INVALID:            'Ese cupón no existe en Stripe o ya no es válido.',
   PAYMENT_FAILED:            'No pudimos cobrar la diferencia. Revisa tu tarjeta en «Gestionar pago».',
+  // Cambiar el correo (API 1.18.0); el formulario traduce por su cuenta, con el campo (utils/emailChange.js)
+  INVALID_EMAIL:             'Ese correo no es válido.',
+  EMAIL_DISPOSABLE:          'Usa un correo permanente, no uno temporal.',
+  SAME_EMAIL:                'Ese ya es tu correo.',
+  EMAIL_ALREADY_REGISTERED:  'Ese correo ya tiene una cuenta en Eazy Stock.',
+  TOO_MANY_EMAIL_CHANGES:    'Ya cambiaste el correo 3 veces hoy. Prueba de nuevo más tarde.',
+  USE_EMAIL_CHANGE:          'El correo se cambia con «Cambiar correo»: te pedimos la contraseña y un código.',
 }
 
 /**

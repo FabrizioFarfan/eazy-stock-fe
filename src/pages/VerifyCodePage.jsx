@@ -7,10 +7,13 @@ import { authApi } from '../services/endpoints/auth'
 import { getErrorMessage } from '../utils/handleApiError'
 import { isEmailGated } from '../utils/emailGate'
 import {
-  CODE_LENGTH, RESEND_WAIT_S, emptyDigits, fillDigits, backspaceDigits, isComplete, retryAfterOf,
+  RESEND_WAIT_S, emptyDigits, isComplete, retryAfterOf,
   codeErrorMessage, clearsDigits, resendState, formatCountdown, markCodeSent, readCodeSent,
 } from '../utils/emailCode'
+import { codeScreenAfterChange } from '../utils/emailChange'
 import AuthShell, { errorBoxCls, okBoxCls } from '../components/common/AuthShell'
+import CodeBoxes from '../components/email/CodeBoxes'
+import ChangeEmailDialog from '../components/email/ChangeEmailDialog'
 
 const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLOYEE: '/sales/new' }
 
@@ -18,6 +21,7 @@ const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLO
  * /confirmar-correo (web 1.23.0 · API 1.16.0, EMAIL-CODE-SPEC.md): el dueño que se registró solo
  * no entra a nada hasta poner el código de 6 dígitos del correo. Pegar el código rellena las 6
  * casillas y la 6.ª lo envía sola; «Reenviar código» con cuenta atrás; «Cerrar sesión».
+ * Web 1.27.0 (API 1.18.0, EMAIL-CHANGE-SPEC.md): «¿Correo equivocado? Cámbialo» → ChangeEmailDialog.
  * Fuera del AppLayout: ni menú, ni tutorial, ni WebSocket.
  */
 export default function VerifyCodePage() {
@@ -50,11 +54,12 @@ function CodeForm({ user }) {
   const [initial] = useState(() => resendState(readCodeSent(userKey)))
   const [wait, setWait] = useState(initial.wait)
   const [sending, setSending] = useState(false)
-  const inputs = useRef([])
+  const [changing, setChanging] = useState(false)
+  const boxes = useRef(null)
   const lastTried = useRef('')
   const autoSent = useRef(false)
 
-  const focusBox = (i) => setTimeout(() => inputs.current[i]?.focus(), 0)
+  const focusBox = (i) => boxes.current?.focus(i)
 
   // ── Reenviar ──────────────────────────────────────────────────────────────
   const resend = useCallback(async ({ auto = false } = {}) => {
@@ -123,26 +128,18 @@ function CodeForm({ user }) {
     }
   }, [submitting, verifyEmailCode, t])
 
-  // La 6.ª casilla (o pegar el código entero) lo envía sola, una vez por código.
-  const apply = ({ digits: next, focus }) => {
-    setDigits(next)
-    focusBox(focus)
-    const code = next.join('')
-    if (isComplete(next) && code !== lastTried.current) submit(code)
-  }
-  const onChange = (i) => (e) => { setError(''); apply(fillDigits(digits, i, e.target.value)) }
-  const onPaste = (i) => (e) => {
-    const text = e.clipboardData?.getData('text') ?? ''
-    if (!/\d/.test(text)) return
-    e.preventDefault()
+  // La 6.ª casilla (o pegar el código entero) lo envía sola, una vez por código; Enter, siempre.
+  const onComplete = (code, { force = false } = {}) => { if (force || code !== lastTried.current) submit(code) }
+
+  // Correo cambiado (la sesión nueva ya está guardada): el API mandó un código al correo nuevo.
+  const onEmailChanged = (email) => {
+    const next = codeScreenAfterChange(t, email)
+    setDigits(next.digits)
+    setWait(next.wait)
+    setNotice(next.notice)
     setError('')
-    apply(fillDigits(digits, i, text))
-  }
-  const onKeyDown = (i) => (e) => {
-    if (e.key === 'Backspace') { e.preventDefault(); apply(backspaceDigits(digits, i)) }
-    else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); focusBox(i - 1) }
-    else if (e.key === 'ArrowRight' && i < CODE_LENGTH - 1) { e.preventDefault(); focusBox(i + 1) }
-    else if (e.key === 'Enter' && isComplete(digits)) { e.preventDefault(); submit(digits.join('')) }
+    lastTried.current = ''
+    focusBox(0)
   }
 
   return (
@@ -150,22 +147,18 @@ function CodeForm({ user }) {
       <div className="space-y-5" data-testid="verify-code-screen">
         <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600"><MailCheck size={17} /></span>
-          <p className="min-w-0 break-all text-sm font-semibold text-gray-900" data-testid="verify-code-email">{user?.email}</p>
+          <div className="min-w-0">
+            <p className="break-all text-sm font-semibold text-gray-900" data-testid="verify-code-email">{user?.email}</p>
+            <button type="button" onClick={() => setChanging(true)} data-testid="verify-code-change-email"
+              className="text-xs font-semibold text-blue-600 hover:underline">
+              {t('¿Correo equivocado? Cámbialo')}
+            </button>
+          </div>
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); if (isComplete(digits)) submit(digits.join('')) }}>
-          <div className="flex justify-between gap-2" role="group" aria-label={t('Código de 6 dígitos')}>
-            {digits.map((d, i) => (
-              <input key={i} ref={(el) => { inputs.current[i] = el }}
-                value={d} onChange={onChange(i)} onPaste={onPaste(i)} onKeyDown={onKeyDown(i)}
-                onFocus={(e) => e.target.select()}
-                type="text" inputMode="numeric" pattern="[0-9]*" maxLength={CODE_LENGTH}
-                autoComplete={i === 0 ? 'one-time-code' : 'off'} disabled={submitting}
-                aria-label={t('Dígito {n}', { n: i + 1 })} data-testid={`code-digit-${i}`}
-                className={`h-14 w-full min-w-0 rounded-xl border text-center font-mono text-2xl font-bold text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 disabled:opacity-60 ${
-                  error ? 'border-red-300' : 'border-gray-200'}`} />
-            ))}
-          </div>
+          <CodeBoxes ref={boxes} digits={digits} disabled={submitting} error={error}
+            onDigits={(next) => { setError(''); setDigits(next) }} onComplete={onComplete} />
           {submitting && (
             <p className="mt-3 flex items-center justify-center gap-2 text-sm text-gray-500"><Loader2 size={14} className="animate-spin" /> {t('Comprobando...')}</p>
           )}
@@ -188,6 +181,7 @@ function CodeForm({ user }) {
           </button>
         </div>
       </div>
+      {changing && <ChangeEmailDialog onClose={() => setChanging(false)} onChanged={onEmailChanged} />}
     </AuthShell>
   )
 }
