@@ -3,6 +3,13 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.26.0 — 2026-10-28 (Balance con la ganancia real + dark mode de «Mis negocios»)
+- **Balance (William):** la ganancia restaba solo la mercadería. Ahora, para el dueño, la franja dice «Ganancia real del período» = ganancia bruta − **otros gastos** de Compras y gastos (alquiler, luz, sueldos…), con «Otros gastos» entre sus cifras y **▲/▼ % frente al período anterior** del mismo largo. «Balance de ventas»: Ganancia bruta → Otros gastos (enlace a Compras y gastos) → **Ganancia real**; sin gastos anotados en el período, aviso «¿Pagaste alquiler, luz o sueldos…?» con enlace. «Ingresos y egresos»: + Otros gastos → **Lo que quedó**. Sale de `GET /api/reports/purchases` (ya existía, solo dueño): sin cambios en el API ni en lo que leen las apps. El vendedor con «Ver reportes» ve lo de antes. Ayuda actualizada; textos en/it (`dict/balance2.js`).
+- **Reportes:** las 6 pestañas (Reportes, Balance, Vendedores, Análisis…, Compras y gastos) van en dos filas de 3 salvo en pantallas muy anchas: en una fila salían cortadas («Análisis de …»); al pasar el ratón, el nombre entero.
+- **Dark mode (Frank):** la tarjeta punteada «Nuevo negocio» de Mis negocios salía gris claro con el texto casi invisible (`bg-white/60` sin regla). Nuevas reglas en `index.css` para `bg-white/60|70|80`, `active:bg-blue-50/60` (pulsar una fila en Productos/Cotizaciones), `text-amber-800/80` y `placeholder-gray-300`. La auditoría vieja se saltaba los blancos con opacidad.
+- **Nuevo negocio:** País y Moneda a la misma altura (la explicación de la moneda va debajo).
+- `utils/dateRanges.js`: `previousRange` y `changePercent`, con tests (`dateRanges.test.mjs`).
+
 ## 1.25.0 — 2026-10-27 (sin descuento de lanzamiento)
 - **Decisión del dueño (27-oct-2026): nadie tiene descuento al registrarse.** Fuera el programa de fundadores («los primeros 50 negocios», 50 % × 6 meses, precio de lanzamiento bloqueado) y la regla post-promo «segundo mes al 50 %». Se quitan todos sus textos en es/en/it.
 - **Landing e /planes**: fuera la ficha «Los primeros {n} negocios pagan la mitad…» de las ofertas (quedan la prueba gratis y el ahorro trimestral/anual, en 2 columnas), la FAQ «¿Qué ganan los primeros {n} negocios?», las coletillas «y el segundo mes a mitad de precio / al {apct} %» (FAQ, ficha post-promo, subtítulo de Precios, línea bajo el selector de período, meta description de /planes) y «Los primeros {n} pagan la mitad…» del Inicio, del chip de /planes y de la FAQ «¿Cuánto cuesta?».

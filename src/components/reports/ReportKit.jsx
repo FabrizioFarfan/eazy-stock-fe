@@ -20,15 +20,16 @@ const SIBLINGS = [
   { to: '/reports/purchases', icon: ShoppingBag, label: 'Compras y gastos',   hint: 'Cuánto se fue y en qué', ownerOnly: true },
 ]
 
-// Fila de tarjetas para saltar entre páginas hermanas (la activa en azul).
+// Fila de tarjetas para saltar entre páginas hermanas (la activa en azul). Con 6 (Reportes) van en dos filas de 3
+// salvo en pantallas muy anchas: en una sola fila los nombres salían cortados («Análisis de …», 28-oct).
 export function SiblingSwitcher({ items, label }) {
   const t = useT()
   if (items.length < 2) return null
-  const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 6 ? 'sm:grid-cols-3 lg:grid-cols-6' : items.length === 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
+  const cols = items.length === 3 ? 'sm:grid-cols-3' : items.length >= 6 ? 'sm:grid-cols-3 2xl:grid-cols-6' : items.length === 5 ? 'sm:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-4'
   return (
     <nav className={`-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid ${cols} sm:overflow-visible sm:px-0 sm:pb-0`} aria-label={label}>
       {items.map(({ to, icon: Icon, label: itemLabel, hint, badge }) => (
-        <NavLink key={to} to={to} end
+        <NavLink key={to} to={to} end title={`${t(itemLabel)} · ${t(hint)}`}
           className={({ isActive }) => `group flex min-w-[10.5rem] flex-shrink-0 items-center gap-3 rounded-2xl p-3 transition-all sm:min-w-0 ${
             isActive
               ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'

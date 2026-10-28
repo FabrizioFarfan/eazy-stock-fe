@@ -94,12 +94,14 @@ function NewBusinessModal({ onClose, onCreated }) {
             {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{t(label)}</option>)}
           </select>
         </EntityField>
-        <EntityField label={t('Moneda')} hint={t('Solo cambia el símbolo; no hay conversión')}>
+        <EntityField label={t('Moneda')}>
           <select {...register('currency')} className={inputCls}>
             {CURRENCY_OPTIONS.map((code) => <option key={code} value={code}>{code} · {CURRENCIES[code].symbol}</option>)}
           </select>
         </EntityField>
       </div>
+      {/* La explicación de la moneda, debajo: encima del campo lo bajaba y País y Moneda no quedaban a la par. */}
+      <p className="-mt-2 text-xs text-gray-400">{t('Moneda')}: {t('Solo cambia el símbolo; no hay conversión')}</p>
       {/* Documento fiscal opcional, con la misma validación del registro (API 1.15.0). */}
       <EntityField label={`${taxIdLabel(country)} (${t('opcional')})`} error={errors.taxId?.message} hint={taxIdHelp(country)}>
         <input {...register('taxId', { validate: (raw) => checkTaxId(country, raw) ?? true })}

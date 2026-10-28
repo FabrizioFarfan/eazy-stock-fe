@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom'
 import {
   Scale, TrendingUp, TrendingDown, Loader2,
   Wallet, PackageOpen, PiggyBank, ShoppingCart, Undo2, AlertTriangle,
-  Banknote, HandCoins,
+  Banknote, HandCoins, Receipt, ArrowUpRight, ArrowDownRight, ChevronRight,
 } from 'lucide-react'
-import { useSalesBalance, useCashBalance, useBusinessOverview, useCashClosing } from '../hooks/useReports'
+import { useSalesBalance, useCashBalance, useBusinessOverview, useCashClosing, usePurchasesReport } from '../hooks/useReports'
 import { useAuth } from '../context/AuthContext'
 import { formatPrice } from '../utils/formatMoney'
 import DateRangeQuick from '../components/common/DateRangeQuick'
-import { quickRange } from '../utils/dateRanges'
+import { quickRange, previousRange, changePercent } from '../utils/dateRanges'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { ReportsSwitcher, ReportHero, ReportHeader } from '../components/reports/ReportKit'
 import { useT, dateLocale } from '../i18n'
@@ -57,11 +57,13 @@ function BalanceHelp() {
         <p><span className="font-semibold">{t('Descuentos')}</span>: {t('lo que rebajaste sobre el total de las ventas.')}</p>
         <p><span className="font-semibold">{t('Devoluciones')}</span>: {t('el dinero devuelto a clientes (la mercadería vuelve al stock).')}</p>
         <p><span className="font-semibold">{t('Costo del producto')}</span>: {t('lo que a ti te costó la mercadería vendida.')}</p>
-        <p><span className="font-semibold">{t('Ganancia')}</span>: {t('lo que te queda después de restar todo lo anterior. Verde = ganaste, rojo = perdiste.')}</p>
+        <p><span className="font-semibold">{t('Ganancia bruta')}</span>: {t('lo que te queda de las ventas después de pagar la mercadería.')}</p>
+        <p><span className="font-semibold">{t('Otros gastos')}</span>: {t('alquiler, luz, sueldos, flete… los que anotas en Compras y gastos.')}</p>
+        <p><span className="font-semibold">{t('Ganancia real')}</span>: {t('la ganancia bruta menos esos gastos: lo que de verdad ganó el negocio. Verde = ganaste, rojo = perdiste. Arriba ves si sube o baja frente al período anterior del mismo largo.')}</p>
       </S>
       <S title={t('4 · Ingresos y egresos')}>
         <p>
-          {t('Compara la plata que entró (ventas) contra la que salió (compras de mercadería a proveedores) en el mismo período. La diferencia es la ganancia operativa.')}
+          {t('Compara la plata que entró (ventas) contra la que salió (compras de mercadería a proveedores y otros gastos) en el mismo período. La diferencia es lo que quedó.')}
         </p>
       </S>
       <S title={t('5 · Información total del negocio')}>
@@ -115,10 +117,13 @@ function formatRangeLabel(from, to) {
   return f === t ? f : `${f} — ${t}`
 }
 
-function BalanceLine({ label, value, negative = false, muted = false }) {
+function BalanceLine({ label, value, negative = false, muted = false, to, toLabel }) {
   return (
     <div className="flex items-center justify-between py-2.5">
-      <span className={`text-sm ${muted ? 'text-gray-400' : 'text-gray-600'}`}>{label}</span>
+      <span className={`flex flex-wrap items-center gap-x-2 text-sm ${muted ? 'text-gray-400' : 'text-gray-600'}`}>
+        {label}
+        {to && <Link to={to} className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-700">{toLabel}<ChevronRight size={12} /></Link>}
+      </span>
       <span className={`font-semibold tabular-nums ${negative ? 'text-red-600' : 'text-gray-900'}`}>
         {negative && Number(value) > 0 ? '−' : ''}{formatPrice(value)}
       </span>
@@ -297,6 +302,38 @@ function CashClosingCard({ report, isLoading, isError, hasRange }) {
   )
 }
 
+/** Subtotal o total de una tarjeta: verde si es ganancia, rojo si es pérdida. */
+function ResultLine({ label, value, big = false, testId }) {
+  const positive = Number(value) >= 0
+  return (
+    <div className={`flex items-center justify-between ${big ? 'pt-3' : 'py-2.5'}`} data-testid={testId}>
+      <span className={`flex items-center gap-1.5 text-sm ${big ? 'font-bold text-gray-800' : 'font-semibold text-gray-700'}`}>
+        {big && (positive ? <TrendingUp size={15} className="text-emerald-600" /> : <TrendingDown size={15} className="text-red-600" />)}
+        {label}
+      </span>
+      <span className={`font-extrabold tabular-nums ${big ? 'text-xl' : 'text-base'} ${positive ? 'text-emerald-600' : 'text-red-600'}`}>
+        {formatPrice(value)}
+      </span>
+    </div>
+  )
+}
+
+/** ▲ 12 % / ▼ 8 % frente al período anterior del mismo largo. */
+function Trend({ pct }) {
+  const t = useT()
+  if (pct == null) return <span className="text-white/70">{t('sin período anterior para comparar')}</span>
+  const up = pct >= 0
+  const Icon = up ? ArrowUpRight : ArrowDownRight
+  return (
+    <span className="inline-flex items-center gap-1" data-testid="balance-trend">
+      <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-bold ${up ? 'bg-emerald-400/25 text-white' : 'bg-red-400/30 text-white'}`}>
+        <Icon size={13} />{up ? '+' : ''}{pct} %
+      </span>
+      <span className="text-white/80">{t('vs. el período anterior')}</span>
+    </span>
+  )
+}
+
 function OverviewCard({ icon: Icon, label, value, tone, subtitle }) {
   const tones = {
     blue:    'bg-blue-50 text-blue-600',
@@ -337,13 +374,26 @@ export default function BalancePage() {
   const cashBalance  = useCashBalance(periodParams,  { enabled: !!periodParams && fullReports })
   const cashClosing  = useCashClosing(periodParams,  { enabled: !!periodParams })
   const overview     = useBusinessOverview(baseParams, { enabled: fullReports })
+  // 28-oct (William): la ganancia restaba solo la mercadería; ahora también los OTROS GASTOS que se anotan en
+  // Compras y gastos (alquiler, luz, sueldos…), y se compara con el período anterior del mismo largo.
+  // Compras y gastos es solo del dueño: el vendedor con «Ver reportes» sigue viendo la ganancia de antes.
+  const owner = user?.role === 'OWNER' || user?.role === 'SUPER_ADMIN'
+  const prevParams = rangeComplete ? { ...baseParams, ...previousRange(range) } : null
+  const prevBalance = useSalesBalance(prevParams, { enabled: !!prevParams && fullReports })
+  const purchases   = usePurchasesReport(periodParams, { enabled: !!periodParams && fullReports && owner })
 
   const sb = salesBalance.data
   const cb = cashBalance.data
   const ov = overview.data
+  const pr = owner ? purchases.data : null
 
-  const profitPositive = sb != null && Number(sb.profit) >= 0
-  const cashPositive   = cb != null && Number(cb.profit) >= 0
+  const otherExpenses = pr ? Number(pr.totalExpenses ?? 0) : null
+  const realProfit = sb ? Number(sb.profit) - (otherExpenses ?? 0) : null
+  const prevReal = prevBalance.data && (!owner || pr)
+    ? Number(prevBalance.data.profit) - (pr ? Number(pr.previousExpenses ?? 0) : 0) : null
+  const trend = realProfit != null && prevReal != null ? changePercent(realProfit, prevReal) : null
+  const leftAfterAll = cb && otherExpenses != null ? Number(cb.profit) - otherExpenses : null
+  const heroLoading = salesBalance.isLoading || (owner && purchases.isLoading)
 
   return (
     <div className="flex flex-col gap-5">
@@ -373,12 +423,22 @@ export default function BalancePage() {
 
       {/* Franja: lo que quedó de ganancia en el período (solo con reportes completos) */}
       {fullReports && periodParams && (
-        <ReportHero icon={Scale} label={t('Ganancia del período')} loading={salesBalance.isLoading}
-          value={<span className={sb && !profitPositive ? 'text-red-200' : ''}>{formatPrice(sb?.profit ?? 0)}</span>}
-          sub={sb && Number(sb.grossSales) > 0 && (
-            <span>{t('Margen')}: <b className="text-white">{Math.round((Number(sb.profit) / Number(sb.grossSales)) * 100)}%</b> {t('de lo vendido')}</span>
+        <ReportHero icon={Scale} label={owner ? t('Ganancia real del período') : t('Ganancia del período')} loading={heroLoading}
+          value={<span data-testid="balance-hero" className={realProfit != null && realProfit < 0 ? 'text-red-200' : ''}>{formatPrice(realProfit ?? 0)}</span>}
+          sub={sb && (
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {Number(sb.grossSales) > 0 && (
+                <span>{t('Margen')}: <b className="text-white">{Math.round(((realProfit ?? 0) / Number(sb.grossSales)) * 100)}%</b> {t('de lo vendido')}</span>
+              )}
+              {!prevBalance.isLoading && <Trend pct={trend} />}
+            </span>
           )}
-          cells={[
+          cells={owner ? [
+            [t('Ventas brutas'), formatPrice(sb?.grossSales ?? 0)],
+            [t('Costo del producto'), formatPrice(sb?.productCost ?? 0)],
+            [t('Otros gastos'), formatPrice(otherExpenses ?? 0)],
+            [t('Ventas'), sb?.salesCount ?? 0],
+          ] : [
             [t('Ventas brutas'), formatPrice(sb?.grossSales ?? 0)],
             [t('Costo del producto'), formatPrice(sb?.productCost ?? 0)],
             [t('Ventas'), sb?.salesCount ?? 0],
@@ -425,18 +485,25 @@ export default function BalancePage() {
               <BalanceLine label={t('Descuentos')} value={sb.discounts} negative />
               <BalanceLine label={t('Devoluciones')} value={sb.returns} negative />
               <BalanceLine label={t('Costo del producto')} value={sb.productCost} negative />
-              <div className="flex items-center justify-between pt-3">
-                <span className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
-                  {profitPositive
-                    ? <TrendingUp size={15} className="text-emerald-600" />
-                    : <TrendingDown size={15} className="text-red-600" />}
-                  {t('Ganancia')}
-                </span>
-                <span className={`text-xl font-extrabold tabular-nums ${profitPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {formatPrice(sb.profit)}
-                </span>
-              </div>
+              {owner && otherExpenses != null ? (
+                <>
+                  <ResultLine label={t('Ganancia bruta')} value={sb.profit} />
+                  <BalanceLine label={t('Otros gastos')} value={otherExpenses} negative
+                    to="/reports/purchases" toLabel={pr?.expensesCount ? (pr.expensesCount === 1 ? t('1 gasto') : t('{n} gastos', { n: pr.expensesCount })) : t('Anotar')} />
+                  <ResultLine label={t('Ganancia real')} value={realProfit} big testId="balance-real" />
+                </>
+              ) : (
+                <ResultLine label={t('Ganancia')} value={sb.profit} big />
+              )}
             </div>
+          )}
+          {owner && otherExpenses === 0 && sb && (
+            <Link to="/reports/purchases" data-testid="balance-expenses-hint"
+              className="mt-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 transition-colors hover:bg-blue-100">
+              <Receipt size={16} className="flex-shrink-0 text-blue-600" />
+              <span className="flex-1">{t('¿Pagaste alquiler, luz o sueldos en este período? Anótalos en Compras y gastos y aquí verás tu ganancia real.')}</span>
+              <ChevronRight size={16} className="flex-shrink-0" />
+            </Link>
           )}
         </div>
 
@@ -461,17 +528,14 @@ export default function BalancePage() {
               <BalanceLine label={t('Devoluciones')} value={cb.returnsRefund} negative />
               <BalanceLine label={t('Ingresos netos')} value={cb.netIncome} />
               <BalanceLine label={t('Egresos (compras a proveedores)')} value={cb.expenses} negative />
-              <div className="flex items-center justify-between pt-3">
-                <span className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
-                  {cashPositive
-                    ? <TrendingUp size={15} className="text-emerald-600" />
-                    : <TrendingDown size={15} className="text-red-600" />}
-                  {t('Ganancia del período')}
-                </span>
-                <span className={`text-xl font-extrabold tabular-nums ${cashPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {formatPrice(cb.profit)}
-                </span>
-              </div>
+              {leftAfterAll != null ? (
+                <>
+                  <BalanceLine label={t('Otros gastos')} value={otherExpenses} negative to="/reports/purchases" toLabel={t('Ver')} />
+                  <ResultLine label={t('Lo que quedó')} value={leftAfterAll} big testId="balance-left" />
+                </>
+              ) : (
+                <ResultLine label={t('Ganancia del período')} value={cb.profit} big />
+              )}
             </div>
           )}
         </div>

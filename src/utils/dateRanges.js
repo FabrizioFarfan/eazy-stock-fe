@@ -31,3 +31,26 @@ export function lastMonthsRange(n) {
   const start = new Date(now.getFullYear(), now.getMonth() - n, now.getDate())
   return { from: toISODate(start), to: toISODate(now) }
 }
+
+/**
+ * El período del mismo largo justo antes de {from, to} (para comparar): del 1 al 28 de octubre → del 3 al 30 de
+ * septiembre; hoy → ayer. Fechas ISO yyyy-mm-dd, en hora local.
+ */
+export function previousRange(range) {
+  if (!range?.from || !range?.to) return null
+  const parse = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d) }
+  const from = parse(range.from)
+  const to = parse(range.to)
+  const days = Math.round((to - from) / 86400000) + 1
+  const prevTo = new Date(from); prevTo.setDate(from.getDate() - 1)
+  const prevFrom = new Date(from); prevFrom.setDate(from.getDate() - days)
+  return { from: toISODate(prevFrom), to: toISODate(prevTo) }
+}
+
+/** Cuánto cambió respecto al período anterior, en %; null si antes era 0 (no hay con qué comparar). */
+export function changePercent(now, before) {
+  const a = Number(now)
+  const b = Number(before)
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return null
+  return Math.round(((a - b) / Math.abs(b)) * 100)
+}
