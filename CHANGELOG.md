@@ -3,6 +3,10 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.26.1 — 2026-10-28 («Primer paso» solo para quien de verdad no tiene productos)
+- **Frank: a William, con su Excel cargado, le salía «Primer paso · Carga tu catálogo» en el Dashboard.** La condición contaba como «0 productos» también una consulta que fallaba o no llegaba. Ahora (`utils/catalogDone.js`, con tests): solo sale con 0 productos CONFIRMADOS por el servidor; en cuanto se ve que hay productos queda marcado como listo para ese negocio (`localStorage eazystock_catalog_done_<businessId>`) y no vuelve.
+- **«Ya tengo mis productos»**: botón en el aviso del Dashboard y «Ya tengo mis productos · Ir al panel» en /bienvenida, para marcarlo como hecho a mano. Textos en/it (`dict/catalogDone.js`).
+
 ## 1.26.0 — 2026-10-28 (Balance con la ganancia real + dark mode de «Mis negocios»)
 - **Balance (William):** la ganancia restaba solo la mercadería. Ahora, para el dueño, la franja dice «Ganancia real del período» = ganancia bruta − **otros gastos** de Compras y gastos (alquiler, luz, sueldos…), con «Otros gastos» entre sus cifras y **▲/▼ % frente al período anterior** del mismo largo. «Balance de ventas»: Ganancia bruta → Otros gastos (enlace a Compras y gastos) → **Ganancia real**; sin gastos anotados en el período, aviso «¿Pagaste alquiler, luz o sueldos…?» con enlace. «Ingresos y egresos»: + Otros gastos → **Lo que quedó**. Sale de `GET /api/reports/purchases` (ya existía, solo dueño): sin cambios en el API ni en lo que leen las apps. El vendedor con «Ver reportes» ve lo de antes. Ayuda actualizada; textos en/it (`dict/balance2.js`).
 - **Reportes:** las 6 pestañas (Reportes, Balance, Vendedores, Análisis…, Compras y gastos) van en dos filas de 3 salvo en pantallas muy anchas: en una fila salían cortadas («Análisis de …»); al pasar el ratón, el nombre entero.

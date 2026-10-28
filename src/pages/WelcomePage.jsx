@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileSpreadsheet, MessageCircle, Zap, ArrowRight, Camera, Mail, CheckCircle2, Package } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useProducts } from '../hooks/useProducts'
+import { markCatalogDone } from '../utils/catalogDone'
 import { useT } from '../i18n'
 
 const SUPPORT_WHATSAPP = '4915511384643'
@@ -63,11 +64,19 @@ export default function WelcomePage() {
         <p className="relative mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
           {t('Es el único paso pesado, y tienes tres formas de hacerlo. Elige la que te resulte más fácil; puedes combinarlas.')}
         </p>
-        {total > 0 && (
-          <p className="relative mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
-            <CheckCircle2 size={13} /> {t('Ya tienes {n} productos cargados', { n: total })}
-          </p>
-        )}
+        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          {total > 0 && (
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
+              <CheckCircle2 size={13} /> {t('Ya tienes {n} productos cargados', { n: total })}
+            </p>
+          )}
+          {/* 28-oct (Frank): marcar el paso como hecho; el aviso del panel ya no vuelve a salir en este negocio. */}
+          <button type="button" data-testid="welcome-catalog-done"
+            onClick={() => { markCatalogDone(user?.businessId); navigate('/dashboard') }}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-gray-900 hover:bg-blue-50">
+            <CheckCircle2 size={13} className="text-emerald-600" /> {t('Ya tengo mis productos · Ir al panel')}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

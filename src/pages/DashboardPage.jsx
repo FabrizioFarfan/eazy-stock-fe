@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { formatPrice } from '../utils/formatMoney'
 import { useNavigate, Navigate, Link } from 'react-router-dom'
 import {
@@ -12,6 +13,7 @@ import { formatQty } from '../utils/quantity'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
+import { isCatalogDone, markCatalogDone, showCatalogBanner } from '../utils/catalogDone'
 import HelpDrawer from '../components/common/HelpDrawer'
 import CashFloatCard from '../components/dashboard/CashFloatCard'
 import { localISODate } from '../utils/formatDate'
@@ -481,8 +483,11 @@ function MovementsPanel({ movements }) {
   )
 }
 
-/** Sin productos todavía: la puerta a «Carga tu catálogo» (onboarding, 20-oct-2026). */
-function CatalogBanner() {
+/**
+ * Sin productos todavía: la puerta a «Carga tu catálogo» (onboarding, 20-oct-2026). 28-oct: con «Ya tengo mis
+ * productos» se marca como listo y no vuelve a salir en ese negocio.
+ */
+function CatalogBanner({ onDone }) {
   const t = useT()
   return (
     <div className="relative overflow-hidden rounded-2xl bg-[#0a0e1a] p-5 text-white sm:p-6">
@@ -493,9 +498,15 @@ function CatalogBanner() {
           <h3 className="mt-1 text-xl font-extrabold">{t('Carga tu catálogo, o empieza vendiendo')}</h3>
           <p className="mt-1 max-w-xl text-sm text-slate-300">{t('Sube tu Excel, mándanos tu lista y la cargamos nosotros, o crea cada producto en la primera venta. Tú eliges.')}</p>
         </div>
-        <Link to="/bienvenida" className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-blue-50">
-          <Upload size={15} /> {t('Ver las opciones')} <ArrowRight size={14} />
-        </Link>
+        <div className="flex flex-shrink-0 flex-col items-stretch gap-2 sm:items-end">
+          <Link to="/bienvenida" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-gray-900 hover:bg-blue-50">
+            <Upload size={15} /> {t('Ver las opciones')} <ArrowRight size={14} />
+          </Link>
+          <button type="button" onClick={onDone} data-testid="catalog-done"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10 hover:text-white">
+            <CheckCircle2 size={13} /> {t('Ya tengo mis productos')}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -514,9 +525,15 @@ function OwnerDashboard({ name, businessId }) {
   const { data: expiringPage, isLoading: loadingExp }     = useReportsExpiring({ size: 10, ...scopeParams })
   const { data: inactive }                                = useInactiveCustomers({ days: 30, ...scopeParams })
   // Onboarding (20-oct): ¿hay catálogo? ¿hay productos creados al vuelo por completar?
-  const { data: anyProduct, isLoading: loadingAny }       = useProducts({ size: 1, ...scopeParams })
+  const { data: anyProduct, isLoading: loadingAny, isError: anyError } = useProducts({ size: 1, ...scopeParams })
   const { data: quickPage }                               = useProducts({ size: 1, active: true, quickOnly: true, ...scopeParams })
-  const noCatalog = !loadingAny && (anyProduct?.totalElements ?? 0) === 0
+  // 28-oct (Frank): a William, con su Excel cargado, le salía el «Primer paso»: si la consulta fallaba o no llegaba,
+  // contaba como 0 productos. Ahora solo sale con 0 CONFIRMADO, y en cuanto hay productos queda como listo.
+  const [dismissed, setDismissed] = useState(() => isCatalogDone(businessId))
+  const productTotal = anyProduct?.totalElements
+  const hasProducts = productTotal > 0
+  useEffect(() => { if (hasProducts) markCatalogDone(businessId) }, [hasProducts, businessId])
+  const noCatalog = showCatalogBanner({ done: dismissed || hasProducts, loading: loadingAny, error: anyError, total: productTotal })
 
   const lowStock  = lowStockPage?.content ?? []
   const expiring  = expiringPage?.content ?? []
@@ -529,7 +546,7 @@ function OwnerDashboard({ name, businessId }) {
     <div className="flex flex-col gap-5">
       <PageHeader name={name} />
 
-      {noCatalog && <CatalogBanner />}
+      {noCatalog && <CatalogBanner onDone={() => { markCatalogDone(businessId); setDismissed(true) }} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         <TodayHero summary={summary} yesterday={ySummary} loading={loadingSummary} />
