@@ -402,7 +402,9 @@ export default function DeleteProductModal({ product, onClose, onDone }) {
                   ? t('Borrar del catálogo')
                   : choice === 'delete'
                     ? t('Borrar definitivamente')
-                    : t('Ocultar producto')}
+                    : choice === 'deactivate'
+                      ? t('Ocultar producto')
+                      : t('Elige una opción')}
           </button>
         </div>
       </div>

@@ -345,7 +345,7 @@ export default function SalesPage() {
   const { data: ySummary } = useDailySummary({ date: yesterdayStr(), ...scope }, { enabled: isManager })
   const { data: todaySales, isLoading: loadingToday } = useSales({ from: today, to: today, size: 500, ...scope }, { enabled: !isManager })
   const hero = isManager
-    ? { revenue: summary?.totalRevenue, yesterday: ySummary?.totalRevenue ?? null, count: summary?.totalSales ?? 0, units: summary?.totalItemsSold ?? 0, loading: loadingSummary }
+    ? { revenue: summary?.netRevenue ?? summary?.totalRevenue, yesterday: ySummary?.netRevenue ?? ySummary?.totalRevenue ?? null, count: summary?.totalSales ?? 0, units: summary?.totalItemsSold ?? 0, loading: loadingSummary }
     : {
         revenue: (todaySales?.content ?? []).reduce((acc, x) => acc + Number(x.total ?? 0) - Number(x.returnedAmount ?? 0), 0),
         yesterday: null, count: todaySales?.totalElements ?? 0, units: null, loading: loadingToday,

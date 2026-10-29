@@ -287,7 +287,7 @@ function Dashboard({ t }) {
     <div className="grid h-full grid-cols-5 content-start gap-3">
       <div data-tour="band" className="relative col-span-3 overflow-hidden rounded-xl bg-blue-600 p-3.5 text-white">
         <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
-        <p className="text-[9px] font-semibold uppercase tracking-widest text-white/80">{t('Ingresos de hoy')}</p>
+        <p className="text-[9px] font-semibold uppercase tracking-widest text-white/80">{t('Vendido hoy')}</p>
         <p className="mt-0.5 text-2xl font-extrabold tracking-tight">S/ 2,580.50</p>
         <p className="mt-0.5 flex items-center gap-1 text-[10px] text-white/90">
           <span className="rounded bg-white/20 px-1 font-bold">+18 %</span> {t('vs ayer ({v})', { v: 'S/ 2,186.00' })}

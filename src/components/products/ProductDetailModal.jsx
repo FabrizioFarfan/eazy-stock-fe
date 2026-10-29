@@ -91,8 +91,9 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
 
   const isLow = product.currentStock < product.minStock
   const photo = imageSrc(product.imageUrl)
+  // Margen sobre la venta, como el Balance y la recepción: (venta − costo) ÷ venta.
   const margin = !hidesCost && !product.priceIsVariable && product.purchasePrice && product.salePrice
-    ? (((product.salePrice - product.purchasePrice) / product.purchasePrice) * 100).toFixed(1)
+    ? (((product.salePrice - product.purchasePrice) / product.salePrice) * 100).toFixed(1)
     : null
   const minN = Number(product.minStock ?? 0)
   const curN = Number(product.currentStock ?? 0)

@@ -253,6 +253,7 @@ export default {
     'Aplicando...': 'Applying...',
     'Borrar todo': 'Delete everything',
     'Ocultar producto': 'Hide product',
+    'Elige una opción': 'Choose an option',
 
     // ── BulkDeleteModal ───────────────────────────────────────────────────
     '{n} producto(s) borrado(s).': '{n} product(s) deleted.',
@@ -961,6 +962,7 @@ export default {
     'Aplicando...': 'Applicazione in corso...',
     'Borrar todo': 'Elimina tutto',
     'Ocultar producto': 'Nascondi prodotto',
+    'Elige una opción': 'Scegli un\'opzione',
 
     // ── BulkDeleteModal ───────────────────────────────────────────────────
     '{n} producto(s) borrado(s).': '{n} prodotto/i eliminato/i.',

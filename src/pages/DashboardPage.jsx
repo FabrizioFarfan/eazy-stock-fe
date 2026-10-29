@@ -258,19 +258,25 @@ function DeltaVsYesterday({ today, yesterday }) {
 function TodayHero({ summary, yesterday, loading }) {
   const t = useT()
   const sales   = summary?.totalSales ?? 0
-  const revenue = Number(summary?.totalRevenue ?? 0)
-  const avg     = sales > 0 ? revenue / sales : 0
+  // «Vendido hoy»: lo vendido menos las devoluciones del día (API 1.18.1; con uno anterior, el total).
+  const revenue = Number(summary?.netRevenue ?? summary?.totalRevenue ?? 0)
+  const refunds = Number(summary?.refunds ?? 0)
+  // El ticket promedio es por venta: sobre lo cobrado en cada una, sin restar devoluciones.
+  const avg     = sales > 0 ? Number(summary?.totalRevenue ?? 0) / sales : 0
   return (
     <div className="relative overflow-hidden rounded-2xl bg-blue-600 p-5 text-white shadow-md shadow-blue-600/30 sm:p-6 lg:col-span-2" data-testid="today-hero">
       <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/10" />
       <div className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/5" />
-      <p className="relative text-xs font-semibold uppercase tracking-widest text-white/80">{t('Ingresos de hoy')}</p>
+      <p className="relative text-xs font-semibold uppercase tracking-widest text-white/80">{t('Vendido hoy')}</p>
       {loading ? (
         <div className="relative mt-2 h-10 w-40 animate-pulse rounded-lg bg-white/20" />
       ) : (
         <>
           <p className="relative mt-1 text-4xl font-extrabold tracking-tight sm:text-5xl">{formatCurrency(revenue)}</p>
-          <div className="relative mt-2"><DeltaVsYesterday today={revenue} yesterday={yesterday?.totalRevenue} /></div>
+          <div className="relative mt-2"><DeltaVsYesterday today={revenue} yesterday={yesterday?.netRevenue ?? yesterday?.totalRevenue} /></div>
+          {refunds > 0 && (
+            <p className="relative mt-1 text-xs text-white/80">{t('Devoluciones')}: −{formatCurrency(refunds)}</p>
+          )}
         </>
       )}
       <div className="relative mt-5 grid grid-cols-3 gap-2 border-t border-white/20 pt-4">
@@ -310,7 +316,7 @@ function MonthCard({ scopeParams }) {
         <div className="mt-3 h-8 w-32 animate-pulse rounded-lg bg-gray-100" />
       ) : (
         <>
-          <p className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">{formatCurrency(data?.netSales ?? 0)}</p>
+          <p className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">{formatCurrency(Number(data?.netSales ?? 0) - Number(data?.returns ?? 0))}</p>
           <p className="text-xs text-gray-400">{t('vendido en {n} ventas', { n: data?.salesCount ?? 0 })}</p>
           <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
             <span className="text-xs text-gray-500">{t('Ganancia')}</span>

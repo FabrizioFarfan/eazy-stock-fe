@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.27.1 — 2026-10-29 (sube junto al API 1.18.1)
+- **Inicio**: la tarjeta azul pasa de «Ingresos de hoy» a **«Vendido hoy»** (como en Ventas) y muestra lo vendido menos las devoluciones del día (`netRevenue` del API 1.18.1; con un API anterior, `totalRevenue`), con «Devoluciones: −S/ x» si hubo. El ticket promedio sigue siendo por venta. «Este mes» también resta las devoluciones (`netSales − returns`). Ventas usa el mismo neto.
+- **Ficha del producto**: el margen se calcula sobre la venta, (venta − costo) ÷ venta, como el Balance y la recepción (antes era sobre el costo y salía más alto).
+- **Quitar producto**: sin elegir opción, el botón dice «Elige una opción» (antes decía «Ocultar producto» apagado).
+- Landing: el ejemplo del panel dice «Vendido hoy». 171 tests, build OK.
+
 ## 1.27.0 — 2026-10-28 (cambiar el correo; sube junto al API 1.18.0)
 - **Contrato: `eazy-stock-be/docs/EMAIL-CHANGE-SPEC.md`** (lo pedía como «web 1.26.0», pero la 1.26.x ya estaba usada: va como 1.27.0). El JWT lleva el correo, así que todo cambio devuelve una sesión nueva: `replaceSession(authResponse)` en el AuthContext guarda `accessToken` + `refreshToken` + usuario sin navegar (el token viejo da 401).
 - **Pantalla del código (/confirmar-correo)**: debajo del correo, **«¿Correo equivocado? Cámbialo»** → «Cambiar correo» con «Correo nuevo» y «Tu contraseña», «Cancelar» / «Cambiar y enviar código» (`POST /auth/verify/change-email`). Al ir bien: el correo nuevo, casillas vacías, «Reenviar código» otra vez a 60 s y «Te mandamos un código a {email}.».
