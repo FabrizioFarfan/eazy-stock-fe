@@ -1,19 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Crown, Rocket, FlaskConical, Paintbrush, ClipboardList, CreditCard, Wallet, Smartphone, Mic, Sparkles,
   Building2, Users, ShoppingCart, Activity, CheckCircle2, Check, X, XCircle, Loader2, RefreshCw,
-  ChevronLeft, ChevronRight, Map, BadgeCheck, UserPlus,
+  ChevronLeft, ChevronRight, Map, UserPlus,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
-import { bossApi } from '../services/endpoints/boss'
 import { ReportHeader, ReportHero } from '../components/reports/ReportKit'
 import { BossSwitcher, FlagAvatar } from '../components/boss/BossKit'
 import { APP_VERSION } from '../utils/version'
-import { KINDS, FILTERS, filterBusinesses, countByFilter, defaultFilter, pendingAccounts, withKind, kindOf } from '../utils/accountKinds'
-import { toast } from 'sonner'
-import { getErrorMessage } from '../utils/handleApiError'
+import { filterBusinesses, countByFilter, defaultFilter, pendingAccounts, kindOf } from '../utils/accountKinds'
+import { KindChip, KindPicker, KindTabs } from '../components/boss/AccountKind'
+import { useAccountKinds } from '../components/boss/accountKindData'
 
 /* ── La ruta (espejo de ROADMAP.md + plan oficial M1–M5 del 17-sep) ──────────
  * status: done · failed (se intentó y no salió: la ruta sigue) · now · next · future
@@ -43,49 +41,63 @@ const PHASES = [
     ],
   },
   {
-    key: 'design', icon: Paintbrush, title: 'Diseño nuevo', status: 'now', progress: 80,
-    desc: 'Toda la app con el mismo lenguaje: franja azul, accesos grandes y tarjetas en el celular.',
+    key: 'design', icon: Paintbrush, title: 'Diseño nuevo', status: 'done', progress: 100,
+    desc: 'Toda la app con el mismo lenguaje: franja azul, accesos grandes, tarjetas en el celular y modo oscuro.',
     items: [
       { label: 'Páginas del dueño', done: true },
       { label: 'Páginas del vendedor (las mismas, con restricciones)', done: true },
       { label: 'Lado Boss: panel, negocios y owners', done: true },
-      { label: 'Modales que faltan: recepción, ajuste, QR, borrar, detalle de venta' },
-      { label: 'Pestañas secundarias de Reportes' },
+      { label: 'Modales, reportes y modo oscuro', done: true },
     ],
   },
   {
-    key: 'william', icon: ClipboardList, title: 'Pedidos de William', status: 'next', progress: 0,
-    desc: 'Lo que pidió FERREFANO, el negocio que más usa la app: lo próximo al cerrar el diseño.',
+    key: 'william', icon: ClipboardList, title: 'Pedidos de William', status: 'done', progress: 100,
+    desc: 'Lo que pidió FERREFANO, el negocio que más usa la app. Se sigue entregando a medida que pide.',
     items: [
-      { label: 'Repasar la lista con Frank y ordenarla' },
-      { label: 'Entregar de a uno y verificarlo con él en vivo' },
+      { label: 'Compras, gastos y devoluciones al proveedor', done: true },
+      { label: 'Historial de un producto y atributos', done: true },
+      { label: 'Nota de pedido y balance con ganancia real', done: true },
+      { label: 'El vendedor nunca ve los costos', done: true },
     ],
   },
   {
-    key: 'm1', icon: CreditCard, title: 'M1 · Planes y límites', status: 'future', progress: 0,
-    desc: 'Basic / Pro / AI: modelo de plan y suscripción, límites en el servidor, pantalla de planes y upgrade.',
+    key: 'm1', icon: CreditCard, title: 'M1 · Planes y límites', status: 'done', progress: 100,
+    desc: 'Basic y Pro: prueba gratis, límites en el servidor, página de planes y bajar de plan sin perder nada.',
     items: [
-      { label: 'Modelo Plan / Suscripción / límites' },
-      { label: 'Límites aplicados en el servidor' },
-      { label: 'Pantalla de planes + botón de upgrade' },
-      { label: 'Migrar la cuenta de William sin romper nada' },
+      { label: 'Modelo Plan / Suscripción / límites', done: true },
+      { label: 'Límites aplicados en el servidor', done: true },
+      { label: 'Pantalla de planes + botón de upgrade', done: true },
+      { label: 'Registro con prueba gratis del plan elegido', done: true },
     ],
   },
   {
-    key: 'm2', icon: Wallet, title: 'M2 · Pagos reales', status: 'future', progress: 0,
-    desc: 'Proveedor de pago en soles, checkout mensual/anual, estados de la suscripción y recibos.',
+    key: 'm2', icon: Wallet, title: 'M2 · Pagos reales', status: 'done', progress: 100,
+    desc: 'Stripe: tarjeta, cobro el día 15, mensual / trimestral / anual, cupones y estados de la suscripción.',
     items: [
-      { label: 'Decidir proveedor de pago y quién factura' },
-      { label: 'Checkout mensual / anual' },
-      { label: 'Webhooks y estados: prueba, activa, vencida, cancelada' },
+      { label: 'Proveedor de pago: Stripe', done: true },
+      { label: 'Checkout mensual / trimestral / anual', done: true },
+      { label: 'Webhooks y estados: prueba, activa, vencida, cancelada', done: true },
+      { label: 'Correo, contraseña olvidada y verificación', done: true },
     ],
   },
   {
-    key: 'm3', icon: Smartphone, title: 'M3 · Apps móviles', status: 'future', progress: 0,
-    desc: 'Ventas, inventario y recepciones en Android e iOS, con login por rol y paywall.',
+    key: 'launch', icon: Rocket, title: 'Lanzamiento', status: 'now', progress: 50,
+    desc: 'Gratis hasta el 15 de diciembre; desde el 16, 30 días gratis al registrarse. Que lleguen los primeros clientes que pagan.',
     items: [
-      { label: 'Decidir stack y alcance del MVP' },
-      { label: 'Login con roles y paywall' },
+      { label: 'Promo: gratis hasta el 15 de diciembre', done: true },
+      { label: 'Panel Boss: clientes de verdad y cuentas nuevas', done: true },
+      { label: 'Marketing en marcha' },
+      { label: 'Encender Stripe con las claves reales (antes del 15-dic)' },
+      { label: 'Primeros clientes que pagan' },
+    ],
+  },
+  {
+    key: 'm3', icon: Smartphone, title: 'M3 · Apps móviles', status: 'next', progress: 60,
+    desc: 'Ventas, inventario y recepciones en Android e iOS, con login por rol.',
+    items: [
+      { label: 'App escrita: login, productos, venta, stock y escáner', done: true },
+      { label: 'Registro y borrado de cuenta en la app', done: true },
+      { label: 'Documento fiscal y correo con código', done: true },
       { label: 'Publicar en Play Store y App Store' },
     ],
   },
@@ -163,51 +175,7 @@ const ROLE_CHIP = {
 }
 const ROLE_SHORT = { BOSS: 'Boss', SUPER_ADMIN: 'Admin', OWNER: 'Owner', EMPLOYEE: 'Empleado' }
 
-/* ── Qué es cada cuenta (30-oct-2026): cliente, tester o equipo; null = nueva, sin revisar ── */
-
-const KIND_CFG = {
-  CUSTOMER: { label: 'Cliente', icon: BadgeCheck,   chip: 'bg-emerald-100 text-emerald-700', on: 'bg-emerald-600 text-white' },
-  TESTER:   { label: 'Tester',  icon: FlaskConical, chip: 'bg-gray-100 text-gray-500',       on: 'bg-gray-700 text-white' },
-  TEAM:     { label: 'Equipo',  icon: Crown,        chip: 'bg-amber-100 text-amber-700',     on: 'bg-amber-500 text-white' },
-  NEW:      { label: 'Nuevo · sin revisar', icon: Sparkles, chip: 'bg-blue-100 text-blue-700' },
-}
-const kindCfg = (kind) => KIND_CFG[kind ?? 'NEW']
-
-const FILTER_LABEL = { customers: 'Clientes', new: 'Nuevos', testers: 'Testers', team: 'Equipo', all: 'Todos' }
-
-function KindChip({ kind }) {
-  const t = useT()
-  const cfg = kindCfg(kind)
-  const Icon = cfg.icon
-  return (
-    <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${cfg.chip}`}>
-      <Icon size={11} /> {t(cfg.label)}
-    </span>
-  )
-}
-
-/** Tres botones: tocar el que ya está lo devuelve a «sin revisar». */
-function KindPicker({ kind, onPick, busy }) {
-  const t = useT()
-  return (
-    <div className="inline-flex rounded-xl border border-gray-200 bg-white p-0.5" role="group" aria-label={t('¿Qué es esta cuenta?')}>
-      {KINDS.map((k) => {
-        const cfg = KIND_CFG[k]
-        const Icon = cfg.icon
-        const on = kind === k
-        return (
-          <button key={k} type="button" disabled={busy} aria-pressed={on}
-            onClick={() => onPick(on ? null : k)}
-            title={on ? t('Volver a «sin revisar»') : t('Marcar como {kind}', { kind: t(cfg.label) })}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
-              on ? cfg.on : 'text-gray-500 hover:bg-gray-50'}`}>
-            <Icon size={12} /> {t(cfg.label)}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+/* ── Qué es cada cuenta (30-oct-2026): ver components/boss/AccountKind.jsx ── */
 
 function NewAccounts({ accounts, onPick, busyId, serverTs }) {
   const t = useT()
@@ -445,13 +413,10 @@ function BusinessCard({ biz, serverTs, onPick, busy }) {
 export default function BossPage() {
   const t = useT()
   const { user } = useAuth()
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['boss-activity'],
-    queryFn: () => bossApi.getActivity().then((r) => r.data.data ?? r.data),
-  })
+  const kinds = useAccountKinds()
+  const { data, isLoading, isError, refetch, isFetching } = kinds.query
   const loading = isLoading
   const error = isError
-  const qc = useQueryClient()
 
   const serverTs   = parseTs(data?.serverTime)
   const businesses = data?.businesses ?? []
@@ -470,24 +435,7 @@ export default function BossPage() {
   const shown = filterBusinesses(businesses, shownFilter)
   const firstName = user?.name?.split(' ')[0] ?? ''
 
-  const classify = useMutation({
-    mutationFn: ({ ownerId, kind }) => bossApi.setAccountKind(ownerId, kind),
-    onMutate: ({ ownerId, kind }) => {
-      const before = qc.getQueryData(['boss-activity'])
-      qc.setQueryData(['boss-activity'], (d) => (d ? { ...d, businesses: withKind(d.businesses, ownerId, kind) } : d))
-      return { before }
-    },
-    onError: (err, _v, ctx) => {
-      if (ctx?.before) qc.setQueryData(['boss-activity'], ctx.before)
-      toast.error(getErrorMessage(err))
-    },
-    onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['boss-activity'] })
-      qc.invalidateQueries({ queryKey: ['boss-subscriptions'] })
-    },
-  })
-  const pick = (ownerId, kind) => classify.mutate({ ownerId, kind })
-  const busyId = classify.isPending ? classify.variables?.ownerId : null
+  const { pick, busyId } = kinds
 
   return (
     <div className="flex flex-col gap-5">
@@ -515,8 +463,6 @@ export default function BossPage() {
         ]} />
 
       <NewAccounts accounts={pending} onPick={pick} busyId={busyId} serverTs={serverTs} />
-
-      <RoadmapStrip />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
@@ -548,18 +494,10 @@ export default function BossPage() {
         )}
         {!loading && !error && businesses.length > 0 && (
           <>
-            <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t('Qué cuentas ver')}>
-              {FILTERS.map((f) => (
-                <button key={f} type="button" role="tab" aria-selected={shownFilter === f} onClick={() => setFilter(f)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                    shownFilter === f ? 'bg-gray-900 text-white' : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
-                  {t(FILTER_LABEL[f])} <span className={shownFilter === f ? 'text-white/60' : 'text-gray-300'}>{counts[f]}</span>
-                </button>
-              ))}
-            </div>
+            <KindTabs value={shownFilter} onChange={setFilter} counts={counts} />
             {shown.length === 0 ? (
               <div className="rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-400 shadow-sm">
-                {t('Ninguna cuenta en «{tab}» todavía.', { tab: t(FILTER_LABEL[shownFilter]) })}
+                {t('Ninguna cuenta en esta pestaña todavía.')}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -571,6 +509,9 @@ export default function BossPage() {
           </>
         )}
       </section>
+
+      {/* 30-oct-2026 (Frank): la ruta, al final del panel */}
+      <RoadmapStrip />
 
       <p className="flex items-center justify-center gap-2 pb-2 text-center text-xs text-gray-300">
         <Building2 size={12} /><Users size={12} />

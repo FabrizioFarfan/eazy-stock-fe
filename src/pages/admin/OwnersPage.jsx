@@ -9,6 +9,9 @@ import { useBusinesses } from '../../hooks/useBusinesses'
 import EditUserModal from '../../components/EditUserModal'
 import EntityModal, { EntityField } from '../../components/common/EntityModal'
 import { ReportHeader, ReportHero, BigSearch, NewButton, EntityCard } from '../../components/reports/ReportKit'
+import { KindChip, KindPicker, KindTabs } from '../../components/boss/AccountKind'
+import { useAccountKinds } from '../../components/boss/accountKindData'
+import { matchesFilter, countKinds } from '../../utils/accountKinds'
 import { BossSwitcher, InitialsAvatar, Chip, ConfirmCard } from '../../components/boss/BossKit'
 import { formatDate, isThisMonth } from '../../components/boss/bossUtils'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
@@ -172,11 +175,17 @@ export default function OwnersPage() {
   const { data, isLoading } = useOwners({ page: 0, size: 200, sort: 'createdAt,desc' })
   const all = data?.content ?? []
 
+  // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS; un owner sin negocio no sale en el panel).
+  const kinds = useAccountKinds()
+  const [tab, setTab] = useState('all')
+  const kindOfOwner = (u) => kinds.byOwner.get(u.id) ?? null
+
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
-    if (!s) return all
-    return all.filter((u) => u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.businessName?.toLowerCase().includes(s))
-  }, [all, q])
+    const byTab = kinds.enabled ? all.filter((u) => matchesFilter(kinds.byOwner.get(u.id), tab)) : all
+    if (!s) return byTab
+    return byTab.filter((u) => u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.businessName?.toLowerCase().includes(s))
+  }, [all, q, tab, kinds.enabled, kinds.byOwner])
 
   const withBiz   = all.filter((u) => u.businessName).length
   const bizCount  = new Set(all.map((u) => u.businessId).filter(Boolean)).size
@@ -200,13 +209,15 @@ export default function OwnersPage() {
 
       <BigSearch value={q} onChange={setQ} placeholder={t('Buscar por nombre, correo o negocio...')} />
 
+      {kinds.enabled && <KindTabs value={tab} onChange={setTab} counts={countKinds(all, kindOfOwner)} />}
+
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-36 animate-pulse rounded-2xl bg-gray-100" />)}
         </div>
       ) : list.length === 0 ? (
         <div className="rounded-2xl border border-gray-100 bg-white px-4 py-12 text-center shadow-sm">
-          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún owner coincide con «{q}»', { q }) : t('No hay owners registrados')}</p>
+          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún owner coincide con «{q}»', { q }) : tab !== 'all' ? t('Ninguna cuenta en esta pestaña todavía.') : t('No hay owners registrados')}</p>
           {q && <button type="button" onClick={() => setQ('')} className="mt-2 text-xs font-semibold text-blue-600 hover:underline">{t('Ver todos')}</button>}
         </div>
       ) : (
@@ -220,10 +231,14 @@ export default function OwnersPage() {
                   ? <Chip icon={Building2} tone="blue">{u.businessName}</Chip>
                   : <Chip icon={Building2} tone="amber">{t('Sin negocio')}</Chip>}
                 <Chip tone={u.active ? 'emerald' : 'red'}>{u.active ? t('Activo') : t('Inactivo')}</Chip>
+                {kinds.enabled && kinds.byOwner.has(u.id) && <KindChip kind={kindOfOwner(u)} />}
               </div>
               <p className="flex items-center gap-1 text-[11px] text-gray-400">
                 <CalendarDays size={11} /> {t('Registrado el {date}', { date: formatDate(u.createdAt) })}
               </p>
+              {kinds.enabled && kinds.byOwner.has(u.id) && (
+                <KindPicker kind={kindOfOwner(u)} busy={kinds.busyId === u.id} onPick={(k) => kinds.pick(u.id, k)} />
+              )}
             </EntityCard>
           ))}
         </div>

@@ -1,7 +1,7 @@
 // Panel Boss: clasificar cuentas en cliente / tester / equipo, y las nuevas sin revisar.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { filterBusinesses, countByFilter, defaultFilter, pendingAccounts, withKind } from './accountKinds.js'
+import { filterBusinesses, countByFilter, defaultFilter, pendingAccounts, withKind, matchesFilter, countKinds } from './accountKinds.js'
 
 const biz = (id, ownerId, accountKind = null, createdAt = '2026-10-01T10:00:00') => ({ id, ownerId, ownerName: `Dueño ${ownerId}`, accountKind, createdAt })
 
@@ -36,4 +36,13 @@ test('las cuentas por revisar: una por dueño, la más nueva primero, sin los ne
 test('clasificar a un dueño cambia todos sus negocios y ninguno más', () => {
   const list = [biz('a', 'w'), biz('b', 'w'), biz('c', 'x')]
   assert.deepEqual(withKind(list, 'w', 'CUSTOMER').map((b) => b.accountKind), ['CUSTOMER', 'CUSTOMER', null])
+})
+
+test('Negocios y Owners: misma regla de pestañas sobre su propia lista', () => {
+  assert.equal(matchesFilter(undefined, 'new'), true)
+  assert.equal(matchesFilter('TEAM', 'team'), true)
+  assert.equal(matchesFilter('TEAM', 'customers'), false)
+  const owners = [{ id: 1 }, { id: 2 }, { id: 3 }]
+  const kinds = { 1: 'CUSTOMER', 2: 'TESTER' }
+  assert.deepEqual(countKinds(owners, (o) => kinds[o.id]), { customers: 1, new: 1, testers: 1, team: 0, all: 3 })
 })

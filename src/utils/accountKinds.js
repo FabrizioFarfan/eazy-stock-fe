@@ -17,6 +17,16 @@ const MATCH = {
   all:       () => true,
 }
 
+/** ¿Una cuenta de este tipo sale en esta pestaña? (Negocios y Owners filtran sus propias listas con esto.) */
+export function matchesFilter(kind, filter) {
+  return (MATCH[filter] ?? MATCH.all)(kind ?? null)
+}
+
+/** Cuántas hay en cada pestaña, para cualquier lista con una función que dice su tipo. */
+export function countKinds(items, kindFn) {
+  return Object.fromEntries(FILTERS.map((f) => [f, (items ?? []).filter((it) => matchesFilter(kindFn(it), f)).length]))
+}
+
 export function filterBusinesses(businesses, filter) {
   const match = MATCH[filter] ?? MATCH.all
   return (businesses ?? []).filter((b) => match(kindOf(b)))

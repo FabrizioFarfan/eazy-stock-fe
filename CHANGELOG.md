@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.29.0 — 2026-10-30 (Negocios y Owners con Cliente / Tester / Socio; la ruta al día y al final)
+- **Negocios y Owners** enseñan lo mismo que el Panel Boss (Frank: «quiero ver esta distinción: estos son testers, estos clientes, este socio»). Arriba están las pestañas Clientes / Nuevos / Testers / Socios / Todos, con su contador. En cada tarjeta, la etiqueta y los tres botones para cambiarla. Los datos salen de `/boss/activity`, así que no hay cambios en el API. Solo para BOSS; un owner sin negocio no tiene etiqueta.
+- **«Equipo» pasa a llamarse «Socio»** en todas partes (Panel Boss, Negocios, Owners y Suscripciones).
+- **La ruta a SaaS, al día y al final del panel**: Diseño nuevo, Pedidos de William, M1 (planes) y M2 (pagos con Stripe), hechos. **Lanzamiento**, en curso: gratis hasta el 15-dic, Panel Boss, marketing, encender Stripe y primeros clientes que pagan. M3 (apps), la siguiente, al 60 %.
+- Las piezas compartidas viven en `components/boss/AccountKind.jsx` (etiqueta, botones, pestañas) y `accountKindData.js` (colores y el hook `useAccountKinds`). `utils/accountKinds.js` añade `matchesFilter` y `countKinds` (+1 test).
+
 ## 1.28.0 — 2026-10-30 (Panel Boss: clientes de verdad; sube junto al API 1.19.0)
 - **Cada cuenta es Cliente, Tester o Equipo.** Frank: «la única que cuenta de verdad es la de William». En cada tarjeta de «¿Quién lo está usando?» hay tres botones (Cliente / Tester / Equipo); tocar el que ya está la devuelve a «sin revisar». La tarjeta de un cliente lleva un borde verde.
 - **Cuentas nuevas por revisar**: un bloque azul arriba del todo enseña cada cuenta que se registró y nadie ha clasificado todavía (la más nueva primero, con su negocio y cuándo se registró). Así quien hace marketing ve quién va llegando.

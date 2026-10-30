@@ -8,6 +8,9 @@ import { toast } from 'sonner'
 import { useBusinesses, useCreateBusiness, useUpdateBusiness, useDeleteBusiness } from '../../hooks/useBusinesses'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
 import { ReportHeader, ReportHero, BigSearch, NewButton, EntityCard } from '../../components/reports/ReportKit'
+import { KindChip, KindPicker, KindTabs } from '../../components/boss/AccountKind'
+import { useAccountKinds } from '../../components/boss/accountKindData'
+import { matchesFilter, countKinds } from '../../utils/accountKinds'
 import EntityModal, { EntityField } from '../../components/common/EntityModal'
 import { BossSwitcher, FlagAvatar, Chip, ConfirmCard } from '../../components/boss/BossKit'
 import { formatDate, isThisMonth } from '../../components/boss/bossUtils'
@@ -183,12 +186,19 @@ export default function BusinessesPage() {
   const { data, isLoading } = useBusinesses({ page: 0, size: 200, sort: 'name' })
   const all = data?.content ?? []
 
+  // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS).
+  const kinds = useAccountKinds()
+  const [tab, setTab] = useState('all')
+  const kindOfBiz = (b) => kinds.byBusiness.get(b.id)?.kind ?? null
+  const ownerOfBiz = (b) => kinds.byBusiness.get(b.id)?.ownerId ?? null
+
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
-    if (!s) return all
-    return all.filter((b) => b.name.toLowerCase().includes(s) || b.taxId?.toLowerCase().includes(s)
+    const byTab = kinds.enabled ? all.filter((b) => matchesFilter(kinds.byBusiness.get(b.id)?.kind, tab)) : all
+    if (!s) return byTab
+    return byTab.filter((b) => b.name.toLowerCase().includes(s) || b.taxId?.toLowerCase().includes(s)
       || b.countryCode?.toLowerCase() === s || countryLabel(b.countryCode).toLowerCase().includes(s))
-  }, [all, q])
+  }, [all, q, tab, kinds.enabled, kinds.byBusiness])
 
   const active     = all.filter((b) => b.active)
   const countries  = new Set(all.map((b) => b.countryCode)).size
@@ -213,13 +223,15 @@ export default function BusinessesPage() {
 
       <BigSearch value={q} onChange={setQ} placeholder={t('Buscar por nombre, RUC o país...')} />
 
+      {kinds.enabled && <KindTabs value={tab} onChange={setTab} counts={countKinds(all, kindOfBiz)} />}
+
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-36 animate-pulse rounded-2xl bg-gray-100" />)}
         </div>
       ) : list.length === 0 ? (
         <div className="rounded-2xl border border-gray-100 bg-white px-4 py-12 text-center shadow-sm">
-          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún negocio coincide con «{q}»', { q }) : t('No hay negocios registrados')}</p>
+          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún negocio coincide con «{q}»', { q }) : tab !== 'all' ? t('Ninguna cuenta en esta pestaña todavía.') : t('No hay negocios registrados')}</p>
           {q && <button type="button" onClick={() => setQ('')} className="mt-2 text-xs font-semibold text-blue-600 hover:underline">{t('Ver todos')}</button>}
         </div>
       ) : (
@@ -233,10 +245,14 @@ export default function BusinessesPage() {
                 <Chip icon={Coins} tone="blue">{b.currency ?? 'PEN'} {CURRENCIES[b.currency ?? 'PEN']?.symbol ?? ''}</Chip>
                 <Chip icon={Globe}>{b.countryCode}</Chip>
                 <Chip tone={b.active ? 'emerald' : 'red'}>{b.active ? t('Activo') : t('Inactivo')}</Chip>
+                {kinds.enabled && ownerOfBiz(b) && <KindChip kind={kindOfBiz(b)} />}
               </div>
               <p className="flex items-center gap-1 text-[11px] text-gray-400">
                 <CalendarDays size={11} /> {t('Registrado el {date}', { date: formatDate(b.createdAt) })}
               </p>
+              {kinds.enabled && ownerOfBiz(b) && (
+                <KindPicker kind={kindOfBiz(b)} busy={kinds.busyId === ownerOfBiz(b)} onPick={(k) => kinds.pick(ownerOfBiz(b), k)} />
+              )}
             </EntityCard>
           ))}
         </div>

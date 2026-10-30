@@ -157,7 +157,7 @@ function CouponField({ row }) {
   )
 }
 
-const KIND_LABEL = { CUSTOMER: 'Cliente', TESTER: 'Tester', TEAM: 'Equipo', NEW: 'Nuevo · sin revisar' }
+const KIND_LABEL = { CUSTOMER: 'Cliente', TESTER: 'Tester', TEAM: 'Socio', NEW: 'Nuevo · sin revisar' }
 const KIND_TONE = { CUSTOMER: 'emerald', TESTER: 'gray', TEAM: 'amber', NEW: 'blue' }
 
 function Row({ row, onEdit }) {
