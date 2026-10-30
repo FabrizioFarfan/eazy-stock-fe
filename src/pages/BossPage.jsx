@@ -9,7 +9,7 @@ import { useT } from '../i18n'
 import { ReportHeader, ReportHero } from '../components/reports/ReportKit'
 import { BossSwitcher, FlagAvatar } from '../components/boss/BossKit'
 import { APP_VERSION } from '../utils/version'
-import { filterBusinesses, countByFilter, defaultFilter, pendingAccounts, kindOf } from '../utils/accountKinds'
+import { filterBusinesses, countByFilter, defaultFilter, newAccounts, kindOf } from '../utils/accountKinds'
 import { KindChip, KindPicker, KindTabs } from '../components/boss/AccountKind'
 import { useAccountKinds } from '../components/boss/accountKindData'
 
@@ -186,9 +186,9 @@ function NewAccounts({ accounts, onPick, busyId, serverTs }) {
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white"><UserPlus size={17} /></span>
         <div>
           <h3 className="text-sm font-bold text-gray-900">
-            {accounts.length === 1 ? t('1 cuenta nueva por revisar') : t('{n} cuentas nuevas por revisar', { n: accounts.length })}
+            {accounts.length === 1 ? t('1 cuenta nueva') : t('{n} cuentas nuevas', { n: accounts.length })}
           </h3>
-          <p className="text-[11px] text-gray-500">{t('Dinos qué es cada una: así las cifras de arriba cuentan solo a los clientes de verdad.')}</p>
+          <p className="text-[11px] text-gray-500">{t('Las que llegaron estos 7 días entran como Cliente; si alguna es de prueba, pásala a Tester. Las que dicen «sin revisar» son de antes: dinos qué son.')}</p>
         </div>
       </div>
       <ul className="flex flex-col gap-2">
@@ -201,7 +201,8 @@ function NewAccounts({ accounts, onPick, busyId, serverTs }) {
                 {a.createdAt && serverTs ? ` · ${registeredLabel(a.createdAt, serverTs, t)}` : ''}
               </p>
             </div>
-            <KindPicker kind={null} busy={busyId === a.ownerId} onPick={(k) => onPick(a.ownerId, k)} />
+            <KindChip kind={a.kind} />
+            <KindPicker kind={a.kind} busy={busyId === a.ownerId} onPick={(k) => onPick(a.ownerId, k)} />
           </li>
         ))}
       </ul>
@@ -428,10 +429,10 @@ export default function BossPage() {
     : 0
   const sales7d  = customers.reduce((acc, b) => acc + b.salesLast7Days, 0)
   const selling  = customers.filter((b) => b.salesLast7Days > 0).length
-  const pending  = pendingAccounts(businesses)
+  const fresh    = newAccounts(businesses, serverTs)
   const counts   = countByFilter(businesses)
   const [filter, setFilter] = useState(null)
-  const shownFilter = filter ?? defaultFilter(businesses)
+  const shownFilter = filter ?? defaultFilter()
   const shown = filterBusinesses(businesses, shownFilter)
   const firstName = user?.name?.split(' ')[0] ?? ''
 
@@ -457,12 +458,12 @@ export default function BossPage() {
         sub={<span>{selling === 1 ? t('1 cliente vendió esta semana') : t('{n} clientes vendieron esta semana', { n: selling })}</span>}
         cells={[
           [t('Clientes'), counts.customers],
-          [t('Por revisar'), pending.length],
+          [t('Cuentas nuevas'), fresh.length],
           [t('Activos hoy'), activeToday],
           [t('Testers'), counts.testers],
         ]} />
 
-      <NewAccounts accounts={pending} onPick={pick} busyId={busyId} serverTs={serverTs} />
+      <NewAccounts accounts={fresh} onPick={pick} busyId={busyId} serverTs={serverTs} />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">

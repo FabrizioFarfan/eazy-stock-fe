@@ -1,7 +1,7 @@
 // Panel Boss: clasificar cuentas en cliente / tester / equipo, y las nuevas sin revisar.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { filterBusinesses, countByFilter, defaultFilter, pendingAccounts, withKind, matchesFilter, countKinds } from './accountKinds.js'
+import { filterBusinesses, countByFilter, defaultFilter, newAccounts, withKind, matchesFilter, countKinds } from './accountKinds.js'
 
 const biz = (id, ownerId, accountKind = null, createdAt = '2026-10-01T10:00:00') => ({ id, ownerId, ownerName: `Dueño ${ownerId}`, accountKind, createdAt })
 
@@ -12,25 +12,25 @@ test('cada pestaña cuenta lo suyo y «todos» lo cuenta todo', () => {
   assert.deepEqual(filterBusinesses(list, 'new').map((b) => b.id), ['d', 'e'])
 })
 
-test('se abre en clientes si hay; si no, en lo nuevo; si no, en todo', () => {
-  assert.equal(defaultFilter([biz('a', 'w', 'CUSTOMER'), biz('d', 'n')]), 'customers')
-  assert.equal(defaultFilter([biz('b', 't', 'TESTER'), biz('d', 'n')]), 'new')
-  assert.equal(defaultFilter([biz('b', 't', 'TESTER')]), 'all')
-  assert.equal(defaultFilter([]), 'all')
+test('las listas se abren siempre en «Clientes»', () => {
+  assert.equal(defaultFilter(), 'customers')
 })
 
-test('las cuentas por revisar: una por dueño, la más nueva primero, sin los negocios sin dueño', () => {
+test('cuentas nuevas: las sin revisar y los clientes de los últimos 7 días; una por dueño, la más nueva primero', () => {
+  const now = new Date('2026-10-30T18:00:00').getTime()
   const list = [
     biz('a', 'old', null, '2026-10-01T09:00:00'),
-    biz('b', 'new', null, '2026-10-29T18:00:00'),
+    biz('b', 'fresh', 'CUSTOMER', '2026-10-29T18:00:00'),
     biz('c', 'old', null, '2026-10-05T09:00:00'),
     biz('d', null, null),
-    biz('e', 'w', 'CUSTOMER'),
+    biz('e', 'william', 'CUSTOMER', '2026-09-20T10:00:00'),
+    biz('f', 'qa', 'TESTER', '2026-10-30T10:00:00'),
   ]
-  const pending = pendingAccounts(list)
-  assert.deepEqual(pending.map((p) => p.ownerId), ['new', 'old'])
-  assert.deepEqual(pending[1].businesses.map((b) => b.id), ['a', 'c'])
-  assert.equal(pending[1].createdAt, '2026-10-01T09:00:00')
+  const fresh = newAccounts(list, now)
+  assert.deepEqual(fresh.map((p) => p.ownerId), ['fresh', 'old'])
+  assert.equal(fresh[0].kind, 'CUSTOMER')
+  assert.deepEqual(fresh[1].businesses.map((b) => b.id), ['a', 'c'])
+  assert.equal(fresh[1].createdAt, '2026-10-01T09:00:00')
 })
 
 test('clasificar a un dueño cambia todos sus negocios y ninguno más', () => {

@@ -2,6 +2,10 @@
 // admin/BusinessesPage, EditUserModal. La llave es el español.
 export default {
   en: {
+    '1 cuenta nueva': '1 new account',
+    '{n} cuentas nuevas': '{n} new accounts',
+    'Cuentas nuevas': 'New accounts',
+    'Las que llegaron estos 7 días entran como Cliente; si alguna es de prueba, pásala a Tester. Las que dicen «sin revisar» son de antes: dinos qué son.': 'Sign-ups from the last 7 days come in as Customer; if one is a test account, switch it to Tester. The ones marked “to review” are older: tell us what they are.',
     // ── 30-oct (2): Socio, pestañas y la ruta al día
     'Socio': 'Partner',
     'Socios': 'Partners',
@@ -374,6 +378,10 @@ export default {
   },
 
   it: {
+    '1 cuenta nueva': '1 nuovo account',
+    '{n} cuentas nuevas': '{n} nuovi account',
+    'Cuentas nuevas': 'Nuovi account',
+    'Las que llegaron estos 7 días entran como Cliente; si alguna es de prueba, pásala a Tester. Las que dicen «sin revisar» son de antes: dinos qué son.': 'Le registrazioni degli ultimi 7 giorni entrano come Cliente; se una è di prova, passala a Tester. Quelle «da rivedere» sono precedenti: dicci cosa sono.',
     // ── 30-oct (2): Socio, pestañas y la ruta al día
     'Socio': 'Socio',
     'Socios': 'Soci',

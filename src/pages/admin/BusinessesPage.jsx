@@ -188,7 +188,7 @@ export default function BusinessesPage() {
 
   // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS).
   const kinds = useAccountKinds()
-  const [tab, setTab] = useState('all')
+  const [tab, setTab] = useState('customers') // Frank: siempre se abre en Clientes
   const kindOfBiz = (b) => kinds.byBusiness.get(b.id)?.kind ?? null
   const ownerOfBiz = (b) => kinds.byBusiness.get(b.id)?.ownerId ?? null
 

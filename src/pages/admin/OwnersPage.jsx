@@ -177,7 +177,7 @@ export default function OwnersPage() {
 
   // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS; un owner sin negocio no sale en el panel).
   const kinds = useAccountKinds()
-  const [tab, setTab] = useState('all')
+  const [tab, setTab] = useState('customers') // Frank: siempre se abre en Clientes
   const kindOfOwner = (u) => kinds.byOwner.get(u.id) ?? null
 
   const list = useMemo(() => {

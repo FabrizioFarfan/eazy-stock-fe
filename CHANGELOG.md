@@ -3,6 +3,11 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.29.1 — 2026-10-30 (siempre en Clientes; cuentas nuevas de 7 días; sube junto al API 1.19.1)
+- Panel Boss, Negocios y Owners se abren **siempre en «Clientes»**.
+- Desde el API 1.19.1, quien se registra entra como Cliente. El bloque azul pasa a ser **«Cuentas nuevas»**: los clientes que llegaron los últimos 7 días, con su etiqueta para pasarlos a Tester si son de prueba, y las cuentas antiguas que siguen sin revisar. La cifra de arriba se llama «Cuentas nuevas».
+- `utils/accountKinds.newAccounts(businesses, now, days)` sustituye a `pendingAccounts` (tests al día, 176 en verde).
+
 ## 1.29.0 — 2026-10-30 (Negocios y Owners con Cliente / Tester / Socio; la ruta al día y al final)
 - **Negocios y Owners** enseñan lo mismo que el Panel Boss (Frank: «quiero ver esta distinción: estos son testers, estos clientes, este socio»). Arriba están las pestañas Clientes / Nuevos / Testers / Socios / Todos, con su contador. En cada tarjeta, la etiqueta y los tres botones para cambiarla. Los datos salen de `/boss/activity`, así que no hay cambios en el API. Solo para BOSS; un owner sin negocio no tiene etiqueta.
 - **«Equipo» pasa a llamarse «Socio»** en todas partes (Panel Boss, Negocios, Owners y Suscripciones).
