@@ -4,7 +4,8 @@
 // versión alemana (vinculante: el Impressum es el texto que dictó el asesor) + español
 // e inglés como traducción de cortesía para nuestros usuarios (16-oct-2026).
 // Datos: Contabo GmbH es el hoster (servidor en la UE); no hay analítica ni rastreo;
-// localStorage solo técnico (sesión, idioma, menú) → sin banner de cookies.
+// localStorage solo técnico (sesión, idioma, menú) → sin banner de cookies. Desde el 30-oct-2026 hay estadísticas de visitas
+// propias SIN cookies ni almacenamiento (punto 10 de la privacidad; analytics/Tracker.jsx + AnalyticsService en el API).
 // 22-oct-2026 (antes de cobrar con Stripe): TÉRMINOS Y CONDICIONES (/terminos) en
 // es/de/en — renovación automática, cancelación, reembolsos, solo lectura al vencer,
 // datos — y la Datenschutz suma la sección «Pagos (Stripe)» que exige la DSGVO.
@@ -97,7 +98,7 @@ export const IMPRESSUM = {
 }
 
 /** Fecha de la Datenschutz; se muestra en cada idioma. */
-export const PRIVACY_UPDATED = { de: 'Stand: 29. Oktober 2026', es: 'Última actualización: 29 de octubre de 2026', en: 'Last updated: October 29, 2026' }
+export const PRIVACY_UPDATED = { de: 'Stand: 30. Oktober 2026', es: 'Última actualización: 30 de octubre de 2026', en: 'Last updated: October 30, 2026' }
 
 export const PRIVACY_LANGS = [
   { code: 'de', label: 'Deutsch' },
@@ -114,7 +115,7 @@ export const PRIVACY = {
     sections: [
       { h: '1. Datenschutz auf einen Blick', p: [
         'Die folgenden Hinweise geben einen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie die Website eazy-stock.com besuchen oder die Anwendung Eazy Stock nutzen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.',
-        'Eazy Stock ist ein Inventar-, Verkaufs- und Kundenkredit-System für kleine Geschäfte. Wir erheben nur die Daten, die für den Betrieb des Dienstes nötig sind. Wir setzen keine Analyse-, Tracking- oder Werbe-Tools ein und verkaufen keine Daten.',
+        'Eazy Stock ist ein Inventar-, Verkaufs- und Kundenkredit-System für kleine Geschäfte. Wir erheben nur die Daten, die für den Betrieb des Dienstes nötig sind. Wir setzen keine Analyse-, Tracking- oder Werbe-Tools von Dritten ein und verkaufen keine Daten; auf den öffentlichen Seiten zählen wir Besuche nur mit einem eigenen Werkzeug ohne Cookies (siehe Abschnitt 10).',
       ] },
       { h: '2. Verantwortlicher', p: [
         `Verantwortlicher für die Datenverarbeitung auf dieser Website ist: ${ADDRESS}.`,
@@ -156,8 +157,9 @@ export const PRIVACY = {
         'Die Hinweise werden über Firebase Cloud Messaging von Google (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland) und auf dem iPhone über den Benachrichtigungsdienst von Apple (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Irland) zugestellt. Diese Anbieter können Daten in den USA verarbeiten; sie stützen sich dafür auf die Standardvertragsklauseln der Europäischen Kommission und das EU-US Data Privacy Framework.',
         'Grundlage ist die Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO). Ob Hinweise auf dem Telefon angezeigt werden, entscheiden Sie in den Einstellungen des Telefons und können es jederzeit ändern. Das Token wird gelöscht, wenn Sie sich auf diesem Telefon abmelden oder die Löschung Ihres Kontos beantragen.',
       ] },
-      { h: '10. Keine Analyse-Tools, kein Tracking, keine Werbung', p: [
-        'Auf eazy-stock.com werden keine Web-Analyse-Dienste (z. B. Google Analytics), keine Social-Media-Plugins, keine eingebetteten Videos und keine Werbenetzwerke eingesetzt. Es findet keine Profilbildung statt. Deshalb zeigen wir auch kein Cookie-Banner.',
+      { h: '10. Eigene Besuchsstatistik ohne Cookies; kein Tracking, keine Werbung', p: [
+        'Auf den öffentlichen Seiten von eazy-stock.com (Startseite, Tarife, Registrierung …) zählen wir Besuche mit einem eigenen Werkzeug auf unserem Server, ohne Dritte: welche Seiten aufgerufen und welche Schaltflächen angeklickt werden, das Land (im Moment des Aufrufs aus der IP-Adresse ermittelt, die IP-Adresse wird nicht gespeichert), die Geräteart, die Sprache und von welcher Website der Besuch kommt (nur deren Domain sowie die utm-Angaben des Links). Um einen Besucher nur einmal pro Tag zu zählen, wird ein Code mit einem zufälligen Schlüssel gebildet, der jeden Tag wechselt und nicht gespeichert wird: Er erlaubt weder, Sie an einem anderen Tag wiederzuerkennen, noch, Sie zu identifizieren. Dafür setzen wir keine Cookies und speichern nichts auf Ihrem Gerät; es findet keine Profilbildung statt, und die Daten werden nicht weitergegeben. Nicht gezählt wird, wer angemeldet ist oder in seinem Browser „Do Not Track“ bzw. „Global Privacy Control“ aktiviert hat. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse, die Nutzung unserer Website zu verstehen und sie zu verbessern). Die Daten werden nach 13 Monaten gelöscht.',
+        'Es werden keine Web-Analyse-Dienste Dritter (z. B. Google Analytics), keine Social-Media-Plugins, keine eingebetteten Videos und keine Werbenetzwerke eingesetzt. Deshalb zeigen wir auch kein Cookie-Banner.',
       ] },
       { h: '11. Zahlungen (Stripe)', p: [
         'Kartenzahlungen für die kostenpflichtigen Pläne von Eazy Stock werden über Stripe abgewickelt (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Irland). Beim Bezahlen geben Sie Ihre Kartendaten in ein Formular von Stripe ein; wir selbst sehen und speichern Ihre Kartennummer zu keinem Zeitpunkt.',
@@ -180,7 +182,7 @@ export const PRIVACY = {
     sections: [
       { h: '1. La privacidad de un vistazo', p: [
         'Aquí te explicamos qué pasa con tus datos personales cuando visitas eazy-stock.com o usas la aplicación Eazy Stock. Datos personales son todos los que permiten identificarte.',
-        'Eazy Stock es un sistema de inventario, ventas y fiado para tiendas pequeñas. Solo recogemos los datos necesarios para que el servicio funcione. No usamos herramientas de analítica, rastreo ni publicidad, y no vendemos datos.',
+        'Eazy Stock es un sistema de inventario, ventas y fiado para tiendas pequeñas. Solo recogemos los datos necesarios para que el servicio funcione. No usamos herramientas de analítica, rastreo ni publicidad de terceros, y no vendemos datos; en las páginas públicas solo contamos visitas con una herramienta propia sin cookies (ver el punto 10).',
       ] },
       { h: '2. Responsable del tratamiento', p: [
         `El responsable del tratamiento de datos en esta web es: ${ADDRESS}.`,
@@ -222,8 +224,9 @@ export const PRIVACY = {
         'Los avisos se envían a través de Firebase Cloud Messaging de Google (Google Ireland Limited, Gordon House, Barrow Street, Dublín 4, Irlanda) y, en iPhone, del servicio de notificaciones de Apple (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Irlanda). Estos proveedores pueden tratar datos en Estados Unidos; para ello se apoyan en las cláusulas contractuales tipo de la Comisión Europea y en el EU-US Data Privacy Framework.',
         'Base legal: la ejecución del contrato de uso (art. 6.1.b RGPD). Si los avisos se muestran o no en tu teléfono lo decides tú en los ajustes del teléfono, y puedes cambiarlo cuando quieras. El token se borra al cerrar sesión en ese teléfono y al pedir el borrado de la cuenta.',
       ] },
-      { h: '10. Sin analítica, sin rastreo, sin publicidad', p: [
-        'En eazy-stock.com no hay servicios de analítica web (por ejemplo Google Analytics), ni plugins de redes sociales, ni vídeos incrustados, ni redes publicitarias. No se crean perfiles. Por eso tampoco mostramos un banner de cookies.',
+      { h: '10. Estadísticas de visitas propias, sin cookies; sin rastreo ni publicidad', p: [
+        'En las páginas públicas de eazy-stock.com (portada, planes, registro…) contamos visitas con una herramienta propia, en nuestro servidor y sin terceros: qué páginas se ven, en qué botones se hace clic, el país (sacado de la dirección IP en el momento, sin guardarla), el tipo de dispositivo, el idioma y desde qué sitio se llega (solo su dominio y las etiquetas utm del enlace). Para contar a cada visitante una sola vez al día se calcula un código con una clave aleatoria que cambia cada día y no se guarda: no sirve para reconocerte otro día ni para identificarte. No usamos cookies ni guardamos nada en tu dispositivo para esto, no se crean perfiles y estos datos no se comparten. No se cuenta a quien tiene la sesión iniciada ni a quien activa «Do Not Track» o «Global Privacy Control» en su navegador. Base legal: art. 6.1.f RGPD (interés legítimo en saber cómo se usa nuestra web para mejorarla). Los datos se borran a los 13 meses.',
+        'No hay servicios de analítica de terceros (por ejemplo Google Analytics), ni plugins de redes sociales, ni vídeos incrustados, ni redes publicitarias. Por eso no mostramos un banner de cookies.',
       ] },
       { h: '11. Pagos (Stripe)', p: [
         'Los pagos con tarjeta de los planes de Eazy Stock los procesa Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublín 2, Irlanda). Cuando pagas, escribes los datos de tu tarjeta en un formulario de Stripe; nosotros nunca vemos ni guardamos el número de tu tarjeta.',
@@ -246,7 +249,7 @@ export const PRIVACY = {
     sections: [
       { h: '1. Privacy at a glance', p: [
         'This notice explains what happens to your personal data when you visit eazy-stock.com or use the Eazy Stock application. Personal data is any data that can identify you personally.',
-        'Eazy Stock is an inventory, sales and store-credit system for small shops. We only collect the data needed to run the service. We use no analytics, tracking or advertising tools and we do not sell data.',
+        'Eazy Stock is an inventory, sales and store-credit system for small shops. We only collect the data needed to run the service. We use no third-party analytics, tracking or advertising tools and we do not sell data; on the public pages we only count visits with our own cookie-free tool (see section 10).',
       ] },
       { h: '2. Controller', p: [
         `The controller responsible for data processing on this website is: ${ADDRESS}.`,
@@ -288,8 +291,9 @@ export const PRIVACY = {
         'Notices are delivered through Google\'s Firebase Cloud Messaging (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland) and, on iPhone, through Apple\'s notification service (Apple Distribution International Ltd., Hollyhill Industrial Estate, Hollyhill, Cork, Ireland). These providers may process data in the United States; they rely on the European Commission\'s standard contractual clauses and the EU-US Data Privacy Framework.',
         'Legal basis: performance of the usage contract (Art. 6(1)(b) GDPR). Whether notices are shown on your phone is up to you in the phone\'s settings, and you can change it at any time. The token is deleted when you log out on that phone and when you request deletion of your account.',
       ] },
-      { h: '10. No analytics, no tracking, no advertising', p: [
-        'eazy-stock.com uses no web analytics services (such as Google Analytics), no social media plugins, no embedded videos and no advertising networks. No profiling takes place. That is why we show no cookie banner.',
+      { h: '10. Our own cookie-free visit statistics; no tracking, no advertising', p: [
+        'On the public pages of eazy-stock.com (home, plans, sign-up …) we count visits with our own tool, on our own server and without third parties: which pages are viewed, which buttons are clicked, the country (derived from the IP address at that moment; the IP address is not stored), the device type, the language and which website the visit comes from (only its domain, plus the link\'s utm tags). To count each visitor only once a day, a code is computed with a random key that changes every day and is never stored: it cannot recognise you on another day or identify you. We set no cookies and store nothing on your device for this, no profiling takes place and this data is not shared. People who are signed in, or who enable “Do Not Track” or “Global Privacy Control” in their browser, are not counted. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in understanding how our website is used in order to improve it). The data is deleted after 13 months.',
+        'We use no third-party web analytics (such as Google Analytics), no social media plugins, no embedded videos and no advertising networks. That is why we show no cookie banner.',
       ] },
       { h: '11. Payments (Stripe)', p: [
         'Card payments for Eazy Stock\'s paid plans are processed by Stripe (Stripe Payments Europe, Ltd., 1 Grand Canal Street Lower, Grand Canal Dock, Dublin 2, Ireland). When you pay, you enter your card details in a form provided by Stripe; we never see or store your card number.',

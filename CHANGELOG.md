@@ -3,6 +3,17 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.30.0 — 2026-10-30 (Panel Boss › Visitas: analítica propia sin cookies; sube junto al API 1.20.0)
+- **Visitas** (`/boss/visitas`, en el menú y en las pestañas del Boss):
+  - Visitantes del periodo (hoy, 7, 30 o 90 días) y cuántos hay en la web ahora mismo; páginas vistas, cuántos vieron precios, cuentas creadas y conversión.
+  - **El embudo**: entraron → vieron los precios → abrieron el registro → enviaron el formulario → crearon su cuenta → hicieron su primera venta, con el porcentaje sobre el paso anterior.
+  - **Visitantes por día**, con el detalle al pasar el ratón.
+  - Países (con bandera), de dónde vienen, dispositivo, páginas más vistas, botones más pulsados y campañas (utm_campaign).
+- **El rastreador** (`analytics/Tracker.jsx` + `analytics/track.js`, lógica en `utils/analytics.js`): solo en las páginas públicas; nunca para quien tiene la sesión abierta ni para quien pide «no me sigas». Sin cookies ni almacenamiento: cada evento va solo, con `fetch` keepalive y sin credenciales. Cuenta páginas vistas (de dónde viene, solo en la primera), clics en WhatsApp, registro, planes, entrar o lo marcado con `data-track`, si se llegan a ver los precios de la portada (#precios) y el envío del registro.
+- **Privacidad** (de/es/en), punto 1 y punto 10: ahora explican estas estadísticas propias sin cookies (art. 6.1.f RGPD, borrado a los 13 meses). Fecha: 30-oct.
+- Menú lateral: «Panel Boss» ya no se marca en sus subpáginas.
+- Tests: `utils/analytics.test.mjs` (4) y `utils/visits.test.mjs` (4); 184 en verde.
+
 ## 1.29.1 — 2026-10-30 (siempre en Clientes; cuentas nuevas de 7 días; sube junto al API 1.19.1)
 - Panel Boss, Negocios y Owners se abren **siempre en «Clientes»**.
 - Desde el API 1.19.1, quien se registra entra como Cliente. El bloque azul pasa a ser **«Cuentas nuevas»**: los clientes que llegaron los últimos 7 días, con su etiqueta para pasarlos a Tester si son de prueba, y las cuentas antiguas que siguen sin revisar. La cifra de arriba se llama «Cuentas nuevas».

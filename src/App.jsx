@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { AuthProvider } from './context/AuthContext'
 import AppRouter from './router/AppRouter'
 import { LangProvider } from './i18n'
+import AnalyticsTracker from './analytics/Tracker'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,6 +18,7 @@ export default function App() {
       <BrowserRouter>
         <LangProvider>
           <AuthProvider>
+            <AnalyticsTracker />
             <AppRouter />
             <Toaster position="top-right" richColors />
           </AuthProvider>

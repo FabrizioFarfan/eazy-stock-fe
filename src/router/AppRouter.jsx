@@ -66,6 +66,7 @@ import OwnersPage          from '../pages/admin/OwnersPage'
 import BossPage            from '../pages/BossPage'
 import SubscriptionsPage   from '../pages/admin/SubscriptionsPage'
 import FeedbackPage       from '../pages/admin/FeedbackPage'
+import VisitsPage         from '../pages/admin/VisitsPage'
 
 export default function AppRouter() {
   return (
@@ -218,6 +219,9 @@ export default function AppRouter() {
       } />
       <Route path="/boss/suscripciones" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SubscriptionsPage /></ProtectedRoute>
+      } />
+      <Route path="/boss/visitas" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><VisitsPage /></ProtectedRoute>
       } />
       <Route path="/boss/feedback" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><FeedbackPage /></ProtectedRoute>

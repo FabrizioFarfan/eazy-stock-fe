@@ -12,6 +12,8 @@ import { useT } from '../i18n'
 import { APP_VERSION } from '../utils/version'
 
 const BOSS_ITEM = { icon: Crown, label: 'Panel Boss', path: '/boss' }
+// 30-oct-2026: visitas de la web pública (analítica propia)
+const VISITS_ITEM = { icon: BarChart2, label: 'Visitas', path: '/boss/visitas' }
 
 const SUPER_ADMIN_NAV = [
   { icon: Building2, label: 'Negocios', path: '/admin/businesses' },
@@ -105,7 +107,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const baseItems = user?.isBoss
-    ? [BOSS_ITEM, ...SUPER_ADMIN_NAV]
+    ? [BOSS_ITEM, VISITS_ITEM, ...SUPER_ADMIN_NAV]
     : navItemsForRole(user?.role)
 
   const allowed = (item) => (!item.permission || can(item.permission))
@@ -197,7 +199,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
                   <li key={path}>
                     <NavLink
                       to={path}
-                      end={path === '/reports'}
+                      end={path === '/reports' || path === '/boss'}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-all ${
                           isActive

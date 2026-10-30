@@ -1,4 +1,4 @@
-import { Crown, Building2, Users, CreditCard, MessageSquareHeart } from 'lucide-react'
+import { Crown, Building2, Users, CreditCard, MessageSquareHeart, BarChart3 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { feedbackApi } from '../../services/endpoints/feedback'
 import { SiblingSwitcher } from '../reports/ReportKit'
@@ -28,6 +28,7 @@ export function BossSwitcher() {
   })
   const items = [
     user?.isBoss && { to: '/boss', icon: Crown, label: 'Panel Boss', hint: 'Quién usa la app y la ruta' },
+    user?.isBoss && { to: '/boss/visitas', icon: BarChart3, label: 'Visitas', hint: 'Quién entra en la web' },
     user?.isBoss && { to: '/boss/suscripciones', icon: CreditCard, label: 'Suscripciones', hint: 'Pruebas, planes y pagos' },
     user?.isBoss && { to: '/boss/feedback', icon: MessageSquareHeart, label: 'Feedback', hint: 'Lo que nos cuentan', badge: summary?.newCount ?? 0 },
     { to: '/admin/businesses', icon: Building2, label: 'Negocios', hint: 'Cada negocio registrado' },

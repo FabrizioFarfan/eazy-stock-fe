@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { track } from '../analytics/track'
 import { Navigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -121,6 +122,7 @@ export default function RegisterPage() {
   if (!isLoading && token) return <Navigate to="/dashboard" replace />
 
   const onSubmit = async ({ accept, phone, ...values }) => {
+    track('register_submit') // analítica: llegó a enviar el formulario (la cuenta creada la apunta el API)
     void accept
     setError('')
     setSubmitting(true)
