@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Crown, Rocket, FlaskConical, Paintbrush, ClipboardList, CreditCard, Wallet, Smartphone, Mic, Sparkles,
   Building2, Users, ShoppingCart, Activity, CheckCircle2, Check, X, XCircle, Loader2, RefreshCw,
-  ChevronLeft, ChevronRight, Map,
+  ChevronLeft, ChevronRight, Map, BadgeCheck, UserPlus,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useT } from '../i18n'
@@ -11,6 +11,9 @@ import { bossApi } from '../services/endpoints/boss'
 import { ReportHeader, ReportHero } from '../components/reports/ReportKit'
 import { BossSwitcher, FlagAvatar } from '../components/boss/BossKit'
 import { APP_VERSION } from '../utils/version'
+import { KINDS, FILTERS, filterBusinesses, countByFilter, defaultFilter, pendingAccounts, withKind, kindOf } from '../utils/accountKinds'
+import { toast } from 'sonner'
+import { getErrorMessage } from '../utils/handleApiError'
 
 /* ── La ruta (espejo de ROADMAP.md + plan oficial M1–M5 del 17-sep) ──────────
  * status: done · failed (se intentó y no salió: la ruta sigue) · now · next · future
@@ -160,6 +163,93 @@ const ROLE_CHIP = {
 }
 const ROLE_SHORT = { BOSS: 'Boss', SUPER_ADMIN: 'Admin', OWNER: 'Owner', EMPLOYEE: 'Empleado' }
 
+/* ── Qué es cada cuenta (30-oct-2026): cliente, tester o equipo; null = nueva, sin revisar ── */
+
+const KIND_CFG = {
+  CUSTOMER: { label: 'Cliente', icon: BadgeCheck,   chip: 'bg-emerald-100 text-emerald-700', on: 'bg-emerald-600 text-white' },
+  TESTER:   { label: 'Tester',  icon: FlaskConical, chip: 'bg-gray-100 text-gray-500',       on: 'bg-gray-700 text-white' },
+  TEAM:     { label: 'Equipo',  icon: Crown,        chip: 'bg-amber-100 text-amber-700',     on: 'bg-amber-500 text-white' },
+  NEW:      { label: 'Nuevo · sin revisar', icon: Sparkles, chip: 'bg-blue-100 text-blue-700' },
+}
+const kindCfg = (kind) => KIND_CFG[kind ?? 'NEW']
+
+const FILTER_LABEL = { customers: 'Clientes', new: 'Nuevos', testers: 'Testers', team: 'Equipo', all: 'Todos' }
+
+function KindChip({ kind }) {
+  const t = useT()
+  const cfg = kindCfg(kind)
+  const Icon = cfg.icon
+  return (
+    <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${cfg.chip}`}>
+      <Icon size={11} /> {t(cfg.label)}
+    </span>
+  )
+}
+
+/** Tres botones: tocar el que ya está lo devuelve a «sin revisar». */
+function KindPicker({ kind, onPick, busy }) {
+  const t = useT()
+  return (
+    <div className="inline-flex rounded-xl border border-gray-200 bg-white p-0.5" role="group" aria-label={t('¿Qué es esta cuenta?')}>
+      {KINDS.map((k) => {
+        const cfg = KIND_CFG[k]
+        const Icon = cfg.icon
+        const on = kind === k
+        return (
+          <button key={k} type="button" disabled={busy} aria-pressed={on}
+            onClick={() => onPick(on ? null : k)}
+            title={on ? t('Volver a «sin revisar»') : t('Marcar como {kind}', { kind: t(cfg.label) })}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+              on ? cfg.on : 'text-gray-500 hover:bg-gray-50'}`}>
+            <Icon size={12} /> {t(cfg.label)}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function NewAccounts({ accounts, onPick, busyId, serverTs }) {
+  const t = useT()
+  if (accounts.length === 0) return null
+  return (
+    <section className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white"><UserPlus size={17} /></span>
+        <div>
+          <h3 className="text-sm font-bold text-gray-900">
+            {accounts.length === 1 ? t('1 cuenta nueva por revisar') : t('{n} cuentas nuevas por revisar', { n: accounts.length })}
+          </h3>
+          <p className="text-[11px] text-gray-500">{t('Dinos qué es cada una: así las cifras de arriba cuentan solo a los clientes de verdad.')}</p>
+        </div>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {accounts.map((a) => (
+          <li key={a.ownerId} className="flex flex-wrap items-center gap-3 rounded-xl border border-white bg-white px-3.5 py-2.5 shadow-sm">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-gray-900">{a.ownerName ?? t('Sin nombre')}</p>
+              <p className="truncate text-[11px] text-gray-400">
+                {a.businesses.map((b) => b.name).join(' · ')}
+                {a.createdAt && serverTs ? ` · ${registeredLabel(a.createdAt, serverTs, t)}` : ''}
+              </p>
+            </div>
+            <KindPicker kind={null} busy={busyId === a.ownerId} onPick={(k) => onPick(a.ownerId, k)} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function registeredLabel(createdAt, serverTs, t) {
+  const ts = parseTs(createdAt)
+  if (!ts) return ''
+  const d = Math.floor(Math.max(0, serverTs - ts) / 86400000)
+  if (d === 0) return t('se registró hoy')
+  if (d === 1) return t('se registró ayer')
+  return t('se registró hace {n} días', { n: d })
+}
+
 /* ── La ruta: estaciones en horizontal, enfocada en la actual ─────────────── */
 
 function Station({ phase, index, focused, onFocus, nodeRef }) {
@@ -288,16 +378,21 @@ function RoadmapStrip() {
 
 /* ── Actividad por negocio ───────────────────────────────────────────────── */
 
-function BusinessCard({ biz, serverTs }) {
+function BusinessCard({ biz, serverTs, onPick, busy }) {
   const t = useT()
   const sale = lastSaleLabel(biz.lastSaleAt, serverTs, t)
   const hot = biz.salesLast7Days > 0
+  const customer = kindOf(biz) === 'CUSTOMER'
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm ${
+      customer ? 'border-emerald-200 ring-2 ring-emerald-500/15' : 'border-gray-100'}`}>
       <div className="flex items-center gap-3 border-b border-gray-50 px-4 py-3.5">
         <FlagAvatar code={biz.countryCode} className="!h-11 !w-11" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-bold leading-tight text-gray-900">{biz.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="truncate font-bold leading-tight text-gray-900">{biz.name}</p>
+            {biz.ownerId && <KindChip kind={kindOf(biz)} />}
+          </div>
           <p className="truncate text-[11px] text-gray-400">{sale}</p>
         </div>
         <div className="flex flex-shrink-0 flex-col items-end gap-1">
@@ -332,6 +427,15 @@ function BusinessCard({ biz, serverTs }) {
           )
         })}
       </ul>
+
+      {biz.ownerId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-50 bg-gray-50/60 px-4 py-2.5">
+          <span className="text-[11px] font-semibold text-gray-400">
+            {t('Cuenta de {name}', { name: biz.ownerName ?? '—' })}
+          </span>
+          <KindPicker kind={kindOf(biz)} busy={busy} onPick={(k) => onPick(biz.ownerId, k)} />
+        </div>
+      )}
     </div>
   )
 }
@@ -345,19 +449,45 @@ export default function BossPage() {
     queryKey: ['boss-activity'],
     queryFn: () => bossApi.getActivity().then((r) => r.data.data ?? r.data),
   })
-  const loading = isLoading || isFetching
+  const loading = isLoading
   const error = isError
+  const qc = useQueryClient()
 
   const serverTs   = parseTs(data?.serverTime)
   const businesses = data?.businesses ?? []
-  const activeBiz  = businesses.filter((b) => b.active)
-  const allUsers   = businesses.flatMap((b) => b.users)
+  // 30-oct-2026: las cifras de arriba son de los CLIENTES de verdad (William), no de testers ni del equipo.
+  const customers  = filterBusinesses(businesses, 'customers')
+  const customerUsers = customers.flatMap((b) => b.users)
   const activeToday = serverTs
-    ? allUsers.filter((u) => ['online', 'today'].includes(activityInfo(u.lastSeenAt, serverTs).level)).length
+    ? customerUsers.filter((u) => ['online', 'today'].includes(activityInfo(u.lastSeenAt, serverTs).level)).length
     : 0
-  const sales7d  = businesses.reduce((acc, b) => acc + b.salesLast7Days, 0)
-  const selling  = businesses.filter((b) => b.salesLast7Days > 0).length
+  const sales7d  = customers.reduce((acc, b) => acc + b.salesLast7Days, 0)
+  const selling  = customers.filter((b) => b.salesLast7Days > 0).length
+  const pending  = pendingAccounts(businesses)
+  const counts   = countByFilter(businesses)
+  const [filter, setFilter] = useState(null)
+  const shownFilter = filter ?? defaultFilter(businesses)
+  const shown = filterBusinesses(businesses, shownFilter)
   const firstName = user?.name?.split(' ')[0] ?? ''
+
+  const classify = useMutation({
+    mutationFn: ({ ownerId, kind }) => bossApi.setAccountKind(ownerId, kind),
+    onMutate: ({ ownerId, kind }) => {
+      const before = qc.getQueryData(['boss-activity'])
+      qc.setQueryData(['boss-activity'], (d) => (d ? { ...d, businesses: withKind(d.businesses, ownerId, kind) } : d))
+      return { before }
+    },
+    onError: (err, _v, ctx) => {
+      if (ctx?.before) qc.setQueryData(['boss-activity'], ctx.before)
+      toast.error(getErrorMessage(err))
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['boss-activity'] })
+      qc.invalidateQueries({ queryKey: ['boss-subscriptions'] })
+    },
+  })
+  const pick = (ownerId, kind) => classify.mutate({ ownerId, kind })
+  const busyId = classify.isPending ? classify.variables?.ownerId : null
 
   return (
     <div className="flex flex-col gap-5">
@@ -374,15 +504,17 @@ export default function BossPage() {
 
       <BossSwitcher />
 
-      <ReportHero icon={ShoppingCart} label={t('Ventas en toda la plataforma · 7 días')} loading={loading}
+      <ReportHero icon={ShoppingCart} label={t('Ventas de los clientes · 7 días')} loading={loading}
         value={sales7d}
-        sub={<span>{selling === 1 ? t('1 negocio vendió esta semana') : t('{n} negocios vendieron esta semana', { n: selling })}</span>}
+        sub={<span>{selling === 1 ? t('1 cliente vendió esta semana') : t('{n} clientes vendieron esta semana', { n: selling })}</span>}
         cells={[
-          [t('Negocios activos'), activeBiz.length],
-          [t('Usuarios'), allUsers.length],
+          [t('Clientes'), counts.customers],
+          [t('Por revisar'), pending.length],
           [t('Activos hoy'), activeToday],
-          [t('Negocios vendiendo'), selling],
+          [t('Testers'), counts.testers],
         ]} />
+
+      <NewAccounts accounts={pending} onPick={pick} busyId={busyId} serverTs={serverTs} />
 
       <RoadmapStrip />
 
@@ -394,7 +526,7 @@ export default function BossPage() {
           </div>
           <button type="button" onClick={() => refetch()}
             className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50">
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={12} className={isFetching ? 'animate-spin' : ''} />
             {t('Actualizar')}
           </button>
         </div>
@@ -415,9 +547,28 @@ export default function BossPage() {
           </div>
         )}
         {!loading && !error && businesses.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {businesses.map((biz) => <BusinessCard key={biz.id} biz={biz} serverTs={serverTs} />)}
-          </div>
+          <>
+            <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t('Qué cuentas ver')}>
+              {FILTERS.map((f) => (
+                <button key={f} type="button" role="tab" aria-selected={shownFilter === f} onClick={() => setFilter(f)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
+                    shownFilter === f ? 'bg-gray-900 text-white' : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
+                  {t(FILTER_LABEL[f])} <span className={shownFilter === f ? 'text-white/60' : 'text-gray-300'}>{counts[f]}</span>
+                </button>
+              ))}
+            </div>
+            {shown.length === 0 ? (
+              <div className="rounded-2xl border border-gray-100 bg-white px-4 py-8 text-center text-sm text-gray-400 shadow-sm">
+                {t('Ninguna cuenta en «{tab}» todavía.', { tab: t(FILTER_LABEL[shownFilter]) })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {shown.map((biz) => (
+                  <BusinessCard key={biz.id} biz={biz} serverTs={serverTs} onPick={pick} busy={busyId === biz.ownerId} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
 

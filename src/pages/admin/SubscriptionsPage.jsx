@@ -157,6 +157,9 @@ function CouponField({ row }) {
   )
 }
 
+const KIND_LABEL = { CUSTOMER: 'Cliente', TESTER: 'Tester', TEAM: 'Equipo', NEW: 'Nuevo · sin revisar' }
+const KIND_TONE = { CUSTOMER: 'emerald', TESTER: 'gray', TEAM: 'amber', NEW: 'blue' }
+
 function Row({ row, onEdit }) {
   const t = useT()
   const markPaid = useMarkPaid()
@@ -188,6 +191,8 @@ function Row({ row, onEdit }) {
             <p className="truncate font-bold leading-tight text-gray-900">{row.ownerName || row.businessName}</p>
             <Chip tone={STATUS_TONE[row.status] ?? 'gray'}>{t(STATUS_LABEL[row.status] ?? row.status)}</Chip>
             <Chip tone="blue">{planName(row.plan)}</Chip>
+            {/* 30-oct-2026: qué es la cuenta (se cambia en el Panel Boss) */}
+            <Chip tone={KIND_TONE[row.accountKind ?? 'NEW']}>{t(KIND_LABEL[row.accountKind ?? 'NEW'])}</Chip>
           </div>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-gray-500">
             <Store size={12} className="text-gray-400" />

@@ -3,6 +3,14 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.28.0 — 2026-10-30 (Panel Boss: clientes de verdad; sube junto al API 1.19.0)
+- **Cada cuenta es Cliente, Tester o Equipo.** Frank: «la única que cuenta de verdad es la de William». En cada tarjeta de «¿Quién lo está usando?» hay tres botones (Cliente / Tester / Equipo); tocar el que ya está la devuelve a «sin revisar». La tarjeta de un cliente lleva un borde verde.
+- **Cuentas nuevas por revisar**: un bloque azul arriba del todo enseña cada cuenta que se registró y nadie ha clasificado todavía (la más nueva primero, con su negocio y cuándo se registró). Así quien hace marketing ve quién va llegando.
+- **Las cifras de arriba son de los clientes**: ventas de los clientes en 7 días, cuántos clientes, cuántas cuentas por revisar, clientes activos hoy y testers.
+- **Pestañas**: Clientes / Nuevos / Testers / Equipo / Todos, con cuántas hay en cada una. Se abre en Clientes si ya hay alguno.
+- Suscripciones: cada fila enseña también qué es la cuenta.
+- Lógica en `utils/accountKinds.js`, con 4 tests.
+
 ## 1.27.1 — 2026-10-29 (sube junto al API 1.18.1)
 - **Inicio**: la tarjeta azul pasa de «Ingresos de hoy» a **«Vendido hoy»** (como en Ventas) y muestra lo vendido menos las devoluciones del día (`netRevenue` del API 1.18.1; con un API anterior, `totalRevenue`), con «Devoluciones: −S/ x» si hubo. El ticket promedio sigue siendo por venta. «Este mes» también resta las devoluciones (`netSales − returns`). Ventas usa el mismo neto.
 - **Ficha del producto**: el margen se calcula sobre la venta, (venta − costo) ÷ venta, como el Balance y la recepción (antes era sobre el costo y salía más alto).
