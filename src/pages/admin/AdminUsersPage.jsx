@@ -122,20 +122,22 @@ function DeleteOwnerModal({ owner, onClose }) {
   const t = useT()
   const deleteOwner = useDeleteOwner()
   const [confirmEmail, setConfirmEmail] = useState('')
+  // 4-nov-2026 (Frank): las cuentas de prueba se borran DE VERDAD, con su negocio y todos sus datos.
+  const [withData, setWithData] = useState(!!owner.businessName)
   const matches = confirmEmail.trim().toLowerCase() === owner.email.toLowerCase()
 
   const onConfirm = async () => {
     if (!matches) return
     try {
-      await deleteOwner.mutateAsync({ id: owner.id, confirmEmail: confirmEmail.trim() })
-      toast.success(t('Owner {name} eliminado permanentemente', { name: owner.name }))
+      await deleteOwner.mutateAsync({ id: owner.id, confirmEmail: confirmEmail.trim(), withData })
+      toast.success(withData ? t('Cuenta {name} eliminada con su negocio y todos sus datos', { name: owner.name }) : t('Owner {name} eliminado permanentemente', { name: owner.name }))
       onClose()
     } catch { /* error mostrado inline */ }
   }
 
   return (
-    <ConfirmCard icon={ShieldAlert} tone="red" title={t('Eliminar owner permanentemente')} onClose={onClose}
-      onConfirm={onConfirm} confirmLabel={t('Eliminar definitivamente')} pending={deleteOwner.isPending} disabled={!matches}>
+    <ConfirmCard icon={ShieldAlert} tone="red" title={t('Eliminar cuenta permanentemente')} onClose={onClose}
+      onConfirm={onConfirm} confirmLabel={withData ? t('Borrar cuenta, negocio y datos') : t('Eliminar definitivamente')} pending={deleteOwner.isPending} disabled={!matches}>
       <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3">
         <InitialsAvatar name={owner.name} />
         <div className="min-w-0">
@@ -144,13 +146,19 @@ function DeleteOwnerModal({ owner, onClose }) {
           {owner.businessName && <p className="truncate text-xs text-gray-400">{owner.businessName}</p>}
         </div>
       </div>
-      <div className="flex gap-2.5 rounded-2xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-700">
-        <AlertTriangle size={15} className="mt-0.5 flex-shrink-0" />
-        <div>
-          <p>{t('La cuenta y sus accesos se borran de forma definitiva.')}</p>
-          <p className="mt-1">{t('Si el owner ya registró ventas, stock o compras, la eliminación se bloquea automáticamente — en ese caso solo puede desactivarse.')}</p>
+      <label className={`flex cursor-pointer gap-2.5 rounded-2xl border px-3.5 py-3 text-xs leading-relaxed ${withData ? 'border-red-200 bg-red-50 text-red-800' : 'border-gray-200 bg-white text-gray-600'}`} data-testid="delete-with-data">
+        <input type="checkbox" checked={withData} onChange={(e) => setWithData(e.target.checked)} className="mt-0.5 accent-red-600" />
+        <span>
+          <span className="block font-bold">{t('Borrar también su negocio y TODOS sus datos')}</span>
+          <span className="block">{t('Productos, ventas, compras, clientes, empleados y suscripción: todo se va ya mismo, sin los 30 días de gracia. Es lo que quieres para una cuenta de prueba; no se puede deshacer.')}</span>
+        </span>
+      </label>
+      {!withData && (
+        <div className="flex gap-2.5 rounded-2xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-700">
+          <AlertTriangle size={15} className="mt-0.5 flex-shrink-0" />
+          <p>{t('Sin esa casilla solo se borra la cuenta: si tiene un negocio (aunque esté desactivado) o actividad, se bloquea.')}</p>
         </div>
-      </div>
+      )}
       <div>
         <label className="mb-1.5 block text-sm font-bold text-gray-800">{t('Escribe el email del owner para confirmar')}</label>
         <input type="email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} placeholder={owner.email} autoComplete="off"
@@ -265,7 +273,7 @@ export default function AdminUsersPage() {
       )}
 
       <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-300">
-        <Trash2 size={12} /> {t('Eliminar solo funciona con usuarios sin actividad; los demás se desactivan desde Editar.')}
+        <Trash2 size={12} /> {t('Eliminar borra la cuenta; con la casilla «Borrar también su negocio y todos sus datos» se va con todo, ya mismo.')}
       </p>
 
       {showModal && <CreateOwnerModal onClose={() => setShowModal(false)} />}

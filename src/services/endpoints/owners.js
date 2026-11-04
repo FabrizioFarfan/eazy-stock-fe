@@ -7,6 +7,7 @@ export const ownersApi = {
   create: (data) => api.post('/admin/owners', data),
   // body: { name, email, password, businessId }
 
-  remove: (id, confirmEmail) => api.delete(`/admin/owners/${id}`, { params: { confirmEmail } }),
-  // eliminación PERMANENTE; 409 si el owner ya tiene actividad de negocio
+  // eliminación PERMANENTE. Sin withData: 409 si tiene negocio o actividad. Con withData=true (API 1.21.1):
+  // se va con su(s) negocio(s) y TODOS sus datos, ya mismo (Frank, 4-nov: borrar de verdad las cuentas de prueba).
+  remove: (id, confirmEmail, withData = false) => api.delete(`/admin/owners/${id}`, { params: { confirmEmail, ...(withData ? { withData: true } : {}) } }),
 }
