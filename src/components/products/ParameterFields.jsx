@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Plus, X, Pin } from 'lucide-react'
+import { Plus, X, Pin, Sparkles } from 'lucide-react'
+import ParameterModal from './ParameterModal'
 import { useT } from '../../i18n'
 import { attrValueFor, withParamValue, normalizeYesNo, YES, NO } from '../../utils/parameters'
 
@@ -18,12 +19,14 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
   const t = useT()
   const [added, setAdded] = useState(() => new Set())
   const [picking, setPicking] = useState(false)
+  // William (varias veces): crear el parámetro desde el propio producto, sin cerrar nada.
+  const [creating, setCreating] = useState(false)
   const shown = useMemo(() => parameters.filter((p) => p.pinned || added.has(p.id) || attrValueFor(attributes, p.name) !== ''), [parameters, added, attributes])
   const hidden = useMemo(() => parameters.filter((p) => !shown.includes(p)), [parameters, shown])
-  if (!parameters.length) return null
   const set = (p, v) => onChange(withParamValue(attributes, p.name, v))
   const remove = (p) => { set(p, ''); setAdded((s) => { const n = new Set(s); n.delete(p.id); return n }) }
   const add = (p) => { setAdded((s) => new Set(s).add(p.id)); setPicking(false) }
+  const onCreated = (p) => { if (p?.id) setAdded((s) => new Set(s).add(p.id)); setPicking(false) }
   const grid = columns === 1 ? 'grid-cols-1' : columns === 3 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'
   return (
     <div className="flex flex-col gap-2" data-testid="parameter-fields">
@@ -61,13 +64,12 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
           })}
         </div>
       )}
-      {hidden.length > 0 && (
-        <div>
+      <div>
           {!picking ? (
             <button type="button" onClick={() => setPicking(true)} data-testid="add-parameter"
               className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700">
               <Plus size={12} /> {shown.length ? t('Añadir parámetro') : t('Añadir un parámetro (color, medida, material…)')}
-              <span className="text-gray-400">· {hidden.length}</span>
+              {hidden.length > 0 && <span className="text-gray-400">· {hidden.length}</span>}
             </button>
           ) : (
             <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2" data-testid="parameter-picker">
@@ -82,12 +84,16 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
                     + {p.name}{p.unit ? <span className="font-normal text-gray-400"> ({p.unit})</span> : null}
                   </button>
                 ))}
+                <button type="button" onClick={() => setCreating(true)} data-testid="new-parameter-inline"
+                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-blue-400 bg-white px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-50">
+                  <Sparkles size={11} /> {t('Nuevo parámetro…')}
+                </button>
               </div>
               <p className="mt-1.5 text-[10px] text-gray-400">{t('Para que uno salga siempre, fíjalo en Catálogo › Parámetros.')}</p>
             </div>
           )}
         </div>
-      )}
+      {creating && <ParameterModal parameter={null} onClose={() => setCreating(false)} onCreated={onCreated} />}
     </div>
   )
 }

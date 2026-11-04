@@ -1045,12 +1045,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </div>
 
                   {/* Parámetros del negocio (Frank, 4-nov-2026): Artesanal Sí/No, Color, Largo cm… se filtran en Productos e Inventario */}
-                  {parameters.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
-                      <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
-                    </div>
-                  )}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
+                    <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
+                  </div>
 
                   {/* Atributos libres */}
                   <div data-tutorial-target="attributes" className="flex flex-col gap-2">
