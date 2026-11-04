@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { X, Receipt } from 'lucide-react'
-import { useSuppliers } from '../../hooks/useSuppliers'
+import { X, Receipt, Plus, Loader2 } from 'lucide-react'
+import { useSuppliers, useCreateSupplier } from '../../hooks/useSuppliers'
+import { getErrorMessage } from '../../utils/handleApiError'
 import { formatAmount } from '../../utils/formatMoney'
 import { useT } from '../../i18n'
 import { EXPENSE_CATEGORIES, PAYMENT_METHODS, categoryOf } from '../../utils/expenseKinds'
@@ -32,6 +33,20 @@ export default function ExpenseModal({ expense, onClose, onSubmit, submitting, e
   const [touched, setTouched] = useState(false)
   const { data: suppliers } = useSuppliers({ page: 0, size: 200, active: true })
   const supplierList = suppliers?.content ?? suppliers ?? []
+  // Crear el proveedor sin salir (William, 4-nov-2026): como el cliente nuevo al dar fiado.
+  const createSupplier = useCreateSupplier()
+  const [newSupplier, setNewSupplier] = useState(null) // null | '' | nombre en curso
+  const [newSupplierError, setNewSupplierError] = useState(null)
+  const saveNewSupplier = async () => {
+    const name = (newSupplier ?? '').trim()
+    if (!name) return
+    setNewSupplierError(null)
+    try {
+      const created = await createSupplier.mutateAsync({ name })
+      setSupplierId(created.id)
+      setNewSupplier(null)
+    } catch (err) { setNewSupplierError(getErrorMessage(err)) }
+  }
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && !submitting) onClose() }
@@ -109,10 +124,26 @@ export default function ExpenseModal({ expense, onClose, onSubmit, submitting, e
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls} htmlFor="expSupplier">{t('Proveedor')} <span className="font-normal normal-case text-gray-400">· {t('opcional')}</span></label>
-              <select id="expSupplier" value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className={inputCls}>
-                <option value="">{t('Sin proveedor')}</option>
-                {supplierList.filter((s) => !s.placeholderForUnassigned).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              {newSupplier === null ? (
+                <select id="expSupplier" value={supplierId} className={inputCls}
+                  onChange={(e) => { if (e.target.value === '__new__') { setNewSupplier(''); return } setSupplierId(e.target.value) }}>
+                  <option value="">{t('Sin proveedor')}</option>
+                  {supplierList.filter((s) => !s.placeholderForUnassigned).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="__new__">＋ {t('Nuevo proveedor…')}</option>
+                </select>
+              ) : (
+                <div className="flex gap-1.5" data-testid="expense-new-supplier">
+                  <input autoFocus value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)} placeholder={t('Nombre del proveedor')}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveNewSupplier() } }} className={inputCls} />
+                  <button type="button" onClick={saveNewSupplier} disabled={!newSupplier.trim() || createSupplier.isPending} aria-label={t('Crear')}
+                    className="flex flex-shrink-0 items-center rounded-xl bg-blue-600 px-3 text-white hover:bg-blue-700 disabled:opacity-50">
+                    {createSupplier.isPending ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                  </button>
+                  <button type="button" onClick={() => { setNewSupplier(null); setNewSupplierError(null) }} aria-label={t('Cancelar')}
+                    className="flex flex-shrink-0 items-center rounded-xl border border-gray-200 px-2.5 text-gray-500 hover:bg-gray-50"><X size={14} /></button>
+                </div>
+              )}
+              {newSupplierError && <p className="mt-1 text-xs text-red-600">{newSupplierError}</p>}
             </div>
             <div>
               <label className={labelCls} htmlFor="expMethod">{t('Cómo se pagó')} <span className="font-normal normal-case text-gray-400">· {t('opcional')}</span></label>

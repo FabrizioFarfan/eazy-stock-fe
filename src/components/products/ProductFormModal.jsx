@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, FolderOpen, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil, Check } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, Plus, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage, useProductNameCheck } from '../../hooks/useProducts'
 import { productsApi } from '../../services/endpoints/products'
@@ -18,6 +18,10 @@ import PriceInput from '../inputs/PriceInput'
 import PriceInputModeToggle from '../inputs/PriceInputModeToggle'
 import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField, getErrorCode } from '../../utils/handleApiError'
+import { useParameters } from '../../hooks/useParameters'
+import ParameterFields from './ParameterFields'
+import { freeAttributeKeys } from '../../utils/parameters'
+import { priceWarnings } from '../../utils/priceSanity'
 import { useT, dateLocale } from '../../i18n'
 
 const UNIT_OPTIONS = ['unidad', 'metro', 'kilo', 'litro', 'otro']
@@ -380,6 +384,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   // Suggested attributes from selected category
   const { data: suggestedAttrs = [] } = useSuggestedAttributes(categoryId)
+  // Parámetros del negocio (Frank, 4-nov-2026): campos con forma (Sí/No, opciones, número con medida).
+  const { data: parameters = [] } = useParameters(user?.role === 'SUPER_ADMIN' && user?.businessId ? { businessId: user.businessId } : {})
+  const freeAttrKeys = freeAttributeKeys(attributes, parameters)
+  // Aviso de precio raro (William, 4-nov-2026): bajo el costo o cambia más de un 80 % → confirmar.
+  const [pricePending, setPricePending] = useState(null)
 
   // Camera — mirrors ScannerInput logic (BarcodeDetector + ZXing fallback)
   const [hasCameraSupport, setHasCameraSupport] = useState(false)
@@ -609,9 +618,21 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   const onSubmit = async (values) => {
     setSupplierError(null)
     setDupPending(null)
+    setPricePending(null)
     if (!supplierId) {
       setSupplierError(t('Elegí un proveedor para este producto'))
       return
+    }
+    // A William un producto de S/ 8 le quedó a S/ 0.80: si el precio queda bajo el costo o
+    // cambia más de un 80 %, se pide confirmación enseñando el precio anterior.
+    if (!values.__priceOk) {
+      const warnings = priceWarnings({
+        newPrice: values.priceIsVariable ? null : values.salePrice,
+        oldPrice: isEdit && !product.priceIsVariable ? product.salePrice : null,
+        cost: values.purchasePrice,
+        variable: !!values.priceIsVariable,
+      })
+      if (warnings.length) { setPricePending({ values, warnings }); return }
     }
     try {
       // Resolve unit: if "otro" → use unitCustom, else use the standard option
@@ -623,7 +644,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       // initialStock es solo para alta; no viaja en update. sku se manda solo
       // si el usuario escribió algo: en alta vacío = autogenerar; en edición
       // vacío = no tocar el código actual.
-      const { unitCustom, initialStock, sku, expirationDate, ...rest } = values
+      const { unitCustom, initialStock, sku, expirationDate, __priceOk, ...rest } = values // eslint-disable-line no-unused-vars
       const trimmedSku = sku?.trim() || ''
       const expDate = expirationDate?.trim() || ''
       const payload = {
@@ -709,7 +730,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
-      <div className="flex max-h-[94dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl md:max-w-5xl">
+      <div className="flex max-h-[94dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl md:max-w-5xl xl:max-w-7xl">
 
         {/* Cabecera */}
         <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
@@ -742,14 +763,15 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           </div>
         </div>
 
-        {/* Cuerpo — en PC/tablet: foto y precios a la izquierda, datos a la derecha */}
+        {/* Cuerpo — TRÍPTICO en PC (Frank, 4-nov-2026): foto + precios | qué es + de dónde viene | códigos + parámetros.
+            En tablet, dos columnas; en el celular, una sola de arriba abajo. */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 overflow-y-auto bg-gray-50/60">
-            <div className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-5 md:grid-rows-[auto_1fr] md:gap-5">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2 md:gap-5 xl:grid-cols-3" data-testid="product-form-grid">
 
               {/* Foto del producto: para que el vendedor sepa cómo es (William).
                   Se reduce en el navegador y se sube aparte al guardar. */}
-              <div data-tutorial-target="photo" className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:col-start-1 md:row-start-1">
+              <div data-tutorial-target="photo" className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:col-start-1 md:row-start-1 xl:col-start-1 xl:row-start-1">
               <input ref={cameraInputRef}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoPick} />
               <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoPick} />
                 <div className="flex items-center gap-4 md:flex-col md:items-stretch">
@@ -789,8 +811,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 </div>
               </div>
 
-              {/* Datos: columna derecha */}
-              <div className="flex min-w-0 flex-col gap-4 md:col-span-3 md:col-start-3 md:row-span-2 md:row-start-1">
+              {/* Hoja 2 del tríptico: qué es y de dónde viene */}
+              <div className="flex min-w-0 flex-col gap-4 md:col-start-2 md:row-start-1 md:row-span-3 xl:col-start-2 xl:row-start-1 xl:row-span-2">
                 <FormSection n={1} title={t('Qué es')} hint={t('Nombre, unidad y código')}>
                   {/* Nombre + Unidad + Presentación */}
                   <div data-tutorial-target="name-unit" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -949,7 +971,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </div>
                 </FormSection>
 
-                <FormSection n={3} title={t('Códigos y detalles')} hint={t('Opcional · para el escáner y para distinguirlo')}>
+              </div>
+
+              {/* Hoja 3 del tríptico: códigos, parámetros y detalles */}
+              <div className="flex min-w-0 flex-col gap-4 md:col-start-1 md:row-start-3 xl:col-start-3 xl:row-start-1 xl:row-span-2">
+                <FormSection n={3} title={t('Códigos, parámetros y detalles')} hint={t('Opcional · para el escáner, para filtrar y para distinguirlo')}>
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {/* Código de barras de fábrica: el EAN impreso en el empaque por el
                         fabricante (Sony pone el código; el distribuidor no lo cambia).
@@ -1017,9 +1043,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     />
                   </Field>
 
-                  {/* Atributos */}
+                  {/* Parámetros del negocio (Frank, 4-nov-2026): Artesanal Sí/No, Color, Largo cm… se filtran en Productos e Inventario */}
+                  {parameters.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
+                      <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
+                    </div>
+                  )}
+
+                  {/* Atributos libres */}
                   <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">{t('Atributos')}</label>
+                    <label className="text-sm font-medium text-gray-700">{parameters.length > 0 ? t('Otros atributos') : t('Atributos')}</label>
 
                     {/* Suggested attribute chips */}
                     {suggestedAttrs.length > 0 && (
@@ -1043,10 +1077,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                       </div>
                     )}
 
-                    {/* Existing attributes */}
-                    {Object.keys(attributes).length > 0 && (
+                    {/* Existing attributes (los que no son parámetros) */}
+                    {freeAttrKeys.length > 0 && (
                       <div className="space-y-1.5">
-                        {Object.entries(attributes).map(([key, val]) => (
+                        {freeAttrKeys.map((key) => [key, attributes[key]]).map(([key, val]) => (
                           <div key={key} className="flex items-center gap-1.5">
                             <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
                             <input
@@ -1093,8 +1127,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 </FormSection>
               </div>
 
-              {/* Precios y stock: bajo la foto en PC, al final en el celular */}
-              <div className="md:col-span-2 md:col-start-1 md:row-start-2 md:self-start">
+              {/* Precios y stock: bajo la foto en PC y tablet, al final en el celular */}
+              <div className="md:col-start-1 md:row-start-2 md:self-start xl:col-start-1 xl:row-start-2">
                 <FormSection n={4} title={t('Precios y stock')} hint={t('Lo que cuesta, lo que cobras y cuánto tienes')} accent>
                   {/* Checkbox precio variable */}
                   <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
@@ -1177,7 +1211,37 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             </div>
 
             <div className="px-4 pb-4 sm:px-6">
-              {dupPending ? (
+              {pricePending ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" data-testid="price-warning">
+                  <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                    <span>{t('¿Seguro con este precio de venta?')}</span>
+                  </p>
+                  <ul className="mt-1.5 space-y-1 text-xs text-amber-800">
+                    {pricePending.warnings.map((w) => (
+                      <li key={w.code}>
+                        {w.code === 'BELOW_COST'
+                          ? t('Queda por DEBAJO del costo: vendes a {price} y te cuesta {cost}.', { price: formatPrice(w.newPrice), cost: formatPrice(w.cost) })
+                          : w.down
+                            ? t('Baja un {pct} %: antes costaba {old} y ahora {price}.', { pct: w.pct, old: formatPrice(w.oldPrice), price: formatPrice(w.newPrice) })
+                            : t('Sube un {pct} %: antes costaba {old} y ahora {price}.', { pct: w.pct, old: formatPrice(w.oldPrice), price: formatPrice(w.newPrice) })}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-1 text-xs text-amber-800">{t('No se guardó. A veces es un cero de más o de menos; revísalo o guárdalo así si es correcto.')}</p>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
+                    <button type="button" onClick={() => setPricePending(null)}
+                      className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">
+                      {t('Revisar el precio')}
+                    </button>
+                    <button type="button" disabled={isBusy} data-testid="price-warning-confirm"
+                      onClick={() => onSubmit({ ...pricePending.values, __priceOk: true })}
+                      className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60">
+                      {t('Sí, guardar con este precio')}
+                    </button>
+                  </div>
+                </div>
+              ) : dupPending ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
                   <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
                     <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />

@@ -1,4 +1,4 @@
-import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2, History } from 'lucide-react'
+import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2, History, PackagePlus } from 'lucide-react'
 import { imageSrc } from '../../utils/productImage'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -8,6 +8,10 @@ import { productsApi } from '../../services/endpoints/products'
 import { useMergeProduct } from '../../hooks/useProducts'
 import { formatQty } from '../../utils/quantity'
 import { stockApi } from '../../services/endpoints/stock'
+import { useReceipts } from '../../hooks/useReceipts'
+import ReceiptDetailModal from '../stock/ReceiptDetailModal'
+import { useParameters } from '../../hooks/useParameters'
+import { attrKeyFor, displayValue } from '../../utils/parameters'
 import { formatPrice } from '../../utils/formatMoney'
 import ExpiryBadge from '../common/ExpiryBadge'
 import { formatShortDate } from '../../utils/formatDate'
@@ -85,9 +89,20 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
     enabled: !!product.id,
   })
   const movements = movementsData?.content ?? []
+  // Ficha única (William, 4-nov-2026): el historial también enseña las recepciones donde llegó este producto.
+  const [histTab, setHistTab] = useState('movements')
+  const [openReceipt, setOpenReceipt] = useState(null)
+  const bizParam = user?.role === 'SUPER_ADMIN' && user?.businessId ? { businessId: user.businessId } : {}
+  const { data: receiptsData, isLoading: loadingRec } = useReceipts({ productId: product.id, page: 0, size: 5, ...bizParam }, { enabled: !!product.id })
+  const receipts = receiptsData?.content ?? []
+  // Parámetros (Frank, 4-nov-2026): los atributos que son parámetros salen primero y con su medida.
+  const { data: parameters = [] } = useParameters(bizParam)
 
   const attrs = product.attributes ?? {}
   const hasAttrs = Object.keys(attrs).length > 0
+  const paramEntries = parameters.map((pm) => { const k = attrKeyFor(attrs, pm.name); return k == null ? null : [k, displayValue(pm, attrs[k])] }).filter(Boolean)
+  const paramKeys = new Set(paramEntries.map(([k]) => k))
+  const freeEntries = Object.entries(attrs).filter(([k]) => !paramKeys.has(k))
 
   const isLow = product.currentStock < product.minStock
   const photo = imageSrc(product.imageUrl)
@@ -241,7 +256,13 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
                   {product.description && <p className="text-sm text-gray-600">{product.description}</p>}
                   {hasAttrs && (
                     <div className={`flex flex-wrap gap-2 ${product.description ? 'mt-3' : ''}`}>
-                      {Object.entries(attrs).map(([key, val]) => (
+                      {paramEntries.map(([key, val]) => (
+                        <span key={key} className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs" title={t('Parámetro')}>
+                          <span className="text-indigo-400">{key}</span>{' '}
+                          <span className="font-semibold text-indigo-900">{val}</span>
+                        </span>
+                      ))}
+                      {freeEntries.map(([key, val]) => (
                         <span key={key} className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
                           <span className="text-gray-400">{key}</span>{' '}
                           <span className="font-semibold text-gray-800">{val}</span>
@@ -264,23 +285,61 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
                   de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
               {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
 
-              {/* Historial reciente */}
+              {/* Historial reciente: movimientos y recepciones (ficha única, William 4-nov-2026) */}
               <div>
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Historial reciente')}</p>
+                  <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-0.5" role="tablist">
+                    <button type="button" role="tab" aria-selected={histTab === 'movements'} onClick={() => setHistTab('movements')}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${histTab === 'movements' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                      {t('Movimientos')}
+                    </button>
+                    <button type="button" role="tab" aria-selected={histTab === 'receipts'} onClick={() => setHistTab('receipts')}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${histTab === 'receipts' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                      {t('Recepciones')}{receiptsData?.totalElements ? <span className="ml-1 text-gray-400">{receiptsData.totalElements}</span> : null}
+                    </button>
+                  </div>
                   {/* Pedido de William: acá solo se ven los últimos 5; el historial
-                      entero vive en Stock › Movimientos, ya filtrado por este producto */}
+                      entero vive en Stock, ya filtrado por este producto */}
                   {!hideHistoryLink && <button type="button"
                     onClick={() => {
                       onClose()
-                      navigate(`/stock?tab=movements&product=${product.id}`, { state: { product } })
+                      navigate(histTab === 'receipts' ? `/stock?tab=receipts&product=${product.id}` : `/stock?tab=movements&product=${product.id}`, { state: { product } })
                     }}
                     className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                     <History size={13} />
                     {t('Ver todo su historial')}
                   </button>}
                 </div>
-                {loadingMov ? (
+                {histTab === 'receipts' ? (
+                  loadingRec ? (
+                    <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-10 animate-pulse rounded-xl bg-gray-100" />)}</div>
+                  ) : receipts.length === 0 ? (
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-5 text-center text-xs text-gray-400">
+                      {t('Todavía no llegó en ninguna recepción')}
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-50 rounded-xl border border-gray-100 bg-white" data-testid="sheet-receipts">
+                      {receipts.map((r) => (
+                        <button key={r.id} type="button" onClick={() => setOpenReceipt(r.id)}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-blue-50/50">
+                          <PackagePlus size={13} className="flex-shrink-0 text-emerald-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-semibold text-gray-800">{r.supplierName}</p>
+                            <p className="mt-0.5 text-xs text-gray-400">{formatDate(r.createdAt)}{r.referenceDocument ? <> · <span className="font-mono">{r.referenceDocument}</span></> : null}</p>
+                          </div>
+                          {r.costPending ? (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">{t('Sin costo')}</span>
+                          ) : (
+                            <>
+                              {r.paymentMode && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${r.paymentMode === 'CREDIT' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{r.paymentMode === 'CREDIT' ? t('Crédito') : t('Contado')}</span>}
+                              {!hidesCost && <span className="shrink-0 text-sm font-bold text-gray-900">{formatPrice(r.returns?.length ? r.netAmount : r.totalAmount)}</span>}
+                            </>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : loadingMov ? (
                   <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-10 animate-pulse rounded-xl bg-gray-100" />)}</div>
                 ) : movements.length === 0 ? (
                   <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-5 text-center text-xs text-gray-400">
@@ -373,6 +432,7 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
           </div>
         )}
       </div>
+      {openReceipt && <ReceiptDetailModal receiptId={openReceipt} onClose={() => setOpenReceipt(null)} />}
     </div>
   )
 }

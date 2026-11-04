@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
-import { useSupplierSearch } from '../../hooks/useSuppliers'
+import { useSupplierSearch, useCreateSupplier } from '../../hooks/useSuppliers'
 import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../common/LoadMoreRow'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -90,6 +90,18 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const debouncedSupplier = useDebounce(supplierQuery, 350)
   const supplierSearch = useSupplierSearch(debouncedSupplier, {}, { enabled: !supplier })
   const supplierResults = supplierSearch.items
+  // Crear el proveedor sin salir de la recepción (William, 4-nov-2026): llegó un camión de uno nuevo.
+  const createSupplier = useCreateSupplier()
+  const [newSupplierError, setNewSupplierError] = useState(null)
+  const createSupplierInline = async () => {
+    const name = supplierQuery.trim()
+    if (!name) return
+    setNewSupplierError(null)
+    try {
+      const created = await createSupplier.mutateAsync({ name })
+      setSupplier(created); setShowSupplierDrop(false); setSupplierQuery('')
+    } catch (err) { setNewSupplierError(getErrorMessage(err)) }
+  }
 
   // ── Paso 2: productos (filtrados por proveedor) ──────────────────────────
   const [productQuery, setProductQuery]           = useState('')
@@ -425,7 +437,15 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                     <div className="absolute z-20 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-xl max-h-56 overflow-y-auto">
                       {supplierResults.length === 0 ? (
                         <p className="px-4 py-3 text-sm text-gray-400">{t('Sin resultados')}</p>
-                      ) : (
+                      ) : null}
+                      {debouncedSupplier.trim() && !supplierResults.some((s) => s.name.toLowerCase() === debouncedSupplier.trim().toLowerCase()) && (
+                        <button type="button" onClick={createSupplierInline} disabled={createSupplier.isPending} data-testid="receipt-new-supplier"
+                          className="flex w-full items-center gap-2 border-b border-gray-100 px-4 py-2.5 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60">
+                          {createSupplier.isPending ? <Loader2 size={14} className="animate-spin" /> : <PackagePlus size={14} />}
+                          {t('Crear proveedor «{name}»', { name: supplierQuery.trim() })}
+                        </button>
+                      )}
+                      {supplierResults.length > 0 && (
                         <>{supplierResults.map((s) => (
                           <button key={s.id} type="button"
                             onClick={() => { setSupplier(s); setShowSupplierDrop(false); setSupplierQuery('') }}
@@ -446,6 +466,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                       )}
                     </div>
                   )}
+                  {newSupplierError && <p className="mt-1 text-xs text-red-600">{newSupplierError}</p>}
                 </div>
               )}
             </section>

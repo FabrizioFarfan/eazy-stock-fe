@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Loader2, Truck, Receipt, Plus, Pencil, Trash2, TrendingUp, TrendingDown, HandCoins } from 'lucide-react'
+import { ShoppingBag, Loader2, Truck, Receipt, Plus, Pencil, Trash2, TrendingUp, TrendingDown, HandCoins, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { usePurchasesReport } from '../hooks/useReports'
@@ -10,6 +10,9 @@ import DateRangeQuick from '../components/common/DateRangeQuick'
 import { ReportsSwitcher, ReportHero, ReportHeader, NewButton } from '../components/reports/ReportKit'
 import PurchasesChart from '../components/reports/PurchasesChart'
 import ExpenseModal from '../components/reports/ExpenseModal'
+import { TrendCard, TopProductsCard, PaymentMethodsCard, ReceiptsCard } from '../components/reports/PurchasesInsights'
+import { useReceipts } from '../hooks/useReceipts'
+import { buildPurchasesCsv, projectMonth } from '../utils/purchasesCsv'
 import { categoryOf, PAYMENT_METHODS } from '../utils/expenseKinds'
 import { formatPrice } from '../utils/formatMoney'
 import { quickRange } from '../utils/dateRanges'
@@ -68,6 +71,9 @@ export default function PurchasesPage() {
   const params = useMemo(() => ({ from: range.from, to: range.to, ...(groupBy ? { groupBy } : {}), ...biz }), [range, groupBy, biz])
   const { data, isLoading, isError } = usePurchasesReport(params)
   const { data: expenses, isLoading: loadingExpenses } = useExpenses({ from: range.from, to: range.to, ...biz })
+  // 4-nov-2026: las compras del período una por una (antes había que ir a Stock).
+  const { data: receiptsPage, isLoading: loadingReceipts } = useReceipts({ from: range.from, to: range.to, page: 0, size: 10, sort: 'createdAt,desc', ...biz })
+  const projection = projectMonth({ from: range.from, to: range.to, total: data?.total })
   const create = useCreateExpense(), update = useUpdateExpense(), remove = useDeleteExpense()
 
   const group = data?.groupBy ?? 'DAY'
@@ -93,6 +99,25 @@ export default function PurchasesPage() {
     if (modal === 'new') create.mutate(payload, { onSuccess: () => done('Gasto registrado'), onError: fail })
     else update.mutate({ id: modal.id, data: payload }, { onSuccess: () => done('Gasto corregido'), onError: fail })
   }
+  const exportCsv = async () => {
+    // Para el CSV se traen todas las recepciones del período, no solo las 10 de la tarjeta.
+    let all = receiptsPage?.content ?? []
+    try {
+      const { receiptsApi } = await import('../services/endpoints/receipts')
+      const r = await receiptsApi.getAll({ from: range.from, to: range.to, page: 0, size: 500, sort: 'createdAt,desc', ...biz })
+      all = r.data.data?.content ?? all
+    } catch { /* con lo que hay */ }
+    const csv = buildPurchasesCsv({ report: data, receipts: all, expenses: expenses ?? [], labelOf, labels: {
+      tramo: t('Tramo'), mercaderia: t('Mercadería'), otros: t('Otros gastos'), total: t('Total'), fecha: t('Fecha'), proveedor: t('Proveedor'),
+      documento: t('Documento'), pago: t('Pago'), monto: t('Monto'), concepto: t('Concepto'), tipo: t('Tipo'), producto: t('Producto'), cantidad: t('Cantidad'),
+    } })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `compras-y-gastos_${range.from}_${range.to}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
   const deleteExpense = (id) => remove.mutate({ id, params: biz }, {
     onSuccess: () => { toast.success(t('Gasto borrado')); setConfirmId(null) },
     onError: (e) => toast.error(e?.response?.data?.message ?? t('No se pudo borrar el gasto')),
@@ -102,7 +127,15 @@ export default function PurchasesPage() {
     <div className="flex flex-col gap-5">
       <ReportHeader icon={ShoppingBag} title={t('Compras y gastos')}
         subtitle={t('Cuánto se fue en mercadería y en otros gastos: por día, semana, mes o año.')}
-        right={<NewButton onClick={() => setModal('new')}><Plus size={16} /> {t('Registrar gasto')}</NewButton>}
+        right={(
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={exportCsv} disabled={!data} title={t('Descargar el período en Excel (CSV)')}
+              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+              <Download size={15} /><span className="hidden sm:inline">{t('Excel')}</span>
+            </button>
+            <NewButton onClick={() => setModal('new')}><Plus size={16} /> {t('Registrar gasto')}</NewButton>
+          </div>
+        )}
         help={(
           <HelpDrawer title={t('Cómo usar Compras y gastos')} autoOpenKey="eazystock_purchases_help_v1">
             <p>{t('Responde')} <strong>{t('cuánto gastaste en total, en qué se fue y a quién le pagaste')}</strong>, {t('en el período que elijas. Es tu facturación en compras hacia los proveedores, más lo que gastas para que el negocio funcione.')}</p>
@@ -144,6 +177,7 @@ export default function PurchasesPage() {
             <Delta now={data.total} before={data.previousTotal} />
             {topBucket && Number(topBucket.total) > 0 && <> · {t('el {g} que más', { g: groupWord })}{': '}<b className="text-white">{labelOf(topBucket)}</b> ({formatPrice(topBucket.total)})</>}
             {activeBuckets > 1 && <> · {t('promedio por {g} con gasto', { g: groupWord })}: <b className="text-white">{formatPrice(avg)}</b></>}
+            {projection && Number(data.total) > 0 && <> · {t('a este ritmo el mes cierra en')} <b className="text-white">{formatPrice(projection.projected)}</b> ({t('día {d} de {n}', { d: projection.elapsed, n: projection.days })})</>}
           </span>
         )}
         cells={[
@@ -151,9 +185,17 @@ export default function PurchasesPage() {
           [t('Otros gastos'), formatPrice(data?.totalExpenses ?? 0), Number(data?.totalExpenses) > 0 ? 'text-amber-200' : ''],
           [t('Pagado a proveedores'), formatPrice(data?.paidToSuppliers ?? 0)],
           [t('Entró al crédito'), formatPrice(data?.creditPurchased ?? 0)],
+          [t('Debes a proveedores hoy'), formatPrice(data?.supplierDebt ?? 0), Number(data?.supplierDebt) > 0 ? 'text-red-200' : ''],
         ]} />
 
       <PurchasesChart buckets={buckets} labelOf={labelOf} isLoading={isLoading} />
+
+      {/* 4-nov-2026: más para analizar — tendencia anual, productos, cómo se pagó y las compras una por una */}
+      <TrendCard trend={data?.trend} isLoading={isLoading} />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <TopProductsCard byProduct={data?.byProduct} isLoading={isLoading} total={data?.totalPurchased} />
+        <ReceiptsCard receipts={receiptsPage?.content} total={receiptsPage?.totalElements ?? 0} isLoading={loadingReceipts} />
+      </div>
 
       {/* Tabla por tramo */}
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -234,6 +276,8 @@ export default function PurchasesPage() {
             </ul>
           )}
         </div>
+        <div className="flex flex-col gap-5">
+        <PaymentMethodsCard byPaymentMethod={data?.byPaymentMethod} isLoading={isLoading} />
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <div className="flex items-center gap-2.5 border-b border-gray-100 px-4 py-3.5 sm:px-5">
             <HandCoins size={16} className="text-amber-600" />
@@ -260,6 +304,7 @@ export default function PurchasesPage() {
               ) })}
             </ul>
           )}
+        </div>
         </div>
       </div>
 

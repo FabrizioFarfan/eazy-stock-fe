@@ -26,6 +26,7 @@ import { formatAmount, round2, formatPrice, currencySymbol } from '../utils/form
 import { isDivisibleUnit, formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
+import { priceWarnings } from '../utils/priceSanity'
 
 // Aggregate amounts (sale totals, discount totals) come back rounded to 2
 // decimals from the BE — `formatPrice` falls through to the same formatting.
@@ -68,6 +69,12 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
   const listPrice = Number(product.salePrice ?? 0)
   const newListValid = newListPrice != null && Number(newListPrice) > 0
     && Math.abs(Number(newListPrice) - listPrice) > 0.0000005
+
+  // Aviso de precio raro (William, 4-nov-2026): si el nuevo precio cambia más de un 80 % (o queda bajo el
+  // costo, cuando se conoce), el botón de confirmar lo dice con el precio anterior antes de guardar.
+  const listWarnings = newListValid
+    ? priceWarnings({ newPrice: newListPrice, oldPrice: listPrice, cost: product.purchasePrice ?? null })
+    : []
 
   const saveListPrice = async () => {
     setSavingList(true)
@@ -241,6 +248,20 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
               <span className="text-gray-400">→</span>
               <span className="text-lg font-bold text-gray-900">{formatCurrency(Number(newListPrice))}</span>
             </div>
+            {listWarnings.length > 0 && (
+              <ul className="mt-3 space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" data-testid="list-price-warning">
+                {listWarnings.map((w) => (
+                  <li key={w.code} className="flex items-start gap-1.5">
+                    <AlertTriangle size={13} className="mt-0.5 flex-shrink-0 text-amber-500" />
+                    {w.code === 'BELOW_COST'
+                      ? t('Queda por DEBAJO del costo: vendes a {price} y te cuesta {cost}.', { price: formatCurrency(w.newPrice), cost: formatCurrency(w.cost) })
+                      : w.down
+                        ? t('Baja un {pct} %: antes costaba {old} y ahora {price}.', { pct: w.pct, old: formatCurrency(w.oldPrice), price: formatCurrency(w.newPrice) })
+                        : t('Sube un {pct} %: antes costaba {old} y ahora {price}.', { pct: w.pct, old: formatCurrency(w.oldPrice), price: formatCurrency(w.newPrice) })}
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="mt-3 text-sm text-gray-500">
               {t('Desde ahora este producto se venderá a {price} en todas las ventas, las tuyas y las de tus vendedores. Las ventas ya hechas no cambian.', { price: formatCurrency(Number(newListPrice)) })}
             </p>

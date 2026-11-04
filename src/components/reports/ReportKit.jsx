@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
-import { BarChart2, Scale, Trophy, Award, Users, Wallet, HandCoins, Truck, Tag, FolderOpen, MapPin, Search, X, Edit, Trash2, ArrowRight, ShoppingBag } from 'lucide-react'
+import { BarChart2, Scale, Trophy, Award, Users, Wallet, HandCoins, Truck, Tag, FolderOpen, MapPin, Search, X, Edit, Trash2, ArrowRight, ShoppingBag, SlidersHorizontal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useT } from '../../i18n'
 
@@ -137,6 +137,7 @@ export function CatalogSwitcher() {
       { to: '/brands',     icon: Tag,        label: 'Marcas',      hint: 'De qué marca es cada producto' },
       { to: '/categories', icon: FolderOpen, label: 'Categorías',  hint: 'Cómo ordenas el catálogo' },
       { to: '/locations',  icon: MapPin,     label: 'Ubicaciones', hint: 'Dónde está cada producto' },
+      { to: '/parametros', icon: SlidersHorizontal, label: 'Parámetros', hint: 'Qué se dice de cada producto y por qué se filtra' },
     ]} />
   )
 }

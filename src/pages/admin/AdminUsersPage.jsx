@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserPlus, Users, Search, Trash2, AlertTriangle, ShieldAlert, Building2, CalendarDays, Mail } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { UserPlus, Users, Search, Trash2, AlertTriangle, ShieldAlert, Building2, CalendarDays, Mail, Crown, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOwners, useCreateOwner, useDeleteOwner } from '../../hooks/useOwners'
 import { useBusinesses } from '../../hooks/useBusinesses'
@@ -11,7 +12,7 @@ import EntityModal, { EntityField } from '../../components/common/EntityModal'
 import { ReportHeader, ReportHero, BigSearch, NewButton, EntityCard } from '../../components/reports/ReportKit'
 import { KindChip, KindPicker, KindTabs } from '../../components/boss/AccountKind'
 import { useAccountKinds } from '../../components/boss/accountKindData'
-import { matchesFilter, countKinds } from '../../utils/accountKinds'
+import { matchesFilter, countKinds, USER_FILTERS } from '../../utils/accountKinds'
 import { BossSwitcher, InitialsAvatar, Chip, ConfirmCard } from '../../components/boss/BossKit'
 import { formatDate, isThisMonth } from '../../components/boss/bossUtils'
 import { getErrorMessage, getErrorField } from '../../utils/handleApiError'
@@ -52,7 +53,7 @@ function CreateOwnerModal({ onClose }) {
   const onSubmit = async ({ firstName, lastName, email, password, businessId }) => {
     try {
       await createOwner.mutateAsync({ name: `${firstName} ${lastName}`.trim(), email, password, businessId })
-      toast.success(t('Owner creado'))
+      toast.success(t('Usuario creado'))
       onClose()
     } catch (err) {
       const field = getErrorField(err)
@@ -66,10 +67,10 @@ function CreateOwnerModal({ onClose }) {
 
   return (
     <EntityModal onClose={onClose} onSubmit={handleSubmit(onSubmit)} isEdit={false}
-      title={t('Nuevo Owner')} avatar={<InitialsAvatar name={previewName || '?'} light />}
+      title={t('Nuevo usuario')} avatar={<InitialsAvatar name={previewName || '?'} light />}
       previewName={previewName} placeholderName={t('Nombre del dueño')}
       subtitle={previewEmail || t('El correo con el que va a entrar')}
-      submitting={createOwner.isPending} submitLabel={t('Crear Owner')} error={serverError}>
+      submitting={createOwner.isPending} submitLabel={t('Crear usuario')} error={serverError}>
 
       <div className="grid grid-cols-2 gap-3">
         <EntityField label={`${t('Nombre')} *`} error={errors.firstName?.message}>
@@ -164,7 +165,13 @@ function DeleteOwnerModal({ owner, onClose }) {
 
 // ── Página ────────────────────────────────────────────────────────────────────
 
-export default function OwnersPage() {
+/**
+ * USUARIOS (antes «Owners»; Frank, 4-nov-2026): las cuentas dueñas de negocio que NO son del equipo. Cada una
+ * lleva su etiqueta (cliente / tester / sin revisar) y el BOSS la cambia aquí mismo, también en las cuentas que
+ * no son dueñas de ningún negocio (un segundo dueño sumado a un negocio ya existente: antes no se podía
+ * clasificar porque la etiqueta salía del negocio). Los Socios viven en su propia página.
+ */
+export default function AdminUsersPage() {
   const t = useT()
   const [showModal, setShowModal]       = useState(false)
   const [editTarget, setEditTarget]     = useState(null)
@@ -178,38 +185,51 @@ export default function OwnersPage() {
   // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS; un owner sin negocio no sale en el panel).
   const kinds = useAccountKinds()
   const [tab, setTab] = useState('customers') // Frank: siempre se abre en Clientes
-  const kindOfOwner = (u) => kinds.byOwner.get(u.id) ?? null
+  // La etiqueta viene en la propia cuenta (API 1.21.0); si falta, la del negocio del que es dueño.
+  const kindOfOwner = (u) => (u.accountKind !== undefined ? u.accountKind : kinds.byOwner.get(u.id)) ?? null
+  // Los socios (TEAM) tienen su página: aquí no se mezclan con los clientes.
+  const partners = useMemo(() => all.filter((u) => kindOfOwner(u) === 'TEAM'), [all, kinds.byOwner]) // eslint-disable-line react-hooks/exhaustive-deps
+  const users = useMemo(() => all.filter((u) => kindOfOwner(u) !== 'TEAM'), [all, kinds.byOwner]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
-    const byTab = kinds.enabled ? all.filter((u) => matchesFilter(kinds.byOwner.get(u.id), tab)) : all
+    const byTab = kinds.enabled ? users.filter((u) => matchesFilter(kindOfOwner(u), tab)) : users
     if (!s) return byTab
     return byTab.filter((u) => u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.businessName?.toLowerCase().includes(s))
-  }, [all, q, tab, kinds.enabled, kinds.byOwner])
+  }, [users, q, tab, kinds.enabled]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const withBiz   = all.filter((u) => u.businessName).length
-  const bizCount  = new Set(all.map((u) => u.businessId).filter(Boolean)).size
-  const newMonth  = all.filter((u) => isThisMonth(u.createdAt)).length
+  const withBiz   = users.filter((u) => u.businessName).length
+  const bizCount  = new Set(users.map((u) => u.businessId).filter(Boolean)).size
+  const newMonth  = users.filter((u) => isThisMonth(u.createdAt)).length
+  const unreviewed = users.filter((u) => kindOfOwner(u) === null).length
 
   return (
     <div className="flex flex-col gap-5">
-      <ReportHeader icon={Users} title={t('Owners')} subtitle={t('Los dueños de cada negocio y con qué correo entran')}
-        right={<NewButton onClick={() => setShowModal(true)}><UserPlus size={16} />{t('Nuevo Owner')}</NewButton>} />
+      <ReportHeader icon={Users} title={t('Usuarios')} subtitle={t('Las cuentas que usan Eazy Stock: clientes, testers y las que faltan revisar')}
+        right={<NewButton onClick={() => setShowModal(true)}><UserPlus size={16} />{t('Nuevo usuario')}</NewButton>} />
 
       <BossSwitcher />
 
-      <ReportHero icon={Users} label={t('Owners activos')} value={all.length} loading={isLoading}
-        sub={<span>{t('Cada owner manda en su negocio: productos, ventas, equipo y permisos')}</span>}
+      <ReportHero icon={Users} label={t('Usuarios')} value={users.length} loading={isLoading}
+        sub={<span>{t('Cada usuario manda en su negocio: productos, ventas, equipo y permisos. Los socios están en su página.')}</span>}
         cells={[
+          [t('Sin revisar'), unreviewed, unreviewed > 0 ? 'text-amber-200' : ''],
           [t('Con negocio'), withBiz],
-          [t('Sin negocio'), all.length - withBiz, all.length - withBiz > 0 ? 'text-amber-200' : ''],
           [t('Negocios distintos'), bizCount],
           [t('Nuevos este mes'), newMonth],
         ]} />
 
+      {kinds.enabled && partners.length > 0 && (
+        <Link to="/admin/socios" className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 transition-colors hover:bg-amber-100">
+          <Crown size={16} className="flex-shrink-0 text-amber-600" />
+          <span className="flex-1">{partners.length === 1 ? t('1 cuenta es de un socio: está en Socios.') : t('{n} cuentas son de socios: están en Socios.', { n: partners.length })}</span>
+          <ArrowRight size={15} />
+        </Link>
+      )}
+
       <BigSearch value={q} onChange={setQ} placeholder={t('Buscar por nombre, correo o negocio...')} />
 
-      {kinds.enabled && <KindTabs value={tab} onChange={setTab} counts={countKinds(all, kindOfOwner)} />}
+      {kinds.enabled && <KindTabs value={tab} onChange={setTab} counts={countKinds(users, kindOfOwner)} filters={USER_FILTERS} />}
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -217,7 +237,7 @@ export default function OwnersPage() {
         </div>
       ) : list.length === 0 ? (
         <div className="rounded-2xl border border-gray-100 bg-white px-4 py-12 text-center shadow-sm">
-          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún owner coincide con «{q}»', { q }) : tab !== 'all' ? t('Ninguna cuenta en esta pestaña todavía.') : t('No hay owners registrados')}</p>
+          <p className="text-sm font-semibold text-gray-700">{q ? t('Ningún usuario coincide con «{q}»', { q }) : tab !== 'all' ? t('Ninguna cuenta en esta pestaña todavía.') : t('No hay usuarios registrados')}</p>
           {q && <button type="button" onClick={() => setQ('')} className="mt-2 text-xs font-semibold text-blue-600 hover:underline">{t('Ver todos')}</button>}
         </div>
       ) : (
@@ -231,12 +251,12 @@ export default function OwnersPage() {
                   ? <Chip icon={Building2} tone="blue">{u.businessName}</Chip>
                   : <Chip icon={Building2} tone="amber">{t('Sin negocio')}</Chip>}
                 <Chip tone={u.active ? 'emerald' : 'red'}>{u.active ? t('Activo') : t('Inactivo')}</Chip>
-                {kinds.enabled && kinds.byOwner.has(u.id) && <KindChip kind={kindOfOwner(u)} />}
+                {kinds.enabled && <KindChip kind={kindOfOwner(u)} />}
               </div>
               <p className="flex items-center gap-1 text-[11px] text-gray-400">
                 <CalendarDays size={11} /> {t('Registrado el {date}', { date: formatDate(u.createdAt) })}
               </p>
-              {kinds.enabled && kinds.byOwner.has(u.id) && (
+              {kinds.enabled && (
                 <KindPicker kind={kindOfOwner(u)} busy={kinds.busyId === u.id} onPick={(k) => kinds.pick(u.id, k)} />
               )}
             </EntityCard>
@@ -245,7 +265,7 @@ export default function OwnersPage() {
       )}
 
       <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-300">
-        <Trash2 size={12} /> {t('Eliminar solo funciona con owners sin actividad; los demás se desactivan desde Editar.')}
+        <Trash2 size={12} /> {t('Eliminar solo funciona con usuarios sin actividad; los demás se desactivan desde Editar.')}
       </p>
 
       {showModal && <CreateOwnerModal onClose={() => setShowModal(false)} />}

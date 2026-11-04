@@ -6,6 +6,8 @@ export const bossApi = {
   //   ownerId, ownerName, accountKind, users: [{ id, name, email, role, active, lastSeenAt, accountKind }] }] }
   // API 1.19.0 (30-oct): qué es la cuenta de un dueño — 'CUSTOMER' | 'TESTER' | 'TEAM' | null (sin revisar).
   setAccountKind: (userId, kind) => api.patch(`/boss/accounts/${userId}/kind`, { kind }),
+  // API 1.21.0 (4-nov): Socios. { bosses: [UserResponse], partners: [UserResponse con accountKind TEAM] }
+  getTeam: () => api.get('/boss/team'),
   // API 1.20.0 (30-oct): visitas de la web pública. { days, visitors, pageviews, liveNow, funnel: [{key, count}],
   //   perDay: [{day, visitors, signups}], countries/sources/devices/pages/clicks/campaigns: [{key, value}] }
   getAnalytics: (days = 7) => api.get('/boss/analytics', { params: { days } }),

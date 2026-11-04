@@ -32,7 +32,8 @@ export function BossSwitcher() {
     user?.isBoss && { to: '/boss/suscripciones', icon: CreditCard, label: 'Suscripciones', hint: 'Pruebas, planes y pagos' },
     user?.isBoss && { to: '/boss/feedback', icon: MessageSquareHeart, label: 'Feedback', hint: 'Lo que nos cuentan', badge: summary?.newCount ?? 0 },
     { to: '/admin/businesses', icon: Building2, label: 'Negocios', hint: 'Cada negocio registrado' },
-    { to: '/admin/owners', icon: Users, label: 'Owners', hint: 'Los dueños y cómo entran' },
+    { to: '/admin/usuarios', icon: Users, label: 'Usuarios', hint: 'Clientes, testers y sin revisar' },
+    { to: '/admin/socios', icon: Crown, label: 'Socios', hint: 'Quién manda como tú' },
   ].filter(Boolean)
   return <SiblingSwitcher items={items} label={t('Panel Boss')} />
 }

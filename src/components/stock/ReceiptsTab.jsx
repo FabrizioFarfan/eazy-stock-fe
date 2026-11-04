@@ -28,7 +28,7 @@ function CostPendingChip({ t }) {
   )
 }
 
-export default function ReceiptsTab({ initialPending = false, initialReceiptId = null }) {
+export default function ReceiptsTab({ initialPending = false, initialReceiptId = null, initialProduct = null }) {
   const t = useT()
   const { user } = useAuth()
   // El vendedor ve qué llegó y cuánto, nunca lo que costó (el API ni lo manda).
@@ -39,7 +39,7 @@ export default function ReceiptsTab({ initialPending = false, initialReceiptId =
   const [to, setTo]                     = useState('')
   const [reference, setReference]       = useState('')
   const [paymentMode, setPaymentMode]   = useState('')
-  const [product, setProduct]           = useState(null)
+  const [product, setProduct]           = useState(initialProduct)
   const [onlyPending, setOnlyPending]   = useState(initialPending)
   const [selectedReceiptId, setSelectedReceiptId] = useState(initialReceiptId)
   const debouncedReference = useDebounce(reference, 350)

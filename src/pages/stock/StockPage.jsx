@@ -294,9 +294,10 @@ export default function StockPage() {
           initialStockMax={searchParams.get('out') === '1' ? '0' : ''} />
       )}
       {activeTab === 'receipts'  && (
-        <ReceiptsTab key={searchParams.get('pending') ?? ''}
+        <ReceiptsTab key={`${searchParams.get('pending') ?? ''}|${productId ?? ''}`}
           initialPending={searchParams.get('pending') === '1'}
-          initialReceiptId={searchParams.get('receipt')} />
+          initialReceiptId={searchParams.get('receipt')}
+          initialProduct={productId ? (pickedProduct ?? location.state?.product ?? null) : null} />
       )}
       {activeTab === 'movements' && (
         <MovementsTab key={typeParam} initialType={typeParam} productId={productId}

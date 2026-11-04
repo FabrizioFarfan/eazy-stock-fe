@@ -46,7 +46,7 @@ const PHASES = [
     items: [
       { label: 'Páginas del dueño', done: true },
       { label: 'Páginas del vendedor (las mismas, con restricciones)', done: true },
-      { label: 'Lado Boss: panel, negocios y owners', done: true },
+      { label: 'Lado Boss: panel, negocios y usuarios', done: true },
       { label: 'Modales, reportes y modo oscuro', done: true },
     ],
   },

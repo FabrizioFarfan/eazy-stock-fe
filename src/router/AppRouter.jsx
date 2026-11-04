@@ -62,7 +62,9 @@ import PayablesPage        from '../pages/PayablesPage'
 import SettingsPage        from '../pages/SettingsPage'
 import MyBusinessesPage    from '../pages/MyBusinessesPage'
 import BusinessesPage      from '../pages/admin/BusinessesPage'
-import OwnersPage          from '../pages/admin/OwnersPage'
+import AdminUsersPage      from '../pages/admin/AdminUsersPage'
+import PartnersPage        from '../pages/admin/PartnersPage'
+import ParametersPage      from '../pages/ParametersPage'
 import BossPage            from '../pages/BossPage'
 import SubscriptionsPage   from '../pages/admin/SubscriptionsPage'
 import FeedbackPage       from '../pages/admin/FeedbackPage'
@@ -188,6 +190,10 @@ export default function AppRouter() {
       <Route path="/categories" element={
         <ProtectedRoute allowedRoles={['OWNER']}><CategoriesPage /></ProtectedRoute>
       } />
+      {/* Parámetros del catálogo (Frank, 4-nov-2026): Sí/No, opciones, número con medida, texto */}
+      <Route path="/parametros" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><ParametersPage /></ProtectedRoute>
+      } />
 
       {/* Customers (paso 4) — OWNER y EMPLOYEE con canManageCustomers */}
       <Route path="/customers" element={
@@ -231,9 +237,14 @@ export default function AppRouter() {
       <Route path="/admin/businesses" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><BusinessesPage /></ProtectedRoute>
       } />
-      <Route path="/admin/owners" element={
-        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><OwnersPage /></ProtectedRoute>
+      {/* 4-nov-2026: «Owners» pasa a Usuarios y los socios tienen su página */}
+      <Route path="/admin/usuarios" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminUsersPage /></ProtectedRoute>
       } />
+      <Route path="/admin/socios" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PartnersPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/owners" element={<Navigate to="/admin/usuarios" replace />} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />

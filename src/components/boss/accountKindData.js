@@ -50,6 +50,9 @@ export function useAccountKinds() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['boss-activity'] })
       qc.invalidateQueries({ queryKey: ['boss-subscriptions'] })
+      // 4-nov-2026: Usuarios y Socios leen la etiqueta de la propia cuenta
+      qc.invalidateQueries({ queryKey: ['owners'] })
+      qc.invalidateQueries({ queryKey: ['boss-team'] })
     },
   })
   const businesses = query.data?.businesses ?? []

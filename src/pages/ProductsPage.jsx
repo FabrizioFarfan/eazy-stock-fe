@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive, ArrowRight, AlertTriangle, CalendarClock, CircleDollarSign, Truck, Boxes, Zap } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { toast } from 'sonner'
-import { useProducts, useReactivateProduct, useProductUnits } from '../hooks/useProducts'
-import { getErrorMessage } from '../utils/handleApiError'
+import { useProducts, useProductUnits } from '../hooks/useProducts'
+import { useParameters } from '../hooks/useParameters'
+import { paramFiltersToQuery, paramFilterChips } from '../utils/parameters'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useBrands } from '../hooks/useBrands'
 import { useCategories } from '../hooks/useCategories'
@@ -13,11 +13,10 @@ import ProductThumb from '../components/products/ProductThumb'
 import { productsApi } from '../services/endpoints/products'
 import { useDebounce } from '../hooks/useDebounce'
 import ProductFormModal from '../components/products/ProductFormModal'
-import ProductDetailModal from '../components/products/ProductDetailModal'
+import ProductSheet from '../components/products/ProductSheet'
+import ParameterFilterPanel from '../components/products/ParameterFilterPanel'
 import BulkDeleteModal from '../components/products/BulkDeleteModal'
-import DeleteProductModal from '../components/products/DeleteProductModal'
 import DeletedProductsModal from '../components/products/DeletedProductsModal'
-import QrModal from '../components/products/QrModal'
 import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import UnitBadge from '../components/common/UnitBadge'
@@ -341,15 +340,18 @@ export default function ProductsPage() {
     return () => window.removeEventListener('eazystock:show-deleted-products', handler)
   }, [])
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, quickOnly, sortBy, debouncedCol])
+  // Parámetros (Frank, 4-nov-2026): { [parameterId]: { value, min, max } } → pf / pfMin / pfMax
+  const [paramFilters, setParamFilters] = useState({})
+  const debouncedParams = useDebounce(paramFilters, 350)
+  const paramQuery = paramFiltersToQuery(debouncedParams)
+  const { data: parameters = [] } = useParameters(bizParam)
+
+  useEffect(() => { setPage(0) }, [debouncedSearch, lowStock, orphansOnly, variableOnly, quickOnly, sortBy, debouncedCol, debouncedParams])
 
   const [formModal,   setFormModal]   = useState({ open: false, product: null, tutorial: false })
-  const [qrModal,     setQrModal]     = useState(null)
   const [detailModal, setDetailModal] = useState(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
-  const [removeModal, setRemoveModal] = useState(null)   // producto a ocultar/borrar
   const [deletedOpen, setDeletedOpen] = useState(false)  // la papelera («Borrados»)
-  const reactivate = useReactivateProduct()
 
   const c = debouncedCol
   const params = {
@@ -377,6 +379,7 @@ export default function ProductsPage() {
     ...(c.stockMin !== '' && { stockMin: c.stockMin }),
     ...(c.stockMax !== '' && { stockMax: c.stockMax }),
     ...(c.expiryStatus && { expiryStatus: c.expiryStatus }),
+    ...paramQuery,
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
 
@@ -459,10 +462,11 @@ export default function ProductsPage() {
     activeChips.push({ label: `${t('Estado')}: ${colFilters.status === 'inactive' ? t('Inactivos') : t('Todos')}`, onRemove: () => clearFields('status') })
   if (colFilters.expiryStatus)
     activeChips.push({ label: `${t('Vencimiento')}: ${t(EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label)}`, onRemove: () => clearFields('expiryStatus') })
+  for (const chip of paramFilterChips(paramFilters, parameters))
+    activeChips.push({ label: chip.label, onRemove: () => setParamFilters((f) => { const n = { ...f }; delete n[chip.id]; return n }) })
 
   const openCreate         = () => setFormModal({ open: true, product: null, tutorial: false })
   const openCreateWithTour = () => setFormModal({ open: true, product: null, tutorial: true  })
-  const openEdit           = (p) => setFormModal({ open: true, product: p,   tutorial: false })
   const closeForm          = () => setFormModal({ open: false, product: null, tutorial: false })
 
   // ?edit=<id> abre directo el modal de edición (link desde Stock). Se quita
@@ -481,20 +485,6 @@ export default function ProductsPage() {
       .catch(() => { /* producto inexistente: queda la lista normal */ })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.get('edit')])
-
-  // Ocultar o borrar: el modal explica la diferencia y solo ofrece el borrado
-  // real cuando el producto nunca se usó.
-  const handleRemove = (p) => setRemoveModal(p)
-
-  const handleReactivate = async (p) => {
-    try {
-      await reactivate.mutateAsync(p.id)
-      setDetailModal(null)
-      toast.success(t('"{name}" volvió al catálogo con su código {sku}.', { name: p.name, sku: p.sku }))
-    } catch (err) {
-      toast.error(getErrorMessage(err))
-    }
-  }
 
   const filtering  = anyShortcut || activeChips.length > 0
   const emptyState = (
@@ -686,6 +676,8 @@ export default function ProductsPage() {
               {t('Ver todos')}
             </button>
           )}
+          {/* Parámetros (Frank, 4-nov-2026): Color = Rojo, Artesanal = Sí, Largo 10–20 cm… */}
+          <ParameterFilterPanel value={paramFilters} onChange={setParamFilters} bizParam={bizParam} />
           <span className="ml-auto hidden flex-shrink-0 text-xs text-gray-400 lg:inline">
             {t('Filtra y ordena desde el')} <SlidersHorizontal size={11} className="inline -mt-0.5" /> {t('de cada columna')}
           </span>
@@ -707,7 +699,7 @@ export default function ProductsPage() {
             </span>
           ))}
           <button
-            onClick={() => setColFilters(EMPTY_COL_FILTERS)}
+            onClick={() => { setColFilters(EMPTY_COL_FILTERS); setParamFilters({}) }}
             className="text-xs font-medium text-gray-500 hover:text-red-600 transition-colors"
           >
             {t('Limpiar todo')}
@@ -907,21 +899,8 @@ export default function ProductsPage() {
           onEditExisting={(p) => setFormModal({ open: true, product: p, tutorial: false })}
         />
       )}
-      {qrModal && <QrModal product={qrModal} onClose={() => setQrModal(null)} />}
-      {detailModal && (
-        <ProductDetailModal
-          product={detailModal}
-          onClose={() => setDetailModal(null)}
-          onEdit={isManager ? (p) => { setDetailModal(null); openEdit(p) } : undefined}
-          onShowQr={isManager ? (p) => { setDetailModal(null); setQrModal(p) } : undefined}
-          onDeactivate={isManager ? (p) => { setDetailModal(null); handleRemove(p) } : undefined}
-          onReactivate={isManager ? handleReactivate : undefined}
-          onMerged={isManager ? (updated) => setDetailModal(updated) : undefined}
-        />
-      )}
-      {removeModal && (
-        <DeleteProductModal product={removeModal} onClose={() => setRemoveModal(null)} />
-      )}
+      {/* La ficha única (William, 4-nov-2026): datos, stock, ajustar, entrada, historial, editar… todo desde aquí */}
+      {detailModal && <ProductSheet product={detailModal} onClose={() => setDetailModal(null)} />}
       {bulkDeleteOpen && <BulkDeleteModal onClose={() => setBulkDeleteOpen(false)} />}
       {deletedOpen && (
         <DeletedProductsModal

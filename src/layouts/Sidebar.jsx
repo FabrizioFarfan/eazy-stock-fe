@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Plus,
   ArrowUpDown, BarChart2, Users, Building2,
   LogOut, Truck, Tag, FolderOpen, X, Settings, Bell, ChevronDown,
-  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin, ShoppingBag, Store,
+  Wallet, HandCoins, FileText, Trophy, Scale, Crown, Award, MapPin, ShoppingBag, Store, SlidersHorizontal,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import LogoutConfirm from '../components/common/LogoutConfirm'
@@ -17,7 +17,8 @@ const VISITS_ITEM = { icon: BarChart2, label: 'Visitas', path: '/boss/visitas' }
 
 const SUPER_ADMIN_NAV = [
   { icon: Building2, label: 'Negocios', path: '/admin/businesses' },
-  { icon: Users,     label: 'Owners',   path: '/admin/owners' },
+  { icon: Users,     label: 'Usuarios', path: '/admin/usuarios' },
+  { icon: Crown,     label: 'Socios',   path: '/admin/socios' },
   { icon: Settings,  label: 'Ajustes',  path: '/settings' },
 ]
 
@@ -54,6 +55,7 @@ const OWNER_NAV = [
     { icon: Tag,           label: 'Marcas',            path: '/brands',              permission: null },
     { icon: FolderOpen,    label: 'Categorías',        path: '/categories',          permission: null },
     { icon: MapPin,        label: 'Ubicaciones',       path: '/locations',           permission: null },
+    { icon: SlidersHorizontal, label: 'Parámetros',    path: '/parametros',          permission: null },
   ] },
   { icon: Users,           label: 'Empleados',         path: '/empleados',           permission: null },
   { icon: Bell,            label: 'Notificaciones',    path: '/notificaciones',      permission: null },

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Package, X, MapPin } from 'lucide-react'
 import ProductThumb from '../products/ProductThumb'
-import ProductDetailModal from '../products/ProductDetailModal'
-import MovementModal from '../../pages/stock/MovementModal'
-import SupplierReceiptModal from './SupplierReceiptModal'
+import ProductSheet from '../products/ProductSheet'
+import ParameterFilterPanel from '../products/ParameterFilterPanel'
+import { useParameters } from '../../hooks/useParameters'
+import { paramFiltersToQuery, paramFilterChips } from '../../utils/parameters'
 import ColumnFilter from '../common/ColumnFilter'
 import ExpiryBadge from '../common/ExpiryBadge'
 import { useAuth } from '../../context/AuthContext'
@@ -83,11 +83,10 @@ function SkeletonRow() {
  */
 export default function InventoryTab({ initialLowStock = false, initialStockMax = '' }) {
   const t = useT()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [detail, setDetail]     = useState(null)
-  const [adjusting, setAdjusting] = useState(null)
-  const [receiving, setReceiving] = useState(null)
+  // Parámetros (Frank, 4-nov-2026): { [parameterId]: { value, min, max } }
+  const [paramFilters, setParamFilters] = useState({})
 
   // Barra superior
   const [search, setSearch]         = useState('')
@@ -100,6 +99,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
 
   const debouncedSearch = useDebounce(search, 350)
   const debouncedCol    = useDebounce(colFilters, 350)
+  const debouncedParams = useDebounce(paramFilters, 350)
 
   // Como SUPER_ADMIN los catálogos exigen businessId (400 sin él → selects vacíos)
   const bizParam = user?.role === 'SUPER_ADMIN' && user?.businessId
@@ -107,6 +107,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
   const { data: suppliersData }  = useSuppliers({ size: 200, ...bizParam })
   const { data: brandsData }     = useBrands({ size: 200, ...bizParam })
   const { data: categoriesData } = useCategories({ size: 200, ...bizParam })
+  const { data: parameters = [] } = useParameters(bizParam)
   const suppliers     = suppliersData?.content ?? []
   const categories    = categoriesData?.content ?? []
   const supplierOpts  = suppliers.map((s) => ({ value: s.id, label: s.placeholderForUnassigned ? `⚠ ${s.name}` : s.name }))
@@ -123,7 +124,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
   const onSortBy     = (key) => (dir) => setSort(dir ? { key, dir } : DEFAULT_SORT)
   const sortBy       = `${sort.key},${sort.dir}`
 
-  useEffect(() => { setPage(0) }, [debouncedSearch, categoryId, lowStock, sortBy, debouncedCol])
+  useEffect(() => { setPage(0) }, [debouncedSearch, categoryId, lowStock, sortBy, debouncedCol, debouncedParams])
 
   const c = debouncedCol
   const params = {
@@ -143,6 +144,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
     ...(c.stockMin !== '' && { stockMin: c.stockMin }),
     ...(c.stockMax !== '' && { stockMax: c.stockMax }),
     ...(c.expiryStatus && { expiryStatus: c.expiryStatus }),
+    ...paramFiltersToQuery(debouncedParams),
     ...(user?.role === 'SUPER_ADMIN' && user?.businessId && { businessId: user.businessId }),
   }
   const { data, isLoading, isFetching } = useProducts(params)
@@ -174,6 +176,8 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
     activeChips.push({ label: `${t('Estado')}: ${colFilters.status === 'inactive' ? t('Inactivos') : t('Todos')}`, onRemove: () => clearFields('status') })
   if (colFilters.expiryStatus)
     activeChips.push({ label: `${t('Vencimiento')}: ${t(EXPIRY_OPTS.find((o) => o.value === colFilters.expiryStatus)?.label)}`, onRemove: () => clearFields('expiryStatus') })
+  for (const chip of paramFilterChips(paramFilters, parameters))
+    activeChips.push({ label: chip.label, onRemove: () => setParamFilters((f) => { const n = { ...f }; delete n[chip.id]; return n }) })
 
   const selectCls = 'rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
 
@@ -208,6 +212,8 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
               className="accent-blue-600" />
             {t('Solo stock bajo')}
           </label>
+
+          <ParameterFilterPanel value={paramFilters} onChange={setParamFilters} bizParam={bizParam} align="right" />
         </div>
       </div>
 
@@ -224,7 +230,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
               </button>
             </span>
           ))}
-          <button onClick={() => setColFilters(EMPTY_COL_FILTERS)}
+          <button onClick={() => { setColFilters(EMPTY_COL_FILTERS); setParamFilters({}) }}
             className="text-xs font-medium text-gray-500 hover:text-red-600 transition-colors">
             {t('Limpiar todo')}
           </button>
@@ -424,34 +430,8 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
         )}
       </div>
 
-      {detail && (
-        <ProductDetailModal
-          product={items.find((i) => i.id === detail.id) ?? detail}
-          onClose={() => setDetail(null)}
-          onRegisterEntry={(p) => setReceiving(p)}
-          // el ajuste manual es del dueño (William, 16-sep): el vendedor mueve stock
-          // solo con ventas, recepciones y devoluciones — ni ve el botón
-          onAdjust={user?.role === 'EMPLOYEE' ? undefined : (p) => setAdjusting(p)}
-          onEdit={(p) => navigate(`/products?edit=${p.id}`)}
-          onMerged={user?.role === 'EMPLOYEE' ? undefined : (updated) => setDetail(updated)}
-        />
-      )}
-
-      {adjusting && (
-        <MovementModal
-          type="ADJUSTMENT"
-          initialProduct={adjusting}
-          onClose={() => setAdjusting(null)}
-        />
-      )}
-
-      {receiving && (
-        <SupplierReceiptModal
-          initialSupplier={receiving.supplierId ? { id: receiving.supplierId, name: receiving.supplierName } : null}
-          initialProduct={receiving.supplierId ? receiving : null}
-          onClose={() => setReceiving(null)}
-        />
-      )}
+      {/* La misma ficha que en Productos (William, 4-nov-2026): datos, stock, ajustar, entrada, historial, editar */}
+      {detail && <ProductSheet product={items.find((i) => i.id === detail.id) ?? detail} onClose={() => setDetail(null)} />}
     </div>
   )
 }

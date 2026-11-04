@@ -6,6 +6,8 @@ export const KINDS = ['CUSTOMER', 'TESTER', 'TEAM']
 
 /** Pestañas del panel, en este orden. */
 export const FILTERS = ['customers', 'new', 'testers', 'team', 'all']
+/** Usuarios (4-nov-2026): sin «Socios», que tienen su propia página. */
+export const USER_FILTERS = ['customers', 'new', 'testers', 'all']
 
 export const kindOf = (biz) => biz?.accountKind ?? null
 

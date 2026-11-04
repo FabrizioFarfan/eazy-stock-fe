@@ -39,11 +39,11 @@ export function KindPicker({ kind, onPick, busy }) {
 }
 
 /** Pestañas con contador: Clientes / Nuevos / Testers / Socios / Todos. */
-export function KindTabs({ value, onChange, counts }) {
+export function KindTabs({ value, onChange, counts, filters = FILTERS }) {
   const t = useT()
   return (
     <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t('Qué cuentas ver')}>
-      {FILTERS.map((f) => (
+      {filters.map((f) => (
         <button key={f} type="button" role="tab" aria-selected={value === f} onClick={() => onChange(f)}
           className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
             value === f ? 'bg-gray-900 text-white' : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}>
