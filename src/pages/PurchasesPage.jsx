@@ -11,6 +11,7 @@ import { ReportsSwitcher, ReportHero, ReportHeader, NewButton } from '../compone
 import PurchasesChart from '../components/reports/PurchasesChart'
 import ExpenseModal from '../components/reports/ExpenseModal'
 import { TrendCard, TopProductsCard, PaymentMethodsCard, ReceiptsCard } from '../components/reports/PurchasesInsights'
+import RecurringExpensesCard from '../components/reports/RecurringExpenses'
 import { useReceipts } from '../hooks/useReceipts'
 import { buildPurchasesCsv, projectMonth } from '../utils/purchasesCsv'
 import { categoryOf, PAYMENT_METHODS } from '../utils/expenseKinds'
@@ -186,7 +187,11 @@ export default function PurchasesPage() {
           [t('Pagado a proveedores'), formatPrice(data?.paidToSuppliers ?? 0)],
           [t('Entró al crédito'), formatPrice(data?.creditPurchased ?? 0)],
           [t('Debes a proveedores hoy'), formatPrice(data?.supplierDebt ?? 0), Number(data?.supplierDebt) > 0 ? 'text-red-200' : ''],
+          [t('Gastos fijos al mes'), formatPrice(data?.fixedMonthly ?? 0), Number(data?.fixedMonthly) > 0 ? 'text-indigo-200' : ''],
         ]} />
+
+      {/* Gastos fijos (Frank, 4-nov): alquiler, luz, sueldo… se registran solos */}
+      <RecurringExpensesCard biz={biz} />
 
       <PurchasesChart buckets={buckets} labelOf={labelOf} isLoading={isLoading} />
 
@@ -326,7 +331,7 @@ export default function PurchasesPage() {
               <li key={e.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
                 <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-lg">{cat.emoji}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-gray-900">{e.concept}</span>
+                  <span className="block truncate text-sm font-semibold text-gray-900">{e.recurringId && <span title={t('Gasto fijo: se registró solo')} className="mr-1">🔁</span>}{e.concept}</span>
                   <span className="block text-[11px] text-gray-400">
                     {fmtDay(e.day, { day: 'numeric', month: 'short', year: 'numeric' })} · {t(cat.label)}
                     {e.supplierName && <> · {e.supplierName}</>}{method && <> · {t(method.label)}</>}

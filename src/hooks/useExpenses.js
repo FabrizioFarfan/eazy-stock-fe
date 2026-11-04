@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { expensesApi } from '../services/endpoints/expenses'
+import { expensesApi, recurringExpensesApi } from '../services/endpoints/expenses'
 
 /**
  * Gastos del negocio que no son mercadería (alquiler, luz, flete, sueldos…).
@@ -44,4 +44,33 @@ export function useDeleteExpense() {
     mutationFn: ({ id, params }) => expensesApi.remove(id, params).then((r) => r.data.data),
     onSuccess: () => invalidate(qc),
   })
+}
+
+// ── Gastos fijos (4-nov-2026) ──
+export const RECURRING_KEY = 'recurring-expenses'
+
+export function useRecurringExpenses(params, options = {}) {
+  return useQuery({
+    queryKey: [RECURRING_KEY, params],
+    queryFn: () => recurringExpensesApi.list(params).then((r) => r.data.data ?? []),
+    ...options,
+  })
+}
+
+function invalidateRecurring(qc) {
+  qc.invalidateQueries({ queryKey: [RECURRING_KEY] })
+  invalidate(qc) // un fijo nuevo puede registrar el gasto de este mes al momento
+}
+
+export function useCreateRecurringExpense() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (data) => recurringExpensesApi.create(data).then((r) => r.data.data), onSuccess: () => invalidateRecurring(qc) })
+}
+export function useUpdateRecurringExpense() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, data, params }) => recurringExpensesApi.update(id, data, params).then((r) => r.data.data), onSuccess: () => invalidateRecurring(qc) })
+}
+export function useDeleteRecurringExpense() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: ({ id, params }) => recurringExpensesApi.remove(id, params).then((r) => r.data.data), onSuccess: () => invalidateRecurring(qc) })
 }
