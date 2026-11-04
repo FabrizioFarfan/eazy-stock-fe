@@ -96,4 +96,34 @@ for (let k = 0; k < (process.env.ONLY === 'receipts' ? 0 : 24); k++) {
   } catch (e) { console.warn('  gasto:', e.message) }
 }
 console.log(`→ gastos creados: ${expenses}`)
+
+// Clientes y VENTAS (Frank, 4-nov: «agrégale datos a la dashboard, que se vea activa»). ONLY=receipts|expenses las salta.
+let sales = 0
+if (!process.env.ONLY) {
+  const wantCustomers = [['María Quispe', 300], ['Jorge Huamán', 500], ['Rosa Flores', 200], ['Constructora Andes SAC', 2000]]
+  const existingCustomers = (await call('GET', '/api/customers?size=200')).content ?? []
+  const customers = []
+  for (const [name, creditLimit] of wantCustomers) {
+    let c = existingCustomers.find((x) => x.name.toLowerCase() === name.toLowerCase())
+    if (!c) c = await call('POST', '/api/customers', { name, creditLimit, phone: '+51 9' + String(10000000 + Math.floor(Math.random() * 89999999)) })
+    customers.push(c)
+  }
+  let methods = []
+  try { const m = await call('GET', '/api/payment-methods'); methods = (m.content ?? m ?? []).filter((x) => x.active !== false) } catch { methods = [] }
+  const fresh = (await call('GET', '/api/products?size=200&active=true')).content ?? []
+  const sellable = fresh.filter((p) => Number(p.currentStock) > 3 && !p.priceIsVariable)
+  for (let k = 0; k < 36 && sellable.length; k++) {
+    const lines = [...new Map(Array.from({ length: 1 + Math.floor(Math.random() * 3) }, () => pick(sellable)).map((p) => [p.id, p])).values()]
+    const items = lines.map((p) => ({ productId: p.id, quantity: 1 + Math.floor(Math.random() * 3) }))
+    const credit = Math.random() < 0.25
+    const customer = credit || Math.random() < 0.3 ? pick(customers) : null
+    const method = methods.length ? pick(methods) : null
+    try {
+      await call('POST', '/api/sales', { items, isOnCredit: credit, customerId: customer?.id ?? null, paymentMethodId: credit ? null : method?.id ?? null, notes: 'Venta de ejemplo' })
+      sales++
+      for (const it of items) { const p = sellable.find((x) => x.id === it.productId); if (p) p.currentStock = Number(p.currentStock) - it.quantity }
+    } catch (e) { console.warn('  venta:', e.message) }
+  }
+  console.log(`→ clientes: ${customers.length} · ventas creadas: ${sales}`)
+}
 console.log('Listo: abre Reportes › Compras y gastos con «Últimos 3 meses».')

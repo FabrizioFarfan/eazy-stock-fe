@@ -9,4 +9,7 @@ export const parametersApi = {
   create: (data) => api.post('/parameters', data),                // { name, type, unit?, options?, position?, businessId? }
   update: (id, data, params) => api.put(`/parameters/${id}`, data, { params }),
   remove: (id, params) => api.delete(`/parameters/${id}`, { params }),
+  // 1.21.2: orden ({ ids } en el orden deseado) y fijar en la ficha
+  reorder: (ids, params) => api.put('/parameters/order', { ids }, { params }),
+  setPinned: (id, pinned, params) => api.patch(`/parameters/${id}/pinned`, { pinned }, { params }),
 }

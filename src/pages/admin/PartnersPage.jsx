@@ -60,13 +60,14 @@ export default function PartnersPage() {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {bosses.map((u) => (
-              <div key={u.id} className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4 shadow-sm" data-testid="boss-card">
+              <div key={u.id} className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-white p-4 shadow-sm" data-testid="boss-card">
                 <InitialsAvatar name={u.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-gray-900">{u.name}{u.id === user?.id && <span className="ml-1.5 text-xs font-semibold text-amber-700">· {t('tú')}</span>}</p>
                   <p className="flex items-center gap-1 truncate text-xs text-gray-500"><Mail size={11} className="flex-shrink-0" />{u.email}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Chip icon={Crown} tone="amber">{u.role === 'BOSS' ? t('Jefe') : t('Super admin')}</Chip>
+                    {u.email === data?.systemAdminEmail && <Chip tone="gray">{t('Cuenta de sistema')}</Chip>}
                     <Chip tone={u.active ? 'emerald' : 'red'}>{u.active ? t('Activo') : t('Inactivo')}</Chip>
                   </div>
                   <p className="mt-1.5 flex items-center gap-1 text-[11px] text-gray-400">
@@ -79,7 +80,10 @@ export default function PartnersPage() {
         )}
         <p className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2 text-[11px] leading-relaxed text-gray-500">
           <Info size={13} className="mt-0.5 flex-shrink-0" />
-          {t('El poder de jefe no se da desde aquí: se añade el correo en la configuración del servidor (APP_BOSS_EMAILS) y la cuenta pasa a jefe al reiniciar el API.')}
+          <span>
+            {t('El poder de jefe no se da desde aquí: se añade el correo en la configuración del servidor (APP_BOSS_EMAILS) y la cuenta pasa a jefe al reiniciar el API.')}{' '}
+            {t('La «cuenta de sistema» la crea el propio API al arrancar y sirve de llave de repuesto (y para las comprobaciones de Claudio): no se puede borrar, volvería sola.')}
+          </span>
         </p>
       </section>
 

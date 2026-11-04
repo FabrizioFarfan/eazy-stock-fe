@@ -56,3 +56,19 @@ export function useDeleteParameter() {
     onSuccess: () => invalidate(qc),
   })
 }
+
+export function useReorderParameters() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ids, params }) => parametersApi.reorder(ids, params).then((r) => r.data.data),
+    onSuccess: () => invalidate(qc),
+  })
+}
+
+export function usePinParameter() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, pinned, params }) => parametersApi.setPinned(id, pinned, params).then((r) => r.data.data),
+    onSuccess: () => invalidate(qc),
+  })
+}

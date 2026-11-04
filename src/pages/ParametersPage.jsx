@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Plus, SlidersHorizontal, X, Package } from 'lucide-react'
+import { Plus, SlidersHorizontal, X, Package, Pin, PinOff, ChevronUp, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { CatalogSwitcher, ReportHero, ReportHeader, BigSearch, NewButton, EntityCard } from '../components/reports/ReportKit'
 import EntityModal, { EntityField } from '../components/common/EntityModal'
 import HelpDrawer from '../components/common/HelpDrawer'
-import { useParameters, useCreateParameter, useUpdateParameter, useDeleteParameter } from '../hooks/useParameters'
+import { useParameters, useCreateParameter, useUpdateParameter, useDeleteParameter, useReorderParameters, usePinParameter } from '../hooks/useParameters'
 import { useAuth } from '../context/AuthContext'
 import { adminBizParam } from '../utils/adminBiz'
 import { getErrorMessage } from '../utils/handleApiError'
@@ -42,6 +42,7 @@ function ParameterModal({ parameter, onClose }) {
   const [type, setType] = useState(parameter?.type ?? 'YES_NO')
   const [unit, setUnit] = useState(parameter?.unit ?? 'cm')
   const [options, setOptions] = useState(parameter?.options ?? [])
+  const [pinned, setPinned] = useState(!!parameter?.pinned)
   const [optInput, setOptInput] = useState('')
   const [touched, setTouched] = useState(false)
 
@@ -60,7 +61,7 @@ function ParameterModal({ parameter, onClose }) {
     e.preventDefault()
     setTouched(true)
     if (!ready) return
-    const data = { name: name.trim(), type, unit: type === 'NUMBER' ? unit.trim() || null : null, options: type === 'OPTIONS' ? options : null }
+    const data = { name: name.trim(), type, unit: type === 'NUMBER' ? unit.trim() || null : null, options: type === 'OPTIONS' ? options : null, pinned }
     try {
       if (isEdit) await update.mutateAsync({ id: parameter.id, data, params: adminBizParam(user) })
       else await create.mutateAsync({ ...data, ...adminBizParam(user) })
@@ -116,6 +117,14 @@ function ParameterModal({ parameter, onClose }) {
         )}
       </EntityField>
 
+      <label className={`flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm ${pinned ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+        <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="mt-0.5 accent-blue-600" />
+        <span>
+          <span className="block font-semibold text-gray-900">{t('Fijado: sale siempre en la ficha del producto')}</span>
+          <span className="block text-xs text-gray-500">{t('Sin fijar, solo aparece cuando el producto ya tiene valor o lo añades con «Añadir parámetro».')}</span>
+        </span>
+      </label>
+
       {type === 'NUMBER' && (
         <EntityField label={t('Medida')} hint={t('Se muestra al lado del número: 25 cm, 1.5 L, 2 kg.')}>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -162,7 +171,7 @@ function ParameterModal({ parameter, onClose }) {
 
 // ── Card ──────────────────────────────────────────────────────────────────────
 
-function ParameterCard({ parameter, onEdit, onDelete }) {
+function ParameterCard({ parameter, onEdit, onDelete, onPin, onMove, first, last, busy }) {
   const t = useT()
   const meta = TYPE_META[parameter.type] ?? TYPE_META.TEXT
   const detail = parameter.type === 'YES_NO' ? `${t('Sí')} / ${t('No')}`
@@ -180,6 +189,19 @@ function ParameterCard({ parameter, onEdit, onDelete }) {
       <p className="flex items-center gap-1 text-[11px] text-gray-400">
         <Package size={11} /> {parameter.productsCount === 1 ? t('1 producto lo usa') : t('{n} productos lo usan', { n: parameter.productsCount })}
       </p>
+      {/* Frank (4-nov): el dueño decide qué se ve y en qué orden */}
+      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <button type="button" disabled={busy} onClick={() => onPin(parameter)} aria-pressed={parameter.pinned}
+          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold transition-colors disabled:opacity-50 ${
+            parameter.pinned ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}
+          title={parameter.pinned ? t('Sale siempre en la ficha; toca para soltarlo') : t('Fijar: que salga siempre en la ficha del producto')}>
+          {parameter.pinned ? <Pin size={11} /> : <PinOff size={11} />} {parameter.pinned ? t('Fijado') : t('Fijar')}
+        </button>
+        <span className="ml-auto inline-flex rounded-lg border border-gray-200 bg-white" role="group" aria-label={t('Orden')}>
+          <button type="button" disabled={busy || first} onClick={() => onMove(parameter, -1)} aria-label={t('Subir')} className="rounded-l-lg p-1 text-gray-500 hover:bg-gray-50 disabled:opacity-30"><ChevronUp size={13} /></button>
+          <button type="button" disabled={busy || last} onClick={() => onMove(parameter, 1)} aria-label={t('Bajar')} className="rounded-r-lg border-l border-gray-200 p-1 text-gray-500 hover:bg-gray-50 disabled:opacity-30"><ChevronDown size={13} /></button>
+        </span>
+      </div>
     </EntityCard>
   )
 }
@@ -192,6 +214,8 @@ export default function ParametersPage() {
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null)
   const remove = useDeleteParameter()
+  const reorder = useReorderParameters()
+  const pin = usePinParameter()
 
   const { data, isLoading } = useParameters(adminBizParam(user))
   const all = data ?? []
@@ -200,6 +224,15 @@ export default function ParametersPage() {
     return s ? all.filter((p) => p.name.toLowerCase().includes(s) || (p.options ?? []).some((o) => o.toLowerCase().includes(s))) : all
   }, [all, search])
   const used = all.filter((p) => p.productsCount > 0).length
+  const pinnedCount = all.filter((p) => p.pinned).length
+  const move = (p, dir) => {
+    const ids = all.map((x) => x.id)
+    const i = ids.indexOf(p.id), j = i + dir
+    if (i < 0 || j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    reorder.mutate({ ids, params: adminBizParam(user) }, { onError: (err) => toast.error(getErrorMessage(err)) })
+  }
+  const togglePin = (p) => pin.mutate({ id: p.id, pinned: !p.pinned, params: adminBizParam(user) }, { onError: (err) => toast.error(getErrorMessage(err)) })
   const byType = (k) => all.filter((p) => p.type === k).length
 
   const handleDelete = async (p) => {
@@ -231,6 +264,10 @@ export default function ParametersPage() {
               <p className="mt-1">{t('Largo en cm, capacidad en litros, peso en kg. Filtras por rango: «entre 10 y 20 cm».')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">📌 {t('Tú decides cuáles se ven')}</p>
+              <p className="mt-1">{t('En la ficha del producto solo salen los FIJADOS y los que ya tienen valor; los demás se añaden con «Añadir parámetro». Fija los que uses siempre y ordénalos con las flechas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">🧩 {t('Ya vienen unos de fábrica')}</p>
               <p className="mt-1">{t('Artesanal, Color, Material, Largo, Ancho, Alto, Peso y Capacidad. Edítalos, quítalos o crea los tuyos: los productos rellenan solo los que les sirven.')}</p>
             </div>
@@ -243,6 +280,7 @@ export default function ParametersPage() {
       <ReportHero icon={SlidersHorizontal} label={t('Tus parámetros')} loading={isLoading} value={all.length}
         sub={<span>{t('Se rellenan en la ficha de cada producto y se filtran en Productos e Inventario.')}</span>}
         cells={[
+          [t('Fijados en la ficha'), pinnedCount, pinnedCount === 0 ? 'text-amber-200' : ''],
           [t('En uso'), used],
           [t('Sí / No'), byType('YES_NO')],
           [t('Opciones'), byType('OPTIONS')],
@@ -269,7 +307,8 @@ export default function ParametersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {list.map((p) => <ParameterCard key={p.id} parameter={p} onEdit={(x) => setModal({ parameter: x })} onDelete={handleDelete} />)}
+          {list.map((p, i) => <ParameterCard key={p.id} parameter={p} onEdit={(x) => setModal({ parameter: x })} onDelete={handleDelete}
+            onPin={togglePin} onMove={move} first={i === 0} last={i === list.length - 1} busy={reorder.isPending || pin.isPending} />)}
         </div>
       )}
 

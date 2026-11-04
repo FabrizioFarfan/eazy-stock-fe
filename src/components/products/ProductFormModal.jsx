@@ -79,8 +79,8 @@ function Field({ label, required, error, children }) {
 // Tarjeta de sección del formulario: número + título + para qué sirve.
 function FormSection({ n, title, hint, accent = false, children }) {
   return (
-    <section className={`rounded-2xl border bg-white p-4 shadow-sm sm:p-5 ${accent ? 'border-blue-100' : 'border-gray-100'}`}>
-      <div className="mb-4 flex items-center gap-3">
+    <section className={`rounded-2xl border bg-white p-4 shadow-sm ${accent ? 'border-blue-100' : 'border-gray-100'}`}>
+      <div className="mb-3 flex items-center gap-3">
         <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
           accent ? 'bg-blue-600 text-white' : 'bg-gray-900 text-white'}`}>{n}</span>
         <div className="min-w-0">
@@ -88,7 +88,7 @@ function FormSection({ n, title, hint, accent = false, children }) {
           {hint && <p className="truncate text-xs text-gray-400">{hint}</p>}
         </div>
       </div>
-      <div className="flex flex-col gap-4">{children}</div>
+      <div className="flex flex-col gap-3">{children}</div>
     </section>
   )
 }
@@ -730,7 +730,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
-      <div className="flex max-h-[94dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl md:max-w-5xl xl:max-w-7xl">
+      <div className="flex max-h-[94dvh] w-full max-w-xl flex-col rounded-2xl bg-white shadow-2xl md:max-w-5xl xl:h-[94dvh] xl:max-w-[1560px] 2xl:max-w-[1760px]" data-testid="product-form-modal">
 
         {/* Cabecera */}
         <div className="flex flex-shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
@@ -763,30 +763,34 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
           </div>
         </div>
 
-        {/* Cuerpo — TRÍPTICO en PC (Frank, 4-nov-2026): foto + precios | qué es + de dónde viene | códigos + parámetros.
+        {/* Cuerpo (Frank, 4-nov-2026): en PC, CUATRO hojas de un vistazo y el modal NO se desliza entero: cada hoja
+            desliza por su cuenta si se le queda corta la pantalla (listas largas de proveedores, categorías, parámetros).
+            Orden: foto + PRECIOS (lo más importante) | qué es | códigos y parámetros | de dónde viene y dónde está.
             En tablet, dos columnas; en el celular, una sola de arriba abajo. */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto bg-gray-50/60">
-            <div className="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2 md:gap-5 xl:grid-cols-3" data-testid="product-form-grid">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/60 xl:relative xl:overflow-hidden">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-2 xl:absolute xl:inset-0 xl:grid-cols-4 xl:gap-4 xl:p-4" data-testid="product-form-grid">
 
+              {/* Hoja 1: foto + precios y stock */}
+              <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1" data-testid="sheet-1">
               {/* Foto del producto: para que el vendedor sepa cómo es (William).
                   Se reduce en el navegador y se sube aparte al guardar. */}
-              <div data-tutorial-target="photo" className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:col-start-1 md:row-start-1 xl:col-start-1 xl:row-start-1">
+              <div data-tutorial-target="photo" className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
               <input ref={cameraInputRef}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoPick} />
               <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoPick} />
-                <div className="flex items-center gap-4 md:flex-col md:items-stretch">
+                <div className="flex items-center gap-4">
                   {photoPreview ? (
-                    <img src={photoPreview} alt="" className="h-24 w-24 flex-shrink-0 rounded-xl border border-gray-100 bg-gray-50 object-contain md:aspect-[4/3] md:h-auto md:w-full" />
+                    <img src={photoPreview} alt="" className="h-24 w-24 flex-shrink-0 rounded-xl border border-gray-100 bg-gray-50 object-contain xl:h-28 xl:w-28" />
                   ) : (
                     <button type="button" onClick={() => galleryInputRef.current?.click()} disabled={photoBusy}
-                      className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-gray-300 transition-colors hover:border-blue-300 hover:text-blue-400 md:aspect-[4/3] md:h-auto md:w-full">
+                      className="flex h-24 w-24 flex-shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-gray-300 transition-colors hover:border-blue-300 hover:text-blue-400 xl:h-28 xl:w-28">
                       {photoBusy ? <Loader2 size={26} className="animate-spin" /> : <ImagePlus size={32} strokeWidth={1.6} />}
-                      <span className="hidden text-xs font-medium md:block">{t('Toca para subir una foto')}</span>
+                      <span className="px-1 text-center text-[10px] font-medium leading-tight xl:text-[11px]">{t('Subir foto')}</span>
                     </button>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-gray-900">{t('Foto del producto')}</p>
-                    <p className="mt-0.5 text-[11px] leading-snug text-gray-400">
+                    <p className="mt-0.5 text-[11px] leading-snug text-gray-400 xl:hidden">
                       {t('Opcional · Se ve en el detalle del producto y como miniatura en las listas, para que el vendedor reconozca el producto de un vistazo.')}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -811,9 +815,95 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 </div>
               </div>
 
-              {/* Hoja 2 del tríptico: qué es y de dónde viene */}
-              <div className="flex min-w-0 flex-col gap-4 md:col-start-2 md:row-start-1 md:row-span-3 xl:col-start-2 xl:row-start-1 xl:row-span-2">
-                <FormSection n={1} title={t('Qué es')} hint={t('Nombre, unidad y código')}>
+              {/* PRECIOS Y STOCK primero (Frank: «lo más importante») */}
+              <div>
+                <FormSection n={1} title={t('Precios y stock')} hint={t('Lo que cuesta, lo que cobras y cuánto tienes')} accent>
+                  {/* Checkbox precio variable */}
+                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      {...register('priceIsVariable')}
+                      className="mt-0.5 accent-blue-600"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{t('Precio variable')}</p>
+                      <p className="text-xs text-gray-500 xl:hidden">
+                        {t('El precio se define al momento de vender (se negocia con el cliente). En el POS pedirá un precio obligatorio antes de cobrar.')}
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Precios + Stock mínimo */}
+                  <div data-tutorial-target="prices">
+                    <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
+                        <PriceInputModeToggle />
+                      </div>
+                    </div>
+                    {/* 1 columna en móvil, 2 en adelante: el modo "6 decimales" del
+                        PriceInput (dos casillas + punto) necesita ancho — con 3
+                        columnas fijas se rompía el layout. Con 2 columnas los
+                        precios quedan en una fila y los stocks en la siguiente. */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                    <Controller
+                      control={control}
+                      name="purchasePrice"
+                      render={({ field }) => (
+                        <PriceInput
+                          label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
+                          value={field.value === '' ? null : field.value}
+                          onChange={(v) => field.onChange(v ?? '')}
+                          error={errors.purchasePrice?.message}
+                        />
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="salePrice"
+                      render={({ field }) => (
+                        <PriceInput
+                          label={priceIsVariable
+                            ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
+                            : <>{t('P. venta')} <span className="text-red-500">*</span></>}
+                          value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
+                          onChange={(v) => field.onChange(v ?? '')}
+                          error={errors.salePrice?.message}
+                          disabled={priceIsVariable}
+                        />
+                      )}
+                    />
+                    </div>
+                    {/* Stock mínimo e inicial: siempre a dos columnas (son cortos) */}
+                    <div className="grid grid-cols-2 gap-3">
+                    <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
+                      <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
+                    </Field>
+                    {!isEdit && !receiptContext && (
+                      <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
+                        <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
+                      </Field>
+                    )}
+                    </div>
+
+                    {/* Fecha de vencimiento (opcional) */}
+                    <div className="mt-3">
+                      <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
+                        <input {...register('expirationDate')} type="date" className={inputCls} />
+                        <p className="text-xs text-gray-400 mt-0.5 xl:hidden">
+                          {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
+                        </p>
+                      </Field>
+                    </div>
+                  </div>
+
+                </FormSection>
+              </div>
+              </div>
+
+              {/* Hoja 2: qué es */}
+              <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1" data-testid="sheet-2">
+                <FormSection n={2} title={t('Qué es')} hint={t('Nombre, unidad, código y descripción')}>
                   {/* Nombre + Unidad + Presentación */}
                   <div data-tutorial-target="name-unit" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div className="sm:col-span-2">
@@ -872,15 +962,176 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                       placeholder={t('Ej: Saco de 25kg, Caja de 100, Rollo de 50m')}
                       className={inputCls}
                     />
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-400 mt-0.5 xl:hidden">
                       {t('Opcional · Cómo viene presentado el producto. No afecta cómo se vende.')}
                     </p>
                   </Field>
 
+                  {/* Descripción */}
+                  <Field label={t('Descripción')} error={errors.description?.message}>
+                    <textarea
+                      {...register('description')}
+                      rows={2}
+                      placeholder={t('Descripción opcional')}
+                      className={`${inputCls} resize-none`}
+                    />
+                  </Field>
+
                 </FormSection>
 
-                <FormSection n={2} title={t('De dónde viene y dónde está')} hint={t('Proveedor, marca, categoría y ubicación')}>
+
+              </div>
+
+              {/* Hoja 3: códigos, parámetros y detalles */}
+              <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1" data-testid="sheet-3">
+                <FormSection n={3} title={t('Códigos y parámetros')} hint={t('Opcional · para el escáner, para filtrar y para distinguirlo')}>
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    {/* Código de barras de fábrica: el EAN impreso en el empaque por el
+                        fabricante (Sony pone el código; el distribuidor no lo cambia).
+                        Acá vive el escáner — es lo que la pistola/cámara lee. */}
+                    <Field label={t('Código de barras')} error={errors.barcode?.message}>
+                      <div className="flex gap-1.5">
+                        <input
+                          {...register('barcode')}
+                          placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
+                          inputMode="numeric"
+                          className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                            errors.barcode
+                              ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                              : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                          }`}
+                        />
+                        {hasCameraSupport && (
+                          <button
+                            type="button"
+                            onClick={cameraOpen ? stopCamera : openCamera}
+                            title={cameraOpen ? t('Cerrar cámara') : t('Escanear código de barras')}
+                            className={`flex items-center rounded-lg px-2.5 transition ${
+                              cameraOpen
+                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
+                          </button>
+                        )}
+                      </div>
+                      {hasCameraSupport && (
+                        <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
+                          <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-black">
+                            <video ref={videoRef} className="w-full" style={{ maxHeight: 140 }} playsInline muted />
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                              <div className="h-14 w-32 rounded border-2 border-blue-500 opacity-80" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </Field>
+
+                    {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
+                    <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
+                      <input
+                        {...register('providerCode')}
+                        placeholder={t('Código interno del proveedor (opcional)')}
+                        className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                          errors.providerCode
+                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                            : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
+                        }`}
+                      />
+                    </Field>
+
+                  </div>
+
+                  {/* Parámetros del negocio (Frank, 4-nov-2026): Artesanal Sí/No, Color, Largo cm… se filtran en Productos e Inventario */}
+                  {parameters.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
+                      <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
+                    </div>
+                  )}
+
+                  {/* Atributos libres */}
+                  <div data-tutorial-target="attributes" className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700">{parameters.length > 0 ? t('Otros atributos') : t('Atributos')}</label>
+
+                    {/* Suggested attribute chips */}
+                    {suggestedAttrs.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {suggestedAttrs.map((attr) => (
+                          <button
+                            key={attr}
+                            type="button"
+                            onClick={() => applySuggestedAttr(attr)}
+                            disabled={attr in attributes}
+                            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                              attr in attributes
+                                ? 'bg-blue-100 text-blue-700 cursor-default'
+                                : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                            }`}
+                          >
+                            {!(attr in attributes) && <Plus size={10} />}
+                            {attr}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Existing attributes (los que no son parámetros) */}
+                    {freeAttrKeys.length > 0 && (
+                      <div className="space-y-1.5">
+                        {freeAttrKeys.map((key) => [key, attributes[key]]).map(([key, val]) => (
+                          <div key={key} className="flex items-center gap-1.5">
+                            <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
+                            <input
+                              type="text"
+                              value={val}
+                              onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
+                              placeholder={t('Valor...')}
+                              className={`${inputCls} flex-1 py-1.5 text-xs`}
+                            />
+                            <button type="button" onClick={() => removeAttribute(key)}
+                              className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add custom attribute */}
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={attrKey}
+                        onChange={(e) => setAttrKey(e.target.value)}
+                        placeholder={t('Atributo...')}
+                        className={`${inputCls} w-28 py-1.5 text-xs`}
+                      />
+                      <input
+                        type="text"
+                        value={attrVal}
+                        onChange={(e) => setAttrVal(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
+                        placeholder={t('Valor...')}
+                        className={`${inputCls} flex-1 py-1.5 text-xs`}
+                      />
+                      <button type="button" onClick={() => addAttribute()}
+                        disabled={!attrKey.trim()}
+                        className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                </FormSection>
+              </div>
+
+
+              {/* Hoja 4: de dónde viene y dónde está (sus listas largas deslizan dentro de la hoja) */}
+              <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1 xl:[&_.max-h-40]:max-h-[7.5rem]" data-testid="sheet-4">
+                <FormSection n={4} title={t('De dónde viene y dónde está')} hint={t('Proveedor, marca, categoría y ubicación')}>
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-1">
                     {/* Supplier picker — obligatorio */}
                     <div data-tutorial-target="supplier-picker">
                       {receiptContext ? (
@@ -970,247 +1221,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
                   </div>
                 </FormSection>
-
-              </div>
-
-              {/* Hoja 3 del tríptico: códigos, parámetros y detalles */}
-              <div className="flex min-w-0 flex-col gap-4 md:col-start-1 md:row-start-3 xl:col-start-3 xl:row-start-1 xl:row-span-2">
-                <FormSection n={3} title={t('Códigos, parámetros y detalles')} hint={t('Opcional · para el escáner, para filtrar y para distinguirlo')}>
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    {/* Código de barras de fábrica: el EAN impreso en el empaque por el
-                        fabricante (Sony pone el código; el distribuidor no lo cambia).
-                        Acá vive el escáner — es lo que la pistola/cámara lee. */}
-                    <Field label={t('Código de barras')} error={errors.barcode?.message}>
-                      <div className="flex gap-1.5">
-                        <input
-                          {...register('barcode')}
-                          placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
-                          inputMode="numeric"
-                          className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
-                            errors.barcode
-                              ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                              : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-                          }`}
-                        />
-                        {hasCameraSupport && (
-                          <button
-                            type="button"
-                            onClick={cameraOpen ? stopCamera : openCamera}
-                            title={cameraOpen ? t('Cerrar cámara') : t('Escanear código de barras')}
-                            className={`flex items-center rounded-lg px-2.5 transition ${
-                              cameraOpen
-                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                : 'border border-gray-300 text-gray-500 hover:bg-gray-50'
-                            }`}
-                          >
-                            {cameraOpen ? <CameraOff size={15} /> : <Camera size={15} />}
-                          </button>
-                        )}
-                      </div>
-                      {hasCameraSupport && (
-                        <div className={cameraOpen ? 'mt-1.5 block' : 'hidden'}>
-                          <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-black">
-                            <video ref={videoRef} className="w-full" style={{ maxHeight: 140 }} playsInline muted />
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                              <div className="h-14 w-32 rounded border-2 border-blue-500 opacity-80" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </Field>
-
-                    {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
-                    <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
-                      <input
-                        {...register('providerCode')}
-                        placeholder={t('Código interno del proveedor (opcional)')}
-                        className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
-                          errors.providerCode
-                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                            : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
-                        }`}
-                      />
-                    </Field>
-
-                  </div>
-                  {/* Descripción */}
-                  <Field label={t('Descripción')} error={errors.description?.message}>
-                    <textarea
-                      {...register('description')}
-                      rows={2}
-                      placeholder={t('Descripción opcional')}
-                      className={`${inputCls} resize-none`}
-                    />
-                  </Field>
-
-                  {/* Parámetros del negocio (Frank, 4-nov-2026): Artesanal Sí/No, Color, Largo cm… se filtran en Productos e Inventario */}
-                  {parameters.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
-                      <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
-                    </div>
-                  )}
-
-                  {/* Atributos libres */}
-                  <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">{parameters.length > 0 ? t('Otros atributos') : t('Atributos')}</label>
-
-                    {/* Suggested attribute chips */}
-                    {suggestedAttrs.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {suggestedAttrs.map((attr) => (
-                          <button
-                            key={attr}
-                            type="button"
-                            onClick={() => applySuggestedAttr(attr)}
-                            disabled={attr in attributes}
-                            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-                              attr in attributes
-                                ? 'bg-blue-100 text-blue-700 cursor-default'
-                                : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                            }`}
-                          >
-                            {!(attr in attributes) && <Plus size={10} />}
-                            {attr}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Existing attributes (los que no son parámetros) */}
-                    {freeAttrKeys.length > 0 && (
-                      <div className="space-y-1.5">
-                        {freeAttrKeys.map((key) => [key, attributes[key]]).map(([key, val]) => (
-                          <div key={key} className="flex items-center gap-1.5">
-                            <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
-                            <input
-                              type="text"
-                              value={val}
-                              onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
-                              placeholder={t('Valor...')}
-                              className={`${inputCls} flex-1 py-1.5 text-xs`}
-                            />
-                            <button type="button" onClick={() => removeAttribute(key)}
-                              className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add custom attribute */}
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        value={attrKey}
-                        onChange={(e) => setAttrKey(e.target.value)}
-                        placeholder={t('Atributo...')}
-                        className={`${inputCls} w-28 py-1.5 text-xs`}
-                      />
-                      <input
-                        type="text"
-                        value={attrVal}
-                        onChange={(e) => setAttrVal(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
-                        placeholder={t('Valor...')}
-                        className={`${inputCls} flex-1 py-1.5 text-xs`}
-                      />
-                      <button type="button" onClick={() => addAttribute()}
-                        disabled={!attrKey.trim()}
-                        className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                </FormSection>
-              </div>
-
-              {/* Precios y stock: bajo la foto en PC y tablet, al final en el celular */}
-              <div className="md:col-start-1 md:row-start-2 md:self-start xl:col-start-1 xl:row-start-2">
-                <FormSection n={4} title={t('Precios y stock')} hint={t('Lo que cuesta, lo que cobras y cuánto tienes')} accent>
-                  {/* Checkbox precio variable */}
-                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      {...register('priceIsVariable')}
-                      className="mt-0.5 accent-blue-600"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{t('Precio variable')}</p>
-                      <p className="text-xs text-gray-500">
-                        {t('El precio se define al momento de vender (se negocia con el cliente). En el POS pedirá un precio obligatorio antes de cobrar.')}
-                      </p>
-                    </div>
-                  </label>
-
-                  {/* Precios + Stock mínimo */}
-                  <div data-tutorial-target="prices">
-                    <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
-                        <PriceInputModeToggle />
-                      </div>
-                    </div>
-                    {/* 1 columna en móvil, 2 en adelante: el modo "6 decimales" del
-                        PriceInput (dos casillas + punto) necesita ancho — con 3
-                        columnas fijas se rompía el layout. Con 2 columnas los
-                        precios quedan en una fila y los stocks en la siguiente. */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
-                    <Controller
-                      control={control}
-                      name="purchasePrice"
-                      render={({ field }) => (
-                        <PriceInput
-                          label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
-                          value={field.value === '' ? null : field.value}
-                          onChange={(v) => field.onChange(v ?? '')}
-                          error={errors.purchasePrice?.message}
-                        />
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name="salePrice"
-                      render={({ field }) => (
-                        <PriceInput
-                          label={priceIsVariable
-                            ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
-                            : <>{t('P. venta')} <span className="text-red-500">*</span></>}
-                          value={priceIsVariable ? null : (field.value === '' ? null : field.value)}
-                          onChange={(v) => field.onChange(v ?? '')}
-                          error={errors.salePrice?.message}
-                          disabled={priceIsVariable}
-                        />
-                      )}
-                    />
-                    <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
-                      <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
-                    </Field>
-                    {!isEdit && !receiptContext && (
-                      <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
-                        <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
-                      </Field>
-                    )}
-                    </div>
-
-                    {/* Fecha de vencimiento (opcional) */}
-                    <div className="mt-3">
-                      <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
-                        <input {...register('expirationDate')} type="date" className={inputCls} />
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
-                        </p>
-                      </Field>
-                    </div>
-                  </div>
-
-                </FormSection>
               </div>
             </div>
 
-            <div className="px-4 pb-4 sm:px-6">
+          {/* Pie: avisos (precio raro, nombre repetido, error) + botones, siempre a la vista */}
+          <div className="flex flex-shrink-0 flex-col gap-3 border-t border-gray-100 bg-white px-5 py-3 sm:px-6">
               {pricePending ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" data-testid="price-warning">
                   <p className="flex items-start gap-2 text-sm font-semibold text-amber-900">
@@ -1274,10 +1289,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 </p>
               )}
             </div>
-          </div>
-
-          {/* Pie */}
-          <div className="flex flex-shrink-0 flex-col-reverse gap-2 border-t border-gray-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -1294,6 +1306,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               {(isBusy || photoSyncing) ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
               {isBusy || photoSyncing ? t('Guardando...') : isEdit ? t('Guardar cambios') : t('Crear producto')}
             </button>
+          </div>
           </div>
         </form>
       </div>

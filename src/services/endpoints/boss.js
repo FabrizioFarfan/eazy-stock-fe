@@ -8,6 +8,8 @@ export const bossApi = {
   setAccountKind: (userId, kind) => api.patch(`/boss/accounts/${userId}/kind`, { kind }),
   // API 1.21.0 (4-nov): Socios. { bosses: [UserResponse], partners: [UserResponse con accountKind TEAM] }
   getTeam: () => api.get('/boss/team'),
+  // API 1.21.2 (4-nov): dar por confirmado el correo de una cuenta de prueba (sin buzón real)
+  verifyEmail: (userId) => api.post(`/boss/accounts/${userId}/verify-email`),
   // API 1.20.0 (30-oct): visitas de la web pública. { days, visitors, pageviews, liveNow, funnel: [{key, count}],
   //   perDay: [{day, visitors, signups}], countries/sources/devices/pages/clicks/campaigns: [{key, value}] }
   getAnalytics: (days = 7) => api.get('/boss/analytics', { params: { days } }),

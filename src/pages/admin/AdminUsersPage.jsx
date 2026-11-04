@@ -3,7 +3,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
-import { UserPlus, Users, Search, Trash2, AlertTriangle, ShieldAlert, Building2, CalendarDays, Mail, Crown, ArrowRight } from 'lucide-react'
+import { UserPlus, Users, Search, Trash2, AlertTriangle, ShieldAlert, Building2, CalendarDays, Mail, Crown, ArrowRight, MailCheck, MailWarning } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { bossApi } from '../../services/endpoints/boss'
 import { toast } from 'sonner'
 import { useOwners, useCreateOwner, useDeleteOwner } from '../../hooks/useOwners'
 import { useBusinesses } from '../../hooks/useBusinesses'
@@ -193,6 +195,13 @@ export default function AdminUsersPage() {
   // 30-oct-2026 (Frank): de un vistazo, quién es cliente, tester o socio (solo BOSS; un owner sin negocio no sale en el panel).
   const kinds = useAccountKinds()
   const [tab, setTab] = useState('customers') // Frank: siempre se abre en Clientes
+  // 4-nov-2026: las cuentas de prueba no tienen buzón; el BOSS da el correo por confirmado desde aquí.
+  const qc = useQueryClient()
+  const verifyEmail = useMutation({
+    mutationFn: (id) => bossApi.verifyEmail(id),
+    onSuccess: (_r, id) => { toast.success(t('Correo confirmado')); qc.invalidateQueries({ queryKey: ['owners'] }); void id },
+    onError: (err) => toast.error(getErrorMessage(err)),
+  })
   // La etiqueta viene en la propia cuenta (API 1.21.0); si falta, la del negocio del que es dueño.
   const kindOfOwner = (u) => (u.accountKind !== undefined ? u.accountKind : kinds.byOwner.get(u.id)) ?? null
   // Los socios (TEAM) tienen su página: aquí no se mezclan con los clientes.
@@ -260,6 +269,14 @@ export default function AdminUsersPage() {
                   : <Chip icon={Building2} tone="amber">{t('Sin negocio')}</Chip>}
                 <Chip tone={u.active ? 'emerald' : 'red'}>{u.active ? t('Activo') : t('Inactivo')}</Chip>
                 {kinds.enabled && <KindChip kind={kindOfOwner(u)} />}
+                {u.emailVerified === false && (
+                  <button type="button" disabled={verifyEmail.isPending} onClick={(e) => { e.stopPropagation(); verifyEmail.mutate(u.id) }}
+                    title={t('Esta cuenta no confirmó su correo: el API la bloquea. Toca para darlo por confirmado (cuentas de prueba).')}
+                    className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 ring-1 ring-red-100 hover:bg-red-100 disabled:opacity-50">
+                    <MailWarning size={11} /> {t('Correo sin confirmar · confirmar')}
+                  </button>
+                )}
+                {u.emailVerified === true && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600" title={t('Correo confirmado')}><MailCheck size={11} /></span>}
               </div>
               <p className="flex items-center gap-1 text-[11px] text-gray-400">
                 <CalendarDays size={11} /> {t('Registrado el {date}', { date: formatDate(u.createdAt) })}
