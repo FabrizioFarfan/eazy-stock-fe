@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X, Eye } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, ClipboardList, Lightbulb, X, Eye, Truck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import { useMovements, useSalesSummary, useProductTotals } from '../../hooks/useStock'
@@ -7,6 +7,7 @@ import { productsApi } from '../../services/endpoints/products'
 import { lastMonthsRange, quickRange } from '../../utils/dateRanges'
 import ProductFilterPicker from './ProductFilterPicker'
 import ProductDetailModal from '../products/ProductDetailModal'
+import SupplierOrderModal from '../reports/SupplierOrderModal'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
@@ -173,10 +174,25 @@ function ProductSalesModal({ row, from, to, onClose }) {
  * tablas a la vez). El total lo suma el servidor sobre todo el rango filtrado,
  * no solo la página visible. Click en una fila → modal con el detalle.
  */
-function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
+function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick, onOrder }) {
   const t = useT()
   const range = rangeLabel(t, from, to)
   const list = rows ?? []
+
+  // «Armar pedido» (William, 4-nov-2026): lo vendido del período, por proveedor,
+  // a la misma previsual editable de Stock bajo (quitar, ajustar, «solo bajo el
+  // mínimo») y de ahí WhatsApp / PDF / imprimir. Si hay varios proveedores en
+  // la lista se elige uno; los productos sin proveedor no se pueden pedir.
+  const bySupplier = list.reduce((acc, r) => {
+    if (!r.supplierId) return acc
+    ;(acc[r.supplierId] ??= { id: r.supplierId, name: r.supplierName, rows: [] }).rows.push(r)
+    return acc
+  }, {})
+  const supplierGroups = Object.values(bySupplier).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+  const [pick, setPick] = useState('')
+  const chosen = supplierGroups.length === 1 ? supplierGroups[0] : supplierGroups.find((g) => g.id === pick)
+  const withoutSupplier = list.length - supplierGroups.reduce((n, g) => n + g.rows.length, 0)
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-gray-100 px-5 py-3.5">
@@ -190,6 +206,31 @@ function ReplenishmentSummary({ rows, isLoading, from, to, onRowClick }) {
           )}
           {' '}<span className="text-gray-400">{t('Click en un producto para ver sus ventas una por una.')}</span>
         </p>
+        {!isLoading && list.length > 0 && (
+          <div className="flex w-full flex-wrap items-center gap-2 pt-1 sm:ml-auto sm:w-auto sm:pt-0">
+            {supplierGroups.length > 1 && (
+              <select value={pick} onChange={(e) => setPick(e.target.value)} data-testid="order-supplier-pick"
+                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
+                <option value="">{t('¿A qué proveedor?')}</option>
+                {supplierGroups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name} — {t('{n} producto(s)', { n: g.rows.length })}</option>
+                ))}
+              </select>
+            )}
+            <button type="button" onClick={() => chosen && onOrder(chosen)} disabled={!chosen} data-testid="summary-order"
+              title={supplierGroups.length === 0
+                ? t('Estos productos no tienen proveedor: asígnales uno en su ficha para poder pedirlos.')
+                : t('Previsual editable del pedido: quita, ajusta cantidades y envíalo por WhatsApp o PDF')}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50">
+              <Truck size={15} /> {t('Armar pedido')}{chosen ? ` (${chosen.rows.length})` : ''}
+            </button>
+            {withoutSupplier > 0 && supplierGroups.length > 0 && (
+              <span className="basis-full text-[11px] text-gray-400 sm:basis-auto">
+                {t('{n} sin proveedor: no entran al pedido.', { n: withoutSupplier })}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -328,6 +369,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
   const [page, setPage]               = useState(0)
   const [detailRow, setDetailRow]     = useState(null)
   const [showProductDetail, setShowProductDetail] = useState(false)
+  const [orderPreview, setOrderPreview] = useState(null)
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(0) }, [typeFilter, supplierId, from, to, productId])
@@ -474,7 +516,18 @@ export default function MovementsTab({ productId = null, productHint = null, onP
         <MoneyMovementsTable kind={typeFilter} from={from} to={to} counterpartyId={typeFilter === 'PAGO' && supplierId ? supplierId : null} />
       ) : isSalesFilter ? (
         <ReplenishmentSummary rows={summaryRows} isLoading={summaryLoading}
-          from={from} to={to} onRowClick={setDetailRow} />
+          from={from} to={to} onRowClick={setDetailRow}
+          onOrder={(group) => {
+            const sup = suppliers.find((x) => x.id === group.id)
+            setOrderPreview({
+              supplier: { id: group.id, name: sup?.name ?? group.name, contact: sup?.contact, phone: sup?.phone, ruc: sup?.ruc },
+              items: group.rows.map((r) => ({
+                productId: r.productId, productName: r.productName, providerCode: r.providerCode, brand: r.brand,
+                unit: r.unit, qty: Number(r.totalSold) || 1, currentStock: r.currentStock, minStock: r.minStock,
+              })),
+              title: t('Pedido con lo vendido {range}', { range: rangeLabel(t, from, to) || t('en todo el historial') }),
+            })
+          }} />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           {/* Celular: una tarjeta por movimiento (la tabla de 8 columnas no se lee) */}
@@ -596,6 +649,17 @@ export default function MovementsTab({ productId = null, productHint = null, onP
 
       {detailRow && (
         <ProductSalesModal row={detailRow} from={from} to={to} onClose={() => setDetailRow(null)} />
+      )}
+      {orderPreview && (
+        <SupplierOrderModal
+          supplier={orderPreview.supplier}
+          items={orderPreview.items}
+          title={orderPreview.title}
+          subtitle={t('Cantidades = lo vendido del período. Quita lo que no pidas, ajusta o deja solo lo que está bajo el mínimo.')}
+          user={user}
+          businessId={user?.businessId}
+          onClose={() => setOrderPreview(null)}
+        />
       )}
     </div>
   )

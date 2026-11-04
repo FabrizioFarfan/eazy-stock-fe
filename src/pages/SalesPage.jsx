@@ -622,7 +622,11 @@ export default function SalesPage() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <p className={`text-base font-bold ${isFullyReturned(sale) ? 'text-slate-400 line-through' : 'text-gray-900'}`}>{formatCurrency(sale.total)}</p>
-                      {sale.customerName && <p className="text-[11px] text-gray-400">{t('{n} items', { n: sale.items?.length ?? 0 })}</p>}
+                      {sale.customerName && (
+                        <p className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-100">
+                          {t('{n} items', { n: sale.items?.length ?? 0 })} <ChevronRight size={10} className="text-blue-400" />
+                        </p>
+                      )}
                     </div>
                   </button>
                 </li>
@@ -710,9 +714,12 @@ export default function SalesPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-center">
-                      <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id) }}
+                        title={t('Ver los productos de esta venta')} data-testid="sale-items-pill"
+                        className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100 hover:ring-blue-200">
                         {t('{n} items', { n: sale.items?.length ?? 0 })}
-                      </span>
+                        <ChevronRight size={11} className="text-blue-400" />
+                      </button>
                     </td>
                     <td className="px-5 py-3.5 text-right font-bold text-gray-900">
                       <div className="flex items-center justify-end gap-2">

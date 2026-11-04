@@ -59,6 +59,8 @@ function printSupplierRestock(supplierName, from, to, rows) {
     const low = r.currentStock < r.minStock
     return `<tr${low ? ' class="low"' : ''}>
       <td>${escapeHtml(r.productName)}</td>
+      <td class="mono strong">${escapeHtml(r.providerCode || '—')}</td>
+      <td>${escapeHtml(r.brand || '—')}</td>
       <td class="mono">${escapeHtml(r.sku ?? '')}</td>
       <td class="c">${r.received}</td>
       <td class="c">${r.sold}</td>
@@ -89,7 +91,7 @@ function printSupplierRestock(supplierName, from, to, rows) {
     <p class="meta">${escapeHtml(tr('Periodo {from} a {to}', { from, to }))} · ${escapeHtml(tr('Generado'))}: ${escapeHtml(generated)} · ${escapeHtml(tr('{n} producto(s)', { n: rows.length }))}</p>
     <table>
       <thead><tr>
-        <th>${escapeHtml(tr('Producto'))}</th><th>${escapeHtml(tr('Código'))}</th>
+        <th>${escapeHtml(tr('Producto'))}</th><th>${escapeHtml(tr('Cód. proveedor'))}</th><th>${escapeHtml(tr('Marca'))}</th><th>${escapeHtml(tr('Código'))}</th>
         <th class="c">${escapeHtml(tr('Recibido'))}</th><th class="c">${escapeHtml(tr('Vendido'))}</th>
         <th class="c">${escapeHtml(tr('Stock actual'))}</th><th class="c">${escapeHtml(tr('Stock mínimo'))}</th><th class="c">${escapeHtml(tr('Sugerido pedir'))}</th>
       </tr></thead>
@@ -423,6 +425,8 @@ function TabLowStock({ businessId }) {
         brand:        p.brand,
         qty:          p.deficit,
         unit:         p.unit,
+        currentStock: p.currentStock,
+        minStock:     p.minStock,
       })),
     })
   }
@@ -453,12 +457,12 @@ function TabLowStock({ businessId }) {
               </option>
             ))}
           </select>
-          <button onClick={handlePrintOrder} disabled={!orderSupplier}
+          <button onClick={handlePrintOrder} disabled={!orderSupplier} data-testid="lowstock-order"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-[0.98] disabled:opacity-50">
-            {t('Generar PDF')}
+            {t('Armar pedido')}
           </button>
           <p className="basis-full text-xs text-blue-700/70 sm:basis-auto">
-            {t('Antes de generar el PDF verás una previsual editable: quita productos, cambia cantidades o agrega otros.')}
+            {t('Verás una previsual editable (quita productos, cambia cantidades o agrega otros) y lo envías por WhatsApp, lo descargas en PDF o lo imprimes.')}
           </p>
         </div>
       )}
@@ -588,6 +592,26 @@ function TabSupplierRestock({ businessId }) {
     printSupplierRestock(supplierName, from, to, rows)
   }
 
+  // «Armar pedido» (William 4-nov): la misma previsual que en Stock bajo y en
+  // Movimientos › Ventas, con lo sugerido como cantidad; desde ahí WhatsApp / PDF.
+  const { user } = useAuth()
+  const [orderPreview, setOrderPreview] = useState(null)
+  const openOrder = () => {
+    const s = suppliers.find((x) => x.id === supplierId)
+    const items = rows
+      .map((r) => ({
+        productId: r.productId, productName: r.productName, providerCode: r.providerCode, brand: r.brand,
+        unit: r.unit, currentStock: r.currentStock, minStock: r.minStock,
+        qty: Math.max(Number(r.sold) || 0, Math.max(0, (Number(r.minStock) || 0) - (Number(r.currentStock) || 0))),
+      }))
+      .filter((it) => it.qty > 0)
+    if (!items.length) return
+    setOrderPreview({
+      supplier: { id: s?.id, name: s?.name ?? supplierName, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
+      items,
+    })
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -603,17 +627,38 @@ function TabSupplierRestock({ businessId }) {
         </div>
         <DateRangeQuick from={from} to={to} onChange={setRange} />
         {supplierId && rows.length > 0 && (
-          <button
-            type="button"
-            onClick={handlePrint}
-            title={t('Imprimir la lista de productos a pedir de este proveedor')}
-            className="ml-auto flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            <Printer size={15} />
-            {t('Imprimir')}
-          </button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              title={t('Imprimir la lista de productos a pedir de este proveedor')}
+              className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <Printer size={15} />
+              {t('Imprimir')}
+            </button>
+            <button
+              type="button"
+              onClick={openOrder}
+              data-testid="restock-order"
+              title={t('Previsual editable del pedido: quita, ajusta cantidades y envíalo por WhatsApp o PDF')}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98]"
+            >
+              <Truck size={15} />
+              {t('Armar pedido')}
+            </button>
+          </div>
         )}
       </div>
+      {orderPreview && (
+        <SupplierOrderModal
+          supplier={orderPreview.supplier}
+          items={orderPreview.items}
+          user={user}
+          businessId={businessId}
+          onClose={() => setOrderPreview(null)}
+        />
+      )}
 
       {/* Empty state — no supplier selected */}
       {!supplierId && (
@@ -642,6 +687,8 @@ function TabSupplierRestock({ businessId }) {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <th className="px-4 py-3">{t('Producto')}</th>
+                <th className="px-4 py-3 whitespace-nowrap">{t('Cód. proveedor')}</th>
+                <th className="px-4 py-3">{t('Marca')}</th>
                 <th className="px-4 py-3">{t('Código')}</th>
                 <th className="px-4 py-3 text-center">{t('Recibido')}</th>
                 <th className="px-4 py-3 text-center">{t('Vendido')}</th>
@@ -657,6 +704,8 @@ function TabSupplierRestock({ businessId }) {
                 return (
                   <tr key={r.productId} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{r.productName}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700 whitespace-nowrap" title={t('El código con el que tu proveedor conoce el producto')}>{r.providerCode || '—'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600">{r.brand || '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-400">{r.sku}</td>
                     <td className="px-4 py-3 text-center text-gray-700">{r.received}</td>
                     <td className="px-4 py-3 text-center text-gray-700">{r.sold}</td>

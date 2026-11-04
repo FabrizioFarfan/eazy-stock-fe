@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2 } from 'lucide-react'
+import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2, Download, MessageCircle, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../common/LoadMoreRow'
 import ProductThumb from '../products/ProductThumb'
 import { useDebounce } from '../../hooks/useDebounce'
 import { printSupplierOrder } from '../../utils/printSupplierOrder'
+import { makeSupplierOrder, downloadSupplierOrderPdf, shareSupplierOrderWhatsApp } from '../../utils/supplierOrderPdf'
+import { formatQty } from '../../utils/quantity'
 import { useT } from '../../i18n'
 import { formatNumericDate } from '../../utils/formatDate'
 
@@ -15,11 +18,19 @@ import { formatNumericDate } from '../../utils/formatDate'
  * en stock bajo. Lo que se ve aquí es exactamente lo que sale en el PDF: sin
  * stock actual, sin mínimos, sin precios — solo lo que el proveedor necesita.
  *
+ * Salidas (4-nov-2026, William «no logra enviar el PDF por WhatsApp»): WhatsApp
+ * (PDF real adjunto en el celular; en la computadora se descarga y se abre el
+ * chat del proveedor con el pedido ya escrito), Descargar PDF e Imprimir.
+ *
  * @param {object}   p
  * @param {object}   p.supplier   { id, name, contact, phone, ruc }
- * @param {Array}    p.items      [{ productId, productName, providerCode, brand, qty, unit }]
+ * @param {Array}    p.items      [{ productId, productName, providerCode, brand, qty, unit, currentStock?, minStock? }]
+ *                                currentStock/minStock son opcionales: habilitan «Solo bajo el mínimo»
+ *                                y una pista de stock en la previsual (NUNCA salen en el PDF).
  * @param {object}   p.user       { businessName, name }
  * @param {string}   [p.businessId]
+ * @param {string}   [p.title]    cabecera alternativa (p. ej. «Pedido con lo vendido del período»)
+ * @param {string}   [p.subtitle]
  * @param {Function} p.onClose
  */
 // Borrador del pedido por proveedor: cerrar la previsual (o irse a otra
@@ -34,8 +45,9 @@ function loadOrderDraft(key) {
   } catch { return null }
 }
 
-export default function SupplierOrderModal({ supplier, items: initialItems, user, businessId, onClose }) {
+export default function SupplierOrderModal({ supplier, items: initialItems, user, businessId, title, subtitle, onClose }) {
   const t = useT()
+  const [busy, setBusy] = useState(null)
   const draftKey = orderDraftKey(businessId ?? user?.businessId, supplier?.id)
   const [draft] = useState(() => loadOrderDraft(draftKey))
   const [rows, setRows]       = useState(() => draft?.rows ?? initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
@@ -99,15 +111,38 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
       brand:        p.brandName,
       unit:         p.unit,
       qty:          deficit > 0 ? deficit : 1,
+      currentStock: p.currentStock,
+      minStock:     p.minStock,
       added:        true,
     }])
     setSearch('')
   }
 
+  // «Solo los que están bajo el mínimo» (lo que William hace en Resurtido, ahora
+  // también desde Movimientos): quita de un toque los que todavía tienen stock;
+  // quedan en «Quitados» por si quiere devolver alguno.
+  const hasStockInfo = rows.concat(removed).some((r) => r.currentStock != null && r.minStock != null)
+  const isLow = (r) => r.currentStock != null && r.minStock != null && Number(r.currentStock) <= Number(r.minStock)
+  const aboveMin = rows.filter((r) => r.currentStock != null && r.minStock != null && !isLow(r))
+  const keepOnlyLow = () => {
+    if (!aboveMin.length) return
+    setRows((rs) => rs.filter((r) => !aboveMin.some((a) => a.productId === r.productId)))
+    setRemoved((rm) => [...rm, ...aboveMin])
+  }
+
   const validRows = rows.filter((r) => Number(r.qty) > 0)
   const totalQty  = validRows.reduce((s, r) => s + Number(r.qty), 0)
 
-  const generate = () => {
+  const buildOrder = () => makeSupplierOrder({
+    businessName: user?.businessName,
+    authorName:   user?.name,
+    supplier,
+    items: validRows,
+    notes,
+  })
+  const done = () => { clearDraft(); onClose() }
+
+  const print = () => {
     if (!validRows.length) return
     const ok = printSupplierOrder({
       businessName: user?.businessName,
@@ -119,8 +154,28 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
       })),
       notes,
     })
-    if (ok) { clearDraft(); onClose() }
+    if (ok) done()
+    else toast.error(t('Tu navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'))
   }
+  const download = () => {
+    if (!validRows.length) return
+    try { downloadSupplierOrderPdf(buildOrder()); toast.success(t('PDF descargado')); done() }
+    catch { toast.error(t('No se pudo generar el PDF')) }
+  }
+  const whatsapp = async () => {
+    if (!validRows.length) return
+    setBusy('wa')
+    try {
+      const how = await shareSupplierOrderWhatsApp(buildOrder())
+      if (how === 'cancelled') return
+      if (how === 'desktop') {
+        toast.info(t('Se descargó el PDF y se abrió WhatsApp con el pedido ya escrito: si quieres, adjunta también el archivo descargado.'), { duration: 8000 })
+      }
+      done()
+    } catch { toast.error(t('No se pudo abrir WhatsApp')) }
+    finally { setBusy(null) }
+  }
+  const noPhone = !supplier?.phone
 
   const th = 'px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400'
 
@@ -138,9 +193,9 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
               <FileText size={18} className="text-blue-600" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">{t('Revisa el pedido antes de generar el PDF')}</h3>
+              <h3 className="text-base font-bold text-gray-900">{title || t('Revisa el pedido antes de enviarlo')}</h3>
               <p className="text-xs text-gray-500">
-                {t('Quita lo que no quieras pedir, ajusta cantidades o agrega productos. Así saldrá el documento.')}
+                {subtitle || t('Quita lo que no quieras pedir, ajusta cantidades o agrega productos. Así saldrá el documento.')}
               </p>
             </div>
           </div>
@@ -177,7 +232,28 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
               <p className="text-sm font-semibold text-gray-900">{supplier?.name || '—'}</p>
               {supplier?.contact && <p className="text-xs text-gray-500">{t('Atención')}: {supplier.contact}</p>}
               {supplier?.phone   && <p className="text-xs text-gray-500">Tel: {supplier.phone}</p>}
+              {noPhone && (
+                <p className="mt-1 inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-[11px] text-amber-800 ring-1 ring-amber-100">
+                  <AlertTriangle size={11} /> {t('Este proveedor no tiene teléfono: WhatsApp se abrirá para que elijas el contacto. Ponle el número en Proveedores y la próxima va directo.')}
+                </p>
+              )}
             </div>
+
+            {/* Filtro de un toque: solo lo que está bajo el mínimo */}
+            {hasStockInfo && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" onClick={keepOnlyLow} disabled={!aboveMin.length}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-default disabled:opacity-50">
+                  <AlertTriangle size={13} /> {t('Solo los que están bajo el mínimo')}
+                  {aboveMin.length > 0 && <span className="rounded-full bg-white px-1.5 text-[10px] text-red-600">−{aboveMin.length}</span>}
+                </button>
+                <span className="text-[11px] text-gray-400">
+                  {aboveMin.length
+                    ? t('Quita de un toque los {n} que todavía tienen stock.', { n: aboveMin.length })
+                    : t('Todos los del pedido están en o bajo su mínimo.')}
+                </span>
+              </div>
+            )}
 
             {/* Tabla editable */}
             <div className="mt-5 overflow-x-auto rounded-xl border border-gray-100">
@@ -205,6 +281,12 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
                         <td className="px-3 py-2 font-medium text-gray-900">
                           {r.productName}
                           {r.added && <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{t('agregado')}</span>}
+                          {r.currentStock != null && r.minStock != null && (
+                            <span className={`block text-[11px] font-normal ${isLow(r) ? 'text-red-500' : 'text-gray-400'}`}
+                              title={t('Solo lo ves tú: no sale en el documento')}>
+                              {t('stock')} {formatQty(r.currentStock)} · {t('mín.')} {formatQty(r.minStock)}
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-gray-600">{r.brand || '—'}</td>
                         <td className="px-3 py-2">
@@ -311,13 +393,23 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
         {/* Footer */}
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-white px-5 py-3 sm:px-6">
           <p className="text-xs text-gray-400">{t('El PDF no muestra tu stock actual, mínimos ni precios.')}</p>
-          <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+          <div className="flex flex-wrap gap-2">
+            <button onClick={onClose} className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
               {t('Cancelar')}
             </button>
-            <button onClick={generate} disabled={!validRows.length}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50">
-              <Printer size={15} /> {t('Generar PDF')} ({validRows.length})
+            <button type="button" onClick={print} disabled={!validRows.length} title={t('Imprimir')}
+              className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              <Printer size={15} /> <span className="hidden sm:inline">{t('Imprimir')}</span>
+            </button>
+            <button type="button" onClick={download} disabled={!validRows.length} data-testid="order-download"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              <Download size={15} /> {t('Descargar PDF')}
+            </button>
+            <button type="button" onClick={whatsapp} disabled={!validRows.length || busy === 'wa'} data-testid="order-whatsapp"
+              title={noPhone ? t('Sin teléfono: se abre WhatsApp para que elijas el contacto') : undefined}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50">
+              {busy === 'wa' ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />}
+              {t('Enviar por WhatsApp')} ({validRows.length})
             </button>
           </div>
         </div>

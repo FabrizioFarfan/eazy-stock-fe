@@ -3,6 +3,16 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.32.0 — 2026-11-04 (pedidos al proveedor por WhatsApp; «Armar pedido» desde Movimientos › Ventas y Resurtido; sube junto al API 1.21.4)
+Pedidos de William (4-nov, 2.ª ronda):
+- **Pedido al proveedor por WhatsApp / PDF real** (`utils/supplierOrderPdf.js`, `SupplierOrderModal`): el pedido ya no solo se imprime. En el celular el PDF viaja adjunto por la hoja de compartir; en la computadora se descarga y se abre el chat del proveedor con el pedido YA ESCRITO (código, producto, marca, cantidad). También «Descargar PDF» e «Imprimir». Si el proveedor no tiene teléfono, aviso y WhatsApp abre para elegir el contacto.
+- **«Solo los que están bajo el mínimo»** en la previsual: quita de un toque los que todavía tienen stock (quedan en «Quitados» por si vuelve alguno); pista de stock/mínimo por fila que NUNCA sale en el documento.
+- **Movimientos › Ventas → «Armar pedido»**: el Resumen de reposición del período se convierte en pedido (cantidades = lo vendido), por proveedor (selector si hay varios; los productos sin proveedor no entran), con la misma previsual editable.
+- **Reportes › Resurtido**: columnas **Cód. proveedor** y **Marca** (en la tabla y en el impreso) + botón «Armar pedido» con lo sugerido.
+- **Reportes › Stock bajo**: el botón pasa de «Generar PDF» a «Armar pedido».
+- **Historial de ventas**: la pastilla «N items» se ve y se comporta como botón: abre el detalle con todos los productos de la venta (en PC y en el celular).
+- Inglés e italiano de todo lo nuevo.
+
 ## 1.30.0 — 2026-10-30 (Panel Boss › Visitas: analítica propia sin cookies; sube junto al API 1.20.0)
 - **Visitas** (`/boss/visitas`, en el menú y en las pestañas del Boss):
   - Visitantes del periodo (hoy, 7, 30 o 90 días) y cuántos hay en la web ahora mismo; páginas vistas, cuántos vieron precios, cuentas creadas y conversión.
