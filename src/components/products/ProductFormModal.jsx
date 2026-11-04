@@ -985,7 +985,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               {/* Hoja 3: códigos, parámetros y detalles */}
               <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1" data-testid="sheet-3">
                 <FormSection n={3} title={t('Códigos y parámetros')} hint={t('Opcional · para el escáner, para filtrar y para distinguirlo')}>
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {/* En PC la hoja es estrecha: los dos códigos van uno debajo del otro (se encimaban, Frank 4-nov) */}
+                  <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-1">
                     {/* Código de barras de fábrica: el EAN impreso en el empaque por el
                         fabricante (Sony pone el código; el distribuidor no lo cambia).
                         Acá vive el escáner — es lo que la pistola/cámara lee. */}
@@ -995,7 +996,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                           {...register('barcode')}
                           placeholder={t('EAN del empaque, ej. 7501031311309 (opcional)')}
                           inputMode="numeric"
-                          className={`flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                          className={`min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
                             errors.barcode
                               ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                               : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
@@ -1033,7 +1034,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                       <input
                         {...register('providerCode')}
                         placeholder={t('Código interno del proveedor (opcional)')}
-                        className={`rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
+                        className={`w-full min-w-0 rounded-lg border px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 ${
                           errors.providerCode
                             ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                             : 'border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20'
@@ -1053,7 +1054,10 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
                   {/* Atributos libres */}
                   <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">{parameters.length > 0 ? t('Otros atributos') : t('Atributos')}</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      {parameters.length > 0 ? t('Otros atributos') : t('Atributos')}
+                      {parameters.length > 0 && <span className="ml-1 text-xs font-normal text-gray-400">· {t('texto libre, los «atributos» de antes; no se filtra por ellos')}</span>}
+                    </label>
 
                     {/* Suggested attribute chips */}
                     {suggestedAttrs.length > 0 && (
@@ -1130,7 +1134,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
               {/* Hoja 4: de dónde viene y dónde está (sus listas largas deslizan dentro de la hoja) */}
               <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1 xl:[&_.max-h-40]:max-h-[7.5rem]" data-testid="sheet-4">
-                <FormSection n={4} title={t('De dónde viene y dónde está')} hint={t('Proveedor, marca, categoría y ubicación')}>
+                <FormSection n={4} title={t('De dónde viene y dónde está')} hint={t('Proveedor, marca, categoría y ubicación · por estos también se filtra')}>
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-1">
                     {/* Supplier picker — obligatorio */}
                     <div data-tutorial-target="supplier-picker">
