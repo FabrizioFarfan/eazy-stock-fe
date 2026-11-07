@@ -25,8 +25,8 @@ const makeSchema = (t) => z.object({
   creditLimit: z.preprocess(
                 (v) => (v === '' || v == null ? undefined : v),
                 z.coerce.number({
-                  invalid_type_error: t('Número inválido'),
-                  required_error: t('El límite de crédito es obligatorio'),
+                  error: t('Número inválido'),
+                  error: t('El límite de crédito es obligatorio'),
                 }).min(0, t('No puede ser negativo')),
               ),
   notes:       z.string().optional(),

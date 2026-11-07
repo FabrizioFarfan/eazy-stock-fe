@@ -36,13 +36,14 @@ const makeSchema = (t) => z.object({
   description:   z.string().optional(),
   providerCode:  z.string().optional(),
   barcode:       z.string().max(64, t('Máximo 64 caracteres')).optional(),
-  purchasePrice: z.coerce.number({ invalid_type_error: t('Ingresa un número') }).positive(t('Debe ser mayor a 0')),
+  // Vacío cuenta como 0: así dice «debe ser mayor a 0» y sigue revisando los demás campos.
+  purchasePrice: z.preprocess((v) => (v === '' || v == null ? 0 : v), z.coerce.number({ error: t('Ingresa un número') }).positive(t('Debe ser mayor a 0'))),
   // salePrice se valida condicionalmente: si priceIsVariable=true, no se exige > 0
-  salePrice:     z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('No puede ser negativo')).optional(),
+  salePrice:     z.coerce.number({ error: t('Ingresa un número') }).min(0, t('No puede ser negativo')).optional(),
   // minStock e initialStock admiten decimales para productos por peso/medida;
   // "unidad" exige entero (refine abajo).
-  minStock:      z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('Mínimo 0')),
-  initialStock:  z.coerce.number({ invalid_type_error: t('Ingresa un número') }).min(0, t('Mínimo 0')).optional(),
+  minStock:      z.coerce.number({ error: t('Ingresa un número') }).min(0, t('Mínimo 0')),
+  initialStock:  z.coerce.number({ error: t('Ingresa un número') }).min(0, t('Mínimo 0')).optional(),
   expirationDate: z.string().optional(),
 }).superRefine((data, ctx) => {
   // minStock / initialStock enteros si el producto no es divisible (unidad)
@@ -64,9 +65,9 @@ const makeSchema = (t) => z.object({
   }
 })
 
-function Field({ label, required, error, children }) {
+function Field({ label, required, error, children, field }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1" data-field={field}>
       <label className="text-sm font-medium text-gray-700">
         {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
@@ -614,6 +615,37 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
   }
 
   const [supplierError, setSupplierError] = useState(null)
+  const formRef = useRef(null)
+  // Frank, 7-nov-2026: lo que impide guardar se dice en el pie, siempre a la vista, y un toque lleva al campo: en PC
+  // el error puede estar en otra hoja y en el celular muy arriba.
+  const FIELD_LABELS = {
+    name: t('Nombre'), sku: t('Código del producto'), unit: t('Unidad'), unitCustom: t('Unidad'), presentation: t('Presentación'),
+    description: t('Descripción'), providerCode: t('Código proveedor'), barcode: t('Código de barras'),
+    purchasePrice: t('P. compra'), salePrice: t('P. venta'), minStock: t('Stock mín.'), initialStock: t('Stock inicial'),
+    expirationDate: t('Fecha de vencimiento'),
+  }
+  const missingSupplier = supplierError && !supplierId
+  const problems = [
+    ...Object.entries(errors).filter(([, e]) => e?.message).map(([key, e]) => ({ key, label: FIELD_LABELS[key] ?? key, message: e.message })),
+    ...(missingSupplier ? [{ key: 'supplier', label: t('Proveedor'), message: supplierError }] : []),
+  ]
+  const jumpTo = (key) => {
+    const form = formRef.current
+    if (!form) return
+    const el = key === 'supplier'
+      ? form.querySelector('[data-tutorial-target="supplier-picker"]')
+      : form.querySelector(`[name="${key}"]`) ?? form.querySelector(`[data-field="${key}"]`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const input = el.matches('input,select,textarea') ? el : el.querySelector('input,select,textarea')
+    input?.focus({ preventScroll: true })
+  }
+  // Campos inválidos: el proveedor no es del formulario, así que se comprueba aquí para decirlo todo de una vez.
+  const onInvalid = () => {
+    setDupPending(null)
+    setPricePending(null)
+    setSupplierError(supplierId ? null : t('Elegí un proveedor para este producto'))
+  }
 
   const onSubmit = async (values) => {
     setSupplierError(null)
@@ -767,7 +799,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
             desliza por su cuenta si se le queda corta la pantalla (listas largas de proveedores, categorías, parámetros).
             Orden: foto + PRECIOS (lo más importante) | qué es | códigos y parámetros | de dónde viene y dónde está.
             En tablet, dos columnas; en el celular, una sola de arriba abajo. */}
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate className="flex min-h-0 flex-1 flex-col" ref={formRef}>
           <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/60 xl:relative xl:overflow-hidden">
             <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-2 xl:absolute xl:inset-0 xl:grid-cols-4 xl:gap-4 xl:p-4" data-testid="product-form-grid">
 
@@ -850,19 +882,19 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                       control={control}
                       name="purchasePrice"
                       render={({ field }) => (
-                        <PriceInput
+                        <div data-field="purchasePrice"><PriceInput
                           label={<>{t('P. compra')} <span className="text-red-500">*</span></>}
                           value={field.value === '' ? null : field.value}
                           onChange={(v) => field.onChange(v ?? '')}
                           error={errors.purchasePrice?.message}
-                        />
+                        /></div>
                       )}
                     />
                     <Controller
                       control={control}
                       name="salePrice"
                       render={({ field }) => (
-                        <PriceInput
+                        <div data-field="salePrice"><PriceInput
                           label={priceIsVariable
                             ? <span className="text-gray-400">{t('P. venta (variable)')}</span>
                             : <>{t('P. venta')} <span className="text-red-500">*</span></>}
@@ -870,17 +902,17 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                           onChange={(v) => field.onChange(v ?? '')}
                           error={errors.salePrice?.message}
                           disabled={priceIsVariable}
-                        />
+                        /></div>
                       )}
                     />
                     </div>
                     {/* Stock mínimo e inicial: siempre a dos columnas (son cortos) */}
                     <div className="grid grid-cols-2 gap-3">
-                    <Field label={t('Stock mín.')} required error={errors.minStock?.message}>
+                    <Field field="minStock" label={t('Stock mín.')} required error={errors.minStock?.message}>
                       <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                     </Field>
                     {!isEdit && !receiptContext && (
-                      <Field label={t('Stock inicial')} error={errors.initialStock?.message}>
+                      <Field field="initialStock" label={t('Stock inicial')} error={errors.initialStock?.message}>
                         <input {...register('initialStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                       </Field>
                     )}
@@ -888,7 +920,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
                     {/* Fecha de vencimiento (opcional) */}
                     <div className="mt-3">
-                      <Field label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
+                      <Field field="expirationDate" label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
                         <input {...register('expirationDate')} type="date" className={inputCls} />
                         <p className="text-xs text-gray-400 mt-0.5 xl:hidden">
                           {t('Opcional · Para productos que caducan (farmacia, alimentos). La app te avisa cuando falte poco para que venza.')}
@@ -907,7 +939,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   {/* Nombre + Unidad + Presentación */}
                   <div data-tutorial-target="name-unit" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div className="sm:col-span-2">
-                      <Field label={t('Nombre')} required error={errors.name?.message}>
+                      <Field field="name" label={t('Nombre')} required error={errors.name?.message}>
                         <input {...register('name')} placeholder={t('Ej. Aceite 5W30')} className={`${inputCls} w-full text-base font-semibold`} />
                       </Field>
                     </div>
@@ -938,7 +970,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   />
 
                   {/* Código del producto (SKU) */}
-                  <Field label={t('Código del producto')} error={errors.sku?.message}>
+                  <Field field="sku" label={t('Código del producto')} error={errors.sku?.message}>
                     <input
                       {...register('sku')}
                       placeholder={isEdit ? t('Código del producto') : t('Se genera automáticamente si lo dejas vacío')}
@@ -990,7 +1022,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     {/* Código de barras de fábrica: el EAN impreso en el empaque por el
                         fabricante (Sony pone el código; el distribuidor no lo cambia).
                         Acá vive el escáner — es lo que la pistola/cámara lee. */}
-                    <Field label={t('Código de barras')} error={errors.barcode?.message}>
+                    <Field field="barcode" label={t('Código de barras')} error={errors.barcode?.message}>
                       <div className="flex gap-1.5">
                         <input
                           {...register('barcode')}
@@ -1030,7 +1062,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     </Field>
 
                     {/* Código proveedor: el código INTERNO del distribuidor (sin barra) */}
-                    <Field label={t('Código proveedor')} error={errors.providerCode?.message}>
+                    <Field field="providerCode" label={t('Código proveedor')} error={errors.providerCode?.message}>
                       <input
                         {...register('providerCode')}
                         placeholder={t('Código interno del proveedor (opcional)')}
@@ -1225,6 +1257,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                 </FormSection>
               </div>
             </div>
+          </div>
 
           {/* Pie: avisos (precio raro, nombre repetido, error) + botones, siempre a la vista */}
           <div className="flex flex-shrink-0 flex-col gap-3 border-t border-gray-100 bg-white px-5 py-3 sm:px-6">
@@ -1285,8 +1318,21 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     </button>
                   </div>
                 </div>
+              ) : problems.length > 0 ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5" data-testid="form-problems" role="alert">
+                  <p className="text-sm font-semibold text-red-700">{t('Para guardar, revisa esto:')}</p>
+                  <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                    {problems.map((p) => (
+                      <li key={p.key} className="text-sm text-red-700">
+                        <button type="button" onClick={() => jumpTo(p.key)} className="text-left underline-offset-2 hover:underline">
+                          <strong className="font-semibold">{p.label}:</strong> {p.message}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : mutation.isError && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600" role="alert">
                   {getErrorMessage(mutation.error)}
                 </p>
               )}
@@ -1308,7 +1354,6 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               {(isBusy || photoSyncing) ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
               {isBusy || photoSyncing ? t('Guardando...') : isEdit ? t('Guardar cambios') : t('Crear producto')}
             </button>
-          </div>
           </div>
         </form>
       </div>

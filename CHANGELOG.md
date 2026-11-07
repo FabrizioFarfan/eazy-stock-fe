@@ -3,6 +3,10 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.36.1 — 2026-11-07 (URGENTE: el botón de crear producto)
+- Desde 1.31.2 (4-nov) el pie del modal de producto estaba dentro del área deslizante: en PC quedaba tapado por la hoja 4 y en tablet y celular al final de todo. Ahora siempre está a la vista.
+- Lo que impide guardar se dice en el pie, todo de una vez y con un toque lleva al campo. Los mensajes de número ya no salen en inglés (zod 4 ignoraba `invalid_type_error`; también en clientes).
+
 ## 1.36.0 — 2026-11-07 (parámetros desde la factura; sube junto al API 1.25.0)
 - William: al registrar una recepción, «Parámetros de estos productos»: eliges parámetro y valor, marcas los productos y se guarda con la compra. En una factura ya registrada, «Poner parámetros a estos productos» en su detalle. Se puede crear un parámetro ahí mismo.
 
