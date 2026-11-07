@@ -43,7 +43,13 @@ export const FALLBACK_COUNTRY_CONFIGS = [
   cfg('UY', 'Uruguay',         'UYU', '$',   2, '598', 'es-UY'),
   cfg('VE', 'Venezuela',       'VES', 'Bs.', 2, '58',  'es-VE'),
   cfg('ES', 'España',          'EUR', '€',   2, '34',  'es-ES'),
+  cfg('FR', 'Francia',         'EUR', '€',   2, '33',  'fr-FR'),
+  cfg('IT', 'Italia',          'EUR', '€',   2, '39',  'it-IT'),
+  cfg('US', 'Estados Unidos',  'USD', '$',   2, '1',   'en-US'),
 ]
+
+/** Debajo de Latinoamérica en la lista del registro (Frank, 7-nov-2026). */
+export const OTHER_REGION = new Set(['ES', 'FR', 'IT', 'US'])
 
 /**
  * País que se propone en el registro según el navegador (`navigator.languages`):

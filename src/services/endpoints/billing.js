@@ -12,6 +12,8 @@ export const billingApi = {
   // no cobra hasta trialEndsAt) y acepta `promotionCode` (400 PROMO_CODE_INVALID); sin prueba
   // cobra hoy. Con suscripción de Stripe activa → 409 (usar changePlan).
   checkout: (data) => api.post('/billing/checkout', data),
+  // 7-nov-2026: documento fiscal antes de pagar. Checkout sin él → 409 TAX_ID_REQUIRED_TO_PAY.
+  setTaxId: (taxId) => api.put('/billing/tax-id', { taxId }),
   // { plan, interval, keep? } → cambia el plan pagando (prorrateo: se cobra o abona la diferencia
   // hoy; 402 PAYMENT_FAILED si el cobro falla y no cambia nada) o, con tarjeta guardada en la
   // prueba, el precio del primer cobro (sin cobrar). Mismas reglas de keep. Sin nada en Stripe → 409.

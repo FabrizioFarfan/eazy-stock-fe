@@ -12,6 +12,9 @@ export const bossApi = {
   verifyEmail: (userId) => api.post(`/boss/accounts/${userId}/verify-email`),
   // API 1.20.0 (30-oct): visitas de la web pública. { days, visitors, pageviews, liveNow, funnel: [{key, count}],
   //   perDay: [{day, visitors, signups}], countries/sources/devices/pages/clicks/campaigns: [{key, value}] }
+  getTesters: () => api.get('/boss/testers'),
+  setTesterInvited: (id, invited) => api.patch(`/boss/testers/${id}/invited`, { invited }),
+  deleteTester: (id) => api.delete(`/boss/testers/${id}`),
   getAnalytics: (days = 7) => api.get('/boss/analytics', { params: { days } }),
 
   // Suscripciones (M1 «Planes en serio», 15-oct-2026): una fila por DUEÑO (la

@@ -11,6 +11,8 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { useReferenceCheck, useCreateSimpleReceipt } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
+import PriceChangeModal from './PriceChangeModal'
+import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
 import ProductFormModal from '../products/ProductFormModal'
@@ -71,6 +73,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   }
   const draft = draftRef.current
   const [restoredBanner, setRestoredBanner] = useState(!!draft?.items?.length)
+  const [priceReview, setPriceReview] = useState(null)
 
   // ── Producto nuevo: abre el modal COMPLETO de producto (con código de
   // proveedor, stock mínimo, marca, etc. — dictado de Frank: el mini-form se
@@ -323,6 +326,21 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       return
     }
 
+    // Frank, 7-nov-2026: si algo cambió de precio, antes de guardar se enseña y se pregunta.
+    const changes = purchasePriceChanges(items.map((i) => ({
+      id: i.product.id,
+      name: i.product.name,
+      quantity: i.quantity,
+      oldCost: i.product.purchasePrice,
+      newCost: i.unitCost,
+      salePrice: i.product.priceIsVariable ? null : effSale(i),
+    })))
+    if (changes.length > 0) { setPriceReview(changes); return }
+    await saveReceipt()
+  }
+
+  const saveReceipt = async (decisions = {}) => {
+    setPriceReview(null)
     try {
       await createReceipt.mutateAsync({
         supplierId: supplier.id,
@@ -332,6 +350,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             quantity:  i.quantity,
             unitCost:  i.unitCost ?? null,
             salePrice: i.salePrice ?? null,
+            ...decisionFields(decisions, i.product.id),
           })),
           totalAmount:       finalTotal,
           paymentMode,
@@ -372,6 +391,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           </button>
         </div>
 
+        {priceReview && <PriceChangeModal changes={priceReview} onConfirm={saveReceipt} onCancel={() => setPriceReview(null)} />}
         <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
 
@@ -652,7 +672,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                           {it.unitCost != null
                             && Number(it.unitCost) !== Number(it.product.purchasePrice ?? 0) && (
                             <p className="mt-1.5 text-xs text-blue-600">
-                              {t('El precio de compra pasará de {from} a', { from: formatPrice(it.product.purchasePrice) })}{' '}
+                              {t('Antes lo pagabas {from}, ahora', { from: formatPrice(it.product.purchasePrice) })}{' '}
                               <span className="font-semibold">{formatPrice(it.unitCost)}</span>
                             </p>
                           )}

@@ -18,6 +18,7 @@ import { PLANS, PERIODS, DEFAULT_PERIOD, periodOf, periodPrice, fmtMoney, curren
 import { Chip } from '../boss/BossKit'
 import { readSetupPending, clearSetupPending } from '../../utils/setupPendingNotice'
 import { taxIdTrialUsedMessage } from '../../utils/taxIdText'
+import TaxIdModal from './TaxIdModal'
 import { planKey, whatsappActivateLink, formatDay, STATUS_TONE, STATUS_LABEL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from './subscriptionUtils'
 
 /**
@@ -113,6 +114,9 @@ export default function PlanSection() {
     }
   }
 
+  // 7-nov-2026: el documento fiscal se pide aquí, al ir a pagar; al guardarlo sigue el pago elegido.
+  const [taxIdFor, setTaxIdFor] = useState(null)
+
   // act = 'checkout' (se va a Stripe) | 'changePlan' (se queda aquí). Devuelve true si se queda.
   const runPlan = async (act, plan, interval, keep) => {
     if (act === 'changePlan') {
@@ -152,7 +156,9 @@ export default function PlanSection() {
       if (await runPlan(act, plan, interval)) setPaying(null)
     } catch (err) {
       const code = getErrorCode(err)
-      if (code === 'KEEP_SELECTION_REQUIRED') {
+      if (code === 'TAX_ID_REQUIRED_TO_PAY') {
+        setTaxIdFor({ plan, interval })
+      } else if (code === 'KEEP_SELECTION_REQUIRED') {
         try { await openKeepModal(plan, act, { interval }) } catch (e2) { toast.error(getErrorMessage(e2)) }
       } else if (code === 'PROMO_CODE_INVALID') {
         setPromoError(getErrorMessage(err))
@@ -180,7 +186,10 @@ export default function PlanSection() {
       setKeepFor(null)
       setPaying(null)
     } catch (err) {
-      if (getErrorCode(err) === 'PROMO_CODE_INVALID') {
+      if (getErrorCode(err) === 'TAX_ID_REQUIRED_TO_PAY') {
+        setTaxIdFor({ plan: keepFor.plan, interval: keepFor.interval })
+        setKeepFor(null)
+      } else if (getErrorCode(err) === 'PROMO_CODE_INVALID') {
         setKeepFor(null)
         setPromoError(getErrorMessage(err))
       } else {
@@ -334,6 +343,10 @@ export default function PlanSection() {
                 onApply={() => applyPlan(selected.toUpperCase(), per.interval)} onPortal={openPortal} />
             )}
 
+            {taxIdFor && (
+              <TaxIdModal countryCode={biz?.countryCode} onClose={() => setTaxIdFor(null)}
+                onSaved={() => { const next = taxIdFor; setTaxIdFor(null); applyPlan(next.plan, next.interval) }} />
+            )}
             {keepFor && (
               <KeepSelectionModal
                 preview={keepFor.preview}

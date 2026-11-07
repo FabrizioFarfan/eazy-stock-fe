@@ -3,7 +3,8 @@
 // (ver AnalyticsService en el API). Aquí está la lógica pura (con tests); el componente es analytics/Tracker.jsx.
 
 /** Solo la web pública cuenta; dentro de la app no se sigue a nadie. */
-export const PUBLIC_PATHS = ['/', '/planes', '/funciones', '/para-quien', '/preguntas', '/registro', '/login',
+export const PUBLIC_PATHS = ['/', '/planes', '/funciones', '/para-quien', '/preguntas', '/registro', '/login', '/apps',
+  '/sistema-para/ferreterias', '/sistema-para/bodegas', '/sistema-para/farmacias', '/sistema-para/minimarkets',
   '/impressum', '/datenschutz', '/terminos', '/eliminar-cuenta']
 
 export function isPublicPath(pathname) {

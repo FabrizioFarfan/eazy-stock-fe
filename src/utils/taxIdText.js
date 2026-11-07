@@ -9,7 +9,7 @@ export const TAX_ID_LABEL = {
   PE: 'RUC', EC: 'RUC', AR: 'CUIT', CL: 'RUT', CO: 'NIT', BO: 'NIT', MX: 'RFC', UY: 'RUT', PY: 'RUC', ES: 'NIF',
   // Resto de LatAm (multi-país, 24-oct-2026)
   VE: 'RIF', DO: 'RNC', PA: 'RUC', NI: 'RUC', GT: 'NIT', SV: 'NIT', HN: 'RTN', CR: 'Cédula jurídica', CU: 'NIT',
-  IT: 'Partita IVA', DE: 'USt-IdNr.',
+  IT: 'Partita IVA', DE: 'USt-IdNr.', FR: 'SIRET', US: 'EIN',
 }
 
 /**

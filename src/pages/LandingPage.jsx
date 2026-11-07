@@ -28,6 +28,8 @@ import { SHOWN_PLANS, SHOW_UPCOMING, DEFAULT_PERIOD, periodOf, periodPrice, perM
 import { PeriodSelector, ComingSoonChip } from './landing/Pricing'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
+import AppsTesters from './landing/AppsTesters'
+
 const CTA = '/registro'
 const LOGIN = '/login'
 
@@ -57,6 +59,7 @@ const NAV = [
   { to: '/',           label: 'Inicio',     end: true, menu: HOME_SECTIONS },
   { to: '/funciones',  label: 'Funciones',  menu: FEATURE_SECTIONS },
   { to: '/para-quien', label: 'Para quién' },
+  { to: '/apps',       label: 'Apps' },
   { to: '/planes',     label: 'Precios' },
   { to: '/preguntas',  label: 'Preguntas' },
 ]
@@ -245,13 +248,13 @@ export function Hero() {
 
             {/* Tres líneas máximo en escritorio (Frank, 20-oct): cada línea no se parte. */}
             <h1 className="lp-display lp-hero-h1 mb-6 text-[2.35rem] leading-[1.04] text-white sm:text-5xl lg:text-[min(3.6rem,2.5vw)]">
-              <span className="lg:whitespace-nowrap">{t('Tu negocio, bajo control.')}</span><br />
-              <span className="text-slate-400 lg:whitespace-nowrap">{t('Gestiona, automatiza')}</span><br />
-              <span className="text-slate-400 lg:whitespace-nowrap">{t('y vende más.')}</span>
+              <span className="lg:whitespace-nowrap">{t('Deja el cuaderno.')}</span><br />
+              <span className="text-slate-400 lg:whitespace-nowrap">{t('Stock, ventas y fiado')}</span><br />
+              <span className="text-slate-400 lg:whitespace-nowrap">{t('desde tu celular.')}</span>
             </h1>
 
             <p className="lp-hero-p mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0 lg:text-lg">
-              {t('Eazy Stock ordena tu inventario, cobra en segundos y cada noche te dice cuánto ganaste. Lo que antes vivía en el cuaderno ahora trabaja para ti: te avisa qué reponer, cobra el fiado, te muestra qué se vende, y mucho más.')}
+              {t('Sabes qué tienes, quién te debe y cuánto ganaste hoy. Para ferreterías, bodegas, farmacias, minimarkets y más.')}
             </p>
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
@@ -259,7 +262,7 @@ export function Hero() {
                 to={CTA}
                 className="lp-btn-3d group flex w-full items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold text-white sm:w-auto"
               >
-                {t('Probar gratis')}
+                {t('Crear mi cuenta gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
@@ -269,8 +272,21 @@ export function Hero() {
                 {t('Ver cómo funciona')}
               </Link>
             </div>
+            <p className="mt-3 text-center text-xs text-slate-400 lg:text-left">
+              {t('Sin tarjeta. Solo tu correo y una contraseña.')}{' '}
+              <a href={`https://wa.me/4915511384643?text=${encodeURIComponent(t('Hola, vi Eazy Stock y tengo una pregunta.'))}`} target="_blank" rel="noreferrer"
+                data-testid="hero-whatsapp" className="font-semibold text-emerald-300 underline-offset-2 hover:underline">
+                {t('¿Dudas? Escríbenos por WhatsApp')}
+              </a>
+            </p>
+            <Link to="/apps" data-track="hero_apps" data-testid="hero-apps"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10">
+              <Smartphone size={14} className="flex-shrink-0 text-blue-300" />
+              {t('La app para Android y iPhone está en prueba: entra gratis como tester')}
+              <ArrowRight size={12} className="flex-shrink-0 text-slate-400" />
+            </Link>
 
-            <ul className="lp-hero-promises mt-9 grid gap-x-6 gap-y-2.5 text-left text-[13px] text-slate-400 sm:grid-cols-2">
+            <ul className="lp-hero-promises mt-7 hidden gap-x-6 gap-y-2.5 text-left text-[13px] text-slate-400 sm:grid sm:grid-cols-2">
               {promises.map(([Icon, k]) => (
                 <li key={k} className="flex items-start gap-2">
                   <Icon size={14} className="mt-0.5 flex-shrink-0 text-blue-400" />
@@ -1502,6 +1518,7 @@ export default function LandingPage() {
       <Hero />
       <Marquee />
       <ForEveryBusiness />
+      <AppsTesters />
       <Benefits teaser />
       <Highlights />
       <HowItWorks />

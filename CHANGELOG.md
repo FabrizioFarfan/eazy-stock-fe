@@ -3,6 +3,18 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.33.0 — 2026-11-07 (registro sin fricción, portada nueva, apps en prueba con lista de testers y aviso de cambio de precio; sube junto al API 1.22.0)
+Pedidos de Frank: «tenemos visitas pero nadie se registra», «mal a penas mostramos las apps» y avisar cuando el proveedor cambia el precio.
+- **Compra con precio distinto** (`components/stock/PriceChangeModal.jsx`, `utils/purchasePriceChanges.js`): al guardar sale «antes lo pagabas X, ahora Y», la ganancia por unidad, el total de más o de menos y «¿desde ahora cuesta siempre así?» por producto (sí, nuevo precio / no, solo en esta compra). También al poner el costo de una entrada simple. Desde el modal se cambia la venta. Sin cambios de precio no sale.
+- **Registro en una pantalla**: negocio, país, correo y contraseña. El país se propone solo por la IP (`GET /api/public/geo`) o el navegador. Sin nombre, RUC, WhatsApp ni elegir plan: la prueba es de Pro y el plan se elige al terminar. Sin casilla de privacidad: queda la frase de aceptación de Términos y Privacidad.
+- **RUC antes de pagar** (`components/subscription/TaxIdModal.jsx`): al ir a Stripe sin documento se pide una vez y sigue solo al pago.
+- **Países**: Latinoamérica primero y debajo España, Francia, Italia y Estados Unidos.
+- **Portada**: titular «Deja el cuaderno», CTA «Crear mi cuenta gratis», WhatsApp, acceso a las apps; en móvil se ve el producto en la primera pantalla.
+- **Apps en fase de prueba** (`pages/landing/AppsTesters.jsx`, página `/apps`, enlace en el menú): correo + Android o iPhone para entrar como tester; 3 meses de Pro al salir. **Boss › Testers** (`/boss/testers`): lista, objetivo de 14, copiar correos y marcar acceso.
+- **Páginas por rubro para Google** (`/sistema-para/ferreterias|bodegas|farmacias|minimarkets`, con prerender y sitemap).
+- **Visitas**: paso nuevo «Empezaron a rellenarlo» y `register_error_*` en los clics.
+- Privacidad de/es/en con la lista de testers. Inglés e italiano de lo nuevo, salvo las páginas por rubro (en español, para el mercado de Latinoamérica) y el panel Boss.
+
 ## 1.32.0 — 2026-11-04 (pedidos al proveedor por WhatsApp; «Armar pedido» desde Movimientos › Ventas y Resurtido; sube junto al API 1.21.4)
 Pedidos de William (4-nov, 2.ª ronda):
 - **Pedido al proveedor por WhatsApp / PDF real** (`utils/supplierOrderPdf.js`, `SupplierOrderModal`): el pedido ya no solo se imprime. En el celular el PDF viaja adjunto por la hoja de compartir; en la computadora se descarga y se abre el chat del proveedor con el pedido YA ESCRITO (código, producto, marca, cantidad). También «Descargar PDF» e «Imprimir». Si el proveedor no tiene teléfono, aviso y WhatsApp abre para elegir el contacto.

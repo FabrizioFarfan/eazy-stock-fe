@@ -1,6 +1,6 @@
 // Panel Boss › Visitas: lo que se calcula sin pintar (embudo, conversión, marcas del eje). Con tests.
 
-export const FUNNEL_STEPS = ['visited', 'pricing', 'register_open', 'register_submit', 'signup', 'first_sale']
+export const FUNNEL_STEPS = ['visited', 'pricing', 'register_open', 'register_started', 'register_submit', 'signup', 'first_sale']
 
 /**
  * Cada paso con su ancho de barra (sobre el primero) y su porcentaje sobre el paso anterior. Un paso puede tener

@@ -6,6 +6,8 @@ import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
 import RegisterPage   from '../pages/RegisterPage'
 import PlansPage      from '../pages/PlansPage'
+import AppsPage       from '../pages/AppsPage'
+import IndustryPage   from '../pages/IndustryPage'
 import FeaturesPage   from '../pages/FeaturesPage'
 import AudiencePage   from '../pages/AudiencePage'
 import { ImpressumPage, PrivacyPage, TermsPage } from '../pages/LegalPage'
@@ -69,6 +71,7 @@ import BossPage            from '../pages/BossPage'
 import SubscriptionsPage   from '../pages/admin/SubscriptionsPage'
 import FeedbackPage       from '../pages/admin/FeedbackPage'
 import VisitsPage         from '../pages/admin/VisitsPage'
+import TestersPage        from '../pages/admin/TestersPage'
 
 export default function AppRouter() {
   return (
@@ -91,6 +94,8 @@ export default function AppRouter() {
       <Route path="/reset" element={<ResetRedirect />} />
       <Route path="/verify" element={<VerifyRedirect />} />
       <Route path="/planes" element={<PlansPage />} />
+      <Route path="/apps" element={<AppsPage />} />
+      <Route path="/sistema-para/:slug" element={<IndustryPage />} />
       <Route path="/funciones" element={<FeaturesPage />} />
       <Route path="/para-quien" element={<AudiencePage />} />
       <Route path="/preguntas" element={<FaqPage />} />
@@ -225,6 +230,9 @@ export default function AppRouter() {
       } />
       <Route path="/boss/suscripciones" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SubscriptionsPage /></ProtectedRoute>
+      } />
+      <Route path="/boss/testers" element={
+        <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TestersPage /></ProtectedRoute>
       } />
       <Route path="/boss/visitas" element={
         <ProtectedRoute allowedRoles={['SUPER_ADMIN']}><VisitsPage /></ProtectedRoute>

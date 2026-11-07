@@ -3,6 +3,8 @@ import { Loader2, Check, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCompleteReceiptCost, useReferenceCheck } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
+import PriceChangeModal from './PriceChangeModal'
+import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import PriceInput from '../inputs/PriceInput'
 import { formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
@@ -35,6 +37,7 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
   const [totalTouched, setTotalTouched] = useState(false)
   const [reference, setReference] = useState(receipt.referenceDocument ?? '')
   const [error, setError] = useState(null)
+  const [priceReview, setPriceReview] = useState(null)
 
   const refCheck = useReferenceCheck(receipt.supplierId, reference, receipt.id)
   const refDuplicated = !!(refCheck.result?.exists && refCheck.result?.sameSupplier)
@@ -57,12 +60,21 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
       setError(t('La factura «{ref}» ya está registrada para {supplier}. Corregí el número o anulá la recepción anterior.', { ref: refCheck.result.referenceDocument, supplier: receipt.supplierName }))
       return
     }
+    const changes = purchasePriceChanges(lines.map((l) => ({
+      id: l.productId, name: l.productName, quantity: l.quantity, oldCost: suggested[l.productId], newCost: l.unitCost, salePrice: null,
+    })))
+    if (changes.length > 0) { setPriceReview(changes); return }
+    await save()
+  }
+
+  const save = async (decisions = {}) => {
+    setPriceReview(null)
     try {
       await complete.mutateAsync({
         id: receipt.id,
         supplierId: receipt.supplierId,
         data: {
-          items: lines.map((l) => ({ productId: l.productId, unitCost: Number(l.unitCost), salePrice: null })),
+          items: lines.map((l) => ({ productId: l.productId, unitCost: Number(l.unitCost), salePrice: null, ...decisionFields(decisions, l.productId) })),
           totalAmount: Math.round(finalTotal * 100) / 100,
           paymentMode,
           referenceDocument: reference.trim() || null,
@@ -79,6 +91,7 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
 
   return (
     <div className="space-y-4" data-testid="receipt-cost-panel">
+      {priceReview && <PriceChangeModal changes={priceReview} onConfirm={save} onCancel={() => setPriceReview(null)} />}
       <p className="text-sm text-gray-600">
         {t('{who} anotó lo que llegó de {supplier}. Pon cuánto costó cada producto y cómo se pagó.', { who: receipt.createdByName, supplier: receipt.supplierName })}
       </p>

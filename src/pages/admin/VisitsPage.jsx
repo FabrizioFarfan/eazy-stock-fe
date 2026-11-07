@@ -26,6 +26,7 @@ const STEP_LABEL = {
   visited: 'Entraron a la web',
   pricing: 'Vieron los precios',
   register_open: 'Abrieron el registro',
+  register_started: 'Empezaron a rellenarlo',
   register_submit: 'Enviaron el formulario',
   signup: 'Crearon su cuenta',
   first_sale: 'Hicieron su primera venta',

@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import { useT } from '../i18n'
 import { Navbar, Footer, CtaBanner, Benefits, Industries, HowItWorks, OriginStory } from './LandingPage'
 import { PageHero, usePublicPage } from './landing/site'
+import { INDUSTRY_PAGES, industryPath } from './landing/industries'
 
 const CTA = '/registro'
 
@@ -29,6 +30,13 @@ export default function AudiencePage() {
       </PageHero>
       <Benefits />
       <Industries />
+      <nav aria-label={t('Por rubro')} className="mx-auto flex max-w-5xl flex-wrap justify-center gap-2 px-5 pb-12">
+        {INDUSTRY_PAGES.map((p) => (
+          <Link key={p.slug} to={industryPath(p.slug)} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            {t('Sistema para {rubro}', { rubro: p.name.toLowerCase() })}
+          </Link>
+        ))}
+      </nav>
       <OriginStory />
       <HowItWorks />
       <CtaBanner />

@@ -17,6 +17,7 @@ import { useNoAppDarkMode } from './useNoAppDarkMode'
 export const PUBLIC_PAGES = [
   { to: '/funciones',  label: 'Funciones' },
   { to: '/para-quien', label: 'Para quién' },
+  { to: '/apps',       label: 'Apps' },
   { to: '/planes',     label: 'Precios' },
   { to: '/preguntas',  label: 'Preguntas' },
 ]
