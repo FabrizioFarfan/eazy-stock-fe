@@ -1521,12 +1521,18 @@ export default function LandingPage() {
   useNoAppDarkMode()
   const t = useT()
   // Al llegar pulsando un enlace, la portada abre arriba (si no, se quedaba a la altura de la página anterior).
-  // Con «atrás» sigue volviendo a donde estaba, y un ancla (/#precios) la resuelve quien la pide.
+  // Con «atrás» sigue volviendo a donde estaba.
   const { hash, key } = useLocation()
   const navigationType = useNavigationType()
   useLayoutEffect(() => {
     if (navigationType === 'PUSH' && !hash) window.scrollTo({ top: 0, behavior: 'instant' })
   }, [navigationType, hash, key])
+  // Los enlaces del menú a una sección de la portada (/#precios): el navegador no baja solo al navegar dentro de la web.
+  useEffect(() => {
+    if (!hash) return undefined
+    const timer = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+    return () => clearTimeout(timer)
+  }, [hash, key])
   usePageSeo({
     title: t('Eazy Stock — Inventario, ventas y fiado para tu negocio'),
     description: t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo y al cierre sabes cuánto hay en caja. Gratis para empezar.'),

@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.34.5 — 2026-11-07 (los enlaces a secciones de la portada llevan a la sección)
+- «Beneficios», «Precios» y demás del menú cambiaban la URL pero no bajaban a la sección.
+
 ## 1.34.4 — 2026-11-07 (la barra de la web pública siempre con su color)
 - Al volver a una página a media altura, la barra se quedaba transparente sobre el fondo blanco hasta el primer scroll. Ahora lee la posición real al pintarse.
 - Al pulsar un enlace a Inicio la portada abre arriba, no a la altura de la página anterior; con «atrás» vuelve a donde estaba.
