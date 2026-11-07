@@ -105,6 +105,15 @@ export function useCompleteReceiptCost() {
   })
 }
 
+/** Marcar como lote lo que entró en una factura ya registrada. */
+export function useMarkReceiptLot() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, productId, parameters }) => receiptsApi.markLot(id, { productId, parameters }).then((r) => r.data.data),
+    onSuccess: (_, vars) => invalidateAfterReceiptChange(qc, vars.supplierId),
+  })
+}
+
 /** Corregir el número de factura / guía de una recepción ya registrada. */
 export function useUpdateReceiptReference() {
   const qc = useQueryClient()

@@ -10,6 +10,7 @@ import ReferenceCheckHint from './ReferenceCheckHint'
 import ReceiptReturnPanel from './ReceiptReturnPanel'
 import ReceiptCostPanel from './ReceiptCostPanel'
 import ReceiptParametersPanel from './ReceiptParametersPanel'
+import ReceiptLotPanel from './ReceiptLotPanel'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
@@ -45,6 +46,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
   // ── Completar el costo de una entrada simple (solo el dueño) ──
   const [costing, setCosting] = useState(false)
   const [editingParams, setEditingParams] = useState(false)
+  const [lotFor, setLotFor] = useState(null)
 
   // ── Cambiar número ──
   const [editingRef, setEditingRef] = useState(false)
@@ -202,6 +204,8 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           ) : returning ? (
             <ReceiptReturnPanel receipt={receipt}
               onDone={() => setReturning(false)} onCancel={() => setReturning(false)} />
+          ) : lotFor && (receipt.movements ?? []).some((m) => m.id === lotFor) ? (
+            <ReceiptLotPanel receipt={receipt} movement={receipt.movements.find((m) => m.id === lotFor)} onDone={() => setLotFor(null)} />
           ) : editingParams ? (
             <ReceiptParametersPanel receipt={receipt}
               onDone={() => setEditingParams(false)} onCancel={() => setEditingParams(false)} />
@@ -300,6 +304,12 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                       <td className="py-2.5">
                         <p className="font-medium text-gray-900">{m.productName}</p>
                         <p className="font-mono text-xs text-gray-400">{m.productSku}</p>
+                        {m.lotLabel && <p className="mt-0.5 text-xs font-semibold text-violet-700" data-testid="receipt-line-lot-label">{m.lotLabel}</p>}
+                        {can('canManageProducts') && (
+                          <button type="button" onClick={() => setLotFor(m.id)} data-testid="receipt-line-lot-open" className="mt-0.5 text-xs font-semibold text-blue-600 hover:underline">
+                            {m.lotLabel ? t('Cambiar el lote') : t('Venía distinta')}
+                          </button>
+                        )}
                       </td>
                       <td className="py-2.5 text-center font-mono text-gray-700">
                         {m.quantity}

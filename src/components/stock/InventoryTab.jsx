@@ -16,6 +16,7 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { formatPrice } from '../../utils/formatMoney'
 import UnitBadge from '../../components/common/UnitBadge'
 import AttributeChips from '../products/AttributeChips'
+import { LotChips } from '../products/ProductLots'
 import { useT } from '../../i18n'
 
 const PAGE_SIZE = 20
@@ -359,6 +360,7 @@ export default function InventoryTab({ initialLowStock = false, initialStockMax 
                             <p className="mt-0.5 flex items-center gap-1.5">
                               <UnitBadge unit={p.unit} />
                               <AttributeChips attributes={p.attributes} empty={null} />
+                              <LotChips lots={p.lots} />
                               {p.presentation && <span className="truncate text-xs text-gray-400">{p.presentation}</span>}
                               {p.locationName && (
                                 <span className="inline-flex items-center gap-0.5 truncate text-[11px] font-medium text-amber-700"><MapPin size={10} /> {p.locationName}</span>

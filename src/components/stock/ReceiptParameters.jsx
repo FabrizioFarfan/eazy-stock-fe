@@ -85,7 +85,7 @@ export default function ReceiptParameters({ lines, onChange }) {
         })}
       </ul>
       <p className="flex items-start gap-1.5 text-[11px] text-gray-400">
-        <Sparkles size={12} className="mt-px flex-shrink-0" /> {t('Queda en la ficha de cada producto y filtra en Productos e Inventario.')}
+        <Sparkles size={12} className="mt-px flex-shrink-0" /> {t('Vale para todo el producto, también lo que ya tenías. Si solo esta compra viene distinta, usa «Esta compra viene distinta».')}
       </p>
       {creating && <ParameterModal parameter={null} onClose={() => setCreating(false)} onCreated={(p) => { if (p?.id) { setParamId(p.id); setValue('') } }} />}
     </div>

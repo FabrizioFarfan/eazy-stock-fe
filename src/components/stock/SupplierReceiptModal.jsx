@@ -11,6 +11,7 @@ import { useReferenceCheck, useCreateSimpleReceipt } from '../../hooks/useReceip
 import ReferenceCheckHint from './ReferenceCheckHint'
 import PriceChangeModal from './PriceChangeModal'
 import ReceiptParameters from './ReceiptParameters'
+import LotFields from './LotFields'
 import { attributesDelta } from '../../utils/parameters'
 import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import { productsApi } from '../../services/endpoints/products'
@@ -251,6 +252,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const lineAttributes = (i) => i.attributes ?? i.product.attributes ?? {}
   const changeAttributes = (id, attributes) => setItems((prev) =>
     prev.map((i) => i.product.id === id ? { ...i, attributes } : i))
+  // Esta compra viene distinta (William: martillos con sacapuntas): va a su lote; lo que ya había no cambia.
+  const toggleLot = (id) => setItems((prev) => prev.map((i) => i.product.id === id
+    ? { ...i, lotOpen: !i.lotOpen, ...(i.lotOpen ? { lot: null } : {}) } : i))
+  const changeLineLotParams = (id, lot) => setItems((prev) => prev.map((i) => i.product.id === id ? { ...i, lot } : i))
   const parameterChanges = items.filter((i) => Object.keys(attributesDelta(i.product.attributes, lineAttributes(i))).length > 0).length
 
   // Cerrar con carrito != perderlo: avisamos que el borrador queda guardado.
@@ -359,6 +364,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             ...decisionFields(decisions, i.product.id),
             ...(Object.keys(attributesDelta(i.product.attributes, lineAttributes(i))).length > 0
               ? { parameters: attributesDelta(i.product.attributes, lineAttributes(i)) } : {}),
+            ...(i.lot && Object.keys(i.lot).length > 0 ? { lot: i.lot } : {}),
           })),
           totalAmount:       finalTotal,
           paymentMode,
@@ -674,6 +680,20 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               {t('Habitual de {other} — es el mismo producto: el stock se suma y esta compra queda a nombre de', { other: it.product.supplierName ?? t('otro proveedor') })}{' '}
                               <span className="font-semibold">{supplier?.name}</span>
                             </p>
+                          )}
+                          {can('canManageProducts') && (
+                            <div className="mt-2" data-testid="receipt-line-lot">
+                              <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-violet-700">
+                                <input type="checkbox" checked={!!it.lotOpen} onChange={() => toggleLot(it.product.id)} data-testid="receipt-line-lot-toggle" className="h-3.5 w-3.5 rounded border-gray-300 text-violet-600" />
+                                {t('Esta compra viene distinta')}
+                              </label>
+                              {it.lotOpen && (
+                                <div className="mt-1.5 rounded-lg bg-violet-50/60 p-2.5">
+                                  <p className="mb-2 text-xs text-gray-600">{t('Entra como lote aparte, al mismo precio. Lo que ya tienes de este producto no cambia, y al vender se elige de cuál.')}</p>
+                                  <LotFields value={it.lot ?? {}} onChange={(lot) => changeLineLotParams(it.product.id, lot)} lots={it.product.lots ?? []} />
+                                </div>
+                              )}
+                            </div>
                           )}
                           {/* El costo tipeado pasa a ser el precio de compra del producto:
                               decirlo acá, no sorprender después en Productos. */}

@@ -551,6 +551,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                         className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50/70 disabled:cursor-default">
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-2 break-words text-sm font-semibold leading-snug text-gray-900">{m.productName}</p>
+                          {m.lotLabel && <p className="text-xs font-semibold text-violet-700">{m.lotLabel}</p>}
                           <p className="mt-0.5 truncate text-xs text-gray-400">
                             {formatDate(m.createdAt)}{m.supplierName && <> · {m.supplierName}</>}
                           </p>
@@ -608,6 +609,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                               {m.productName}
                             </button>
                           )}
+                          {m.lotLabel && <span className="block truncate text-xs font-semibold text-violet-700">{m.lotLabel}</span>}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-gray-600 whitespace-nowrap">{m.providerCode ?? '—'}</td>
                         <td className="px-4 py-3.5 text-xs text-gray-500">{m.supplierName ?? '—'}</td>

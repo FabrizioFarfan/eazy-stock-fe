@@ -297,6 +297,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                         <td className="py-2.5">
                           <p className="font-medium text-gray-900">{item.productName}</p>
                           <p className="font-mono text-xs text-gray-400">{item.productSku}</p>
+                          {item.lotLabel && <p className="mt-0.5 text-xs font-semibold text-violet-700" data-testid="sale-item-lot">{item.lotLabel}</p>}
                           {hasOverride && item.belowList ? (
                             <p className="mt-0.5 text-xs font-semibold text-red-600" data-testid="below-list-line">
                               <TrendingDown size={10} className="-mt-0.5 inline" /> {t('Por debajo del precio de venta')}{' '}

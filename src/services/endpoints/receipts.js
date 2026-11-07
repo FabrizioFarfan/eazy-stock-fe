@@ -12,6 +12,8 @@ export const receiptsApi = {
   // Parámetros de los productos de la factura (William, 7-nov-2026). body: { items: [{ productId, values: { nombre: valor } }] }
   parameters:       (id)                  => api.get(`/receipts/${id}/parameters`),
   updateParameters: (id, items)           => api.put(`/receipts/${id}/parameters`, { items }),
+  // Lo que entró en esta factura pasa a un lote (parameters vacío lo quita)
+  markLot:          (id, data)            => api.put(`/receipts/${id}/lots`, data),
   returnItems:     (id, data)            => api.post(`/receipts/${id}/returns`, data),
   // Entrada simple del vendedor (sin precios). body: { supplierId, items: [{ productId, quantity }], referenceDocument, notes }
   createSimple:    (data)                => api.post('/receipts/simple', data),

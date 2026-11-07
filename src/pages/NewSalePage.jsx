@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { lotBuckets, defaultLot, lineKey, availableFor, lotMissing, changeLineLot } from '../utils/lots'
 import { createPortal } from 'react-dom'
 import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Zap } from 'lucide-react'
 import QuickProductModal from '../components/products/QuickProductModal'
@@ -303,9 +304,12 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
 
 // ── CartItem ──────────────────────────────────────────────────────────────────
 
-function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange }) {
+function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange, onLotChange, onAddLine, canAddLine }) {
   const t = useT()
   const { product, quantity, unitPrice } = item
+  const key = lineKey(item)
+  const buckets = lotBuckets(product)
+  const missingLot = lotMissing(item)
   const isVariable   = !!product.priceIsVariable
   const numericPrice = parseNumber(unitPrice)
   const subtotal     = round2((Number(quantity) || 0) * numericPrice)
@@ -320,7 +324,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
 
   return (
     <div className={`rounded-xl border p-3 ${
-      variableMissing
+      variableMissing || missingLot
         ? 'border-orange-300 bg-orange-50/70 ring-1 ring-orange-200'
         : isBelow
           ? 'border-red-200 bg-red-50/60 ring-1 ring-red-100'
@@ -328,18 +332,43 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
     }`} data-below-list={isBelow || undefined}>
       <div className="flex items-start justify-between gap-2">
         <p className="flex-1 text-sm font-semibold leading-snug text-gray-900">{product.name}</p>
-        <button onClick={() => onRemove(product.id)} aria-label={t('Quitar')}
+        <button onClick={() => onRemove(key)} aria-label={t('Quitar')}
           className="flex-shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700">
           <X size={13} />
         </button>
       </div>
 
+      {/* Frank, 7-nov-2026: al vender se dice si es del lote o no. Mismo precio; lo que cambia es de dónde sale. */}
+      {buckets.length > 0 && (
+        <div className="mt-2" data-testid="sale-lot-picker">
+          <p className={`mb-1 text-xs font-semibold ${missingLot ? 'text-orange-700' : 'text-gray-500'}`}>
+            {missingLot ? t('¿De cuál le das? Elige uno') : t('De cuál')}
+          </p>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('De cuál')}>
+            {buckets.map((b) => {
+              const on = item.lotId === b.lotId
+              return (
+                <button key={b.lotId ?? 'loose'} type="button" role="radio" aria-checked={on} onClick={() => onLotChange(key, b.lotId)} data-testid="sale-lot-option"
+                  className={`rounded-lg border px-2.5 py-1.5 text-left text-xs font-semibold transition-colors ${on ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}>
+                  {b.label ?? t('Sin lote')} <span className={on ? 'text-violet-100' : 'text-gray-400'}>· {formatQty(b.quantity)}</span>
+                </button>
+              )
+            })}
+          </div>
+          {canAddLine && !missingLot && (
+            <button type="button" onClick={() => onAddLine(product)} data-testid="sale-lot-add-line" className="mt-1.5 text-xs font-semibold text-blue-600 hover:underline">
+              {t('+ Lleva también del otro')}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="mt-2.5 flex items-end justify-between gap-2">
         <QuantityInput
           value={quantity}
-          onChange={(v) => onQtyChange(product.id, v)}
+          onChange={(v) => onQtyChange(key, v)}
           unit={product.unit || t('unidad')}
-          max={product.quickCreated ? undefined : product.currentStock}
+          max={product.quickCreated ? undefined : availableFor(item)}
           maxDecimals={3}
           className="w-36"
           label={t('Cantidad')}
@@ -350,7 +379,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
       <div className="mt-2">
         <PriceInput
           value={isVariable && (unitPrice === '' || unitPrice == null) ? null : numericPrice}
-          onChange={(v) => onPriceChange(product.id, v)}
+          onChange={(v) => onPriceChange(key, v)}
           disabled={priceInputDisabled}
           maxDecimals={6}
           autoFocus={isVariable && variableMissing}
@@ -700,6 +729,7 @@ export default function NewSalePage() {
       {
         product,
         quantity,
+        lotId: defaultLot(product),
         // Precio variable arranca vacío para forzar al cajero a definirlo
         unitPrice: priceOverride != null
           ? priceOverride
@@ -719,16 +749,25 @@ export default function NewSalePage() {
     }))
     qc.invalidateQueries({ queryKey: [PRODUCTS_KEY] })
   }
-  const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.product.id !== id))
+  // Las líneas se identifican por producto + lote: el mismo producto puede ir en dos, una por lote.
+  const removeFromCart = (key) => setCart((prev) => prev.filter((i) => lineKey(i) !== key))
+  const changeLot = (key, lotId) => setCart((prev) => changeLineLot(prev, key, lotId))
+  const addLotLine = (product) => setCart((prev) => [...prev, {
+    product, quantity: 1, lotId: undefined,
+    unitPrice: product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
+  }])
   // Cantidad escribible directa (incl. decimales para productos divisibles).
-  const changeQty = (id, value) => setCart((prev) =>
-    prev.map((i) => i.product.id === id ? { ...i, quantity: value } : i))
-  // Al re-escanear un producto ya en el carrito: suma 1 (tope = stock disponible).
-  const bumpQty = (id) => setCart((prev) =>
-    prev.map((i) => i.product.id === id
-      ? { ...i, quantity: i.product.quickCreated ? (Number(i.quantity) || 0) + 1 : Math.min((Number(i.quantity) || 0) + 1, i.product.currentStock) } : i))
-  const changePrice = (id, raw) => setCart((prev) =>
-    prev.map((i) => i.product.id === id ? { ...i, unitPrice: raw } : i))
+  const changeQty = (key, value) => setCart((prev) =>
+    prev.map((i) => lineKey(i) === key ? { ...i, quantity: value } : i))
+  // Al re-escanear un producto ya en el carrito: suma 1 a su primera línea (tope = lo disponible en ella).
+  const bumpQty = (id) => setCart((prev) => {
+    const first = prev.find((i) => i.product.id === id)
+    return prev.map((i) => i === first
+      ? { ...i, quantity: i.product.quickCreated ? (Number(i.quantity) || 0) + 1 : Math.min((Number(i.quantity) || 0) + 1, availableFor(i)) }
+      : i)
+  })
+  const changePrice = (key, raw) => setCart((prev) =>
+    prev.map((i) => lineKey(i) === key ? { ...i, unitPrice: raw } : i))
 
   const scanCode = async (code) => {
     if (scanLockRef.current) return
@@ -794,13 +833,19 @@ export default function NewSalePage() {
   const invalidQtyItem = cart.find((i) => {
     const q = Number(i.quantity)
     if (!Number.isFinite(q) || q <= 0) return true
-    if (!i.product.quickCreated && q > Number(i.product.currentStock ?? 0) + 1e-9) return true
+    if (!i.product.quickCreated && q > availableFor(i) + 1e-9) return true
     if (!isDivisibleUnit(i.product.unit) && !Number.isInteger(q)) return true
     return false
   })
 
+  const lotMissingItem = cart.find(lotMissing)
+
   const handleSubmit = async () => {
     if (cart.length === 0) return
+    if (lotMissingItem) {
+      toast.error(t('Elige de cuál das en «{name}»', { name: lotMissingItem.product.name }))
+      return
+    }
     if (hasVariableWithoutPrice) {
       toast.error(t('Definí el precio de los productos variables antes de cobrar'))
       return
@@ -829,6 +874,7 @@ export default function NewSalePage() {
         return {
           productId: i.product.id,
           quantity: i.quantity,
+          ...(i.lotId && { lotId: i.lotId }),
           ...(overrideUsed && { unitPriceOverride: enteredPrice }),
         }
       })
@@ -1055,12 +1101,15 @@ export default function NewSalePage() {
                 </div>
                 {cart.map((item) => (
                   <CartItem
-                    key={item.product.id}
+                    key={lineKey(item)}
                     item={item}
                     canApplyDiscount={canApplyDiscount}
                     onQtyChange={changeQty}
                     onRemove={removeFromCart}
                     onPriceChange={changePrice}
+                    onLotChange={changeLot}
+                    onAddLine={addLotLine}
+                    canAddLine={cart.filter((c) => c.product.id === item.product.id).length < lotBuckets(item.product).length}
                   />
                 ))}
               </div>
@@ -1168,7 +1217,7 @@ export default function NewSalePage() {
             )}
             <button
               onClick={handleSubmit}
-              disabled={cart.length === 0 || createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
+              disabled={cart.length === 0 || createSale.isPending || !!lotMissingItem || hasVariableWithoutPrice || !!invalidQtyItem}
               className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-base font-extrabold text-blue-700 shadow-sm transition-all hover:bg-blue-50 active:scale-[0.98] disabled:opacity-60"
             >
               {createSale.isPending && <Loader2 size={14} className="animate-spin" />}
@@ -1196,7 +1245,7 @@ export default function NewSalePage() {
             </div>
             <button
               onClick={handleSubmit}
-              disabled={createSale.isPending || hasVariableWithoutPrice || !!invalidQtyItem}
+              disabled={createSale.isPending || !!lotMissingItem || hasVariableWithoutPrice || !!invalidQtyItem}
               className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-blue-700 shadow-sm transition-all hover:bg-blue-50 active:scale-[0.98] disabled:opacity-60"
             >
               {createSale.isPending && <Loader2 size={13} className="animate-spin" />}

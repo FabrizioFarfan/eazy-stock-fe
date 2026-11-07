@@ -5,6 +5,9 @@ export const productsApi = {
   // params: { page, size, search, lowStock, active, businessId }
 
   getById: (id) => api.get(`/products/${id}`),
+  // Lotes (William, 7-nov-2026): repartir el stock sin cambiar el total
+  separateLot: (id, data) => api.post(`/products/${id}/lots`, data),
+  setLotQuantity: (id, lotId, quantity) => api.put(`/products/${id}/lots/${lotId}`, { quantity }),
 
   create: (data) => api.post('/products', data),
   /** Crear AL VUELO desde Nueva venta: { name, salePrice, unit?, barcode? } → queda «por completar». */

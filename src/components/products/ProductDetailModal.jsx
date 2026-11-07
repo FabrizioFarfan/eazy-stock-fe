@@ -17,6 +17,7 @@ import ExpiryBadge from '../common/ExpiryBadge'
 import { formatShortDate } from '../../utils/formatDate'
 import { useT, dateLocale } from '../../i18n'
 import { useAuth } from '../../context/AuthContext'
+import ProductLots from './ProductLots'
 
 function formatDate(dateStr) {
   if (!dateStr) return '—'
@@ -283,6 +284,8 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
 
               {/* Repetidos: mismo nombre con otro código. Hasta el 16-sep cada recepción
                   de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
+              <ProductLots product={product} />
+
               {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
 
               {/* Historial reciente: movimientos y recepciones (ficha única, William 4-nov-2026) */}

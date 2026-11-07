@@ -3,6 +3,12 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.37.0 — 2026-11-07 (Lotes; sube junto al API 1.26.0)
+- **Recepción**: «Esta compra viene distinta» en cada línea: entra como lote aparte, al mismo precio.
+- **Nueva venta**: un producto con lotes pide de cuál das, y no deja cobrar sin elegir; el mismo producto puede ir en dos líneas, una por lote. La cantidad se limita a lo que queda en ese lote.
+- **Ficha**: reparto del stock, separar en un lote y corregir sin cambiar el total. **Productos e Inventario**: etiqueta con cada lote y su cantidad.
+- **Factura ya registrada**: «Venía distinta» por línea. **Historial de ventas y Movimientos** enseñan el lote.
+
 ## 1.36.1 — 2026-11-07 (URGENTE: el botón de crear producto)
 - Desde 1.31.2 (4-nov) el pie del modal de producto estaba dentro del área deslizante: en PC quedaba tapado por la hoja 4 y en tablet y celular al final de todo. Ahora siempre está a la vista.
 - Lo que impide guardar se dice en el pie, todo de una vez y con un toque lleva al campo. Los mensajes de número ya no salen en inglés (zod 4 ignoraba `invalid_type_error`; también en clientes).

@@ -21,6 +21,7 @@ import ColumnFilter from '../components/common/ColumnFilter'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import UnitBadge from '../components/common/UnitBadge'
 import AttributeChips from '../components/products/AttributeChips'
+import { LotChips } from '../components/products/ProductLots'
 import { formatPrice } from '../utils/formatMoney'
 import PageTitle from '../components/common/PageTitle'
 import HelpDrawer from '../components/common/HelpDrawer'
@@ -202,6 +203,7 @@ function ProductCardRow({ p, onOpen, showCost }) {
             {p.supplierName && <> · {p.supplierName}</>}
           </p>
           <div className="mt-1.5 empty:hidden"><AttributeChips attributes={p.attributes} empty={null} /></div>
+          <LotChips lots={p.lots} />
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <UnitBadge unit={p.unit} />
             <ExpiryBadge product={p} />
@@ -855,7 +857,7 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-center"><StockBadge current={p.currentStock} min={p.minStock} /></td>
                     <td className="px-5 py-3.5 font-mono text-xs text-gray-400">{p.sku}</td>
-                    <td className="min-w-[170px] max-w-[260px] px-5 py-3.5"><AttributeChips attributes={p.attributes} /></td>
+                    <td className="min-w-[170px] max-w-[260px] px-5 py-3.5"><AttributeChips attributes={p.attributes} /><LotChips lots={p.lots} /></td>
                     <td className="px-5 py-3.5"><UnitBadge unit={p.unit} /></td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">{p.categoryName || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500">{p.brandName || '—'}</td>
