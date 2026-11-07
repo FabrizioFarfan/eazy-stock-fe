@@ -10,11 +10,12 @@ import { Reveal } from './shared'
 /**
  * Apps en fase de prueba (Frank, 7-nov-2026): quien entra cree que no hay apps y se desanima, y para publicar en
  * Play nos faltan testers. Se cuenta tal cual, como un favor que se agradece: deja tu correo y te invitamos.
- * Lo enseñan el Inicio y /apps. El beneficio también sale en el correo de AppTesterService: cambiar los dos.
+ * Lo enseñan el Inicio y /apps. El beneficio concreto NO sale en la web (Frank, 7-nov-2026): se cuenta en privado, en el
+ * correo que manda AppTesterService al apuntarse.
  */
 const PERKS = [
   [Zap, 'Usas la app antes que nadie, gratis.'],
-  [Sparkles, '3 meses gratis del plan Pro cuando salga.'],
+  [Sparkles, 'Por ayudarnos te tenemos un detalle: te lo contamos por correo.'],
   [Heart, 'Hablas directo con quienes la hacemos.'],
 ]
 

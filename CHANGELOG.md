@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.34.1 — 2026-11-07 (el beneficio de los testers, en privado)
+- Frank: el beneficio no se anuncia en la web. `/apps` y el Inicio dicen que hay un detalle que se cuenta por correo; el concreto va en el correo que llega al apuntarse.
+
 ## 1.34.0 — 2026-11-07 (el correo se confirma al terminar la prueba; sube junto al API 1.23.0)
 - Al registrarse se entra directo. La pantalla del código sale al terminar la prueba o al ir a pagar, y al confirmar lleva a Tu plan.
 

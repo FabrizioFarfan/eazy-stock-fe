@@ -7,7 +7,7 @@ const QUESTIONS = [
   ['¿Cuesta algo?', 'No. La prueba es gratis y no te pedimos tarjeta.'],
   ['¿Qué tengo que hacer?', 'Instalar la app con el enlace que te mandamos, usarla un poco durante 14 días y contarnos qué falla.'],
   ['¿Necesito tener un negocio?', 'No hace falta. Si tienes uno, mejor, porque la pruebas con tus productos de verdad.'],
-  ['¿Y cuando salga?', 'Te quedas con la app y tienes 3 meses gratis del plan Pro, por ayudarnos.'],
+  ['¿Y cuando salga?', 'Te quedas con la app y, por ayudarnos, te tenemos un detalle que te contamos por correo.'],
 ]
 
 /** /apps — el enlace para compartir: las apps en fase de prueba y el correo para entrar como tester. */
@@ -15,7 +15,7 @@ export default function AppsPage() {
   const t = useT()
   usePublicPage({
     title: t('Apps de Eazy Stock para Android y iPhone: pruébalas gratis'),
-    description: t('La app de Eazy Stock para Android y iPhone está en fase de prueba. Déjanos tu correo, pruébala gratis y llévate 3 meses del plan Pro cuando salga.'),
+    description: t('La app de Eazy Stock para Android y iPhone está en fase de prueba. Déjanos tu correo y pruébala gratis antes que nadie.'),
     path: '/apps',
   })
   return (
