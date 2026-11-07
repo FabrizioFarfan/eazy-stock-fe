@@ -1,5 +1,5 @@
-import { Link, NavLink, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, useLocation, useNavigationType } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
   BarChart2, Shield, QrCode, Bell, FileSpreadsheet,
   MessageCircle, Smartphone, Check, Users, Truck, Receipt,
@@ -80,20 +80,23 @@ function MenuPanel({ items, onPick }) {
   )
 }
 
+// La barra lee la posición real en cada render, no solo al moverse (Frank, 7-nov-2026: al volver a una página
+// a media altura se quedaba transparente sobre el fondo blanco hasta el primer scroll).
+const isScrolled = () => window.scrollY > 12
+const subscribeToScroll = (onChange) => {
+  window.addEventListener('scroll', onChange, { passive: true })
+  return () => window.removeEventListener('scroll', onChange)
+}
+
 export function Navbar() {
   const t = useT()
   const location = useLocation()
-  const [scrolled, setScrolled] = useState(false)
+  const scrolled = useSyncExternalStore(subscribeToScroll, isScrolled, () => false)
   const [open, setOpen] = useState(false)       // menú del celular
   const [menu, setMenu] = useState(null)        // panel abierto en escritorio (índice de NAV)
   const [sub, setSub] = useState(null)          // grupo desplegado en el celular
   const closeTimer = useRef(null)
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
   // Al cambiar de página o de ancla se cierra todo (estado derivado durante el render).
   const [seenKey, setSeenKey] = useState(location.key)
   if (seenKey !== location.key) { setSeenKey(location.key); setOpen(false); setMenu(null) }
@@ -1517,6 +1520,13 @@ function PricingTeaser() {
 export default function LandingPage() {
   useNoAppDarkMode()
   const t = useT()
+  // Al llegar pulsando un enlace, la portada abre arriba (si no, se quedaba a la altura de la página anterior).
+  // Con «atrás» sigue volviendo a donde estaba, y un ancla (/#precios) la resuelve quien la pide.
+  const { hash, key } = useLocation()
+  const navigationType = useNavigationType()
+  useLayoutEffect(() => {
+    if (navigationType === 'PUSH' && !hash) window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [navigationType, hash, key])
   usePageSeo({
     title: t('Eazy Stock — Inventario, ventas y fiado para tu negocio'),
     description: t('Eazy Stock es el sistema de inventario, ventas y fiado para ferreterías, bodegas, farmacias y minimarkets. Escaneas, cobras con billetera digital o efectivo y al cierre sabes cuánto hay en caja. Gratis para empezar.'),

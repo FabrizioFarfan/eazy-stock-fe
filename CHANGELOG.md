@@ -3,6 +3,10 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.34.4 — 2026-11-07 (la barra de la web pública siempre con su color)
+- Al volver a una página a media altura, la barra se quedaba transparente sobre el fondo blanco hasta el primer scroll. Ahora lee la posición real al pintarse.
+- Al pulsar un enlace a Inicio la portada abre arriba, no a la altura de la página anterior; con «atrás» vuelve a donde estaba.
+
 ## 1.34.3 — 2026-11-07 (beneficios: primero el problema, al bajar la solución)
 - La hoja de cuaderno lleva su propio título del problema («La caja nunca cuadra») y la ficha el de la solución («La caja cuadra, todos los días»).
 - Las tarjetas ya no giran solas a los 1,5 s: cada una se voltea al llegar su borde al 40 % de la pantalla y vuelve al subir. El interruptor y el toque siguen mandando.
