@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.33.2 — 2026-11-07 (fuera las líneas azules de la web pública)
+- Frank: «quítalas de todos lados». Se quedan la malla y las esfumaturas; la única línea es `FooterLine`, fina y sutil, en el aire justo antes del footer.
+
 ## 1.33.1 — 2026-11-07 (/apps con su h1: sin él fallaba el prerender de toda la web pública)
 - `/apps` no tenía `h1` y el prerender se paraba ahí: las páginas públicas se quedaban sin HTML estático para Google.
 

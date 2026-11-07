@@ -98,65 +98,31 @@ export function GlowOrbs() {
 }
 
 /**
- * Fondo del hero (20-oct-2026, v4 «simple», Frank: «muy cargado; la malla me gustaba;
- * esfumaturas»): la malla con esfumatura, tres manchas de color difuminadas y dos
- * corrientes curvas que entran desde el borde izquierdo hacia la ventana del producto
- * con puntos que viajan (los productos vendiéndose). Sin círculos. En el celular, una
- * versión vertical propia (STREAMS_MOBILE) por las franjas libres del texto.
- * Reutilizable: Frank quiere este efecto en todas las webs.
+ * La única línea de la web pública (Frank, 7-nov-2026: «quítalas de todos lados; solo una, bien sutil, justo antes
+ * del footer»). Va pegada al borde de abajo de la sección, en el aire que queda bajo el contenido, sin cruzar texto.
  */
-// Tres corrientes continuas: nacen fuera del borde izquierdo y mueren fuera del derecho
-// (Frank: «parece que se quedaron a la mitad; con inicio y fin»). Se esfuman en ambos
-// extremos con un degradado en coordenadas de usuario (no del bbox de cada trazo).
-const STREAMS = [
-  'M-60 150 C 300 60, 560 310, 860 300 S 1250 110, 1500 80',
-  'M-60 760 C 340 830, 620 640, 900 660 S 1250 770, 1500 700',
-  'M-60 900 C 400 950, 700 790, 950 830 S 1300 910, 1500 850',
-]
-// Celular (Frank: «también quiero ese SVG en mobile»): lienzo vertical 390×1150 y
-// tres corrientes por las franjas libres (sobre el titular, entre botones y promesas,
-// al pie), más finas y suaves para que el texto siga leyéndose.
-const STREAMS_MOBILE = [
-  'M-20 150 C 80 90, 190 210, 290 160 S 380 100, 410 110',
-  'M-20 700 C 90 660, 180 740, 280 700 S 370 650, 410 670',
-  'M-20 1080 C 110 1130, 220 1010, 320 1050 S 390 1100, 410 1090',
-]
-
-function Streams({ paths, viewBox, className, id, width = 1.5, dot = 4.5, glow = 3 }) {
+export function FooterLine() {
+  const d = 'M-60 74 C 300 34, 620 104, 900 66 S 1280 36, 1500 62'
   return (
-    <svg className={className} viewBox={viewBox} preserveAspectRatio="xMidYMin slice" fill="none">
+    <svg aria-hidden="true" data-testid="footer-line" className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
+      viewBox="0 0 1440 120" preserveAspectRatio="xMidYMid slice" fill="none">
       <defs>
-        {/* Sin feGaussianBlur (20-oct-2026): el filtro se recalculaba en cada frame de las
-            partículas y era lo que más pesaba; el «brillo» ahora es un segundo trazo ancho y tenue. */}
-        <linearGradient id={`${id}-grad`} gradientUnits="userSpaceOnUse" x1={viewBox.split(' ')[0] - 60} x2={Number(viewBox.split(' ')[2]) + 60} y1="0" y2="0">
+        <linearGradient id="lp-footer-line" gradientUnits="userSpaceOnUse" x1="0" x2="1440" y1="0" y2="0">
           <stop offset="0" stopColor="#93c5fd" stopOpacity="0" />
-          <stop offset=".18" stopColor="#93c5fd" stopOpacity=".55" />
-          <stop offset=".5" stopColor="#60a5fa" stopOpacity=".8" />
-          <stop offset=".82" stopColor="#93c5fd" stopOpacity=".55" />
+          <stop offset=".5" stopColor="#60a5fa" stopOpacity=".5" />
           <stop offset="1" stopColor="#93c5fd" stopOpacity="0" />
         </linearGradient>
-        {paths.map((d, i) => <path key={i} id={`${id}-${i}`} d={d} />)}
+        <path id="lp-footer-line-path" d={d} />
       </defs>
-      <g strokeLinecap="round">
-        {paths.map((d, i) => (
-          <path key={`h${i}`} d={d} stroke={`url(#${id}-grad)`} strokeWidth={width * 4} strokeOpacity={glow * 0.06} />
-        ))}
-        {paths.map((d, i) => (
-          <path key={i} d={d} className="lp-draw" stroke={`url(#${id}-grad)`} strokeWidth={width} style={{ animationDelay: `${i * 0.5}s` }} />
-        ))}
-        {paths.map((_, i) => [0, 1].map((k) => (
-          <circle key={`${i}-${k}`} r={k === 1 ? dot * 0.66 : dot} fill={k === 1 ? '#bfdbfe' : '#60a5fa'} className="lp-particle">
-            <animateMotion dur={`${9 + i * 1.5}s`} begin={`${-(i * 2.5 + k * 3.3)}s`} repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" keyTimes="0;1" keyPoints="0;1">
-              <mpath href={`#${id}-${i}`} />
-            </animateMotion>
-          </circle>
-        )))}
-      </g>
+      <path d={d} className="lp-draw" stroke="url(#lp-footer-line)" strokeWidth="1" strokeLinecap="round" />
+      <circle r="2" fill="#bfdbfe" className="lp-particle">
+        <animateMotion dur="16s" repeatCount="indefinite"><mpath href="#lp-footer-line-path" /></animateMotion>
+      </circle>
     </svg>
   )
 }
 
-export function HeroBackdrop({ id = 'lpb', paths = STREAMS, mobilePaths = STREAMS_MOBILE, fade = true }) {
+export function HeroBackdrop({ fade = true }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* esfumaturas: UN solo div con degradados radiales (20-oct-2026: los tres
@@ -174,9 +140,6 @@ export function HeroBackdrop({ id = 'lpb', paths = STREAMS, mobilePaths = STREAM
       />
       {/* la malla, esfumada hacia los bordes */}
       <GridPattern />
-      {/* corrientes: una versión apaisada para escritorio y otra vertical para el celular */}
-      <Streams id={`${id}-d`} paths={paths} viewBox="0 0 1440 900" className="absolute inset-0 hidden h-full w-full lg:block" />
-      <Streams id={`${id}-m`} paths={mobilePaths} viewBox="0 0 390 1150" className="absolute inset-0 h-full w-full opacity-80 lg:hidden" width={1.25} dot={3.5} glow={2} />
       {fade && <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0e1a] to-transparent" />}
     </div>
   )

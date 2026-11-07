@@ -11,8 +11,7 @@ import {
 } from 'lucide-react'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
-import { Reveal, GridPattern, HeroBackdrop, SectionHead, LandingStyles } from './landing/shared'
-import { STREAMS_EDGES, STREAMS_CTA } from './landing/streams'
+import { Reveal, GridPattern, HeroBackdrop, FooterLine, SectionHead, LandingStyles } from './landing/shared'
 import {
   IconTile, IcoTill, IcoLedger, IcoShelf, IcoTeam, IcoTag, IcoChart, IcoScan, IcoTruck, IcoChat, IcoSheet,
   IcoHardware, IcoStore, IcoPharmacy, IcoBasket, IcoCup,
@@ -513,7 +512,7 @@ export function Benefits({ teaser = false }) {
         ) : (
         <Reveal>
           <div className="relative mt-10 flex flex-col items-center justify-between gap-4 overflow-hidden rounded-3xl bg-[#0a0e1a] px-6 py-6 text-center sm:flex-row sm:px-8 sm:text-left">
-            <HeroBackdrop id="lpb-bn" paths={STREAMS_EDGES} fade={false} />
+            <HeroBackdrop fade={false} />
             <p className="relative text-base font-semibold text-white sm:text-lg">
               {t('Menos cuaderno, menos plata perdida, más tiempo para vender.')}
               <span className="block text-sm font-normal text-slate-400">{t('Se aprende en una tarde.')} {trialLine(t, dateLocale())}.</span>
@@ -902,7 +901,7 @@ export function Industries() {
   const t = useT()
   return (
     <section id="para-quien" className="scroll-mt-28 relative overflow-hidden bg-[#0a0e1a] py-24">
-      <HeroBackdrop id="lpb-pq" paths={STREAMS_EDGES} />
+      <HeroBackdrop />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead
@@ -1195,7 +1194,8 @@ export function CtaBanner() {
   ]
   return (
     <section className="relative overflow-hidden bg-[#0a0e1a] py-28 sm:py-36">
-      <HeroBackdrop id="lpb-cta" paths={STREAMS_CTA} />
+      <HeroBackdrop />
+      <FooterLine />
 
       {/* fichas flotantes */}
       <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
@@ -1358,7 +1358,7 @@ function Highlights() {
   const pct = (focus / (DAY.length - 1)) * 100
   return (
     <section id="un-dia" ref={ref} className="relative scroll-mt-20 overflow-hidden bg-[#0a0e1a] py-24">
-      <HeroBackdrop id="lpb-day" paths={STREAMS_EDGES} />
+      <HeroBackdrop />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal>
           <SectionHead dark kicker={t('Un día con Eazy Stock')} title={t('De la venta al cierre de caja, sin hojas sueltas')} />
