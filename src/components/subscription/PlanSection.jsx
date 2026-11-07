@@ -162,7 +162,7 @@ export default function PlanSection() {
         try { await openKeepModal(plan, act, { interval }) } catch (e2) { toast.error(getErrorMessage(e2)) }
       } else if (code === 'PROMO_CODE_INVALID') {
         setPromoError(getErrorMessage(err))
-      } else {
+      } else if (code !== 'EMAIL_NOT_VERIFIED') { // ese lo resuelve la pantalla del código, a la que ya lleva api.js
         toast.error(getErrorMessage(err))
       }
       setPaying(null)

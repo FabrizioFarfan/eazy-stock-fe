@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.34.0 — 2026-11-07 (el correo se confirma al terminar la prueba; sube junto al API 1.23.0)
+- Al registrarse se entra directo. La pantalla del código sale al terminar la prueba o al ir a pagar, y al confirmar lleva a Tu plan.
+
 ## 1.33.2 — 2026-11-07 (fuera las líneas azules de la web pública)
 - Frank: «quítalas de todos lados». Se quedan la malla y las esfumaturas; la única línea es `FooterLine`, fina y sutil, en el aire justo antes del footer.
 
