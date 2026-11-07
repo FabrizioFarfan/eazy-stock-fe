@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.36.0 — 2026-11-07 (parámetros desde la factura; sube junto al API 1.25.0)
+- William: al registrar una recepción, «Parámetros de estos productos»: eliges parámetro y valor, marcas los productos y se guarda con la compra. En una factura ya registrada, «Poner parámetros a estos productos» en su detalle. Se puede crear un parámetro ahí mismo.
+
 ## 1.35.0 — 2026-11-07 (Visitas en vivo; sube junto al API 1.24.0)
 - **Boss › Visitas › En vivo**: una fila por visita de las últimas 48 h (hace cuánto, país, dispositivo, de dónde y lo que hizo), refrescada cada 10 s, sin cookies. Dice quién no aparece. El resto de la página se refresca cada 20 s.
 - Los eventos van por `/api/public/e`, sin la palabra «analytics».

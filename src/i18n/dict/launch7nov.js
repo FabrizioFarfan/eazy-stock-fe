@@ -1,6 +1,18 @@
 // Tanda del 7-nov-2026: portada, registro sin fricción, apps en fase de prueba y aviso de cambio de precio. Llave = español.
 export default {
   en: {
+    // Parámetros en la factura
+    'Parámetros de estos productos': 'Parameters for these products',
+    '{n} con cambios': '{n} changed',
+    'Poner parámetros a estos productos': 'Set parameters for these products',
+    'Elige un parámetro y ponlo a los productos de esta factura de una vez.': 'Choose a parameter and set it on the products of this invoice in one go.',
+    'Guardar parámetros': 'Save parameters',
+    'Parámetros guardados en {n} producto(s)': 'Parameters saved on {n} product(s)',
+    'No se pudieron cargar los productos de esta factura.': 'The products of this invoice could not be loaded.',
+    'Elige uno…': 'Choose one…',
+    'Poner a {n}': 'Set on {n}',
+    'Incluir {name}': 'Include {name}',
+    'Queda en la ficha de cada producto y filtra en Productos e Inventario.': 'It stays on each product card and filters in Products and Inventory.',
     // Beneficios: el título del problema
     'La caja nunca cuadra': 'The till never balances',
     'El fiado no se cobra': 'Credit never gets collected',
@@ -80,6 +92,17 @@ export default {
     'Antes lo pagabas {from}, ahora': 'You used to pay {from}, now',
   },
   it: {
+    'Parámetros de estos productos': 'Parametri di questi prodotti',
+    '{n} con cambios': '{n} modificati',
+    'Poner parámetros a estos productos': 'Imposta i parametri di questi prodotti',
+    'Elige un parámetro y ponlo a los productos de esta factura de una vez.': 'Scegli un parametro e impostalo in una volta sui prodotti di questa fattura.',
+    'Guardar parámetros': 'Salva i parametri',
+    'Parámetros guardados en {n} producto(s)': 'Parametri salvati su {n} prodotto/i',
+    'No se pudieron cargar los productos de esta factura.': 'Non è stato possibile caricare i prodotti di questa fattura.',
+    'Elige uno…': 'Scegline uno…',
+    'Poner a {n}': 'Imposta su {n}',
+    'Incluir {name}': 'Includi {name}',
+    'Queda en la ficha de cada producto y filtra en Productos e Inventario.': 'Resta nella scheda di ogni prodotto e filtra in Prodotti e Inventario.',
     'La caja nunca cuadra': 'La cassa non torna mai',
     'El fiado no se cobra': 'Il credito non si incassa',
     'Otra vez «se acabó»': 'Di nuovo «è finito»',

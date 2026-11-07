@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Truck, Loader2, FileText, Pencil, Trash2, AlertTriangle, ArrowRight, Check, Undo2 } from 'lucide-react'
+import { X, Truck, Loader2, FileText, Pencil, Trash2, AlertTriangle, ArrowRight, Check, Undo2, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -9,6 +9,7 @@ import {
 import ReferenceCheckHint from './ReferenceCheckHint'
 import ReceiptReturnPanel from './ReceiptReturnPanel'
 import ReceiptCostPanel from './ReceiptCostPanel'
+import ReceiptParametersPanel from './ReceiptParametersPanel'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { getErrorMessage } from '../../utils/handleApiError'
@@ -35,7 +36,7 @@ function formatDate(str) {
  */
 export default function ReceiptDetailModal({ receiptId, onClose }) {
   const t = useT()
-  const { user } = useAuth()
+  const { user, can } = useAuth()
   const isOwner = user?.role === 'OWNER'
   // El vendedor ve qué llegó y cuánto, nunca lo que costó (el API ni lo manda).
   const hidesCost = user?.role === 'EMPLOYEE'
@@ -43,6 +44,7 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
   const pending = !!receipt?.costPending
   // ── Completar el costo de una entrada simple (solo el dueño) ──
   const [costing, setCosting] = useState(false)
+  const [editingParams, setEditingParams] = useState(false)
 
   // ── Cambiar número ──
   const [editingRef, setEditingRef] = useState(false)
@@ -200,6 +202,9 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
           ) : returning ? (
             <ReceiptReturnPanel receipt={receipt}
               onDone={() => setReturning(false)} onCancel={() => setReturning(false)} />
+          ) : editingParams ? (
+            <ReceiptParametersPanel receipt={receipt}
+              onDone={() => setEditingParams(false)} onCancel={() => setEditingParams(false)} />
           ) : costing ? (
             <ReceiptCostPanel receipt={receipt}
               onDone={() => setCosting(false)} onCancel={() => setCosting(false)} />
@@ -308,6 +313,13 @@ export default function ReceiptDetailModal({ receiptId, onClose }) {
                   ))}
                 </tbody>
               </table>
+
+              {can('canManageProducts') && (
+                <button type="button" onClick={() => setEditingParams(true)} data-testid="receipt-params-open"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  <SlidersHorizontal size={15} /> {t('Poner parámetros a estos productos')}
+                </button>
+              )}
 
               {isOwner && !pending && (
                 <button type="button" onClick={() => setReturning(true)}

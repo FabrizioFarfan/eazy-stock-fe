@@ -110,3 +110,14 @@ export function displayValue(parameter, raw) {
 }
 
 function norm(s) { return String(s ?? '').trim().toLowerCase() }
+
+/** Lo que cambió entre dos mapas de atributos, para mandar solo eso: { nombre: valor } y '' = quitado. */
+export function attributesDelta(before, after) {
+  const delta = {}
+  for (const key of new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])) {
+    const was = attrValueFor(before, key)
+    const now = attrValueFor(after, key)
+    if (was !== now) delta[attrKeyFor(after, key) ?? attrKeyFor(before, key) ?? key] = now
+  }
+  return delta
+}

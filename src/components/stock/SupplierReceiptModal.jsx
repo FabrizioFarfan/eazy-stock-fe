@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus,
-} from 'lucide-react'
+import { X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import { useSupplierSearch, useCreateSupplier } from '../../hooks/useSuppliers'
@@ -12,6 +10,8 @@ import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { useReferenceCheck, useCreateSimpleReceipt } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
 import PriceChangeModal from './PriceChangeModal'
+import ReceiptParameters from './ReceiptParameters'
+import { attributesDelta } from '../../utils/parameters'
 import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
@@ -74,6 +74,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const draft = draftRef.current
   const [restoredBanner, setRestoredBanner] = useState(!!draft?.items?.length)
   const [priceReview, setPriceReview] = useState(null)
+  const [paramsOpen, setParamsOpen] = useState(false)
 
   // ── Producto nuevo: abre el modal COMPLETO de producto (con código de
   // proveedor, stock mínimo, marca, etc. — dictado de Frank: el mini-form se
@@ -246,6 +247,11 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const effSale = (i) => i.salePrice != null ? Number(i.salePrice) : Number(i.product.salePrice ?? 0)
   const marginOf = (i) => effSale(i) - Number(i.unitCost ?? 0)
   const removeItem = (id) => setItems((prev) => prev.filter((i) => i.product.id !== id))
+  // Parámetros de lo que llegó (William, 7-nov-2026): se guardan con la recepción.
+  const lineAttributes = (i) => i.attributes ?? i.product.attributes ?? {}
+  const changeAttributes = (id, attributes) => setItems((prev) =>
+    prev.map((i) => i.product.id === id ? { ...i, attributes } : i))
+  const parameterChanges = items.filter((i) => Object.keys(attributesDelta(i.product.attributes, lineAttributes(i))).length > 0).length
 
   // Cerrar con carrito != perderlo: avisamos que el borrador queda guardado.
   const handleClose = () => {
@@ -351,6 +357,8 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             unitCost:  i.unitCost ?? null,
             salePrice: i.salePrice ?? null,
             ...decisionFields(decisions, i.product.id),
+            ...(Object.keys(attributesDelta(i.product.attributes, lineAttributes(i))).length > 0
+              ? { parameters: attributesDelta(i.product.attributes, lineAttributes(i)) } : {}),
           })),
           totalAmount:       finalTotal,
           paymentMode,
@@ -694,6 +702,25 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                 </>
               )}
             </section>
+
+            {!simple && can('canManageProducts') && items.length > 0 && (
+              <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>
+                <button type="button" onClick={() => setParamsOpen((v) => !v)} aria-expanded={paramsOpen} data-testid="receipt-params-toggle"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  <span>{t('Parámetros de estos productos')} <span className="font-normal text-gray-400">({t('opcional')})</span></span>
+                  <span className="flex items-center gap-2 text-xs font-medium text-blue-600">
+                    {parameterChanges > 0 && t('{n} con cambios', { n: parameterChanges })}
+                    {paramsOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </span>
+                </button>
+                {paramsOpen && (
+                  <div className="mt-2">
+                    <ReceiptParameters onChange={changeAttributes}
+                      lines={items.map((i) => ({ id: i.product.id, name: i.product.name, sku: i.product.sku, attributes: lineAttributes(i) }))} />
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* ── Forma de pago + total + factura ────────────────────────── */}
             {!simple && <section className={step2Disabled ? 'opacity-50 pointer-events-none' : ''}>

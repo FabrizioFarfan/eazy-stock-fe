@@ -47,18 +47,7 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
                       className="flex-shrink-0 rounded p-0.5 text-gray-300 hover:bg-red-50 hover:text-red-500"><X size={12} /></button>
                   )}
                 </div>
-                {p.type === 'YES_NO' && <YesNo value={normalizeYesNo(value)} onChange={(v) => set(p, v)} />}
-                {p.type === 'OPTIONS' && <OptionPick options={p.options ?? []} value={value} onChange={(v) => set(p, v)} />}
-                {p.type === 'NUMBER' && (
-                  <div className="relative">
-                    <input type="number" inputMode="decimal" step="any" value={value} onChange={(e) => set(p, e.target.value)}
-                      placeholder="—" className={`${inputCls} ${p.unit ? 'pr-12' : ''}`} />
-                    {p.unit && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">{p.unit}</span>}
-                  </div>
-                )}
-                {p.type === 'TEXT' && (
-                  <input type="text" value={value} onChange={(e) => set(p, e.target.value)} placeholder="—" className={inputCls} maxLength={255} />
-                )}
+                <ParameterValueInput parameter={p} value={value} onChange={(v) => set(p, v)} />
               </div>
             )
           })}
@@ -95,6 +84,26 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
         </div>
       {creating && <ParameterModal parameter={null} onClose={() => setCreating(false)} onCreated={onCreated} />}
     </div>
+  )
+}
+
+/** El campo de un parámetro según su tipo. Lo comparten la ficha y la factura. */
+export function ParameterValueInput({ parameter: p, value, onChange }) {
+  return (
+    <>
+      {p.type === 'YES_NO' && <YesNo value={normalizeYesNo(value)} onChange={onChange} />}
+      {p.type === 'OPTIONS' && <OptionPick options={p.options ?? []} value={value} onChange={onChange} />}
+      {p.type === 'NUMBER' && (
+        <div className="relative">
+          <input type="number" inputMode="decimal" step="any" value={value} onChange={(e) => onChange(e.target.value)}
+            placeholder="—" className={`${inputCls} ${p.unit ? 'pr-12' : ''}`} />
+          {p.unit && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">{p.unit}</span>}
+        </div>
+      )}
+      {p.type === 'TEXT' && (
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="—" className={inputCls} maxLength={200} />
+      )}
+    </>
   )
 }
 

@@ -2,8 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   attrKeyFor, attrValueFor, withParamValue, freeAttributeKeys, normalizeYesNo,
-  paramFiltersToQuery, countActiveParamFilters, paramFilterChips, displayValue,
-} from './parameters.js'
+  paramFiltersToQuery, countActiveParamFilters, paramFilterChips, displayValue, attributesDelta } from './parameters.js'
 
 const params = [
   { id: 'c', name: 'Color', type: 'OPTIONS', options: ['Rojo', 'Azul'] },
@@ -41,4 +40,12 @@ test('un número se muestra con su medida una sola vez', () => {
   assert.equal(displayValue(params[1], '25'), '25 cm')
   assert.equal(displayValue(params[1], '25 cm'), '25 cm')
   assert.equal(displayValue(params[0], 'Rojo'), 'Rojo')
+})
+
+test('de la factura solo viaja lo que cambió, y vacío quita el parámetro', () => {
+  assert.deepEqual(attributesDelta({ Color: 'Rojo', Marca: 'x' }, { Color: 'Rojo', Marca: 'x' }), {})
+  assert.deepEqual(attributesDelta({ Color: 'Rojo' }, { Color: 'Azul', Material: 'Acero' }), { Color: 'Azul', Material: 'Acero' })
+  assert.deepEqual(attributesDelta({ Color: 'Rojo', Peso: '2' }, { Peso: '2' }), { Color: '' })
+  assert.deepEqual(attributesDelta({ color: 'Rojo' }, { Color: 'Rojo' }), {})
+  assert.deepEqual(attributesDelta(null, undefined), {})
 })
