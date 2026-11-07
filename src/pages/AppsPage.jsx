@@ -21,7 +21,7 @@ export default function AppsPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <Navbar />
-      <div className="bg-[#0a0e1a] pt-16"><AppsTesters /></div>
+      <div className="bg-[#0a0e1a] pt-16"><AppsTesters pageTitle /></div>
       <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
         <h2 className="text-2xl font-extrabold text-gray-900">{t('Lo que nos suelen preguntar')}</h2>
         <dl className="mt-6 divide-y divide-gray-100">

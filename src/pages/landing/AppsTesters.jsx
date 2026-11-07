@@ -45,8 +45,10 @@ function PhoneMock() {
   )
 }
 
-export default function AppsTesters() {
+/** `pageTitle`: en /apps esta sección es el título de la página (h1). */
+export default function AppsTesters({ pageTitle = false }) {
   const t = useT()
+  const Heading = pageTitle ? 'h1' : 'h2'
   const [platform, setPlatform] = useState('ANDROID')
   const [email, setEmail] = useState('')
   const [website, setWebsite] = useState('')
@@ -78,10 +80,10 @@ export default function AppsTesters() {
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">
             <span className="h-2 w-2 rounded-full bg-emerald-400" /> {t('Android y iPhone · en fase de prueba')}
           </p>
-          <h2 className="lp-display text-3xl font-extrabold leading-tight text-white sm:text-4xl">
+          <Heading className="lp-display text-3xl font-extrabold leading-tight text-white sm:text-4xl">
             {t('La app ya funciona.')}<br />
             <span className="text-slate-400">{t('Nos faltan personas para probarla.')}</span>
-          </h2>
+          </Heading>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-300">
             {t('Para publicarla, Google nos pide gente real que la use durante 14 días, y somos un equipo pequeño. ¿Nos echas una mano? Te lo agradecemos de verdad.')}
           </p>

@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.33.1 — 2026-11-07 (/apps con su h1: sin él fallaba el prerender de toda la web pública)
+- `/apps` no tenía `h1` y el prerender se paraba ahí: las páginas públicas se quedaban sin HTML estático para Google.
+
 ## 1.33.0 — 2026-11-07 (registro sin fricción, portada nueva, apps en prueba con lista de testers y aviso de cambio de precio; sube junto al API 1.22.0)
 Pedidos de Frank: «tenemos visitas pero nadie se registra», «mal a penas mostramos las apps» y avisar cuando el proveedor cambia el precio.
 - **Compra con precio distinto** (`components/stock/PriceChangeModal.jsx`, `utils/purchasePriceChanges.js`): al guardar sale «antes lo pagabas X, ahora Y», la ganancia por unidad, el total de más o de menos y «¿desde ahora cuesta siempre así?» por producto (sí, nuevo precio / no, solo en esta compra). También al poner el costo de una entrada simple. Desde el modal se cambia la venta. Sin cambios de precio no sale.
