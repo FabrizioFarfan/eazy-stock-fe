@@ -352,36 +352,42 @@ export function Marquee() {
 const BENEFITS = [
   {
     icon: IcoTill, chip: 'Al centavo',
+    problem: 'La caja nunca cuadra',
     title: 'La caja cuadra, todos los días',
     before: 'Cierras contando billetes y nunca sabes si falta plata o se anotó mal.',
     after: 'La app te dice cuánto debe haber en el cajón: el fondo para dar vuelto, más el efectivo vendido, menos las devoluciones. Y lo mismo por cada medio de pago.',
   },
   {
     icon: IcoLedger, chip: 'WhatsApp en 1 clic',
+    problem: 'El fiado no se cobra',
     title: 'El fiado se cobra',
     before: 'El cuaderno se moja, se pierde o nadie recuerda quién debe cuánto.',
     after: 'Cada cliente tiene su límite, su deuda al día y su estado de cuenta en PDF. El recordatorio de cobro sale por WhatsApp con un clic.',
   },
   {
     icon: IcoShelf, chip: 'Pedido en PDF',
+    problem: 'Otra vez «se acabó»',
     title: 'Nunca más «se acabó»',
     before: 'Te enteras de que no hay stock cuando el cliente ya lo está pidiendo.',
     after: 'Cada producto tiene su mínimo y avisa en vivo cuando baja. El pedido al proveedor sale en PDF en dos clics, con lo que falta de cada uno.',
   },
   {
     icon: IcoTeam, chip: 'Cada venta con nombre',
+    problem: 'Si no estás, no sabes qué pasa',
     title: 'Tu equipo vende, tú controlas',
     before: 'Dejas la tienda y no sabes quién vendió qué, ni a qué precio.',
     after: 'Cada venta queda con el nombre del vendedor y la hora. El vendedor no ve tus costos ni toca el stock a mano, y tú decides cada permiso.',
   },
   {
     icon: IcoTag, chip: 'Se corrige al vender',
+    problem: 'Tus precios se quedan viejos',
     title: 'Precios siempre al día',
     before: 'Precios viejos o mal redondeados que te comen el margen en silencio.',
     after: 'Corriges el precio en plena venta y queda para siempre, con aviso. Los precios con céntimos de céntimo nunca se redondean, y vender por debajo del precio queda marcado.',
   },
   {
     icon: IcoChart, chip: 'Ganancia real',
+    problem: 'No sabes qué te deja plata',
     title: 'Sabes qué te deja plata',
     before: 'Vendes todo el mes y no sabes si ganaste, ni con qué producto.',
     after: 'Ganancia del mes, productos que más rinden, mejores clientes y vendedores. Y lo que está por vencer, para liquidarlo antes de perderlo.',
@@ -392,25 +398,27 @@ export function Benefits({ teaser = false }) {
   const t = useT()
   const list = teaser ? BENEFITS.slice(0, 3) : BENEFITS
   const ref = useRef(null)
-  const [flipped, setFlipped] = useState(false)   // interruptor general: Antes | Con Eazy Stock
+  const [manual, setManual] = useState(null)      // interruptor general: null = lo decide el scroll
   const [own, setOwn] = useState({})              // tarjetas giradas a mano, una por una
-  const [auto, setAuto] = useState(false)         // ya dio la vuelta sola al entrar en pantalla
+  const [scrolled, setScrolled] = useState({})    // tarjetas que ya subieron lo bastante en la pantalla
+  const cards = useRef([])
 
-  // Entra en pantalla «Antes» (el cuaderno) y, tras un momento, las tarjetas giran solas a «Con Eazy Stock».
+  // Frank, 7-nov-2026: cada tarjeta entra enseñando el problema y se voltea a la solución al seguir bajando,
+  // cuando su borde de arriba llega al 40 % de la pantalla. Al volver a subir, vuelve al problema.
   useEffect(() => {
-    const el = ref.current
-    if (!el || auto) return undefined
-    let timer = 0
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return
-      obs.disconnect()
-      timer = setTimeout(() => { setFlipped(true); setAuto(true) }, 1500)
-    }, { threshold: 0.35 })
-    obs.observe(el)
-    return () => { obs.disconnect(); clearTimeout(timer) }
-  }, [auto])
+    const obs = new IntersectionObserver((entries) => {
+      setScrolled((prev) => {
+        const next = { ...prev }
+        for (const e of entries) next[e.target.dataset.i] = e.isIntersecting || e.boundingClientRect.bottom < 0
+        return next
+      })
+    }, { rootMargin: '0px 0px -60% 0px' })
+    cards.current.forEach((el) => el && obs.observe(el))
+    return () => obs.disconnect()
+  }, [list.length])
 
-  const setAll = (v) => { setFlipped(v); setOwn({}); setAuto(true) }
+  const flipped = manual ?? list.every((_, i) => scrolled[i])
+  const setAll = (v) => { setManual(v); setOwn({}) }
 
   return (
     <section id="beneficios" ref={ref} className={`scroll-mt-28 bg-white ${teaser ? 'py-24' : 'pb-24 pt-10'}`}>
@@ -467,11 +475,14 @@ export function Benefits({ teaser = false }) {
         </Reveal>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map(({ icon: Icon, chip, title, before, after }, i) => {
-            const isFlipped = own[i] ?? flipped
+          {list.map(({ icon: Icon, chip, problem, title, before, after }, i) => {
+            const isFlipped = own[i] ?? manual ?? !!scrolled[i]
             return (
               <Reveal key={title} delay={(i % 3) * 90}>
                 <div
+                  ref={(el) => { cards.current[i] = el }}
+                  data-i={i}
+                  data-testid="benefit-card"
                   className={`lp-flip h-full cursor-pointer ${isFlipped ? 'is-flipped' : ''}`}
                   onClick={() => setOwn(o => ({ ...o, [i]: !isFlipped }))}
                   role="button"
@@ -484,7 +495,7 @@ export function Benefits({ teaser = false }) {
                     <article className="lp-paper relative flex flex-col items-center rounded-3xl border border-gray-200 px-7 pb-8 pt-7 text-center">
                       <span className="lp-hand absolute right-6 top-4 text-xl text-gray-400">{t('Antes')}</span>
                       <span className="text-[#0a0e1a]"><Icon size={44} /></span>
-                      <h3 className="lp-hand mt-3 text-[1.9rem] font-bold leading-[28px] text-gray-800">{t(title)}</h3>
+                      <h3 className="lp-hand mt-3 text-[1.9rem] font-bold leading-[28px] text-gray-800">{t(problem)}</h3>
                       <p className="lp-hand mt-[28px] text-[1.35rem] leading-[28px] text-gray-600">{t(before)}</p>
                     </article>
                     {/* CON EAZY STOCK: la ficha de la app */}

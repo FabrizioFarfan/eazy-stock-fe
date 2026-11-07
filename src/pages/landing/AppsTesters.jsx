@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Apple, Check, Heart, Loader2, Smartphone, Sparkles, Zap } from 'lucide-react'
 import { useT } from '../../i18n'
@@ -19,30 +19,26 @@ const PERKS = [
   [Heart, 'Hablas directo con quienes la hacemos.'],
 ]
 
-function PhoneMock() {
-  const t = useT()
+/**
+ * El promo de la web de la E.L.C. (eazy-stock-promo.mp4), recortado a inventario, venta y reportes: sin su final con los
+ * «39 cupos» ni el mensaje directo, que aquí lo hace el formulario. Se reproduce solo mientras se ve; sin movimiento, la foto.
+ */
+function AppVideo() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const video = ref.current
+    if (!video || typeof IntersectionObserver === 'undefined') return undefined
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) video.play().catch(() => {})
+      else video.pause()
+    }, { threshold: 0.25 })
+    obs.observe(video)
+    return () => obs.disconnect()
+  }, [])
   return (
-    <div aria-hidden="true" className="mx-auto w-[15.5rem] rounded-[2.4rem] border border-white/15 bg-[#05070d] p-2.5 shadow-2xl shadow-blue-900/40">
-      <div className="overflow-hidden rounded-[1.9rem] bg-gray-50 text-left">
-        <div className="bg-blue-600 px-4 pb-4 pt-6 text-white">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100">{t('Vendido hoy')}</p>
-          <p className="mt-0.5 font-mono text-2xl font-extrabold">S/ 2,580.50</p>
-          <p className="mt-1 text-[11px] text-blue-100">{t('18 ventas · +18 % que ayer')}</p>
-        </div>
-        <div className="space-y-2 p-3">
-          <div className="flex items-center justify-between rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-bold text-white">
-            {t('Nueva venta')} <span>+</span>
-          </div>
-          {[['Pegamento PVC 1/4 gal', '3 / 10'], ['Clavos 2" (kg)', '4 / 20'], ['Cinta aislante', '6 / 15']].map(([name, stock]) => (
-            <div key={name} className="flex items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-[11px] shadow-sm ring-1 ring-gray-100">
-              <span className="truncate font-semibold text-gray-800">{t(name)}</span>
-              <span className="flex-shrink-0 font-mono font-bold text-amber-600">{stock}</span>
-            </div>
-          ))}
-          <p className="pt-1 text-center text-[10px] font-semibold text-gray-400">{t('Escanea, cobra y mira tu stock')}</p>
-        </div>
-      </div>
-    </div>
+    <video ref={ref} src="/videos/app-preview.mp4" poster="/videos/app-preview.jpg" muted loop playsInline preload="none" aria-hidden="true" data-testid="app-video"
+      className="mx-auto block aspect-[9/16] w-full max-w-[19rem] rounded-[2rem] object-cover shadow-2xl shadow-blue-900/40 ring-1 ring-white/15" />
   )
 }
 
@@ -132,7 +128,7 @@ export default function AppsTesters({ pageTitle = false }) {
             </form>
           )}
         </Reveal>
-        <Reveal delay={120}><PhoneMock /></Reveal>
+        <Reveal delay={120}><AppVideo /></Reveal>
       </div>
     </section>
   )

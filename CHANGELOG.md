@@ -3,6 +3,14 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.34.3 — 2026-11-07 (beneficios: primero el problema, al bajar la solución)
+- La hoja de cuaderno lleva su propio título del problema («La caja nunca cuadra») y la ficha el de la solución («La caja cuadra, todos los días»).
+- Las tarjetas ya no giran solas a los 1,5 s: cada una se voltea al llegar su borde al 40 % de la pantalla y vuelve al subir. El interruptor y el toque siguen mandando.
+
+## 1.34.2 — 2026-11-07 (vídeo de verdad en las apps; carrusel de negocios más rápido)
+- La sección de apps enseña el promo de la web de la E.L.C., recortado a inventario, venta y reportes (`public/videos/app-preview.mp4`), en lugar del teléfono dibujado.
+- Las fotos de los negocios pasan de 26 a 70 px/s.
+
 ## 1.34.1 — 2026-11-07 (el beneficio de los testers, en privado)
 - Frank: el beneficio no se anuncia en la web. `/apps` y el Inicio dicen que hay un detalle que se cuenta por correo; el concreto va en el correo que llega al apuntarse.
 

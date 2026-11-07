@@ -1,6 +1,13 @@
 // Tanda del 7-nov-2026: portada, registro sin fricción, apps en fase de prueba y aviso de cambio de precio. Llave = español.
 export default {
   en: {
+    // Beneficios: el título del problema
+    'La caja nunca cuadra': 'The till never balances',
+    'El fiado no se cobra': 'Credit never gets collected',
+    'Otra vez «se acabó»': '«We ran out» again',
+    'Si no estás, no sabes qué pasa': 'If you are away, you have no idea what happens',
+    'Tus precios se quedan viejos': 'Your prices go out of date',
+    'No sabes qué te deja plata': 'You do not know what makes you money',
     // Portada
     'Deja el cuaderno.': 'Ditch the notebook.',
     'Stock, ventas y fiado': 'Stock, sales and credit',
@@ -42,8 +49,6 @@ export default {
     'Te escribimos con el enlace en cuanto te demos acceso.': 'We will send you the link as soon as we give you access.',
     'Te llega el acceso a ese correo. Solo lo usamos para esto;': 'Your access is sent to that email. We only use it for this;',
     'puedes pedirnos que lo borremos': 'you can ask us to delete it',
-    '18 ventas · +18 % que ayer': '18 sales · +18 % vs yesterday',
-    'Escanea, cobra y mira tu stock': 'Scan, charge and check your stock',
     'Apps de Eazy Stock para Android y iPhone: pruébalas gratis': 'Eazy Stock apps for Android and iPhone: try them free',
     'La app de Eazy Stock para Android y iPhone está en fase de prueba. Déjanos tu correo y pruébala gratis antes que nadie.': 'The Eazy Stock app for Android and iPhone is in testing. Leave your email and try it free before anyone else.',
     'Lo que nos suelen preguntar': 'What people usually ask',
@@ -75,6 +80,12 @@ export default {
     'Antes lo pagabas {from}, ahora': 'You used to pay {from}, now',
   },
   it: {
+    'La caja nunca cuadra': 'La cassa non torna mai',
+    'El fiado no se cobra': 'Il credito non si incassa',
+    'Otra vez «se acabó»': 'Di nuovo «è finito»',
+    'Si no estás, no sabes qué pasa': 'Se non ci sei, non sai cosa succede',
+    'Tus precios se quedan viejos': 'I tuoi prezzi restano vecchi',
+    'No sabes qué te deja plata': 'Non sai cosa ti fa guadagnare',
     'Deja el cuaderno.': 'Basta quaderno.',
     'Stock, ventas y fiado': 'Stock, vendite e credito',
     'desde tu celular.': 'dal tuo telefono.',
@@ -112,8 +123,6 @@ export default {
     'Te escribimos con el enlace en cuanto te demos acceso.': "Ti scriviamo con il link appena ti diamo l'accesso.",
     'Te llega el acceso a ese correo. Solo lo usamos para esto;': "L'accesso arriva a quella email. La usiamo solo per questo;",
     'puedes pedirnos que lo borremos': 'puoi chiederci di cancellarla',
-    '18 ventas · +18 % que ayer': '18 vendite · +18 % rispetto a ieri',
-    'Escanea, cobra y mira tu stock': 'Scansiona, incassa e controlla lo stock',
     'Apps de Eazy Stock para Android y iPhone: pruébalas gratis': 'App di Eazy Stock per Android e iPhone: provale gratis',
     'La app de Eazy Stock para Android y iPhone está en fase de prueba. Déjanos tu correo y pruébala gratis antes que nadie.': "L'app di Eazy Stock per Android e iPhone è in fase di test. Lasciaci la tua email e provala gratis prima di tutti.",
     'Lo que nos suelen preguntar': 'Cosa ci chiedono di solito',

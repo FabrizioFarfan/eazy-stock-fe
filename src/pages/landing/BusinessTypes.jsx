@@ -37,7 +37,7 @@ const TYPES = [
 const SHOWN = TYPES
 
 const STEP_MS = 2600   // cada cuánto salta el foco
-const SPEED = 26       // px/s del carrusel
+const SPEED = 70       // px/s del carrusel (Frank, 7-nov-2026: a 26 iba muy lento)
 const RESUME_MS = 2500 // tras soltar en el celular, vuelve a moverse
 
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
