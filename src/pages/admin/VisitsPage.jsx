@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BarChart3, Globe2, Share2, Smartphone, FileText, MousePointerClick, Megaphone, ShieldCheck, Loader2 } from 'lucide-react'
+import { BarChart3, Globe2, Share2, Smartphone, FileText, MousePointerClick, Megaphone, ShieldCheck, Loader2, Radio } from 'lucide-react'
 import { useT } from '../../i18n'
 import { bossApi } from '../../services/endpoints/boss'
 import { ReportHeader, ReportHero } from '../../components/reports/ReportKit'
 import { BossSwitcher } from '../../components/boss/BossKit'
 import { flagEmoji } from '../../components/boss/bossUtils'
-import { FUNNEL_STEPS, funnelRows, conversion, axisTicks } from '../../utils/visits'
+import { FUNNEL_STEPS, funnelRows, conversion, axisTicks, groupLive } from '../../utils/visits'
 
 /*
  * Panel Boss › Visitas (Frank, 30-oct-2026): «saber si la gente entra siquiera a la página: una persona abrió la
@@ -45,8 +45,16 @@ const CLICK_LABEL = {
 const PAGE_LABEL = {
   '/': 'Portada', '/planes': 'Planes', '/registro': 'Registro', '/login': 'Entrar', '/funciones': 'Funciones',
   '/para-quien': 'Para quién', '/preguntas': 'Preguntas', '/datenschutz': 'Privacidad', '/impressum': 'Impressum',
-  '/terminos': 'Términos', '/eliminar-cuenta': 'Eliminar cuenta',
+  '/terminos': 'Términos', '/eliminar-cuenta': 'Eliminar cuenta', '/apps': 'Apps',
+  '/sistema-para/ferreterias': 'Ferreterías', '/sistema-para/bodegas': 'Bodegas', '/sistema-para/farmacias': 'Farmacias', '/sistema-para/minimarkets': 'Minimarkets',
 }
+const LIVE_STEP = {
+  pricing_view: 'Vio los precios', register_started: 'Empezó el registro', register_submit: 'Envió el registro', signup: 'Creó su cuenta',
+}
+const LIVE_CLICK = {
+  hero_apps: 'Abrió lo de las apps', tester_signup_android: 'Se apuntó como tester (Android)', tester_signup_ios: 'Se apuntó como tester (iPhone)',
+}
+const LIVE_LIMIT = 12
 
 function countryName(code) {
   if (!code || code === '??') return null
@@ -55,6 +63,77 @@ function countryName(code) {
   } catch {
     return code
   }
+}
+
+/** Hace cuánto, corto: «ahora», «hace 4 min», «hace 2 h». */
+function ago(iso, t) {
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (min < 1) return t('ahora')
+  if (min < 60) return t('hace {n} min', { n: min })
+  return t('hace {n} h', { n: Math.floor(min / 60) })
+}
+
+/** En vivo (Frank, 7-nov-2026): cada visita de las últimas 48 h con lo que hizo. Se refresca cada 10 s. */
+function LiveVisits() {
+  const t = useT()
+  const [all, setAll] = useState(false)
+  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
+    queryKey: ['boss-analytics-live'],
+    queryFn: () => bossApi.getAnalyticsLive().then((r) => r.data.data ?? r.data),
+    refetchInterval: 10_000,
+  })
+  const visits = useMemo(() => groupLive(data?.events, dataUpdatedAt || undefined), [data, dataUpdatedAt])
+  const shown = all ? visits : visits.slice(0, LIVE_LIMIT)
+  const liveNow = data?.liveNow ?? 0
+  const stepLabel = (s) => {
+    if (s.name === 'pageview') return t(PAGE_LABEL[s.path] ?? s.path ?? '—')
+    if (s.name === 'click') return t(LIVE_CLICK[s.label] ?? CLICK_LABEL[s.label] ?? s.label)
+    return t(LIVE_STEP[s.name] ?? s.name)
+  }
+  return (
+    <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5" data-testid="live-visits">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+          <Radio size={16} className="text-emerald-500" /> {t('En vivo')}
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${liveNow > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`} data-testid="live-now">
+            <span className={`h-2 w-2 rounded-full ${liveNow > 0 ? 'animate-pulse bg-emerald-500' : 'bg-gray-300'}`} />
+            {liveNow === 1 ? t('1 persona ahora') : t('{n} personas ahora', { n: liveNow })}
+          </span>
+        </h2>
+        <p className="text-[11px] text-gray-400">{t('Se actualiza cada 10 segundos · últimas 48 horas')}</p>
+      </div>
+      {isLoading && <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-gray-400" /></div>}
+      {isError && <p className="py-4 text-center text-sm text-red-500">{t('No se pudo actualizar. Se vuelve a intentar solo.')}</p>}
+      {!isLoading && !isError && visits.length === 0 && (
+        <p className="py-6 text-center text-sm text-gray-500">{t('Nadie en las últimas 48 horas.')}</p>
+      )}
+      {shown.length > 0 && (
+        <ul className="mt-3 divide-y divide-gray-100">
+          {shown.map((v) => (
+            <li key={v.visitor} className="grid gap-x-4 gap-y-1 py-2.5 md:grid-cols-[6.5rem_minmax(0,16rem)_minmax(0,1fr)]" data-testid="live-visit">
+              <span className={`flex items-center gap-1.5 text-xs font-semibold ${v.online ? 'text-emerald-600' : 'text-gray-400'}`}>
+                <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${v.online ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                {ago(v.lastAt, t)}
+              </span>
+              <span className="min-w-0 text-sm text-gray-800">
+                <span className="font-semibold">{countryName(v.country) ? `${flagEmoji(v.country)} ${countryName(v.country)}` : t('No se sabe')}</span>
+                <span className="text-gray-500"> · {t(DEVICE_LABEL[v.device] ?? 'Computadora')}{v.source ? ` · ${t(SOURCE_LABEL[v.source] ?? v.source)}` : ''}{v.campaign ? ` · ${v.campaign}` : ''}</span>
+              </span>
+              <span className="min-w-0 text-sm text-gray-600">{v.steps.map(stepLabel).join(' → ')}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!all && visits.length > LIVE_LIMIT && (
+        <button type="button" onClick={() => setAll(true)} className="mt-2 text-xs font-semibold text-blue-600 hover:underline">
+          {t('Ver las {n} visitas', { n: visits.length })}
+        </button>
+      )}
+      <p className="mt-3 border-t border-gray-100 pt-3 text-[11px] leading-relaxed text-gray-400">
+        {t('No aparecen: quien tiene la sesión abierta en ese navegador (como tú), quien activó «no me sigas», los robots conocidos, y quien solo ve la vista previa del enlace en WhatsApp o Instagram sin abrirlo. Para probarlo, ábrela en otro celular o en una ventana de incógnito.')}
+      </p>
+    </section>
+  )
 }
 
 function fmtDay(iso, opts = { day: 'numeric', month: 'short' }) {
@@ -162,7 +241,7 @@ export default function VisitsPage() {
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ['boss-analytics', days],
     queryFn: () => bossApi.getAnalytics(days).then((r) => r.data.data ?? r.data),
-    refetchInterval: 60_000,
+    refetchInterval: 20_000,
   })
   const steps = useMemo(() => {
     const byKey = Object.fromEntries((data?.funnel ?? []).map((s) => [s.key, s.count]))
@@ -177,6 +256,8 @@ export default function VisitsPage() {
         right={isFetching && !isLoading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : null} />
 
       <BossSwitcher />
+
+      <LiveVisits />
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={t('Periodo')}>
         {PERIODS.map((p) => (

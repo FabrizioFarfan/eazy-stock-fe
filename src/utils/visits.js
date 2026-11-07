@@ -35,3 +35,33 @@ export function axisTicks(n) {
   for (let k = 1; k <= inner; k++) ticks.add(Math.round((k * (n - 1)) / (inner + 1)))
   return [...ticks].sort((a, b) => a - b)
 }
+
+/** Quien hizo algo hace menos de esto cuenta como «ahora» (lo mismo que `liveNow` en el API). */
+export const LIVE_MS = 5 * 60_000
+
+/**
+ * Panel en vivo: de eventos sueltos (del más nuevo al más viejo) a una fila por visita, con lo que hizo en orden.
+ * La misma página dos veces seguidas cuenta una. Visita = el hash del día del API: cambia cada día.
+ */
+export function groupLive(events, now = Date.now()) {
+  const byVisitor = new Map()
+  for (const e of [...(events ?? [])].reverse()) {
+    let v = byVisitor.get(e.visitor)
+    if (!v) {
+      v = { visitor: e.visitor, country: null, device: null, source: null, campaign: null, lastAt: e.at, steps: [] }
+      byVisitor.set(e.visitor, v)
+    }
+    v.lastAt = e.at
+    v.country = v.country ?? e.country
+    v.device = v.device ?? e.device
+    v.source = v.source ?? e.source
+    v.campaign = v.campaign ?? e.campaign
+    const prev = v.steps[v.steps.length - 1]
+    if (!(prev && prev.name === e.name && prev.path === e.path && prev.label === e.label)) {
+      v.steps.push({ name: e.name, path: e.path, label: e.label })
+    }
+  }
+  return [...byVisitor.values()]
+    .map((v) => ({ ...v, online: now - new Date(v.lastAt).getTime() < LIVE_MS }))
+    .sort((a, b) => new Date(b.lastAt) - new Date(a.lastAt))
+}

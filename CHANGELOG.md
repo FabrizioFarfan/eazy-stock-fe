@@ -3,6 +3,10 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.35.0 — 2026-11-07 (Visitas en vivo; sube junto al API 1.24.0)
+- **Boss › Visitas › En vivo**: una fila por visita de las últimas 48 h (hace cuánto, país, dispositivo, de dónde y lo que hizo), refrescada cada 10 s, sin cookies. Dice quién no aparece. El resto de la página se refresca cada 20 s.
+- Los eventos van por `/api/public/e`, sin la palabra «analytics».
+
 ## 1.34.5 — 2026-11-07 (los enlaces a secciones de la portada llevan a la sección)
 - «Beneficios», «Precios» y demás del menú cambiaban la URL pero no bajaban a la sección.
 

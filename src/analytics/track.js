@@ -14,7 +14,7 @@ export function track(name, extra = {}) {
   const body = JSON.stringify({ name, path: normalizePath(window.location.pathname), lang: document.documentElement.lang || undefined, ...extra })
   try {
     // keepalive: el clic que cambia de página no corta el envío. Sin credenciales: no viaja ninguna cookie.
-    fetch(`${BASE_URL}/public/analytics/event`, {
+    fetch(`${BASE_URL}/public/e`, {
       method: 'POST', keepalive: true, credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body,
     }).catch(() => {})
   } catch { /* nunca rompe la página */ }

@@ -15,6 +15,7 @@ export const bossApi = {
   getTesters: () => api.get('/boss/testers'),
   setTesterInvited: (id, invited) => api.patch(`/boss/testers/${id}/invited`, { invited }),
   deleteTester: (id) => api.delete(`/boss/testers/${id}`),
+  getAnalyticsLive: () => api.get('/boss/analytics/live'),
   getAnalytics: (days = 7) => api.get('/boss/analytics', { params: { days } }),
 
   // Suscripciones (M1 «Planes en serio», 15-oct-2026): una fila por DUEÑO (la
