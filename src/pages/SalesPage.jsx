@@ -23,6 +23,7 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import { useDailySummary } from '../hooks/useReports'
 import { localISODate } from '../utils/formatDate'
 import { formatQty } from '../utils/quantity'
+import { itemsLabel } from '../utils/itemsLabel'
 import { useT, dateLocale } from '../i18n'
 
 function formatDate(dateStr) {
@@ -612,8 +613,10 @@ export default function SalesPage() {
                       <ShoppingCart size={17} />
                     </div>
                     <div className="min-w-0 flex-1">
+                      {/* Sin cliente, el título son los productos (William, 11-nov): se sabe qué fue sin abrir */}
                       <p className="truncate text-sm font-semibold text-gray-900">
-                        {sale.customerName ?? t('{n} items', { n: sale.items?.length ?? 0 })}
+                        {sale.customerName ?? ((sale.items ?? []).slice(0, 2).map((i) => i.productName).filter(Boolean).join(', ') || t('Venta'))}
+                        {!sale.customerName && (sale.items?.length ?? 0) > 2 && <span className="font-medium text-gray-400"> +{sale.items.length - 2}</span>}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-gray-400">
                         {formatDate(sale.createdAt)} · {sale.employeeName ?? sale.createdByName ?? '—'}
@@ -622,11 +625,9 @@ export default function SalesPage() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <p className={`text-base font-bold ${isFullyReturned(sale) ? 'text-slate-400 line-through' : 'text-gray-900'}`}>{formatCurrency(sale.total)}</p>
-                      {sale.customerName && (
-                        <p className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-100">
-                          {t('{n} items', { n: sale.items?.length ?? 0 })} <ChevronRight size={10} className="text-blue-400" />
-                        </p>
-                      )}
+                      <p className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-blue-100">
+                        {itemsLabel(t, sale.items?.length ?? 0)} <ChevronRight size={10} className="text-blue-400" />
+                      </p>
                     </div>
                   </button>
                 </li>
@@ -717,7 +718,7 @@ export default function SalesPage() {
                       <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id) }}
                         title={t('Ver los productos de esta venta')} data-testid="sale-items-pill"
                         className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100 hover:ring-blue-200">
-                        {t('{n} items', { n: sale.items?.length ?? 0 })}
+                        {itemsLabel(t, sale.items?.length ?? 0)}
                         <ChevronRight size={11} className="text-blue-400" />
                       </button>
                     </td>

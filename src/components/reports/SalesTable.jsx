@@ -1,7 +1,9 @@
 import { formatPrice } from '../../utils/formatMoney'
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import SaleDetailModal from './SaleDetailModal'
 import { useT, dateLocale } from '../../i18n'
+import { itemsLabel } from '../../utils/itemsLabel'
 
 function formatCurrency(v) {
   return formatPrice(v) // moneda del negocio
@@ -104,6 +106,7 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
                   key={row.saleId}
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
                   onClick={() => setSelectedSaleId(row.saleId)}
+                  title={t('Ver detalle de la venta')}
                 >
                   <td className="px-4 py-3">
                     <span
@@ -114,7 +117,15 @@ export default function SalesTable({ items, isLoading, isError, page, onPageChan
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-800">{row.employeeName}</td>
-                  <td className="px-4 py-3 text-center font-mono text-gray-600">{row.itemCount}</td>
+                  {/* William (11-nov): la cantidad es un botón a la vista, igual que en el historial de ventas */}
+                  <td className="px-4 py-3 text-center">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedSaleId(row.saleId) }}
+                      title={t('Ver los productos de esta venta')} data-testid="report-sale-items-pill"
+                      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100 hover:ring-blue-200">
+                      {itemsLabel(t, row.itemCount ?? 0)}
+                      <ChevronRight size={11} className="text-blue-400" />
+                    </button>
+                  </td>
                   <td className="px-4 py-3"><NameChips names={row.supplierNames} /></td>
                   <td className="px-4 py-3"><NameChips names={row.brandNames} /></td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">

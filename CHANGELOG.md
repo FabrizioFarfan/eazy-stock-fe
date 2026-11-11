@@ -3,6 +3,11 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.37.1 — 2026-11-11 (William: saber qué productos fueron en cada venta)
+- **Reportes › tabla de ventas**: la columna Items era un número suelto («5»); ahora es el mismo botón azul «5 items ›» del historial de ventas y abre el detalle con los productos. La fila entera sigue abriendo lo mismo.
+- **Ventas en el celular**: una venta sin cliente tenía por título «5 items»; ahora el título son sus productos («Martillo, Clavo +3») y el botón «5 items ›» sale en todas las ventas, con o sin cliente.
+- Con un solo producto dice «1 item», no «1 items».
+
 ## 1.37.0 — 2026-11-07 (Lotes; sube junto al API 1.26.0)
 - **Recepción**: «Esta compra viene distinta» en cada línea: entra como lote aparte, al mismo precio.
 - **Nueva venta**: un producto con lotes pide de cuál das, y no deja cobrar sin elegir; el mismo producto puede ir en dos líneas, una por lote. La cantidad se limita a lo que queda en ese lote.
