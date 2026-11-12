@@ -12,6 +12,7 @@ import { myBusinessesApi } from "../services/endpoints/myBusinesses";
 import { saveSetupPending } from "../utils/setupPendingNotice";
 import { markCodeSent, clearCodeSent } from "../utils/emailCode";
 import { VERIFY_CODE_PATH, isEmailGated, afterVerifyPath } from "../utils/emailGate";
+import { isTransientFailure, reconnectDelay } from "../utils/sessionErrors";
 
 const AuthContext = createContext(null);
 
@@ -65,6 +66,8 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [token, setToken]             = useState(() => localStorage.getItem("eazystock_token"));
   const [isLoading, setIsLoading]     = useState(true);
+  // El API no contesta (despliegue, sin red) al abrir la app: se espera con la sesión intacta
+  const [isReconnecting, setIsReconnecting] = useState(false);
   // null = aún no cargado del BE; Set<string> = claves de tutoriales ya vistos
   const [seenTutorials, setSeenTutorials] = useState(null);
   const navigate = useNavigate();
@@ -108,15 +111,22 @@ export function AuthProvider({ children }) {
     tutorialsApi.markSeen([key]).catch(() => {});
   }, []);
 
-  // Rehydrate user on mount — the axios interceptor will silently refresh if needed
+  // Rehydrate user on mount — the axios interceptor will silently refresh if needed.
+  // Frank (12-nov-2026): una actualización no cierra sesiones. Si el API no contesta (502 mientras
+  // reinicia, sin red) los tokens se conservan y se reintenta; solo se borran si el API los rechaza.
   useEffect(() => {
     if (!token) {
       setIsLoading(false);
       return;
     }
-    api
-      .get("/auth/me")
-      .then(async (res) => {
+    let cancelled = false;
+    let timer = null;
+    let attempt = 0;
+    const load = async () => {
+      timer = null;
+      try {
+        const res = await api.get("/auth/me");
+        if (cancelled) return;
         const userData = res.data.data ?? res.data;
         setUser(normalizeUser(userData));
         // Sync access token in case the interceptor refreshed it during /me
@@ -124,13 +134,36 @@ export function AuthProvider({ children }) {
         if (currentToken !== token) setToken(currentToken);
         // Sin el código, el API responde 403 EMAIL_NOT_VERIFIED a todo menos /auth/**: no se pide nada más.
         if (!isEmailGated(userData)) await Promise.all([loadPermissions(), loadTutorials(userData)]);
-      })
-      .catch(() => {
+      } catch (err) {
+        if (cancelled) return;
+        if (isTransientFailure(err) && localStorage.getItem("eazystock_token")) {
+          setIsReconnecting(true);
+          timer = setTimeout(load, reconnectDelay(attempt++));
+          return;
+        }
         localStorage.removeItem("eazystock_token");
         localStorage.removeItem("eazystock_refresh_token");
         setToken(null);
-      })
-      .finally(() => setIsLoading(false));
+      }
+      if (cancelled) return;
+      setIsReconnecting(false);
+      setIsLoading(false);
+    };
+    // Vuelve la red (o la pestaña): no esperar al siguiente reintento
+    const retryNow = () => {
+      if (!timer || document.visibilityState === "hidden") return;
+      clearTimeout(timer);
+      load();
+    };
+    window.addEventListener("online", retryNow);
+    document.addEventListener("visibilitychange", retryNow);
+    load();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", retryNow);
+      document.removeEventListener("visibilitychange", retryNow);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -298,7 +331,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, replaceSession, verifyEmailCode, justVerified, seenTutorials, markTutorialSeen }}
+      value={{ user, token, isLoading, isReconnecting, permissions, can, login, register, switchBusiness, logout, logoutAll, endSessionLocally, refreshUser, replaceSession, verifyEmailCode, justVerified, seenTutorials, markTutorialSeen }}
     >
       {children}
     </AuthContext.Provider>

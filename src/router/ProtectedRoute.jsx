@@ -1,18 +1,13 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppLayout from '../layouts/AppLayout'
+import SessionSpinner from '../components/common/SessionSpinner'
 import { VERIFY_CODE_PATH, isEmailGated } from '../utils/emailGate'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { token, user, isLoading } = useAuth()
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-      </div>
-    )
-  }
+  if (isLoading) return <SessionSpinner />
 
   if (!token) return <Navigate to="/login" replace />
 

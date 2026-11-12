@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
+import SessionSpinner from '../components/common/SessionSpinner'
 
 import LandingPage    from '../pages/LandingPage'
 import LoginPage      from '../pages/LoginPage'
@@ -26,11 +27,7 @@ const ROLE_HOME = { SUPER_ADMIN: '/admin/businesses', OWNER: '/dashboard', EMPLO
 
 function LandingRoute() {
   const { token, user, isLoading } = useAuth()
-  if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-[#111827]">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-    </div>
-  )
+  if (isLoading) return <SessionSpinner dark />
   if (token) return <Navigate to={user?.isBoss ? '/boss' : (ROLE_HOME[user?.role] ?? '/dashboard')} replace />
   return <LandingPage />
 }

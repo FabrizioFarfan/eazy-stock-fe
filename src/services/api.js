@@ -2,6 +2,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import { t } from '../i18n'
 import { announceToken } from './wsClient'
+import { isTransientFailure, sessionGoneError } from '../utils/sessionErrors'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -15,6 +16,26 @@ const processQueue = (error, token = null) => {
   pendingRequests.forEach(({ resolve, reject }) => error ? reject(error) : resolve(token))
   pendingRequests = []
 }
+
+// Una sola pestaña refresca a la vez (Web Locks): el refresh token es de un solo uso y, si dos
+// pestañas presentan el mismo, el API lo toma por robo y cierra la sesión en todas.
+const withRefreshLock = (fn) => (navigator.locks?.request ? navigator.locks.request('eazystock_refresh', fn) : fn())
+
+// Devuelve un access token válido. `sentToken`: el que llevaba la petición que dio 401.
+const refreshSession = (sentToken) => withRefreshLock(async () => {
+  // Otra pestaña ya refrescó mientras esperábamos: se usa su token, sin gastar el refresh.
+  const current = localStorage.getItem('eazystock_token')
+  if (current && sentToken && current !== sentToken) return current
+
+  const refreshToken = localStorage.getItem('eazystock_refresh_token')
+  if (!refreshToken) throw sessionGoneError()
+  const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken }, { timeout: 20000 })
+  const { accessToken, refreshToken: newRefresh } = res.data
+
+  localStorage.setItem('eazystock_token', accessToken)
+  localStorage.setItem('eazystock_refresh_token', newRefresh)
+  return accessToken
+})
 
 // Attach access token on every request
 api.interceptors.request.use((config) => {
@@ -58,11 +79,8 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
-        const { accessToken, refreshToken: newRefresh } = res.data
-
-        localStorage.setItem('eazystock_token', accessToken)
-        localStorage.setItem('eazystock_refresh_token', newRefresh)
+        const sentToken = String(originalRequest.headers?.Authorization ?? '').replace(/^Bearer /, '')
+        const accessToken = await refreshSession(sentToken)
 
         api.defaults.headers.common.Authorization = `Bearer ${accessToken}`
         originalRequest.headers.Authorization = `Bearer ${accessToken}`
@@ -72,6 +90,9 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)
+        // El API no contesta (lo estamos actualizando) o no hay red: la sesión sigue siendo
+        // buena. Se conserva; solo falla esta petición y la siguiente lo vuelve a intentar.
+        if (isTransientFailure(refreshError)) return Promise.reject(refreshError)
         localStorage.removeItem('eazystock_token')
         localStorage.removeItem('eazystock_refresh_token')
         toast.error(t('Tu sesión expiró. Por favor inicia sesión nuevamente.'))

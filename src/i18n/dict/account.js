@@ -3,6 +3,9 @@
 export default {
   en: {
     '¿Olvidaste tu contraseña?': 'Forgot your password?',
+    'Recordar mi correo': 'Remember my email',
+    'Reconectando…': 'Reconnecting…',
+    'Estamos actualizando EAZY STOCK o no hay conexión. Tu sesión sigue abierta: entrarás en cuanto vuelva.': 'We are updating EAZY STOCK or there is no connection. Your session is still open: you will be in as soon as it is back.',
     'Escribe tu correo y te mandamos un enlace para elegir una nueva.': 'Enter your email and we\'ll send you a link to choose a new one.',
     '¿La recordaste?': 'Remembered it?',
     'Si ese correo tiene una cuenta, ya te mandamos el enlace. Vale 1 hora. Revisa también el spam.': 'If that email has an account, the link is on its way. It\'s valid for 1 hour. Check your spam folder too.',
@@ -36,6 +39,9 @@ export default {
   },
   it: {
     '¿Olvidaste tu contraseña?': 'Hai dimenticato la password?',
+    'Recordar mi correo': 'Ricorda la mia email',
+    'Reconectando…': 'Riconnessione…',
+    'Estamos actualizando EAZY STOCK o no hay conexión. Tu sesión sigue abierta: entrarás en cuanto vuelva.': 'Stiamo aggiornando EAZY STOCK o non c\'è connessione. La tua sessione resta aperta: entrerai appena torna.',
     'Escribe tu correo y te mandamos un enlace para elegir una nueva.': 'Scrivi la tua email e ti mandiamo un link per sceglierne una nuova.',
     '¿La recordaste?': 'Te la sei ricordata?',
     'Si ese correo tiene una cuenta, ya te mandamos el enlace. Vale 1 hora. Revisa también el spam.': 'Se quell\'email ha un account, il link è in arrivo. Vale 1 ora. Controlla anche lo spam.',

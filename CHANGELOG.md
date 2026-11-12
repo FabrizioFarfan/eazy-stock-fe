@@ -3,6 +3,11 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.38.0 — 2026-11-12 (la sesión aguanta las actualizaciones; el login recuerda el correo)
+- **Una actualización ya no cierra sesiones.** Mientras se despliega, el API no contesta unos segundos (502, corte de red) y la web lo tomaba por «sesión vencida»: borraba la sesión y mandaba al login. Ahora la sesión solo se cierra si el API la rechaza de verdad (401 al refrescar). Si al abrir la app el API no contesta, sale «Reconectando…» y entra sola en cuanto vuelve (reintenta a los 2, 4, 8 s y luego cada 15 s; también al volver la red o la pestaña).
+- **Varias pestañas**: solo una refresca la sesión a la vez y las demás usan su token (antes dos pestañas podían presentar el mismo refresh token y el API cerraba la sesión en todas).
+- **Login › «Recordar mi correo»** (marcado por defecto): tras cerrar sesión el correo ya está puesto y el cursor va a la contraseña. Al desmarcarlo se borra en el momento. La contraseña nunca se guarda.
+
 ## 1.37.1 — 2026-11-11 (William: saber qué productos fueron en cada venta)
 - **Reportes › tabla de ventas**: la columna Items era un número suelto («5»); ahora es el mismo botón azul «5 items ›» del historial de ventas y abre el detalle con los productos. La fila entera sigue abriendo lo mismo.
 - **Ventas en el celular**: una venta sin cliente tenía por título «5 items»; ahora el título son sus productos («Martillo, Clavo +3») y el botón «5 items ›» sale en todas las ventas, con o sin cliente.

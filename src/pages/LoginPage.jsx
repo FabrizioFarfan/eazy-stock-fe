@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
 import { getErrorCode } from '../utils/handleApiError'
 import { readDeletionNotice, clearDeletionNotice, formatDeletionDate } from '../utils/deletionNotice'
+import { readRememberedEmail, rememberEmailEnabled, saveRememberedEmail } from '../utils/rememberedEmail'
 import { useT, dateLocale } from '../i18n'
 import LangSwitcher from '../i18n/LangSwitcher'
 import { trialLine } from './landing/plans'
@@ -19,7 +20,10 @@ const FEATURES = [
 export default function LoginPage() {
   const t = useT()
   const { login, token, isLoading } = useAuth()
-  const [email, setEmail] = useState('')
+  // «Recordar mi correo» (Frank, 12-nov-2026): tras cerrar sesión el correo ya está puesto y el cursor va a la contraseña.
+  const [email, setEmail] = useState(readRememberedEmail)
+  const [remember, setRemember] = useState(rememberEmailEnabled)
+  const [hadEmail] = useState(() => !!readRememberedEmail())
   const [password, setPassword] = useState('')
   // El ojito para ver la contraseña (feedback de un socio, 3-oct-2026): regla para TODOS los logins.
   const [showPassword, setShowPassword] = useState(false)
@@ -32,12 +36,16 @@ export default function LoginPage() {
 
   const dismissDeletion = () => { clearDeletionNotice(); setDeletion(null) }
 
+  // Quitar la casilla olvida el correo en el momento, sin esperar a entrar.
+  const toggleRemember = (on) => { setRemember(on); if (!on) saveRememberedEmail('', false) }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setSubmitting(true)
     try {
       const data = await login(email, password)
+      saveRememberedEmail(email, remember)
       clearDeletionNotice()
       // Entrar dentro de los 30 días cancela el borrado pedido (API 1.14.0)
       if (data?.accountReactivated) {
@@ -159,6 +167,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     required
                     autoComplete="current-password"
+                    autoFocus={hadEmail}
                     className="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                   />
                   <button type="button" onClick={() => setShowPassword((v) => !v)} tabIndex={-1}
@@ -177,7 +186,12 @@ export default function LoginPage() {
               )}
 
               {/* Recuperar contraseña por correo (22-oct-2026) */}
-              <div className="-mt-2 text-right">
+              <div className="-mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-600">
+                  <input type="checkbox" checked={remember} onChange={(e) => toggleRemember(e.target.checked)} data-testid="remember-email"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600 focus:ring-blue-600/30" />
+                  {t('Recordar mi correo')}
+                </label>
                 <Link to="/olvide" className="text-xs font-semibold text-blue-600 hover:underline">{t('¿Olvidaste tu contraseña?')}</Link>
               </div>
 
