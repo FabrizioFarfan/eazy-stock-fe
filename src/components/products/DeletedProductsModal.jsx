@@ -179,7 +179,7 @@ export default function DeletedProductsModal({ onClose, canRestore = false, busi
                         <Field label={t('Creado')} value={s.createdAt ? formatShortDate(String(s.createdAt).slice(0, 10)) : null} />
                         {s.description && <Field label={t('Descripción')} value={s.description} wide />}
                         {s.attributes && Object.keys(s.attributes).length > 0 && (
-                          <Field label={t('Atributos')} wide
+                          <Field label={t('Parámetros')} wide
                             value={Object.entries(s.attributes).map(([k, v]) => `${k}: ${v}`).join(' · ')} />
                         )}
                         {s.importNotes && <Field label={t('Notas de import')} value={s.importNotes} wide />}

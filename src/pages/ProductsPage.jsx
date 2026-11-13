@@ -549,7 +549,7 @@ export default function ProductsPage() {
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">📦 {t('Presentación y unidad de venta')}</p>
-              <p className="mt-1">{t('¿Tienes el mismo producto en varias medidas (por ejemplo una armella de 1/4", 1/2" y 1")? No metas la medida en el nombre: ponla como atributo al editar el producto (Medida → 1/2"). El nombre queda corto y la columna "Atributos" te muestra de un vistazo cuál es cuál. Y si un nombre se corta, pasa el mouse por la fila para leerlo entero.')}</p>
+              <p className="mt-1">{t('¿Tienes el mismo producto en varias medidas (por ejemplo una armella de 1/4", 1/2" y 1")? No metas la medida en el nombre: ponla como parámetro al editar el producto (Medida → 1/2"). El nombre queda corto y la columna "Parámetros" te muestra de un vistazo cuál es cuál. Y si un nombre se corta, pasa el mouse por la fila para leerlo entero.')}</p>
               <p className="mt-1">{t('La unidad (unidad, metro, kilo, litro, paquete, gramo…) es cómo lo vendes y se ve como etiqueta en la tabla; puedes filtrar por ella desde la columna "Unidad". La presentación ("Saco de 25 kg", "Caja de 100") es solo informativa y no afecta cómo se vende.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
@@ -787,8 +787,8 @@ export default function ProductsPage() {
                   placeholder={t('Buscar código...')} active={!!colFilters.sku}
                   sortState={sortStateFor('sku')} onSort={onSortBy('sku')} ascLabel="A–Z" descLabel="Z–A"
                   onClear={() => clearFields('sku')} />
-                {/* Atributos (medida, color, material…): distinguen productos de mismo nombre */}
-                <th className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Atributos')}</th>
+                {/* Parámetros (medida, color, material…): distinguen productos de mismo nombre */}
+                <th className="whitespace-nowrap px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-gray-400">{t('Parámetros')}</th>
                 <ColumnFilter label={t('Unidad')} type="select" align="left"
                   value={colFilters.unit} onChange={(v) => setField('unit', v)}
                   options={unitOpts} active={!!colFilters.unit}

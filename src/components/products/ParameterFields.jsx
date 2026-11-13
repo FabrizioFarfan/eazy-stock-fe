@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Plus, X, Pin, Sparkles } from 'lucide-react'
+import { Plus, X, Pin, Sparkles, Filter } from 'lucide-react'
 import ParameterModal from './ParameterModal'
 import { useT } from '../../i18n'
-import { attrValueFor, withParamValue, normalizeYesNo, YES, NO } from '../../utils/parameters'
+import { attrValueFor, withParamValue, normalizeYesNo, legacyEntries, suggestionsToOffer, YES, NO } from '../../utils/parameters'
 
 /**
  * Los parámetros del negocio como campos de la ficha del producto (Frank, 4-nov-2026). Cada uno escribe en
@@ -11,26 +11,51 @@ import { attrValueFor, withParamValue, normalizeYesNo, YES, NO } from '../../uti
  * Qué se ve (Frank: «que el usuario pueda escoger qué parámetros quiere ver, no que estén fijos»): los FIJADOS
  * en Catálogo › Parámetros, los que ya tienen valor en este producto y los que el usuario añade con
  * «Añadir parámetro». Cada campo tiene una ✕ que lo vacía (y lo esconde si no está fijado).
+ *
+ * 13-nov-2026 (Frank, task 1769): ya no hay «Otros atributos». Dos cosas pasaron aquí:
+ *  · `suggested` = lo que propone la categoría elegida: sale como chips; un toque añade el parámetro, y si el
+ *    negocio no lo tiene se crea ahí mismo con ese nombre.
+ *  · lo que el producto tenía escrito en los atributos de antes sigue a la vista como un campo de texto más,
+ *    con «Hacer parámetro» para poder filtrar por él. Nada se borra solo.
  */
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 bg-white'
 
-export default function ParameterFields({ parameters = [], attributes = {}, onChange, columns = 2 }) {
+export default function ParameterFields({ parameters = [], attributes = {}, onChange, columns = 2, suggested = [] }) {
   const t = useT()
   const [added, setAdded] = useState(() => new Set())
   const [picking, setPicking] = useState(false)
   // William (varias veces): crear el parámetro desde el propio producto, sin cerrar nada.
-  const [creating, setCreating] = useState(false)
+  const [creating, setCreating] = useState(null) // null | { name, type }
   const shown = useMemo(() => parameters.filter((p) => p.pinned || added.has(p.id) || attrValueFor(attributes, p.name) !== ''), [parameters, added, attributes])
   const hidden = useMemo(() => parameters.filter((p) => !shown.includes(p)), [parameters, shown])
   const set = (p, v) => onChange(withParamValue(attributes, p.name, v))
   const remove = (p) => { set(p, ''); setAdded((s) => { const n = new Set(s); n.delete(p.id); return n }) }
   const add = (p) => { setAdded((s) => new Set(s).add(p.id)); setPicking(false) }
   const onCreated = (p) => { if (p?.id) setAdded((s) => new Set(s).add(p.id)); setPicking(false) }
+  const legacy = useMemo(() => legacyEntries(attributes, parameters), [attributes, parameters])
+  const offers = useMemo(
+    () => suggestionsToOffer(suggested, parameters, [...shown.map((p) => p.name), ...legacy.map(([k]) => k)]),
+    [suggested, parameters, shown, legacy])
+  const setLegacy = (key, v) => onChange({ ...attributes, [key]: v })
+  const removeLegacy = (key) => { const next = { ...attributes }; delete next[key]; onChange(next) }
   const grid = columns === 1 ? 'grid-cols-1' : columns === 3 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'
   return (
     <div className="flex flex-col gap-2" data-testid="parameter-fields">
-      {shown.length > 0 && (
+      {offers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5" data-testid="parameter-suggestions">
+          <span className="text-[11px] font-semibold text-gray-500">{t('Para esta categoría:')}</span>
+          {offers.map((o) => (
+            <button key={o.name} type="button" data-testid="parameter-suggestion"
+              onClick={() => (o.parameter ? add(o.parameter) : setCreating({ name: o.name, type: 'TEXT' }))}
+              title={o.parameter ? t('Añadir a esta ficha') : t('Aún no es un parámetro de tu negocio: se crea al tocarlo')}
+              className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 hover:border-blue-400 hover:bg-blue-100">
+              <Plus size={10} /> {o.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {(shown.length > 0 || legacy.length > 0) && (
         <div className={`grid gap-3 ${grid}`}>
           {shown.map((p) => {
             const value = attrValueFor(attributes, p.name)
@@ -51,6 +76,21 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
               </div>
             )
           })}
+          {legacy.map(([key, value]) => (
+            <div key={`legacy-${key}`} className="min-w-0" data-testid="legacy-field">
+              <div className="mb-1 flex items-center justify-between gap-1">
+                <label className="min-w-0 truncate text-xs font-semibold text-gray-600" title={key}>{key}</label>
+                <button type="button" onClick={() => removeLegacy(key)} aria-label={t('Quitar {name}', { name: key })} title={t('Quitar de esta ficha')}
+                  className="flex-shrink-0 rounded p-0.5 text-gray-300 hover:bg-red-50 hover:text-red-500"><X size={12} /></button>
+              </div>
+              <input type="text" value={value} onChange={(e) => setLegacy(key, e.target.value)} className={inputCls} maxLength={200} />
+              <button type="button" onClick={() => setCreating({ name: key, type: 'TEXT' })} data-testid="legacy-to-parameter"
+                title={t('Lo escribiste antes como texto libre. Hazlo parámetro para poder filtrar por él.')}
+                className="mt-1 inline-flex items-center gap-1 rounded text-[11px] font-semibold text-blue-600 hover:underline">
+                <Filter size={10} /> {t('Hacer parámetro')}
+              </button>
+            </div>
+          ))}
         </div>
       )}
       <div>
@@ -73,7 +113,7 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
                     + {p.name}{p.unit ? <span className="font-normal text-gray-400"> ({p.unit})</span> : null}
                   </button>
                 ))}
-                <button type="button" onClick={() => setCreating(true)} data-testid="new-parameter-inline"
+                <button type="button" onClick={() => setCreating({ name: '', type: 'YES_NO' })} data-testid="new-parameter-inline"
                   className="inline-flex items-center gap-1 rounded-full border border-dashed border-blue-400 bg-white px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-50">
                   <Sparkles size={11} /> {t('Nuevo parámetro…')}
                 </button>
@@ -82,7 +122,7 @@ export default function ParameterFields({ parameters = [], attributes = {}, onCh
             </div>
           )}
         </div>
-      {creating && <ParameterModal parameter={null} onClose={() => setCreating(false)} onCreated={onCreated} />}
+      {creating && <ParameterModal parameter={null} initialName={creating.name} initialType={creating.type} onClose={() => setCreating(null)} onCreated={onCreated} />}
     </div>
   )
 }

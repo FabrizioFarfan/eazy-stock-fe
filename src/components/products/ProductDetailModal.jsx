@@ -253,7 +253,7 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
               </Section>
 
               {(product.description || hasAttrs) && (
-                <Section title={hasAttrs ? t('Atributos') : t('Descripción')}>
+                <Section title={hasAttrs ? t('Parámetros') : t('Descripción')}>
                   {product.description && <p className="text-sm text-gray-600">{product.description}</p>}
                   {hasAttrs && (
                     <div className={`flex flex-wrap gap-2 ${product.description ? 'mt-3' : ''}`}>

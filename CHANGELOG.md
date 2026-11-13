@@ -3,6 +3,15 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.39.0 — 2026-11-13 (William: fuera «Otros atributos»; todo vive en Parámetros)
+- **Producto**: desaparece el bloque «Otros atributos» (texto libre de antes). Repetía a Parámetros y confundía. Lo que un producto ya tenía escrito ahí **no se pierde**: sigue en la ficha como un campo más dentro de Parámetros, con «Hacer parámetro» para poder filtrar por él (al crearlo vale para todos los productos que tenían ese dato).
+- **Lo que propone la categoría pasa a Parámetros**: al elegir la categoría salen sus sugerencias en azul («Para esta categoría: + Color + Medida»). Un toque añade el parámetro; si el negocio aún no lo tiene, se crea ahí mismo con el nombre puesto.
+- **Categorías**: «Atributos sugeridos» ahora es «Parámetros sugeridos» y se eligen de un toque entre los parámetros del negocio (o se escribe uno nuevo).
+- **Tutorial del producto**: el paso 5 explica Parámetros y señala ese bloque.
+- **Listas**: la columna «Atributos» se llama «Parámetros» (enseña lo mismo, también lo escrito antes). Igual en la ficha y en Borrados.
+- **Arreglo**: crear un parámetro desde la ficha del producto guardaba y cerraba el producto (el envío del modal subía al formulario de abajo). Ya no.
+- Al guardar ya no viajan datos vacíos, y al editar quitar el último parámetro sí lo quita (antes el API conservaba los que había).
+
 ## 1.38.0 — 2026-11-12 (la sesión aguanta las actualizaciones; el login recuerda el correo)
 - **Una actualización ya no cierra sesiones.** Mientras se despliega, el API no contesta unos segundos (502, corte de red) y la web lo tomaba por «sesión vencida»: borraba la sesión y mandaba al login. Ahora la sesión solo se cierra si el API la rechaza de verdad (401 al refrescar). Si al abrir la app el API no contesta, sale «Reconectando…» y entra sola en cuanto vuelve (reintenta a los 2, 4, 8 s y luego cada 15 s; también al volver la red o la pestaña).
 - **Varias pestañas**: solo una refresca la sesión a la vez y las demás usan su token (antes dos pestañas podían presentar el mismo refresh token y el API cerraba la sesión en todas).

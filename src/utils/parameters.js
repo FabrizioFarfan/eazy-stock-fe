@@ -45,6 +45,42 @@ export function freeAttributeKeys(attributes, parameters) {
   return Object.keys(attributes ?? {}).filter((k) => !names.has(norm(k)))
 }
 
+/**
+ * Lo que un producto tenía escrito en los «atributos» de antes y no es de ningún parámetro: [[clave, valor]].
+ * El campo de texto libre ya no existe (13-nov-2026): esto es lo que la ficha sigue enseñando para que no se
+ * pierda nada. Las claves sin valor no cuentan.
+ */
+export function legacyEntries(attributes, parameters) {
+  return freeAttributeKeys(attributes, parameters)
+    .map((k) => [k, String(attributes[k] ?? '')])
+    .filter(([, v]) => v.trim() !== '')
+}
+
+/**
+ * Lo que la categoría propone y la ficha aún no enseña: [{ name, parameter }]. `parameter` es el del negocio con
+ * ese nombre (se añade de un toque) o null (hay que crearlo). `shownNames` = parámetros y datos de antes ya a la vista.
+ */
+export function suggestionsToOffer(suggested, parameters, shownNames) {
+  const shown = new Set((shownNames ?? []).map(norm))
+  const seen = new Set()
+  const out = []
+  for (const raw of suggested ?? []) {
+    const k = norm(raw)
+    if (!k || shown.has(k) || seen.has(k)) continue
+    seen.add(k)
+    const parameter = (parameters ?? []).find((p) => norm(p.name) === k) ?? null
+    out.push({ name: parameter?.name ?? String(raw).trim(), parameter })
+  }
+  return out
+}
+
+/** El mapa sin las claves vacías (los chips de antes dejaban «Medida: ''»). */
+export function withoutEmptyValues(attributes) {
+  const out = {}
+  for (const [k, v] of Object.entries(attributes ?? {})) if (String(v ?? '').trim() !== '') out[k] = v
+  return out
+}
+
 /** «sí», «si», «yes», «true», «1» → Sí; «no», «false», «0» → No; lo demás → ''. */
 export function normalizeYesNo(raw) {
   const v = String(raw ?? '').trim().toLowerCase()

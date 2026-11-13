@@ -2,7 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   attrKeyFor, attrValueFor, withParamValue, freeAttributeKeys, normalizeYesNo,
-  paramFiltersToQuery, countActiveParamFilters, paramFilterChips, displayValue, attributesDelta } from './parameters.js'
+  paramFiltersToQuery, countActiveParamFilters, paramFilterChips, displayValue, attributesDelta,
+  legacyEntries, suggestionsToOffer, withoutEmptyValues } from './parameters.js'
 
 const params = [
   { id: 'c', name: 'Color', type: 'OPTIONS', options: ['Rojo', 'Azul'] },
@@ -48,4 +49,22 @@ test('de la factura solo viaja lo que cambió, y vacío quita el parámetro', ()
   assert.deepEqual(attributesDelta({ Color: 'Rojo', Peso: '2' }, { Peso: '2' }), { Color: '' })
   assert.deepEqual(attributesDelta({ color: 'Rojo' }, { Color: 'Rojo' }), {})
   assert.deepEqual(attributesDelta(null, undefined), {})
+})
+
+test('lo escrito en los atributos de antes sigue a la vista; las claves vacías no', () => {
+  assert.deepEqual(legacyEntries({ color: 'Rojo', Rosca: 'fina', Medida: '', Hilo: '  ' }, params), [['Rosca', 'fina']])
+  assert.deepEqual(legacyEntries(null, params), [])
+  // Al crear el parámetro con ese nombre deja de ser «de antes» y pasa a ser un campo normal.
+  assert.deepEqual(legacyEntries({ Rosca: 'fina' }, [...params, { id: 'r', name: 'rosca', type: 'TEXT' }]), [])
+})
+
+test('la categoría propone solo lo que la ficha aún no enseña, y dice si el parámetro ya existe', () => {
+  const offers = suggestionsToOffer(['color', 'Largo', 'Rosca', 'rosca', ' ', 'Medida'], params, ['Largo', 'medida'])
+  assert.deepEqual(offers, [{ name: 'Color', parameter: params[0] }, { name: 'Rosca', parameter: null }])
+  assert.deepEqual(suggestionsToOffer(null, params, []), [])
+})
+
+test('al guardar no viajan las claves vacías', () => {
+  assert.deepEqual(withoutEmptyValues({ Color: 'Rojo', Medida: '', Hilo: ' ' }), { Color: 'Rojo' })
+  assert.deepEqual(withoutEmptyValues(null), {})
 })

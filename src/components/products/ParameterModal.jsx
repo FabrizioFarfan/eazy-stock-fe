@@ -19,7 +19,7 @@ import { useT } from '../../i18n'
 const inputCls =
   'rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400 w-full bg-white'
 
-export default function ParameterModal({ parameter, onClose, onCreated, initialName = '' }) {
+export default function ParameterModal({ parameter, onClose, onCreated, initialName = '', initialType = 'YES_NO' }) {
   const t = useT()
   const { user } = useAuth()
   const isEdit = !!parameter
@@ -28,7 +28,7 @@ export default function ParameterModal({ parameter, onClose, onCreated, initialN
   const mutation = isEdit ? update : create
 
   const [name, setName] = useState(parameter?.name ?? initialName)
-  const [type, setType] = useState(parameter?.type ?? 'YES_NO')
+  const [type, setType] = useState(parameter?.type ?? initialType)
   const [unit, setUnit] = useState(parameter?.unit ?? 'cm')
   const [options, setOptions] = useState(parameter?.options ?? [])
   const [pinned, setPinned] = useState(!!parameter?.pinned)
@@ -48,6 +48,9 @@ export default function ParameterModal({ parameter, onClose, onCreated, initialN
 
   const onSubmit = async (e) => {
     e.preventDefault()
+    // El portal saca el modal del DOM, pero en React el submit sigue subiendo al formulario del producto:
+    // sin esto, crear un parámetro desde la ficha guardaba y cerraba el producto (13-nov-2026).
+    e.stopPropagation()
     setTouched(true)
     if (!ready) return
     const data = { name: name.trim(), type, unit: type === 'NUMBER' ? unit.trim() || null : null, options: type === 'OPTIONS' ? options : null, pinned }

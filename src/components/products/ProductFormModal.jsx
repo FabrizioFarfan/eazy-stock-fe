@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Loader2, Camera, CameraOff, Plus, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil, Check } from 'lucide-react'
+import { X, Loader2, Camera, CameraOff, HelpCircle, ImagePlus, Trash2, Package, AlertTriangle, EyeOff, Pencil, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCreateProduct, useUpdateProduct, useFreeCodes, useUploadProductImage, useDeleteProductImage, useProductNameCheck } from '../../hooks/useProducts'
 import { productsApi } from '../../services/endpoints/products'
@@ -20,7 +20,7 @@ import ProductFormTutorial from '../tutorial/ProductFormTutorial'
 import { getErrorMessage, getErrorField, getErrorCode } from '../../utils/handleApiError'
 import { useParameters } from '../../hooks/useParameters'
 import ParameterFields from './ParameterFields'
-import { freeAttributeKeys } from '../../utils/parameters'
+import { withoutEmptyValues } from '../../utils/parameters'
 import { priceWarnings } from '../../utils/priceSanity'
 import { useT, dateLocale } from '../../i18n'
 
@@ -380,14 +380,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   // Attributes map: Record<string, string>
   const [attributes,  setAttributes]  = useState(product?.attributes  ?? {})
-  const [attrKey,     setAttrKey]     = useState('')
-  const [attrVal,     setAttrVal]     = useState('')
 
-  // Suggested attributes from selected category
+  // Lo que la categoría elegida propone: sale como chips dentro de Parámetros (task 1769, 13-nov-2026).
   const { data: suggestedAttrs = [] } = useSuggestedAttributes(categoryId)
   // Parámetros del negocio (Frank, 4-nov-2026): campos con forma (Sí/No, opciones, número con medida).
   const { data: parameters = [] } = useParameters(user?.role === 'SUPER_ADMIN' && user?.businessId ? { businessId: user.businessId } : {})
-  const freeAttrKeys = freeAttributeKeys(attributes, parameters)
   // Aviso de precio raro (William, 4-nov-2026): bajo el costo o cambia más de un 80 % → confirmar.
   const [pricePending, setPricePending] = useState(null)
 
@@ -590,30 +587,6 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
     setCategoryId(newCategory.id)
   }
 
-  // Attribute helpers
-  const addAttribute = (key = attrKey, val = attrVal) => {
-    const k = key.trim()
-    const v = val.trim()
-    if (!k) return
-    setAttributes((prev) => ({ ...prev, [k]: v }))
-    setAttrKey('')
-    setAttrVal('')
-  }
-
-  const removeAttribute = (key) => {
-    setAttributes((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-  }
-
-  const applySuggestedAttr = (attr) => {
-    if (!(attr in attributes)) {
-      setAttributes((prev) => ({ ...prev, [attr]: '' }))
-    }
-  }
-
   const [supplierError, setSupplierError] = useState(null)
   const formRef = useRef(null)
   // Frank, 7-nov-2026: lo que impide guardar se dice en el pie, siempre a la vista, y un toque lleva al campo: en PC
@@ -691,7 +664,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         brandId:     brandId     || null,
         categoryId:  categoryId  || null,
         locationId:  locationId  || null,
-        attributes:  Object.keys(attributes).length > 0 ? attributes : null,
+        // Al editar va siempre el mapa (vacío = quitarlos todos); con null el API deja los que había.
+        attributes:  isEdit || Object.keys(withoutEmptyValues(attributes)).length > 0 ? withoutEmptyValues(attributes) : null,
       }
 
       let savedId
@@ -1077,85 +1051,9 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </div>
 
                   {/* Parámetros del negocio (Frank, 4-nov-2026): Artesanal Sí/No, Color, Largo cm… se filtran en Productos e Inventario */}
-                  <div className="flex flex-col gap-2">
+                  <div data-tutorial-target="parameters" className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-gray-700">{t('Parámetros')} <span className="text-xs font-normal text-gray-400">· {t('rellena solo los que apliquen; por estos se filtra')}</span></label>
-                    <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} />
-                  </div>
-
-                  {/* Atributos libres */}
-                  <div data-tutorial-target="attributes" className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {parameters.length > 0 ? t('Otros atributos') : t('Atributos')}
-                      {parameters.length > 0 && <span className="ml-1 text-xs font-normal text-gray-400">· {t('texto libre, los «atributos» de antes; no se filtra por ellos')}</span>}
-                    </label>
-
-                    {/* Suggested attribute chips */}
-                    {suggestedAttrs.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {suggestedAttrs.map((attr) => (
-                          <button
-                            key={attr}
-                            type="button"
-                            onClick={() => applySuggestedAttr(attr)}
-                            disabled={attr in attributes}
-                            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-                              attr in attributes
-                                ? 'bg-blue-100 text-blue-700 cursor-default'
-                                : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                            }`}
-                          >
-                            {!(attr in attributes) && <Plus size={10} />}
-                            {attr}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Existing attributes (los que no son parámetros) */}
-                    {freeAttrKeys.length > 0 && (
-                      <div className="space-y-1.5">
-                        {freeAttrKeys.map((key) => [key, attributes[key]]).map(([key, val]) => (
-                          <div key={key} className="flex items-center gap-1.5">
-                            <span className="w-28 shrink-0 text-xs font-medium text-gray-500 truncate">{key}</span>
-                            <input
-                              type="text"
-                              value={val}
-                              onChange={(e) => setAttributes((prev) => ({ ...prev, [key]: e.target.value }))}
-                              placeholder={t('Valor...')}
-                              className={`${inputCls} flex-1 py-1.5 text-xs`}
-                            />
-                            <button type="button" onClick={() => removeAttribute(key)}
-                              className="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add custom attribute */}
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        value={attrKey}
-                        onChange={(e) => setAttrKey(e.target.value)}
-                        placeholder={t('Atributo...')}
-                        className={`${inputCls} w-28 py-1.5 text-xs`}
-                      />
-                      <input
-                        type="text"
-                        value={attrVal}
-                        onChange={(e) => setAttrVal(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute() } }}
-                        placeholder={t('Valor...')}
-                        className={`${inputCls} flex-1 py-1.5 text-xs`}
-                      />
-                      <button type="button" onClick={() => addAttribute()}
-                        disabled={!attrKey.trim()}
-                        className="flex items-center rounded-lg border border-gray-200 px-2.5 py-1.5 text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
-                        <Plus size={14} />
-                      </button>
-                    </div>
+                    <ParameterFields parameters={parameters} attributes={attributes} onChange={setAttributes} columns={2} suggested={suggestedAttrs} />
                   </div>
 
                 </FormSection>

@@ -40,9 +40,9 @@ const STEPS = [
     desc: 'Es cómo agrupas el producto: Tornillería, Pinturas, Plomería, Herramientas. Ojo: no es una marca ni un proveedor. Búscala y haz clic para seleccionarla. Si tu negocio es ferretería, ya tienes 9 categorías cargadas por defecto.',
   },
   {
-    target: 'attributes',
-    title: '5. Atributos: lo que distingue al producto',
-    desc: 'Esto es opcional pero muy útil. Aquí pones lo que diferencia a este producto del resto: color, tamaño, material, peso, voltaje... lo que quieras. Haz clic en los chips grises para sumar uno, o agrega los tuyos.',
+    target: 'parameters',
+    title: '5. Parámetros: lo que distingue al producto',
+    desc: 'Es opcional pero muy útil. Aquí dices lo que diferencia a este producto del resto: color, medida, material, peso... Toca «Añadir parámetro» y elige uno, o crea el tuyo con «Nuevo parámetro…». Si la categoría propone alguno, sale arriba en azul: un toque y queda puesto. Rellena solo los que apliquen; después filtras por ellos en Productos e Inventario.',
   },
   {
     target: 'prices',

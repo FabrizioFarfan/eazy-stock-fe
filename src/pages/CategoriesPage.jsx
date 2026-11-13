@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories'
+import { useParameters } from '../hooks/useParameters'
 import { useAuth } from '../context/AuthContext'
 import { adminBizParam } from '../utils/adminBiz'
 import { useDebounce } from '../hooks/useDebounce'
@@ -57,12 +58,16 @@ function CategoryModal({ category, onClose }) {
   })
   const name = watch('name')
 
-  const addAttr = () => {
-    const v = attrInput.trim()
-    if (v && !suggestedAttrs.includes(v)) {
-      setSuggestedAttrs((prev) => [...prev, v])
-    }
-    setAttrInput('')
+  // Task 1769 (13-nov-2026): lo sugerido son PARÁMETROS; los del negocio se eligen de un toque.
+  const { data: parameters = [] } = useParameters(adminBizParam(user))
+  const has = (v) => suggestedAttrs.some((a) => a.trim().toLowerCase() === v.trim().toLowerCase())
+  const pickable = parameters.filter((p) => !has(p.name))
+  const addAttr = (raw = attrInput) => {
+    const v = raw.trim()
+    // Si ya existe un parámetro con ese nombre, se guarda con su nombre exacto.
+    const known = parameters.find((p) => p.name.trim().toLowerCase() === v.toLowerCase())
+    if (v && !has(v)) setSuggestedAttrs((prev) => [...prev, known?.name ?? v])
+    if (raw === attrInput) setAttrInput('')
   }
 
   const removeAttr = (attr) =>
@@ -85,7 +90,7 @@ function CategoryModal({ category, onClose }) {
   return (
     <EntityModal onClose={onClose} onSubmit={handleSubmit(onSubmit)} isEdit={isEdit}
       title={isEdit ? t('Editar categoría') : t('Nueva categoría')}
-      subtitle={suggestedAttrs.length ? (suggestedAttrs.length !== 1 ? t('{n} atributos', { n: suggestedAttrs.length }) : t('1 atributo')) : t('Sin atributos sugeridos')}
+      subtitle={suggestedAttrs.length ? (suggestedAttrs.length !== 1 ? t('{n} parámetros', { n: suggestedAttrs.length }) : t('1 parámetro')) : t('Sin parámetros sugeridos')}
       avatar={(
         <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl font-extrabold ring-1 ring-white/30">
           {(name || '?').trim()[0]?.toUpperCase() ?? '?'}
@@ -101,20 +106,30 @@ function CategoryModal({ category, onClose }) {
       <EntityField label={t('Descripción')}>
         <textarea {...register('description')} rows={2} placeholder={t('Descripción opcional')} className={`${inputCls} resize-none`} />
       </EntityField>
-      <EntityField label={t('Atributos sugeridos')} hint={t('Los atributos que aparecerán como chips al crear productos de esta categoría.')}>
+      <EntityField label={t('Parámetros sugeridos')} hint={t('Lo que propondrá la ficha al crear un producto de esta categoría. Elige de tus parámetros o escribe uno nuevo.')}>
         <div className="flex gap-2">
           <input
             value={attrInput}
             onChange={(e) => setAttrInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttr() } }}
-            placeholder={t('Ej. material, longitud...')}
+            placeholder={t('Ej. Material, Largo...')}
             className={`${inputCls} flex-1`}
           />
-          <button type="button" onClick={addAttr} disabled={!attrInput.trim()}
+          <button type="button" onClick={() => addAttr()} disabled={!attrInput.trim()}
             className="flex items-center gap-1.5 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100 disabled:opacity-40">
             <Plus size={15} />{t('Agregar')}
           </button>
         </div>
+        {pickable.length > 0 && (
+          <div className="mt-2 flex max-h-24 flex-wrap gap-1.5 overflow-y-auto" data-testid="category-parameter-picks">
+            {pickable.map((p) => (
+              <button key={p.id} type="button" onClick={() => addAttr(p.name)}
+                className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:border-blue-400 hover:text-blue-700">
+                + {p.name}
+              </button>
+            ))}
+          </div>
+        )}
         {suggestedAttrs.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {suggestedAttrs.map((attr) => (
@@ -130,7 +145,7 @@ function CategoryModal({ category, onClose }) {
           </div>
         ) : (
           <p className="mt-3 rounded-xl border-2 border-dashed border-gray-100 px-3 py-3 text-center text-xs text-gray-400">
-            {t('Aún sin atributos: escribe uno y toca Agregar')}
+            {t('Aún sin parámetros: elige uno o escríbelo y toca Agregar')}
           </p>
         )}
       </EntityField>
@@ -148,7 +163,7 @@ function CategoryCard({ category, onEdit, onDelete }) {
     <EntityCard
       avatar={<div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold ${catColor(category.name)}`}>{initial}</div>}
       title={category.name}
-      subtitle={category.description || (attrs.length ? (attrs.length !== 1 ? t('{n} atributos', { n: attrs.length }) : t('1 atributo')) : t('Sin atributos sugeridos'))}
+      subtitle={category.description || (attrs.length ? (attrs.length !== 1 ? t('{n} parámetros', { n: attrs.length }) : t('1 parámetro')) : t('Sin parámetros sugeridos'))}
       onOpen={() => onEdit(category)} onEdit={() => onEdit(category)} onDelete={() => onDelete(category)}
       link={{ to: `/products?categoryId=${category.id}`, label: t('Ver sus productos') }}
     >
@@ -196,12 +211,12 @@ export default function CategoriesPage() {
           <HelpDrawer title={t('Cómo usar Categorías')} autoOpenKey="eazystock_categories_help_v1">
             <p>{t('Las categorías ordenan tu catálogo y hacen que buscar y filtrar sea mucho más rápido.')}</p>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-              <p className="font-semibold text-gray-800">🏷️ {t('Atributos sugeridos')}</p>
-              <p className="mt-1">{t('Cada categoría puede sugerir campos al crear un producto (talla, color, presentación…). Así todos los productos de una categoría quedan completos y parejos.')}</p>
+              <p className="font-semibold text-gray-800">🏷️ {t('Parámetros sugeridos')}</p>
+              <p className="mt-1">{t('Cada categoría puede proponer parámetros al crear un producto (talla, color, medida…). Así todos los productos de una categoría quedan completos y parejos, y se filtra por ellos.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">✏️ {t('Editar')}</p>
-              <p className="mt-1">{t('Click en una categoría para renombrarla o ajustar sus atributos. Los productos existentes no se pierden.')}</p>
+              <p className="mt-1">{t('Click en una categoría para renombrarla o ajustar sus parámetros sugeridos. Los productos existentes no se pierden.')}</p>
             </div>
           </HelpDrawer>
         )}
@@ -213,7 +228,7 @@ export default function CategoriesPage() {
         value={data?.totalElements ?? 0}
         cells={[
           [t('Productos en el catálogo'), catalog?.totalElements ?? '—'],
-          [t('Atributos sugeridos'), categories.reduce((n, c) => n + (c.suggestedAttributes?.length ?? 0), 0)],
+          [t('Parámetros sugeridos'), categories.reduce((n, c) => n + (c.suggestedAttributes?.length ?? 0), 0)],
         ]} />
 
       <BigSearch value={search} onChange={setSearch} placeholder={t('Buscar categoría...')} />
