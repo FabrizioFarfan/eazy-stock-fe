@@ -65,9 +65,9 @@ const makeSchema = (t) => z.object({
   }
 })
 
-function Field({ label, required, error, children, field }) {
+function Field({ label, required, error, children, field, tour }) {
   return (
-    <div className="flex flex-col gap-1" data-field={field}>
+    <div className="flex flex-col gap-1" data-field={field} data-tutorial-target={tour}>
       <label className="text-sm font-medium text-gray-700">
         {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
@@ -825,7 +825,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               <div>
                 <FormSection n={1} title={t('Precios y stock')} hint={t('Lo que cuesta, lo que cobras y cuánto tienes')} accent>
                   {/* Checkbox precio variable */}
-                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                  <label data-tutorial-target="price-variable" className="flex cursor-pointer items-start gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                     <input
                       type="checkbox"
                       {...register('priceIsVariable')}
@@ -840,8 +840,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </label>
 
                   {/* Precios + Stock mínimo */}
-                  <div data-tutorial-target="prices">
-                    <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                  <div>
+                    <div data-tutorial-target="price-format" className="mb-3 flex flex-wrap items-center justify-end gap-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] text-gray-400">{t('Formato del precio')}</span>
                         <PriceInputModeToggle />
@@ -851,7 +851,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                         PriceInput (dos casillas + punto) necesita ancho — con 3
                         columnas fijas se rompía el layout. Con 2 columnas los
                         precios quedan en una fila y los stocks en la siguiente. */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                    <div data-tutorial-target="price-fields" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                     <Controller
                       control={control}
                       name="purchasePrice"
@@ -881,7 +881,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     />
                     </div>
                     {/* Stock mínimo e inicial: siempre a dos columnas (son cortos) */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div data-tutorial-target="stock-fields" className="grid grid-cols-2 gap-3">
                     <Field field="minStock" label={t('Stock mín.')} required error={errors.minStock?.message}>
                       <input {...register('minStock')} type="number" step={unitValue === 'unidad' ? '1' : '0.001'} min="0" placeholder="0" className={inputCls} />
                     </Field>
@@ -893,7 +893,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     </div>
 
                     {/* Fecha de vencimiento (opcional) */}
-                    <div className="mt-3">
+                    <div data-tutorial-target="expiry" className="mt-3">
                       <Field field="expirationDate" label={t('Fecha de vencimiento')} error={errors.expirationDate?.message}>
                         <input {...register('expirationDate')} type="date" className={inputCls} />
                         <p className="text-xs text-gray-400 mt-0.5 xl:hidden">
@@ -944,7 +944,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   />
 
                   {/* Código del producto (SKU) */}
-                  <Field field="sku" label={t('Código del producto')} error={errors.sku?.message}>
+                  <Field field="sku" tour="sku" label={t('Código del producto')} error={errors.sku?.message}>
                     <input
                       {...register('sku')}
                       placeholder={isEdit ? t('Código del producto') : t('Se genera automáticamente si lo dejas vacío')}
@@ -962,7 +962,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                     <FreeCodesHint codes={freeCodes} onPick={(code) => setValue('sku', code)} />
                   </Field>
 
-                  <Field label={t('Presentación')} error={errors.presentation?.message}>
+                  <Field tour="presentation" label={t('Presentación')} error={errors.presentation?.message}>
                     <input
                       {...register('presentation')}
                       placeholder={t('Ej: Saco de 25kg, Caja de 100, Rollo de 50m')}
@@ -974,7 +974,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                   </Field>
 
                   {/* Descripción */}
-                  <Field label={t('Descripción')} error={errors.description?.message}>
+                  <Field tour="description" label={t('Descripción')} error={errors.description?.message}>
                     <textarea
                       {...register('description')}
                       rows={2}
@@ -992,7 +992,7 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
               <div className="flex min-w-0 flex-col gap-4 xl:min-h-0 xl:overflow-y-auto xl:pr-1" data-testid="sheet-3">
                 <FormSection n={3} title={t('Códigos y parámetros')} hint={t('Opcional · para el escáner, para filtrar y para distinguirlo')}>
                   {/* En PC la hoja es estrecha: los dos códigos van uno debajo del otro (se encimaban, Frank 4-nov) */}
-                  <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-1">
+                  <div data-tutorial-target="codes" className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-1">
                     {/* Código de barras de fábrica: el EAN impreso en el empaque por el
                         fabricante (Sony pone el código; el distribuidor no lo cambia).
                         Acá vive el escáner — es lo que la pistola/cámara lee. */}

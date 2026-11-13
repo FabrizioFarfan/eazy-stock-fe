@@ -3,6 +3,11 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.39.1 — 2026-11-14 (el tutorial del formulario de producto, rehecho)
+- El tutorial que se abre con el botón «Tutorial» del modal de producto seguía el formulario viejo (marca, proveedor, categoría, atributos, precios). Ahora recorre el de hoy en el orden en que se ve, 14 pasos: foto · hoja 1 precios (precio variable, formato) y stock/vencimiento · hoja 2 nombre y unidad, código/presentación/descripción · hoja 3 códigos (barras con cámara, código proveedor) y parámetros · hoja 4 proveedor, marca, categoría, ubicación · guardar (lista de lo que falta, aviso de precio raro).
+- Un paso puede señalar varios campos a la vez (el recuadro rojo los abarca) y el cartel se coloca con su alto real, así no tapa lo que señala; en el celular va al borde libre de la pantalla.
+- Dice desde el principio qué es obligatorio: precio de compra, precio de venta, stock mínimo, nombre y proveedor. Textos en español, inglés e italiano.
+
 ## 1.39.0 — 2026-11-13 (William: fuera «Otros atributos»; todo vive en Parámetros)
 - **Producto**: desaparece el bloque «Otros atributos» (texto libre de antes). Repetía a Parámetros y confundía. Lo que un producto ya tenía escrito ahí **no se pierde**: sigue en la ficha como un campo más dentro de Parámetros, con «Hacer parámetro» para poder filtrar por él (al crearlo vale para todos los productos que tenían ese dato).
 - **Lo que propone la categoría pasa a Parámetros**: al elegir la categoría salen sus sugerencias en azul («Para esta categoría: + Color + Medida»). Un toque añade el parámetro; si el negocio aún no lo tiene, se crea ahí mismo con el nombre puesto.
