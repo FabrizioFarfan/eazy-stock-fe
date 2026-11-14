@@ -18,6 +18,8 @@ export const LEGAL_ENTITY = {
   country: 'Deutschland',
   phone: '+49 155 11384643',
   email: 'kontakt.eazylife@gmail.com',
+  // USt-IdNr. (14-nov-2026). La Steuernummer NO va en el Impressum: sólo en las facturas.
+  vatId: 'DE466232832',
 }
 
 /**
@@ -52,6 +54,7 @@ export const IMPRESSUM = {
       { p: [
         'Eazy Life ist eine Geschäftsbezeichnung von Fabrizio Farfan, Einzelunternehmer.',
         'Umsatzsteuer: Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+        `Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: ${LEGAL_ENTITY.vatId}`,
       ] },
       { h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV', lines: [`${LEGAL_ENTITY.name}, Anschrift wie oben`] },
       { h: 'Verbraucherstreitbeilegung', p: [
@@ -70,6 +73,7 @@ export const IMPRESSUM = {
       { p: [
         'Eazy Life es el nombre comercial de Fabrizio Farfan, empresario individual.',
         'IVA: según el § 19 de la UStG (régimen de pequeño empresario) no se cobra IVA.',
+        `Número de identificación a efectos del IVA según el § 27a de la UStG: ${LEGAL_ENTITY.vatId}`,
       ] },
       { h: 'Responsable del contenido según el § 18 (2) del MStV', lines: [`${LEGAL_ENTITY.name}, dirección indicada arriba`] },
       { h: 'Resolución de litigios de consumo', p: [
@@ -88,6 +92,7 @@ export const IMPRESSUM = {
       { p: [
         'Eazy Life is the trade name of Fabrizio Farfan, sole proprietor.',
         'VAT: in accordance with § 19 UStG (small business scheme) no VAT is charged.',
+        `VAT identification number pursuant to § 27a UStG: ${LEGAL_ENTITY.vatId}`,
       ] },
       { h: 'Responsible for content pursuant to § 18 (2) MStV', lines: [`${LEGAL_ENTITY.name}, address as above`] },
       { h: 'Consumer dispute resolution', p: [

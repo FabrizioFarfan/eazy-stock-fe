@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.39.2 — 2026-11-14 (Impressum con la USt-IdNr.)
+- El Impressum suma la línea «Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE466232832», con su traducción en español e inglés. La Steuernummer no se publica: va sólo en las facturas.
+
 ## 1.39.1 — 2026-11-14 (el tutorial del formulario de producto, rehecho)
 - El tutorial que se abre con el botón «Tutorial» del modal de producto seguía el formulario viejo (marca, proveedor, categoría, atributos, precios). Ahora recorre el de hoy en el orden en que se ve, 14 pasos: foto · hoja 1 precios (precio variable, formato) y stock/vencimiento · hoja 2 nombre y unidad, código/presentación/descripción · hoja 3 códigos (barras con cámara, código proveedor) y parámetros · hoja 4 proveedor, marca, categoría, ubicación · guardar (lista de lo que falta, aviso de precio raro).
 - Un paso puede señalar varios campos a la vez (el recuadro rojo los abarca) y el cartel se coloca con su alto real, así no tapa lo que señala; en el celular va al borde libre de la pantalla.
