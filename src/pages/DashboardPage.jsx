@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useDailySummary, useReportsLowStock, useReportsExpiring, useCustomerRanking, useInactiveCustomers, useSalesBalance } from '../hooks/useReports'
 import { formatQty } from '../utils/quantity'
+import { signedQuantityLabel, movementDirection } from '../utils/movementSign'
 import ExpiryBadge from '../components/common/ExpiryBadge'
 import { useSales } from '../hooks/useSales'
 import { useProducts } from '../hooks/useProducts'
@@ -477,8 +478,8 @@ function MovementsPanel({ movements }) {
                     {TYPE_LABEL[m.type] ? t(TYPE_LABEL[m.type]) : m.type}{m.createdByName ? ` · ${m.createdByName}` : ''}{m.createdAt ? ` · ${timeOf(m.createdAt)}` : ''}
                   </p>
                 </div>
-                <span className={`flex-shrink-0 text-sm font-bold ${qty > 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
-                  {qty > 0 ? `+${formatQty(qty)}` : formatQty(qty)}
+                <span className={`flex-shrink-0 text-sm font-bold ${movementDirection(m.type, qty) === 'up' ? 'text-emerald-600' : movementDirection(m.type, qty) === 'down' ? 'text-red-500' : 'text-gray-900'}`}>
+                  {signedQuantityLabel(m.type, qty)}
                 </span>
               </li>
             )

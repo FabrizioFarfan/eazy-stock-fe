@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { productsApi } from '../../services/endpoints/products'
 import { useMergeProduct } from '../../hooks/useProducts'
 import { formatQty } from '../../utils/quantity'
+import { signedQuantityLabel, movementDirection } from '../../utils/movementSign'
 import { stockApi } from '../../services/endpoints/stock'
 import { useReceipts } from '../../hooks/useReceipts'
 import ReceiptDetailModal from '../stock/ReceiptDetailModal'
@@ -377,10 +378,12 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
                           </div>
                           <p className="mt-0.5 text-xs text-gray-400">{formatDate(m.createdAt)}</p>
                         </div>
-                        <span className={`shrink-0 text-sm font-bold ${
-                          (m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? 'text-red-500' : 'text-emerald-600'
-                        }`}>
-                          {(m.type === 'SALE' || m.type === 'SUPPLIER_RETURN') ? '-' : '+'}{m.quantity}
+                        {/* Siempre con su signo real: un ajuste hacia abajo salía en verde como «+-1» (William, 15-nov-2026). */}
+                        <span className={`shrink-0 text-right text-sm font-bold ${
+                          movementDirection(m.type, m.quantity) === 'down' ? 'text-red-500' : movementDirection(m.type, m.quantity) === 'up' ? 'text-emerald-600' : 'text-gray-700'
+                        }`} data-testid="sheet-movement-quantity">
+                          {signedQuantityLabel(m.type, m.quantity)}
+                          {m.stockAfter != null && <span className="ml-1 text-xs font-normal text-gray-500">({formatQty(m.stockAfter)})</span>}
                         </span>
                       </div>
                     ))}

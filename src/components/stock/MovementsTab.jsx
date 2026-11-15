@@ -11,6 +11,7 @@ import SupplierOrderModal from '../reports/SupplierOrderModal'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
+import { signedQuantityLabel, movementDirection } from '../../utils/movementSign'
 import { MoneyMovementsTable, MoneyStrip } from './MoneyMovements'
 
 function formatDate(str) {
@@ -28,21 +29,26 @@ const TYPE_CONFIG = {
   SUPPLIER_RETURN: { label: 'Devuelto a proveedor', cls: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100' },
 }
 
-function QuantityCell({ type, quantity, stockAfter }) {
+function QuantityCell({ type, quantity, stockBefore, stockAfter }) {
   const t = useT()
-  const isPositive = type === 'PURCHASE_ENTRY' || type === 'RETURN' || (type === 'ADJUSTMENT' && quantity > 0)
-  const isNegative = type === 'SALE' || type === 'SUPPLIER_RETURN' || (type === 'ADJUSTMENT' && quantity < 0)
-  const cls = isPositive ? 'font-bold text-emerald-600'
-            : isNegative ? 'font-bold text-red-500'
+  // Siempre con signo (William, 15-nov-2026): un ajuste de −1 salía como «1» y parecía que entraba mercadería.
+  const direction = movementDirection(type, quantity)
+  const cls = direction === 'up' ? 'font-bold text-emerald-600'
+            : direction === 'down' ? 'font-bold text-red-500'
             : 'font-medium text-gray-700'
-  const sign = isPositive ? '+' : (type === 'SALE' || type === 'SUPPLIER_RETURN') ? '-' : ''
   return (
-    <span className={`whitespace-nowrap ${cls}`}>
-      {sign}{Math.abs(quantity)}
+    <span className={`whitespace-nowrap ${cls}`} data-testid="movement-quantity">
+      {signedQuantityLabel(type, quantity)}
       {stockAfter != null && (
         // Idea de William: el stock que QUEDÓ del producto tras este movimiento
         <span className="ml-1 text-xs font-normal text-gray-500" title={t('Stock del producto tras este movimiento')}>
           ({fmtQty(stockAfter)})
+        </span>
+      )}
+      {/* En un ajuste se dice de cuánto a cuánto pasó: no deja dudas de si subió o bajó. */}
+      {type === 'ADJUSTMENT' && stockBefore != null && stockAfter != null && (
+        <span className="block text-[11px] font-normal text-gray-500" data-testid="movement-adjust-range">
+          {t('había {before} → quedó {after}', { before: fmtQty(stockBefore), after: fmtQty(stockAfter) })}
         </span>
       )}
     </span>
@@ -138,7 +144,7 @@ function ProductSalesModal({ row, from, to, onClose }) {
                   <tr key={m.id} className="border-b border-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">{formatDate(m.createdAt)}</td>
                     <td className="px-4 py-3 text-center whitespace-nowrap font-bold text-red-500">
-                      -{fmtQty(m.quantity)}
+                      −{fmtQty(m.quantity)}
                       {m.stockAfter != null && (
                         <span className="ml-1 text-xs font-normal text-gray-500" title={t('Stock del producto tras esta venta')}>
                           ({fmtQty(m.stockAfter)})
@@ -558,7 +564,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                           <span className={`mt-1.5 inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
                         </div>
                         <div className="flex flex-shrink-0 flex-col items-end gap-1 text-sm">
-                          <QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} />
+                          <QuantityCell type={m.type} quantity={m.quantity} stockBefore={m.stockBefore} stockAfter={m.stockAfter} />
                           <span className="text-xs text-gray-400">{formatPrice(m.unitCost)} {t('c/u')}</span>
                           <span className="font-bold text-gray-900">{formatAmount(m.subtotal)}</span>
                         </div>
@@ -616,7 +622,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                         <td className="px-4 py-3.5 text-center">
                           <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
                         </td>
-                        <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockAfter={m.stockAfter} /></td>
+                        <td className="px-4 py-3.5 text-center"><QuantityCell type={m.type} quantity={m.quantity} stockBefore={m.stockBefore} stockAfter={m.stockAfter} /></td>
                         <td className="px-4 py-3.5 text-right font-mono text-xs text-gray-700">{formatPrice(m.unitCost)}</td>
                         <td className="px-4 py-3.5 text-right font-semibold text-gray-900">{formatAmount(m.subtotal)}</td>
                       </tr>

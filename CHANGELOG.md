@@ -3,6 +3,11 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.40.1 — 2026-11-15 (los ajustes de stock, siempre con su signo)
+- William: «desde el ajuste no coinciden las cifras». Comprobado en una copia de su base: el stock cuadra fila a fila. Lo que fallaba era la pantalla: en Stock › Movimientos un ajuste de −1 salía como «1» sin signo, y en el historial de la ficha salía en verde como «+-1», así que parecía que entraba mercadería.
+- Una sola regla para pintar la cantidad de un movimiento (`utils/movementSign.js`, 5 tests): lo que baja el stock lleva «−» en rojo y lo que lo sube «+» en verde. Usada en Stock › Movimientos, la ficha del producto, Reportes y el Dashboard (ahí las ventas salían como «+2» en verde).
+- En los ajustes, debajo de la cantidad: «había 12 → quedó 11».
+
 ## 1.40.0 — 2026-11-15 (FORMAS DE VENTA: por unidad, por ciento, por caja… cada una con su precio)
 - Lo que William quería cuando escribió «ciento → 12» en los atributos y vendió 100 esperando ese precio. Necesita la API 1.27.0.
 - **Ficha del producto, hoja 1**: bloque «Formas de venta» (opcional). Cada forma lleva nombre, cuántas trae y su precio; debajo dice a cuánto sale cada unidad. Una forma a medio escribir no deja guardar y dice qué le falta. También se ven en la ficha de solo lectura.

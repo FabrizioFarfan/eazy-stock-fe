@@ -25,6 +25,7 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import SupplierOrderModal from '../components/reports/SupplierOrderModal'
 import { localISODate } from '../utils/formatDate'
 import { useT, t as tr, dateLocale } from '../i18n'
+import { signedQuantityLabel, movementDirection } from '../utils/movementSign'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,7 @@ function MovementsTable({ movements }) {
                 <td className="px-4 py-3 text-center">
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.cls}`}>{t(cfg.label)}</span>
                 </td>
-                <td className="px-4 py-3 text-center font-semibold text-gray-700">{m.quantity}</td>
+                <td className={`px-4 py-3 text-center font-semibold ${movementDirection(m.type, m.quantity) === 'down' ? 'text-red-500' : movementDirection(m.type, m.quantity) === 'up' ? 'text-emerald-600' : 'text-gray-700'}`}>{signedQuantityLabel(m.type, m.quantity)}</td>
                 <td className="px-4 py-3 text-gray-500">{m.createdByName ?? '—'}</td>
               </tr>
             )

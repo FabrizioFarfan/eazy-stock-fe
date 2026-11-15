@@ -2,6 +2,7 @@
 // Llave = español. No repetir llaves de otros diccionarios (se funden en orden alfabético de archivo).
 export default {
   en: {
+    'había {before} → quedó {after}': 'was {before} → now {after}',
     '¿Cómo lo lleva?': 'How are they taking it?',
     '1 {name} = {detail}': '1 {name} = {detail}',
     '= {n} {unit} del stock': '= {n} {unit} from stock',
@@ -27,6 +28,7 @@ export default {
     'Opcional. Si además de suelto lo vendes por ciento, por caja o por docena, agrega cada forma con cuántas trae y su precio (ciento = 100 a 12.00). Al vender eliges cómo lo lleva y el precio sale solo; el stock se sigue contando en la unidad del producto.': 'Optional. If besides single units you sell it by the hundred, by the box or by the dozen, add each one with how many it holds and its price (hundred = 100 for 12.00). When selling you pick how they take it and the price comes up by itself; stock is still counted in the product\'s unit.',
   },
   it: {
+    'había {before} → quedó {after}': 'erano {before} → ora {after}',
     '¿Cómo lo lleva?': 'Come lo prende?',
     '1 {name} = {detail}': '1 {name} = {detail}',
     '= {n} {unit} del stock': '= {n} {unit} dal magazzino',
