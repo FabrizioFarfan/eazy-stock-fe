@@ -201,6 +201,23 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
                   </div>
                   <p className="mt-1 text-[11px] text-gray-400">{t('Mínimo')} {formatQty(product.minStock)}</p>
                 </div>
+                {/* Formas de venta (ciento, caja…): mismas unidades del stock, cada una con su precio. */}
+                {(product.saleUnits ?? []).length > 0 && (
+                  <div className="col-span-2 rounded-2xl border border-gray-100 bg-white px-4 py-3" data-testid="sheet-sale-units">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('Formas de venta')}</p>
+                    <ul className="mt-1 divide-y divide-gray-50">
+                      {product.saleUnits.map((u) => (
+                        <li key={u.id} className="flex items-baseline justify-between gap-3 py-1 text-sm">
+                          <span className="min-w-0 truncate">
+                            <span className="font-semibold text-gray-900">{u.name}</span>
+                            <span className="text-gray-400"> · {formatQty(u.units)} {product.unit || t('unidad')}</span>
+                          </span>
+                          <span className="flex-shrink-0 font-bold text-gray-900">{formatPrice(u.salePrice)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {!hidesCost && (
                   <div className="col-span-2 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
                     <div>

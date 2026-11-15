@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { lotBuckets, defaultLot, lineKey, availableFor, lotMissing, changeLineLot } from '../utils/lots'
+import { lotBuckets, defaultLot, lineKey, stockKey, availableFor, lotMissing, changeLineLot } from '../utils/lots'
+import {
+  saleUnitsOf, saleUnitOf, baseQuantity, listPriceOf, isVariablePrice, startingPrice, withSaleUnit, suggestSaleUnit,
+  applySuggestion, quantityIsValid, maxInSaleUnit, overStockLines, saleUnitField, unitNameOf,
+} from '../utils/saleUnits'
+import SaleUnitPicker from '../components/products/SaleUnitPicker'
 import { createPortal } from 'react-dom'
 import { Plus, X, ShoppingCart, Loader2, Check, ArrowLeft, Search, Tag, User, AlertTriangle, MapPin, TrendingDown, ScanLine, Wallet, Zap } from 'lucide-react'
 import QuickProductModal from '../components/products/QuickProductModal'
@@ -24,7 +29,7 @@ import PriceInputModeToggle from '../components/inputs/PriceInputModeToggle'
 import CustomerSelectModal from '../components/customers/CustomerSelectModal'
 import { formatPhoneDisplay } from '../utils/phone'
 import { formatAmount, round2, formatPrice, currencySymbol } from '../utils/formatMoney'
-import { isDivisibleUnit, formatQty } from '../utils/quantity'
+import { formatQty } from '../utils/quantity'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 import { priceWarnings } from '../utils/priceSanity'
@@ -91,14 +96,19 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
     }
   }
 
+  // Forma de venta (William, 11-nov-2026): suelto, por ciento, por caja… null = la unidad del producto.
+  const forms = saleUnitsOf(product)
+  const [unitId, setUnitId] = useState(null)
+  const draft = { product, quantity: qty, saleUnitId: unitId }
+  const form  = saleUnitOf(draft)
+
   const q = Number(qty)
-  const qtyInvalid = !Number.isFinite(q) || q <= 0
-    || (!quick && q > Number(product.currentStock ?? 0) + 1e-9)
-    || (!isDivisibleUnit(product.unit) && !Number.isInteger(q))
+  const qtyInvalid = !Number.isFinite(q) || !quantityIsValid(draft)
+    || (!quick && baseQuantity(draft) > Number(product.currentStock ?? 0) + 1e-9)
 
   const handleAdd = () => {
-    onAdd(product, q, priceOpen && price != null ? price : null)
-    setQty(1); setPriceOpen(false); setPrice(null)
+    onAdd(product, q, !form && priceOpen && price != null ? price : null, form ? form.id : null)
+    setQty(1); setPriceOpen(false); setPrice(null); setUnitId(null)
   }
 
   return (
@@ -147,7 +157,11 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
             {t('Stock')}: {formatQty(product.currentStock)} {product.unit || t('unidad')}
           </p>
           )}
-          {isVariable ? (
+          {form ? (
+            <p className="text-xl font-extrabold tracking-tight text-gray-900" data-testid="card-form-price">
+              {formatCurrency(form.salePrice)} <span className="text-xs font-semibold text-gray-400">/ {form.name}</span>
+            </p>
+          ) : isVariable ? (
             <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
               {t('Precio variable')}
             </span>
@@ -157,7 +171,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
           {/* Precio variable: se define para ESTA venta antes de agregar.
               Precio fijo: el botón cambia el precio del producto (ver arriba);
               el precio de una sola venta se ajusta en el carrito. */}
-          {!inCart && !noStock && isVariable && (
+          {!inCart && !noStock && isVariable && !form && (
             <button type="button"
               onClick={() => { setPriceOpen((o) => !o); setPrice(null) }}
               className="mt-0.5 block text-[11px] font-semibold text-blue-600 hover:text-blue-700">
@@ -186,8 +200,8 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
             <QuantityInput
               value={qty}
               onChange={setQty}
-              unit={product.unit || t('unidad')}
-              max={quick ? undefined : product.currentStock}
+              unit={form ? form.name : product.unit || t('unidad')}
+              max={quick ? undefined : maxInSaleUnit(product.currentStock, draft)}
               maxDecimals={3}
               className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             />
@@ -198,6 +212,11 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
           </div>
         )}
       </div>
+
+      {/* ¿Cómo lo lleva? Solo si el producto tiene formas de venta. */}
+      {forms.length > 0 && !inCart && !noStock && (
+        <SaleUnitPicker product={product} value={unitId} onChange={(id) => { setUnitId(id); setQty(1) }} className="mt-2.5" />
+      )}
 
       {listEditOpen && !isVariable && (
         <div className="mt-2.5 border-t border-gray-100 pt-2.5">
@@ -282,7 +301,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
         document.body,
       )}
 
-      {priceOpen && !inCart && !noStock && isVariable && (
+      {priceOpen && !inCart && !noStock && isVariable && !form && (
         <div className="mt-2.5 border-t border-gray-100 pt-2.5">
           <PriceInput
             label={isVariable ? t('Precio de venta de esta venta') : t('Nuevo precio de venta')}
@@ -304,16 +323,22 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
 
 // ── CartItem ──────────────────────────────────────────────────────────────────
 
-function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange, onLotChange, onAddLine, canAddLine }) {
+function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange, onLotChange, onAddLine, canAddLine,
+  onSaleUnitChange, onApplySuggestion, onAddFormLine, canAddFormLine, overStock }) {
   const t = useT()
   const { product, quantity, unitPrice } = item
   const key = lineKey(item)
   const buckets = lotBuckets(product)
   const missingLot = lotMissing(item)
-  const isVariable   = !!product.priceIsVariable
+  // Con una forma de venta (ciento, caja…) la cantidad y el precio de la línea van en esa forma.
+  const forms        = saleUnitsOf(product)
+  const form         = saleUnitOf(item)
+  const unitName     = unitNameOf(item, t('unidad'))
+  const suggestion   = suggestSaleUnit(item)
+  const isVariable   = isVariablePrice(item)
   const numericPrice = parseNumber(unitPrice)
   const subtotal     = round2((Number(quantity) || 0) * numericPrice)
-  const listPrice    = Number(product.salePrice ?? 0)
+  const listPrice    = listPriceOf(item)
   const isModified   = !isVariable && Math.abs(numericPrice - listPrice) > 0.0000005
   const isBelow      = !isVariable && numericPrice < listPrice - 0.0000005
   const variableMissing = isVariable && (unitPrice === '' || unitPrice == null || numericPrice <= 0)
@@ -363,18 +388,45 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
         </div>
       )}
 
+      {forms.length > 0 && (
+        <SaleUnitPicker product={product} value={item.saleUnitId ?? null} onChange={(id) => onSaleUnitChange(key, id)} className="mt-2" />
+      )}
+
       <div className="mt-2.5 flex items-end justify-between gap-2">
         <QuantityInput
           value={quantity}
           onChange={(v) => onQtyChange(key, v)}
-          unit={product.unit || t('unidad')}
-          max={product.quickCreated ? undefined : availableFor(item)}
+          unit={unitName}
+          max={product.quickCreated ? undefined : maxInSaleUnit(availableFor(item), item)}
           maxDecimals={3}
           className="w-36"
           label={t('Cantidad')}
         />
         <p className="pb-2 text-sm font-bold text-gray-900">{formatAmount(subtotal)}</p>
       </div>
+      {form && (
+        <p className="mt-1 text-[11px] text-gray-500" data-testid="sale-form-equals">
+          {t('= {n} {unit} del stock', { n: formatQty(baseQuantity(item)), unit: product.unit || t('unidad') })}
+        </p>
+      )}
+      {overStock && (
+        <p className="mt-1 text-[11px] font-semibold text-red-600" data-testid="sale-form-overstock">
+          {t('Entre todas las líneas de este producto pides más de lo que hay ({n} {unit}).', { n: formatQty(availableFor(item)), unit: product.unit || t('unidad') })}
+        </p>
+      )}
+      {/* William escribió 100 esperando el precio del ciento: se le ofrece, y lo acepta con un toque. */}
+      {suggestion && (
+        <button type="button" onClick={() => onApplySuggestion(key)} data-testid="sale-form-suggestion"
+          className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-2 text-left text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-100">
+          <span>{t('¿Es {count} {name}? Sale a {total}', { count: formatQty(suggestion.count), name: suggestion.saleUnit.name, total: formatAmount(suggestion.total) })}</span>
+          <span className="flex-shrink-0 rounded-md bg-emerald-600 px-2 py-1 text-[11px] text-white">{t('Cambiar')}</span>
+        </button>
+      )}
+      {canAddFormLine && (
+        <button type="button" onClick={() => onAddFormLine(item)} data-testid="sale-form-add-line" className="mt-1.5 text-xs font-semibold text-blue-600 hover:underline">
+          {t('+ Lleva también de otra forma')}
+        </button>
+      )}
 
       <div className="mt-2">
         <PriceInput
@@ -399,7 +451,7 @@ function CartItem({ item, canApplyDiscount, onQtyChange, onRemove, onPriceChange
         ) : isBelow ? (
           <p className="mt-1.5 text-[11px] font-semibold text-red-600">
             <TrendingDown size={11} className="-mt-0.5 mr-1 inline" />
-            {t('Por debajo del precio de venta ({list}): −{diff} por {unit}', { list: formatCurrency(listPrice), diff: formatCurrency(listPrice - numericPrice), unit: product.unit || t('unidad') })}
+            {t('Por debajo del precio de venta ({list}): −{diff} por {unit}', { list: formatCurrency(listPrice), diff: formatCurrency(listPrice - numericPrice), unit: unitName })}
             {Number(quantity) > 1 && ` · ${t('−{total} en la línea', { total: formatAmount((listPrice - numericPrice) * Number(quantity)) })}`}
           </p>
         ) : isModified ? (
@@ -723,19 +775,45 @@ export default function NewSalePage() {
 
   // La tarjeta puede mandar cantidad y precio ya decididos; el escáner usa
   // los defaults (1 unidad, precio de lista).
-  const addToCart = (product, quantity = 1, priceOverride = null) => {
+  const addToCart = (product, quantity = 1, priceOverride = null, saleUnitId = null) => {
     setCart((prev) => [
       ...prev,
       {
         product,
         quantity,
         lotId: defaultLot(product),
+        // Forma de venta (ciento, caja…): la cantidad y el precio de la línea van en esa forma. null = por unidad.
+        saleUnitId,
         // Precio variable arranca vacío para forzar al cajero a definirlo
-        unitPrice: priceOverride != null
-          ? priceOverride
-          : product.priceIsVariable ? '' : Number(product.salePrice ?? 0),
+        unitPrice: priceOverride != null ? priceOverride : startingPrice(product, saleUnitId),
       },
     ])
+  }
+  // Cambiar la forma de una línea; si ya hay otra línea igual (mismo producto, lote y forma), se queda esa.
+  const changeSaleUnit = (key, saleUnitId) => setCart((prev) => {
+    const line = prev.find((i) => lineKey(i) === key)
+    if (!line) return prev
+    const moved = withSaleUnit(line, saleUnitId)
+    if (prev.some((i) => i !== line && lineKey(i) === lineKey(moved))) return prev.filter((i) => i !== line)
+    return prev.map((i) => (i === line ? moved : i))
+  })
+  // «¿Es 1 ciento?»: la línea por unidad pasa a la forma sugerida (o se suma a la que ya hay de esa forma).
+  const acceptSuggestion = (key) => setCart((prev) => {
+    const line = prev.find((i) => lineKey(i) === key)
+    const suggestion = line && suggestSaleUnit(line)
+    if (!suggestion) return prev
+    const moved = applySuggestion(line, suggestion)
+    const target = prev.find((i) => i !== line && lineKey(i) === lineKey(moved))
+    if (!target) return prev.map((i) => (i === line ? moved : i))
+    return prev.filter((i) => i !== line).map((i) => (i === target ? { ...i, quantity: (Number(i.quantity) || 0) + suggestion.count } : i))
+  })
+  // Formas del producto que aún no tienen línea en ese lote: 1 caja y además 30 sueltos.
+  const freeForms = (item) => [null, ...saleUnitsOf(item.product).map((u) => u.id)]
+    .filter((id) => !cart.some((c) => stockKey(c) === stockKey(item) && (c.saleUnitId ?? null) === id))
+  const addFormLine = (item) => {
+    const [saleUnitId] = freeForms(item)
+    if (saleUnitId === undefined) return
+    setCart((prev) => [...prev, { product: item.product, quantity: 1, lotId: item.lotId, saleUnitId, unitPrice: startingPrice(item.product, saleUnitId) }])
   }
   // Precio del producto cambiado desde su tarjeta: se refresca la búsqueda y,
   // si ya estaba en el carrito a precio de lista, la línea pasa al precio nuevo
@@ -743,6 +821,8 @@ export default function NewSalePage() {
   const onSalePriceSaved = (updated) => {
     setCart((prev) => prev.map((i) => {
       if (i.product.id !== updated.id) return i
+      // Una línea por ciento o por caja tiene su propio precio: el de la unidad no la toca.
+      if (saleUnitOf(i)) return { ...i, product: { ...i.product, salePrice: updated.salePrice } }
       const wasList = Math.abs(parseNumber(i.unitPrice) - Number(i.product.salePrice ?? 0)) <= 0.0000005
       return { ...i, product: { ...i.product, salePrice: updated.salePrice },
         unitPrice: wasList ? Number(updated.salePrice) : i.unitPrice }
@@ -763,7 +843,7 @@ export default function NewSalePage() {
   const bumpQty = (id) => setCart((prev) => {
     const first = prev.find((i) => i.product.id === id)
     return prev.map((i) => i === first
-      ? { ...i, quantity: i.product.quickCreated ? (Number(i.quantity) || 0) + 1 : Math.min((Number(i.quantity) || 0) + 1, availableFor(i)) }
+      ? { ...i, quantity: i.product.quickCreated ? (Number(i.quantity) || 0) + 1 : Math.min((Number(i.quantity) || 0) + 1, maxInSaleUnit(availableFor(i), i)) }
       : i)
   })
   const changePrice = (key, raw) => setCart((prev) =>
@@ -812,10 +892,10 @@ export default function NewSalePage() {
   const total = round2(Math.max(0, subtotal - discountAmount))
 
   // Líneas vendidas por debajo del precio de venta: se avisa (no se bloquea)
-  const belowLines = cart.filter((i) => !i.product.priceIsVariable
-    && parseNumber(i.unitPrice) < Number(i.product.salePrice ?? 0) - 0.0000005)
+  const belowLines = cart.filter((i) => !isVariablePrice(i)
+    && parseNumber(i.unitPrice) < listPriceOf(i) - 0.0000005)
   const belowAmount = belowLines.reduce(
-    (sum, i) => sum + (Number(i.product.salePrice ?? 0) - parseNumber(i.unitPrice)) * (Number(i.quantity) || 0), 0)
+    (sum, i) => sum + (listPriceOf(i) - parseNumber(i.unitPrice)) * (Number(i.quantity) || 0), 0)
 
   const isFiado = canSellOnCredit && onCredit
   const fiadoMissingCustomer = isFiado && !customer
@@ -825,17 +905,17 @@ export default function NewSalePage() {
 
   // Productos variables sin precio definido — bloquean la confirmación
   const variableWithoutPrice = cart.filter((i) =>
-    i.product.priceIsVariable && parseNumber(i.unitPrice) <= 0,
+    isVariablePrice(i) && parseNumber(i.unitPrice) <= 0,
   )
   const hasVariableWithoutPrice = variableWithoutPrice.length > 0
 
   // Cantidades inválidas: vacías/0, sobre stock, o con decimales en productos por unidad.
+  // Suelto y por ciento gastan del mismo stock: se suma lo de todas las líneas del producto (y lote).
+  const overStock = overStockLines(cart, availableFor, stockKey)
   const invalidQtyItem = cart.find((i) => {
     const q = Number(i.quantity)
-    if (!Number.isFinite(q) || q <= 0) return true
-    if (!i.product.quickCreated && q > availableFor(i) + 1e-9) return true
-    if (!isDivisibleUnit(i.product.unit) && !Number.isInteger(q)) return true
-    return false
+    if (!Number.isFinite(q) || !quantityIsValid(i)) return true
+    return overStock.includes(i)
   })
 
   const lotMissingItem = cart.find(lotMissing)
@@ -865,15 +945,17 @@ export default function NewSalePage() {
     try {
       const items = cart.map((i) => {
         const enteredPrice = parseNumber(i.unitPrice)
-        const original     = Number(i.product.salePrice ?? 0)
+        const original     = listPriceOf(i)
         // Para precio variable, el override SIEMPRE viaja — es el único precio.
         // Para precio fijo, si el cajero lo cambió (cualquier vendedor puede;
         // por debajo del precio de venta se avisa y queda marcado).
-        const overrideUsed = i.product.priceIsVariable
+        const overrideUsed = isVariablePrice(i)
           || Math.abs(enteredPrice - original) > 0.0001
         return {
           productId: i.product.id,
+          // Con forma de venta, cantidad y precio viajan en esa forma (2 cientos a 12): el API baja el stock en unidades.
           quantity: i.quantity,
+          ...saleUnitField(i),
           ...(i.lotId && { lotId: i.lotId }),
           ...(overrideUsed && { unitPriceOverride: enteredPrice }),
         }
@@ -1109,7 +1191,12 @@ export default function NewSalePage() {
                     onPriceChange={changePrice}
                     onLotChange={changeLot}
                     onAddLine={addLotLine}
-                    canAddLine={cart.filter((c) => c.product.id === item.product.id).length < lotBuckets(item.product).length}
+                    canAddLine={new Set(cart.filter((c) => c.product.id === item.product.id).map(stockKey)).size < lotBuckets(item.product).length}
+                    onSaleUnitChange={changeSaleUnit}
+                    onApplySuggestion={acceptSuggestion}
+                    onAddFormLine={addFormLine}
+                    canAddFormLine={saleUnitsOf(item.product).length > 0 && !lotMissing(item) && freeForms(item).length > 0}
+                    overStock={overStock.includes(item)}
                   />
                 ))}
               </div>

@@ -22,6 +22,7 @@ import QuoteCustomerSection from '../components/quotes/QuoteCustomerSection'
 import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 import { formatQty } from '../utils/quantity'
+import { quoteFormFields, quoteFormPatch } from '../utils/saleUnits'
 
 // ── Borrador de cotización ────────────────────────────────────────────────────
 // Igual que la venta: lo que se va armando se guarda en localStorage (por
@@ -41,6 +42,25 @@ function loadQuoteDraft(userId) {
 }
 
 const inputCls = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 placeholder-gray-400'
+
+// Elegir en qué se cotiza el producto: su unidad o una de sus formas de venta (ciento, caja…), con su precio.
+function QuoteFormSelect({ item, onChange }) {
+  const t = useT()
+  if (!item.saleUnits?.length) return null
+  return (
+    <label className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+      {t('¿Cómo lo lleva?')}
+      <select value={item.saleUnitId ?? ''} data-testid="quote-form-select"
+        onChange={(e) => onChange(quoteFormPatch(item, e.target.value || null))}
+        className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-800 outline-none focus:border-blue-600">
+        <option value="">{item.baseUnit || t('unidad')}</option>
+        {item.saleUnits.map((u) => (
+          <option key={u.id} value={u.id}>{u.name} · {formatQty(u.units)} {item.baseUnit || t('unidad')}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
 
 export default function QuotePage() {
   const navigate = useNavigate()
@@ -76,6 +96,8 @@ export default function QuotePage() {
         name: p.name,
         sku: p.sku,
         unit: p.unit,
+        // Formas de venta (ciento, caja…): `unit` es en qué se cotiza; cantidad y precio van en esa forma.
+        ...quoteFormFields(p.unit, p.saleUnits, p.priceIsVariable ? 0 : Number(p.salePrice) || 0, null),
         qty: 1,
         unitPrice: p.priceIsVariable ? 0 : Number(p.salePrice) || 0,
       }]
@@ -125,7 +147,11 @@ export default function QuotePage() {
       navigate('/cotizaciones/historial', { replace: true })
       return
     }
-    setItems(q.items.map((it) => ({ productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })))
+    setItems(q.items.map((it) => ({
+      productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
+      ...quoteFormFields(it.productUnit ?? it.unit, it.saleUnits, it.priceIsVariable ? 0 : Number(it.currentSalePrice) || 0, it.saleUnitId),
+      qty: Number(it.quantity), unitPrice: Number(it.unitPrice),
+    })))
     setCust({
       customer: q.customerId ? { id: q.customerId, name: q.customerName, phone: q.customerPhone, email: q.customerEmail } : null,
       name: q.customerName ?? '', phone: q.customerPhone ?? '', email: q.customerEmail ?? '',
@@ -201,7 +227,10 @@ export default function QuotePage() {
   const confirmGenerate = async () => {
     const c = customerData()
     const body = {
-      items: items.map((it) => ({ productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0 })),
+      items: items.map((it) => ({
+        productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0,
+        ...(it.saleUnitId && { saleUnitId: it.saleUnitId }),
+      })),
       customerId: cust.customer?.id || undefined,
       customerName: c.name || undefined,
       customerPhone: c.phone || undefined,
@@ -394,6 +423,7 @@ export default function QuotePage() {
                       <div className="min-w-0">
                         <p className="break-words text-sm font-bold text-gray-900">{it.name}</p>
                         {it.sku && <p className="font-mono text-xs text-gray-400">{it.sku}</p>}
+                        <QuoteFormSelect item={it} onChange={(patch) => updateItem(it.productId, patch)} />
                       </div>
                       <button onClick={() => removeItem(it.productId)} title={t('Quitar')}
                         className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500">
@@ -440,6 +470,7 @@ export default function QuotePage() {
                         <td className="px-4 py-3">
                           <p className="font-semibold text-gray-900">{it.name}</p>
                           {it.sku && <p className="font-mono text-xs text-gray-400">{it.sku}</p>}
+                          <QuoteFormSelect item={it} onChange={(patch) => updateItem(it.productId, patch)} />
                         </td>
                         <td className="px-4 py-3 text-center">
                           <input

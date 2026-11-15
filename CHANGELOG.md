@@ -3,6 +3,17 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.40.0 — 2026-11-15 (FORMAS DE VENTA: por unidad, por ciento, por caja… cada una con su precio)
+- Lo que William quería cuando escribió «ciento → 12» en los atributos y vendió 100 esperando ese precio. Necesita la API 1.27.0.
+- **Ficha del producto, hoja 1**: bloque «Formas de venta» (opcional). Cada forma lleva nombre, cuántas trae y su precio; debajo dice a cuánto sale cada unidad. Una forma a medio escribir no deja guardar y dice qué le falta. También se ven en la ficha de solo lectura.
+- **Nueva venta**: «¿Cómo lo lleva?» en la tarjeta y en la línea del carrito (unidad · ciento · caja, con su precio). La cantidad y el precio de la línea van en esa forma y debajo dice cuánto gasta del stock («= 200 unidad del stock»).
+- Si el vendedor escribe 100 unidades y existe «ciento», la línea ofrece «¿Es 1 ciento? Sale a S/ 12.00» y se acepta con un toque (no cambia nada sola).
+- El mismo producto puede ir en dos líneas (1 caja y además 30 sueltos); el tope de stock suma las dos.
+- **Detalle de venta y nota de pedido**: «2 ciento × 12.00», con lo que fue en unidades. Las devoluciones se siguen haciendo en la unidad del producto.
+- **Cotización**: se elige la forma en cada línea; sale en el PDF y, al pasarla a venta o duplicarla, se conserva (si la forma ya no existe, pasa a unidades con el mismo total).
+- Tutorial del formulario con el paso nuevo. Textos en español, inglés e italiano.
+- Lógica en `utils/saleUnits.js` (16 tests); `SaleUnitPicker`, `SaleUnitsEditor`.
+
 ## 1.39.2 — 2026-11-14 (Impressum con la USt-IdNr.)
 - El Impressum suma la línea «Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE466232832», con su traducción en español e inglés. La Steuernummer no se publica: va sólo en las facturas.
 

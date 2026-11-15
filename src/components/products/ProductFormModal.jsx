@@ -21,6 +21,8 @@ import { getErrorMessage, getErrorField, getErrorCode } from '../../utils/handle
 import { useParameters } from '../../hooks/useParameters'
 import ParameterFields from './ParameterFields'
 import { withoutEmptyValues } from '../../utils/parameters'
+import { rowsFromProduct, saleUnitRowErrors, saleUnitsPayload } from '../../utils/saleUnits'
+import SaleUnitsEditor from './SaleUnitsEditor'
 import { priceWarnings } from '../../utils/priceSanity'
 import { useT, dateLocale } from '../../i18n'
 
@@ -380,6 +382,9 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
 
   // Attributes map: Record<string, string>
   const [attributes,  setAttributes]  = useState(product?.attributes  ?? {})
+  // Formas de venta (ciento, caja…): filas del editor; las vacías no se guardan.
+  const [saleUnitRows, setSaleUnitRows] = useState(() => rowsFromProduct(product))
+  const [saleUnitsChecked, setSaleUnitsChecked] = useState(false)
 
   // Lo que la categoría elegida propone: sale como chips dentro de Parámetros (task 1769, 13-nov-2026).
   const { data: suggestedAttrs = [] } = useSuggestedAttributes(categoryId)
@@ -551,6 +556,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         expirationDate: product.expirationDate ?? '',
       })
       setBrandId(product.brandId       ?? null)
+      setSaleUnitRows(rowsFromProduct(product))
+      setSaleUnitsChecked(false)
       setSupplierId(product.supplierId ?? null)
       setCategoryId(product.categoryId ?? null)
       setLocationId(product.locationId ?? null)
@@ -628,6 +635,14 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
       setSupplierError(t('Elegí un proveedor para este producto'))
       return
     }
+    // Formas de venta a medio escribir: se dice cuál y qué le falta, y no se guarda.
+    const formUnit = values.unit === 'otro' ? (values.unitCustom?.trim() || 'unidad') : (values.unit || 'unidad')
+    if (saleUnitRowErrors(saleUnitRows, formUnit).some(Boolean)) {
+      setSaleUnitsChecked(true)
+      toast.error(t('Revisa las formas de venta: a una le falta algo'))
+      document.querySelector('[data-tutorial-target="sale-forms"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return
+    }
     // A William un producto de S/ 8 le quedó a S/ 0.80: si el precio queda bajo el costo o
     // cambia más de un 80 %, se pide confirmación enseñando el precio anterior.
     if (!values.__priceOk) {
@@ -666,6 +681,8 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
         locationId:  locationId  || null,
         // Al editar va siempre el mapa (vacío = quitarlos todos); con null el API deja los que había.
         attributes:  isEdit || Object.keys(withoutEmptyValues(attributes)).length > 0 ? withoutEmptyValues(attributes) : null,
+        // Al editar va siempre la lista: quedan exactamente esas (vacía = ninguna).
+        ...((isEdit || saleUnitsPayload(saleUnitRows).length > 0) && { saleUnits: saleUnitsPayload(saleUnitRows) }),
       }
 
       let savedId
@@ -901,6 +918,11 @@ export default function ProductFormModal({ product, onClose, autoTutorial = fals
                         </p>
                       </Field>
                     </div>
+
+                    <SaleUnitsEditor rows={saleUnitRows} onChange={setSaleUnitRows}
+                      unit={unitValue === 'otro' ? (watch('unitCustom')?.trim() || t('unidad')) : unitValue}
+                      errors={saleUnitRowErrors(saleUnitRows, unitValue === 'otro' ? (watch('unitCustom')?.trim() || 'unidad') : (unitValue || 'unidad'))}
+                      showErrors={saleUnitsChecked} />
                   </div>
 
                 </FormSection>

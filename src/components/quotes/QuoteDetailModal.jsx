@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useQuote, useDeleteQuote } from '../../hooks/useQuotes'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
+import { quoteFormFields, cartLineFromQuoteItem, quoteItemShort } from '../../utils/saleUnits'
 import QuoteActions from './QuoteActions'
 import { quoteDraftKey } from '../../utils/quoteDraft'
 import { useT, dateLocale } from '../../i18n'
@@ -51,11 +52,19 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
     }
     const active = q.items.filter((it) => it.productActive)
     if (active.length === 0) { toast.error(t('Ningún producto de esta cotización sigue activo en el catálogo')); return }
-    const items = active.map((it) => ({
-      productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
-      qty: Number(it.quantity),
-      unitPrice: it.priceIsVariable ? Number(it.unitPrice) : (Number(it.currentSalePrice) || Number(it.unitPrice)),
-    }))
+    const items = active.map((it) => {
+      // La copia sale con los precios de hoy: el de la forma cotizada si el producto la sigue teniendo, o el de la unidad.
+      const fields = quoteFormFields(it.productUnit ?? it.unit, it.saleUnits, it.priceIsVariable ? 0 : Number(it.currentSalePrice) || 0, it.saleUnitId)
+      const form = fields.saleUnits.find((u) => u.id === fields.saleUnitId)
+      const lost = it.saleUnitId && !form ? Number(it.saleUnitFactor) || 1 : 1
+      return {
+        productId: it.productId, name: it.productName, sku: it.productSku, unit: form ? form.name : fields.baseUnit,
+        ...fields,
+        qty: Number(it.quantity) * lost,
+        unitPrice: form ? Number(form.salePrice)
+          : it.priceIsVariable ? Number(it.unitPrice) / lost : (Number(it.currentSalePrice) || Number(it.unitPrice) / lost),
+      }
+    })
     try {
       localStorage.setItem(quoteDraftKey(user?.id), JSON.stringify({
         items,
@@ -79,18 +88,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
     }
     const sellable = q.items.filter((it) => it.productActive)
     const skipped = q.items.length - sellable.length
-    const cart = sellable.map((it) => {
-      const stock = Number(it.currentStock ?? 0)
-      const qty = Math.min(Number(it.quantity), stock)
-      return {
-        product: {
-          id: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
-          currentStock: stock, priceIsVariable: it.priceIsVariable, salePrice: it.currentSalePrice,
-        },
-        quantity: qty > 0 ? qty : 1,
-        unitPrice: Number(it.unitPrice),
-      }
-    })
+    const cart = sellable.map(cartLineFromQuoteItem)
     if (cart.length === 0) { toast.error(t('Ningún producto de esta cotización sigue activo en el catálogo')); return }
     try {
       localStorage.setItem(saleDraftKey(user?.id), JSON.stringify({
@@ -99,7 +97,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
       }))
     } catch { toast.error(t('No se pudo preparar la venta (almacenamiento del navegador bloqueado)')); return }
     if (skipped > 0) toast.warning(t('{n} producto(s) ya no están en el catálogo y no se pasaron a la venta', { n: skipped }))
-    const short = sellable.filter((it) => Number(it.currentStock ?? 0) < Number(it.quantity)).length
+    const short = sellable.filter(quoteItemShort).length
     if (short > 0) toast.warning(t('{n} producto(s) tienen menos stock que lo cotizado — la cantidad se ajustó al disponible', { n: short }))
     navigate('/sales/new')
   }
@@ -142,7 +140,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
               {/* Móvil: líneas apiladas */}
               <ul className="divide-y divide-gray-50 sm:hidden">
                 {q.items.map((it) => {
-                  const short = Number(it.currentStock ?? 0) < Number(it.quantity)
+                  const short = quoteItemShort(it)
                   return (
                     <li key={it.id} className="px-5 py-3">
                       <div className="flex items-start justify-between gap-3">
@@ -175,7 +173,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
                 </thead>
                 <tbody>
                   {q.items.map((it) => {
-                    const short = Number(it.currentStock ?? 0) < Number(it.quantity)
+                    const short = quoteItemShort(it)
                     return (
                       <tr key={it.id} className="border-b border-gray-50">
                         <td className="px-5 py-2.5 sm:px-6">

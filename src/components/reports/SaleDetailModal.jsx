@@ -10,6 +10,8 @@ import QuoteActions from '../quotes/QuoteActions'
 import { useAuth } from '../../context/AuthContext'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { orderNoteNumberLabel } from '../../utils/quotePdf'
+import { soldAs, soldInSaleUnit } from '../../utils/saleUnits'
+import { formatQty } from '../../utils/quantity'
 import { useT, dateLocale } from '../../i18n'
 import { displayTaxIdType } from '../../utils/taxIdText'
 
@@ -92,13 +94,18 @@ export default function SaleDetailModal({ saleId, onClose }) {
         phone: customer?.phone ?? '',
         email: customer?.email ?? '',
       },
-      items: (sale.items || []).map((it) => ({
-        name: it.productName,
-        sku: it.productSku,
-        qty: Number(it.quantity),
-        unitPrice: Number(it.unitPriceOverride ?? it.unitPrice),
-        subtotal: Number(it.subtotal),
-      })),
+      // Lo vendido por ciento o por caja sale como se cobró: «2 ciento × 12.00».
+      items: (sale.items || []).map((it) => {
+        const as = soldAs(it)
+        return {
+          name: it.productName,
+          sku: it.productSku,
+          qty: as.quantity,
+          ...(soldInSaleUnit(it) && { unit: as.unitName }),
+          unitPrice: as.price,
+          subtotal: Number(it.subtotal),
+        }
+      }),
       notes: '',
       paymentLabel: sale.onCredit
         ? (debtPending ? t('Al fiado · pendiente de pago') : t('Al fiado · pagado'))
@@ -289,7 +296,10 @@ export default function SaleDetailModal({ saleId, onClose }) {
                   {(sale?.items || []).map((item) => {
                     const hasOverride = item.unitPriceOverride != null
                       && Number(item.unitPriceOverride) !== Number(item.unitPrice)
-                    const effectivePrice = hasOverride ? item.unitPriceOverride : item.unitPrice
+                    // Vendido por ciento o por caja: se enseña como se cobró (2 ciento a 12), con lo que fue en unidades.
+                    const as = soldAs(item, t('unidad'))
+                    const inForm = soldInSaleUnit(item)
+                    const effectivePrice = as.price
                     const returned = returnedByItem[item.id] ?? 0
                     const remaining = Number(item.quantity) - returned
                     return (
@@ -301,13 +311,13 @@ export default function SaleDetailModal({ saleId, onClose }) {
                           {hasOverride && item.belowList ? (
                             <p className="mt-0.5 text-xs font-semibold text-red-600" data-testid="below-list-line">
                               <TrendingDown size={10} className="-mt-0.5 inline" /> {t('Por debajo del precio de venta')}{' '}
-                              <span className="line-through">{formatCurrency(item.unitPrice)}</span>
+                              <span className="line-through">{formatCurrency(as.listPrice)}</span>
                               {' · '}−{formatAmount(item.belowListAmount)}
                             </p>
                           ) : hasOverride ? (
                             <p className="mt-0.5 text-xs text-orange-600">
                               <Tag size={10} className="-mt-0.5 inline" /> {t('Precio modificado de')}{' '}
-                              <span className="line-through">{formatCurrency(item.unitPrice)}</span>
+                              <span className="line-through">{formatCurrency(as.listPrice)}</span>
                             </p>
                           ) : null}
                           {returned > 0 && (
@@ -316,7 +326,14 @@ export default function SaleDetailModal({ saleId, onClose }) {
                             </p>
                           )}
                         </td>
-                        <td className="py-2.5 text-center font-mono text-gray-700">{item.quantity}</td>
+                        <td className="py-2.5 text-center font-mono text-gray-700">
+                          {inForm ? (
+                            <span data-testid="sale-item-form">
+                              {formatQty(as.quantity)} <span className="font-sans font-semibold">{as.unitName}</span>
+                              <span className="block font-sans text-[11px] text-gray-400">= {formatQty(as.baseQuantity)} {as.baseUnit}</span>
+                            </span>
+                          ) : item.quantity}
+                        </td>
                         <td className={`py-2.5 text-right ${hasOverride ? (item.belowList ? 'font-semibold text-red-600' : 'font-semibold text-orange-600') : 'text-gray-600'}`}>
                           {formatCurrency(effectivePrice)}
                         </td>
@@ -324,6 +341,7 @@ export default function SaleDetailModal({ saleId, onClose }) {
                         {returnMode && (
                           <td className="py-2.5 text-right">
                             {remaining > 0 ? (
+                              <>
                               <input
                                 type="number"
                                 inputMode="decimal"
@@ -335,6 +353,9 @@ export default function SaleDetailModal({ saleId, onClose }) {
                                 placeholder={t('máx {n}', { n: remaining })}
                                 className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 sm:w-24"
                               />
+                              {/* Se devuelve en la unidad del producto, aunque se vendiera por ciento. */}
+                              {inForm && <span className="mt-0.5 block text-[11px] text-gray-400">{t('en {unit}', { unit: as.baseUnit })}</span>}
+                              </>
                             ) : (
                               <span className="text-xs text-gray-300">{t('Devuelto')}</span>
                             )}

@@ -33,6 +33,11 @@ const STEPS = [
     desc: 'P. compra es lo que te cuesta; P. venta es lo que cobras. Si el precio se negocia con cada cliente, marca «Precio variable» y se pedirá al vender. «Formato del precio» cambia cómo lo escribes: 2 decimales (tecleas 1150 y queda 11.50) o hasta 6 decimales para precios muy pequeños.',
   },
   {
+    targets: ['sale-forms'],
+    title: 'Hoja 1 · Formas de venta',
+    desc: 'Opcional. Si además de suelto lo vendes por ciento, por caja o por docena, agrega cada forma con cuántas trae y su precio (ciento = 100 a 12.00). Al vender eliges cómo lo lleva y el precio sale solo; el stock se sigue contando en la unidad del producto.',
+  },
+  {
     targets: ['stock-fields', 'expiry'],
     title: 'Hoja 1 · Stock y vencimiento',
     desc: 'Stock mínimo: cuando quede esa cantidad o menos, la app te avisa para que repongas. Stock inicial (solo al crear): cuánto tienes hoy. Si el producto caduca, ponle fecha de vencimiento y te avisamos antes de que venza.',

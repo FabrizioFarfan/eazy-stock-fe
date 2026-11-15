@@ -34,7 +34,11 @@ export function defaultLot(product) {
 }
 
 /** La línea del carrito: el mismo producto puede ir en dos líneas, una por lote. */
-export const lineKey = (item) => `${item.product.id}:${item.lotId === undefined ? '?' : item.lotId ?? ''}`
+export const lineKey = (item) =>
+  `${item.product.id}:${item.lotId === undefined ? '?' : item.lotId ?? ''}${item.saleUnitId ? `:${item.saleUnitId}` : ''}`
+
+/** De dónde gasta la línea (producto + lote), sin mirar en qué forma se vende: suelto y por ciento gastan del mismo sitio. */
+export const stockKey = (item) => `${item.product.id}:${item.lotId === undefined ? '?' : item.lotId ?? ''}`
 
 /** Cuánto se puede vender en esta línea: lo de su lote, o el total mientras no se ha elegido. */
 export function availableFor(item) {
