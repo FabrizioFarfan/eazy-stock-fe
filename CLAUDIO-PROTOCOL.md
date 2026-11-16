@@ -27,7 +27,7 @@ Tienes un servidor MCP con las herramientas de EAZY PROJECT. En Claude Code se v
 | `list_tasks` | tareas abiertas de un proyecto (o de toda la carpeta) |
 | `create_task` | abrir la tarea al ARRANCAR una tanda (status DOING + frente BE/FE/ANDROID/IOS) |
 | `update_task` | cerrar la tarea (DONE) o retitularla |
-| `add_worklog` | la BITÁCORA al cerrar: prompt en limpio + result con commits y verificación + closing |
+| `add_worklog` | la BITÁCORA al cerrar: prompt en limpio + result con commits y verificación + `pending` (obligatorio: lo NUEVO que queda sin arreglar se convierte en tareas; lo que ya tiene tarea abierta se cita como `#id` y no crea otra; `[]` si nada) + closing |
 | `list_worklog` | leer las últimas entradas |
 | `add_note` | ideas / pendientes para después (post-it) |
 
@@ -47,7 +47,14 @@ Al trabajar en CUALQUIER repo de la E.L.C.:
 2. **Al cerrar la tanda**: `update_task` → `DONE` y `add_worklog` en ese proyecto:
    `prompt` = lo que se pidió, reescrito en castellano limpio; `result` = lo entregado
    (qué, commits con hash VERIFICADO antes de escribirlo, cómo se verificó); `closing` =
-   tu mensaje final del chat al humano, TAL CUAL (markdown ok).
+   tu mensaje final del chat al humano, TAL CUAL (markdown ok); `pending` = TODO lo que
+   encontraste y dejas sin arreglar o sin comprobar, aunque nadie lo pidiera: cada elemento
+   NUEVO se crea como tarea TODO. Lo que sólo se dice en el chat se pierde.
+   **Sin duplicar (16-nov-2026):** mira antes las tareas abiertas (`get_project`); lo que ya
+   tiene tarea se cita como `#id` (basta el número) y no crea nada. Si aun así repites un
+   título igual o casi igual al de una tarea abierta, el servidor no la duplica: la respuesta
+   trae `pendingTasks` (las creadas) y `alreadyOpen` (las que ya existían). `create_task` con
+   el título de una tarea abierta devuelve esa misma (`alreadyExisted`).
 3. **Co-autoría (de suma importancia para Frank)**: cada acción registra QUIÉN te dictó
    la orden. Con el conector (token personal de agente) la co-autoría sale sola: el token
    sabe quién es tu humano y todo queda firmado «<humano> con Claudio». Solo si usas
@@ -122,3 +129,10 @@ curl -s -X POST $BASE/api/projects/{projectId}/worklog -H "Authorization: Bearer
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Lo pedido...","result":"Lo entregado...","closing":"Tu mensaje final, tal cual..."}'
 ```
+
+## Fotos (12-nov-2026)
+Las tareas, la bitácora y los proyectos admiten fotos. Por el conector no viajan bytes: llama `get_upload_link`
+(con `taskId` o `projectId`) y sube cada imagen con `curl -F file=@foto.png <uploadUrl>`; si no tienes shell o red,
+dale el enlace a tu humano, que al abrirlo puede soltar o pegar las fotos. `list_images` devuelve las que hay, con
+una URL para descargarlas y mirarlas. Desde este servidor también vale la API directa:
+`curl -H "Authorization: Bearer $TOKEN" -H 'X-Directed-By: 1' -F file=@foto.png -F target=TASK -F targetId=<id> https://api.eazy-project.com/api/projects/<projectId>/attachments`.
