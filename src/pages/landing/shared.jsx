@@ -206,6 +206,13 @@ export function LandingStyles() {
       }
       .lp-btn-3d:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -2px 0 rgba(0,0,0,.2), 0 7px 0 #1e3a8a, 0 20px 34px -10px rgba(37,99,235,.75); }
       .lp-btn-3d:active { transform: translateY(4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.2), 0 2px 0 #1e3a8a, 0 8px 16px -8px rgba(37,99,235,.6); }
+      /* El verde de WhatsApp con el mismo cuerpo que el botón azul. */
+      .lp-btn-wa { position: relative; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; will-change: transform;
+        background: linear-gradient(180deg, #3ddc7a 0%, #25d366 50%, #16a34a 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.15), 0 6px 0 #166534, 0 16px 30px -10px rgba(22,163,74,.6);
+        text-shadow: 0 1px 0 rgba(0,0,0,.18); }
+      .lp-btn-wa:hover { transform: translateY(-1px); filter: brightness(1.05); }
+      .lp-btn-wa:active { transform: translateY(4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 2px 0 #166534, 0 8px 16px -8px rgba(22,163,74,.5); }
       .lp-btn-3d-ghost {
         background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 100%);
         border: 1px solid rgba(255,255,255,.18);

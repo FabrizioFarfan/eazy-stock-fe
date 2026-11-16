@@ -3,6 +3,14 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.41.0 — 2026-11-16 (WhatsApp a la vista en la web pública)
+- Frank: un mes de reels y nadie intenta registrarse; quien compra este sistema prefiere hablar con alguien antes. WhatsApp pasa de un enlace pequeño a segunda llamada de la portada.
+- Portada: botón verde «Escríbenos por WhatsApp» con el número, al lado de «Crear mi cuenta gratis». «Ver cómo funciona» pasa a enlace de texto debajo.
+- Botón flotante de WhatsApp abajo a la derecha en todas las páginas públicas (va con el pie), y el número en «Soporte» del pie.
+- Se mide en Boss › Visitas: `hero_whatsapp`, `float_whatsapp` y `footer_whatsapp`.
+- El número de la web pública vive en `pages/landing/contact.js`.
+- Pie: «Inicio» salía dos veces en la columna Producto.
+
 ## 1.40.1 — 2026-11-15 (los ajustes de stock, siempre con su signo)
 - William: «desde el ajuste no coinciden las cifras». Comprobado en una copia de su base: el stock cuadra fila a fila. Lo que fallaba era la pantalla: en Stock › Movimientos un ajuste de −1 salía como «1» sin signo, y en el historial de la ficha salía en verde como «+-1», así que parecía que entraba mercadería.
 - Una sola regla para pintar la cantidad de un movimiento (`utils/movementSign.js`, 5 tests): lo que baja el stock lleva «−» en rojo y lo que lo sube «+» en verde. Usada en Stock › Movimientos, la ficha del producto, Reportes y el Dashboard (ahí las ventas salían como «+2» en verde).

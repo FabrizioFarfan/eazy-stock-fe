@@ -28,6 +28,8 @@ import { PeriodSelector, ComingSoonChip } from './landing/Pricing'
 
 // «Probar gratis» → registro propio (15-oct-2026); entrar → login.
 import AppsTesters from './landing/AppsTesters'
+import { WhatsAppCta, WhatsAppFloat, WhatsAppIcon } from './landing/WhatsAppButton'
+import { WHATSAPP_DISPLAY, whatsappLink } from './landing/contact'
 
 const CTA = '/registro'
 const LOGIN = '/login'
@@ -267,19 +269,13 @@ export function Hero() {
                 {t('Crear mi cuenta gratis')}
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link
-                to="/funciones"
-                className="lp-btn-3d-ghost flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-slate-100 sm:w-auto"
-              >
-                {t('Ver cómo funciona')}
-              </Link>
+              <WhatsAppCta track="hero_whatsapp" testId="hero-whatsapp" />
             </div>
-            <p className="mt-3 text-center text-xs text-slate-400 lg:text-left">
-              {t('Sin tarjeta. Solo tu correo y una contraseña.')}{' '}
-              <a href={`https://wa.me/4915511384643?text=${encodeURIComponent(t('Hola, vi Eazy Stock y tengo una pregunta.'))}`} target="_blank" rel="noreferrer"
-                data-testid="hero-whatsapp" className="font-semibold text-emerald-300 underline-offset-2 hover:underline">
-                {t('¿Dudas? Escríbenos por WhatsApp')}
-              </a>
+            <p className="mt-4 text-center text-xs leading-relaxed text-slate-400 lg:text-left">
+              {t('Sin tarjeta. Solo tu correo y una contraseña. Si prefieres, escríbenos y te ayudamos a empezar.')}{' '}
+              <Link to="/funciones" data-testid="hero-how" className="whitespace-nowrap font-semibold text-slate-200 underline-offset-2 hover:underline">
+                {t('Ver cómo funciona')} →
+              </Link>
             </p>
             <Link to="/apps" data-track="hero_apps" data-testid="hero-apps"
               className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10">
@@ -1039,7 +1035,7 @@ const COUNTER_REQUESTS = [
 
 export function OriginStory() {
   const t = useT()
-  const wa = `https://wa.me/4915511384643?text=${encodeURIComponent(t('Hola, vi la web de Eazy Stock y tengo una pregunta:'))}`
+  const wa = whatsappLink(t('Hola, vi la web de Eazy Stock y tengo una pregunta:'))
   return (
     <section id="de-donde-sale" className="scroll-mt-28 bg-gray-50 py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -1271,6 +1267,7 @@ export function CtaBanner() {
 export function Footer() {
   const t = useT()
   return (
+    <>
     <footer className="bg-[#0a0e1a] py-16">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="grid gap-8 md:grid-cols-4">
@@ -1287,7 +1284,6 @@ export function Footer() {
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Producto')}</p>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="text-slate-500 transition-colors hover:text-white">{t('Inicio')}</Link></li>
               {NAV.map((n) => (
                 <li key={n.to}><Link to={n.to} className="text-slate-500 transition-colors hover:text-white">{t(n.label)}</Link></li>
               ))}
@@ -1305,6 +1301,13 @@ export function Footer() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">{t('Soporte')}</p>
             <ul className="space-y-2 text-sm text-slate-500">
               <li>{t('Tutorial en cada pantalla')}</li>
+              <li>
+                <a href={whatsappLink(t('Hola, vi Eazy Stock y tengo una pregunta.'))} target="_blank" rel="noopener noreferrer"
+                  data-track="footer_whatsapp" data-testid="footer-whatsapp"
+                  className="inline-flex items-center gap-1.5 font-semibold text-emerald-400 transition-colors hover:text-emerald-300">
+                  <WhatsAppIcon size={15} /> WhatsApp <span className="tabular-nums">{WHATSAPP_DISPLAY}</span>
+                </a>
+              </li>
               <li><a href="mailto:kontakt.eazylife@gmail.com" className="transition-colors hover:text-white">kontakt.eazylife@gmail.com</a></li>
               <li><a href="https://eazylifecompany.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-slate-300 transition-colors hover:text-white">Eazy Life Company <ArrowRight size={12} /></a></li>
             </ul>
@@ -1330,6 +1333,8 @@ export function Footer() {
         </div>
       </div>
     </footer>
+    <WhatsAppFloat />
+    </>
   )
 }
 
