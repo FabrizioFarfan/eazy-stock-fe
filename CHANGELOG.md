@@ -3,6 +3,13 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.42.0 — 2026-11-19 (William: «desde ahora me lo trae este proveedor»)
+- William cambió de proveedor en un producto y su ficha seguía diciendo el viejo. Al guardar una compra con productos que eran de otro proveedor, se pregunta por cada uno: «Sí, desde ahora me lo trae X» o «No, solo esta compra». No hay respuesta marcada de antemano; con varios productos hay «Todos: …».
+- Sale antes del aviso de cambio de precio, en «Registrar recepción» y al completar el costo de una entrada simple. Solo a quien puede gestionar productos.
+- Cambiar de proveedor dentro de la recepción ya no vacía el carrito: desde la ficha del producto se entra con el proveedor viejo y ahora basta cambiarlo.
+- Un producto «Sin proveedor asignado» se pregunta igual, con su propio texto.
+- `SupplierChangeModal`, `utils/supplierChanges.js` (con tests), textos en `i18n/dict/supplierChange.js`. Pide API 1.28.0.
+
 ## 1.41.0 — 2026-11-16 (WhatsApp a la vista en la web pública)
 - Frank: un mes de reels y nadie intenta registrarse; quien compra este sistema prefiere hablar con alguien antes. WhatsApp pasa de un enlace pequeño a segunda llamada de la portada.
 - Portada: botón verde «Escríbenos por WhatsApp» con el número, al lado de «Crear mi cuenta gratis». «Ver cómo funciona» pasa a enlace de texto debajo.

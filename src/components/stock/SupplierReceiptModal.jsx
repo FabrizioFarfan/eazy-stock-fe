@@ -10,10 +10,12 @@ import { useCreateSupplierReceipt } from '../../hooks/useSupplierReceipts'
 import { useReferenceCheck, useCreateSimpleReceipt } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
 import PriceChangeModal from './PriceChangeModal'
+import SupplierChangeModal from './SupplierChangeModal'
 import ReceiptParameters from './ReceiptParameters'
 import LotFields from './LotFields'
 import { attributesDelta } from '../../utils/parameters'
 import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
+import { supplierChanges, adoptFields } from '../../utils/supplierChanges'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
 import ProductFormModal from '../products/ProductFormModal'
@@ -75,6 +77,9 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const draft = draftRef.current
   const [restoredBanner, setRestoredBanner] = useState(!!draft?.items?.length)
   const [priceReview, setPriceReview] = useState(null)
+  // William, 19-nov-2026: un producto que era de otro proveedor → al guardar se pregunta si cambia de proveedor.
+  const [supplierReview, setSupplierReview] = useState(null)
+  const supplierDecisionsRef = useRef({})
   const [paramsOpen, setParamsOpen] = useState(false)
 
   // ── Producto nuevo: abre el modal COMPLETO de producto (con código de
@@ -134,14 +139,15 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = items }, [items])
 
-  // Si el OWNER cambia de proveedor, vaciamos el carrito (productos eran del
-  // otro). El ref evita vaciar el carrito inicial en el primer render.
+  // Cambiar de proveedor ya NO vacía el carrito (19-nov-2026): el buscador mira todo el catálogo y William cambia
+  // de proveedor justo con el producto ya puesto (entra desde su ficha, que trae el proveedor viejo). Al guardar
+  // se pregunta por los productos que eran de otro.
   const prevSupplierIdRef = useRef(supplier?.id)
   useEffect(() => {
     if (prevSupplierIdRef.current === supplier?.id) return
     prevSupplierIdRef.current = supplier?.id
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems([]); setProductQuery('')
+    setProductQuery('')
   }, [supplier?.id])
 
   // ── Receipt header ───────────────────────────────────────────────────────
@@ -337,6 +343,17 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
       return
     }
 
+    // Cambiar el proveedor de la ficha es cosa de quien gestiona productos; sin ese permiso, la compra entra como siempre.
+    const moved = can('canManageProducts') ? supplierChanges(items.map((i) => ({
+      id: i.product.id, name: i.product.name, supplierId: i.product.supplierId, supplierName: i.product.supplierName,
+    })), supplier) : []
+    if (moved.length > 0) { setSupplierReview(moved); return }
+    await reviewPrices({})
+  }
+
+  const reviewPrices = async (supplierDecisions) => {
+    setSupplierReview(null)
+    supplierDecisionsRef.current = supplierDecisions
     // Frank, 7-nov-2026: si algo cambió de precio, antes de guardar se enseña y se pregunta.
     const changes = purchasePriceChanges(items.map((i) => ({
       id: i.product.id,
@@ -362,6 +379,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             unitCost:  i.unitCost ?? null,
             salePrice: i.salePrice ?? null,
             ...decisionFields(decisions, i.product.id),
+            ...adoptFields(supplierDecisionsRef.current, i.product.id),
             ...(Object.keys(attributesDelta(i.product.attributes, lineAttributes(i))).length > 0
               ? { parameters: attributesDelta(i.product.attributes, lineAttributes(i)) } : {}),
             ...(i.lot && Object.keys(i.lot).length > 0 ? { lot: i.lot } : {}),
@@ -405,6 +423,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
           </button>
         </div>
 
+        {supplierReview && <SupplierChangeModal changes={supplierReview} onConfirm={reviewPrices} onCancel={() => setSupplierReview(null)} />}
         {priceReview && <PriceChangeModal changes={priceReview} onConfirm={saveReceipt} onCancel={() => setPriceReview(null)} />}
         <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-col">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
@@ -679,6 +698,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                             <p className="mt-1.5 text-xs font-medium text-violet-600">
                               {t('Habitual de {other} — es el mismo producto: el stock se suma y esta compra queda a nombre de', { other: it.product.supplierName ?? t('otro proveedor') })}{' '}
                               <span className="font-semibold">{supplier?.name}</span>
+                              {can('canManageProducts') && <>. {t('Al guardar te preguntamos si cambia de proveedor.')}</>}
                             </p>
                           )}
                           {can('canManageProducts') && (

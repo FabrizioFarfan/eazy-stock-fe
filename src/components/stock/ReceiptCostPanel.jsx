@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Loader2, Check, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCompleteReceiptCost, useReferenceCheck } from '../../hooks/useReceipts'
 import ReferenceCheckHint from './ReferenceCheckHint'
 import PriceChangeModal from './PriceChangeModal'
+import SupplierChangeModal from './SupplierChangeModal'
+import { supplierChanges, adoptFields } from '../../utils/supplierChanges'
+import { useAuth } from '../../context/AuthContext'
 import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import PriceInput from '../inputs/PriceInput'
 import { formatPrice } from '../../utils/formatMoney'
@@ -22,6 +25,7 @@ import { useT } from '../../i18n'
 export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
   const t = useT()
   const complete = useCompleteReceiptCost()
+  const { can } = useAuth()
   const suggested = receipt.suggestedCosts ?? {}
 
   // Una línea por producto (la entrada simple no repite productos).
@@ -31,6 +35,9 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
     productSku: m.productSku,
     quantity: Number(m.quantity),
     unitCost: suggested[m.productId] != null ? Number(suggested[m.productId]) : null,
+    // Proveedor habitual del producto (no el de la recepción): si es otro, al guardar se pregunta si cambia.
+    supplierId: m.supplierId,
+    supplierName: m.supplierName,
   })))
   const [paymentMode, setPaymentMode] = useState('CASH')
   const [totalAmount, setTotalAmount] = useState(null)
@@ -38,6 +45,8 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
   const [reference, setReference] = useState(receipt.referenceDocument ?? '')
   const [error, setError] = useState(null)
   const [priceReview, setPriceReview] = useState(null)
+  const [supplierReview, setSupplierReview] = useState(null)
+  const supplierDecisionsRef = useRef({})
 
   const refCheck = useReferenceCheck(receipt.supplierId, reference, receipt.id)
   const refDuplicated = !!(refCheck.result?.exists && refCheck.result?.sameSupplier)
@@ -60,6 +69,16 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
       setError(t('La factura «{ref}» ya está registrada para {supplier}. Corregí el número o anulá la recepción anterior.', { ref: refCheck.result.referenceDocument, supplier: receipt.supplierName }))
       return
     }
+    const moved = can('canManageProducts') ? supplierChanges(lines.map((l) => ({
+      id: l.productId, name: l.productName, supplierId: l.supplierId, supplierName: l.supplierName,
+    })), { id: receipt.supplierId, name: receipt.supplierName }) : []
+    if (moved.length > 0) { setSupplierReview(moved); return }
+    await reviewPrices({})
+  }
+
+  const reviewPrices = async (supplierDecisions) => {
+    setSupplierReview(null)
+    supplierDecisionsRef.current = supplierDecisions
     const changes = purchasePriceChanges(lines.map((l) => ({
       id: l.productId, name: l.productName, quantity: l.quantity, oldCost: suggested[l.productId], newCost: l.unitCost, salePrice: null,
     })))
@@ -74,7 +93,7 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
         id: receipt.id,
         supplierId: receipt.supplierId,
         data: {
-          items: lines.map((l) => ({ productId: l.productId, unitCost: Number(l.unitCost), salePrice: null, ...decisionFields(decisions, l.productId) })),
+          items: lines.map((l) => ({ productId: l.productId, unitCost: Number(l.unitCost), salePrice: null, ...decisionFields(decisions, l.productId), ...adoptFields(supplierDecisionsRef.current, l.productId) })),
           totalAmount: Math.round(finalTotal * 100) / 100,
           paymentMode,
           referenceDocument: reference.trim() || null,
@@ -91,6 +110,7 @@ export default function ReceiptCostPanel({ receipt, onDone, onCancel }) {
 
   return (
     <div className="space-y-4" data-testid="receipt-cost-panel">
+      {supplierReview && <SupplierChangeModal changes={supplierReview} onConfirm={reviewPrices} onCancel={() => setSupplierReview(null)} />}
       {priceReview && <PriceChangeModal changes={priceReview} onConfirm={save} onCancel={() => setPriceReview(null)} />}
       <p className="text-sm text-gray-600">
         {t('{who} anotó lo que llegó de {supplier}. Pon cuánto costó cada producto y cómo se pagó.', { who: receipt.createdByName, supplier: receipt.supplierName })}
