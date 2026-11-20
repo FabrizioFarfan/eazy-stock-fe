@@ -3,6 +3,9 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.43.1 — 2026-11-20 (William: el nuevo precio de venta en la recepción solo dejaba 2 decimales)
+- En «Registrar recepción», el campo «Nuevo precio de venta» de cada producto cortaba a 2 decimales, cuando el costo de esa misma línea y el precio de venta en el resto de la app (producto, Nueva venta, aviso de cambio de precio) admiten hasta 6. Un tornillo a 0.0357 no se podía poner ahí. Ahora admite hasta 6.
+
 ## 1.43.0 — 2026-11-20 (William: comparar proveedores por producto y elegir el grupo al vender)
 - William: el mismo producto se lo traen dos o tres proveedores y el precio va cambiando; quiere saber quién lo tiene más barato. Al armar el pedido de un proveedor, un aviso dice qué productos compró más barato a otro la última vez (los dos precios, las fechas, el % y cuánto se ahorraría con las cantidades del pedido) y cada uno se puede pasar al pedido del otro («Pasar al pedido de X», o todos de una vez). Lo pasado espera en el pedido de ese proveedor y se puede abrir ahí mismo; el pedido actual se guarda.
 - Ficha del producto: «Quién te lo trae y a cuánto», la última compra a cada proveedor del más barato al más caro, con el de siempre y el más barato marcados. Solo sale si lo trajeron dos o más; el vendedor que no ve costos no lo ve.

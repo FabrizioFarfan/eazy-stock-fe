@@ -682,7 +682,7 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                                 label={t('Nuevo precio de venta')}
                                 value={it.salePrice ?? Number(it.product.salePrice ?? 0)}
                                 onChange={(v) => changeSalePrice(it.product.id, v)}
-                                maxDecimals={2}
+                                maxDecimals={6}
                               />
                             </div>
                           )}
