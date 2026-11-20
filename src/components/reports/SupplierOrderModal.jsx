@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2, Download, MessageCircle, AlertTriangle } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { X, Trash2, Plus, Search, Printer, Undo2, FileText, Loader2, Download, MessageCircle, AlertTriangle, TrendingDown, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useProductSearch } from '../../hooks/useProducts'
 import LoadMoreRow from '../common/LoadMoreRow'
@@ -10,6 +10,10 @@ import { makeSupplierOrder, downloadSupplierOrderPdf, shareSupplierOrderWhatsApp
 import { formatQty } from '../../utils/quantity'
 import { useT } from '../../i18n'
 import { formatNumericDate } from '../../utils/formatDate'
+import { formatPrice, formatAmount } from '../../utils/formatMoney'
+import { useSupplierPrices } from '../../hooks/useSupplierPrices'
+import { useSuppliers } from '../../hooks/useSuppliers'
+import { cheaperRows, addExtra, peekExtras, setExtras, mergeExtras } from '../../utils/supplierCompare'
 
 /**
  * Previsual EDITABLE de la orden de pedido antes de generar el PDF (pedido de
@@ -45,26 +49,59 @@ function loadOrderDraft(key) {
   } catch { return null }
 }
 
-export default function SupplierOrderModal({ supplier, items: initialItems, user, businessId, title, subtitle, onClose }) {
+/**
+ * Comparar proveedores (William, 20-nov-2026): desde el pedido de un proveedor se puede saltar al de otro (el que lo
+ * dio más barato). Este envoltorio guarda a qué proveedor se saltó; el pedido de dentro se monta de nuevo con él.
+ */
+export default function SupplierOrderModal(props) {
+  const [other, setOther] = useState(null) // { supplier } cuando se saltó al pedido de otro proveedor
+  const supplier = other?.supplier ?? props.supplier
+  return (
+    <OrderModal key={supplier?.id ?? 'none'} {...props}
+      supplier={supplier}
+      items={other ? [] : props.items}
+      title={other ? undefined : props.title}
+      subtitle={other ? undefined : props.subtitle}
+      onSwitchSupplier={(s) => setOther({ supplier: s })}
+    />
+  )
+}
+
+function OrderModal({ supplier, items: initialItems, user, businessId, title, subtitle, onClose, onSwitchSupplier }) {
   const t = useT()
   const [busy, setBusy] = useState(null)
-  const draftKey = orderDraftKey(businessId ?? user?.businessId, supplier?.id)
+  const bizKey = businessId ?? user?.businessId
+  const draftKey = orderDraftKey(bizKey, supplier?.id)
   const [draft] = useState(() => loadOrderDraft(draftKey))
-  const [rows, setRows]       = useState(() => draft?.rows ?? initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
+  // Lo que se pasó a este proveedor desde el pedido de otro (filas con `movedFrom`) entra aquí al abrir. Esas filas no
+  // van en el borrador: siguen apuntadas aparte hasta que el pedido se envía, así no tapan lo que Resurtido sugiera luego.
+  const [rows, setRows]       = useState(() => mergeExtras(
+    draft?.rows ?? initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })),
+    peekExtras(localStorage, bizKey, supplier?.id),
+  ))
   const [removed, setRemoved] = useState(() => draft?.removed ?? [])
   const [notes, setNotes]     = useState(() => draft?.notes ?? '')
   const [restoredBanner, setRestoredBanner] = useState(!!draft)
+  const hasDraft = useRef(!!draft) // ya hay borrador guardado de este pedido (cargado o escrito en esta visita)
 
   useEffect(() => {
+    const own = rows.filter((r) => !r.movedFrom)
+    setExtras(localStorage, bizKey, supplier?.id, rows.filter((r) => r.movedFrom))
+    // Abierto solo para ver lo que vino de otro pedido: sin nada propio no se crea borrador.
+    if (!hasDraft.current && own.length === 0 && removed.length === 0 && !notes) return
+    hasDraft.current = true
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ rows, removed, notes, savedAt: Date.now() }))
+      localStorage.setItem(draftKey, JSON.stringify({ rows: own, removed, notes, savedAt: Date.now() }))
     } catch { /* best-effort */ }
-  }, [draftKey, rows, removed, notes])
+  }, [draftKey, bizKey, supplier?.id, rows, removed, notes])
 
-  const clearDraft = () => { try { localStorage.removeItem(draftKey) } catch { /* noop */ } }
+  const clearDraft = () => {
+    try { localStorage.removeItem(draftKey) } catch { /* noop */ }
+    setExtras(localStorage, bizKey, supplier?.id, [])
+  }
   const discardDraft = () => {
-    clearDraft()
-    setRows(initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })))
+    try { localStorage.removeItem(draftKey) } catch { /* noop */ }
+    setRows((rs) => mergeExtras(initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })), rs.filter((r) => r.movedFrom)))
     setRemoved([])
     setNotes('')
     setRestoredBanner(false)
@@ -128,6 +165,31 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
     if (!aboveMin.length) return
     setRows((rs) => rs.filter((r) => !aboveMin.some((a) => a.productId === r.productId)))
     setRemoved((rm) => [...rm, ...aboveMin])
+  }
+
+  // ── Comparar proveedores: lo que otro proveedor dio más barato la última vez ──────────────────────────────────
+  const rowIds = useMemo(() => rows.map((r) => r.productId), [rows])
+  const { byProduct } = useSupplierPrices(rowIds, businessId, { enabled: !!supplier?.id })
+  const cheaper = useMemo(() => cheaperRows(rows, byProduct, supplier?.id), [rows, byProduct, supplier?.id])
+  const cheaperById = useMemo(() => Object.fromEntries(cheaper.map((c) => [c.row.productId, c])), [cheaper])
+  const cheaperTotal = cheaper.reduce((s, c) => s + c.total, 0)
+  // Los proveedores con su teléfono, para poder abrir el pedido del otro tal cual.
+  const { data: suppliersData } = useSuppliers({ size: 200, ...(businessId && { businessId }) }, { enabled: cheaper.length > 0 })
+  const supplierList = suppliersData?.content ?? (Array.isArray(suppliersData) ? suppliersData : [])
+  const fullSupplier = (id, name) => supplierList.find((s) => s.id === id) ?? { id, name }
+  // Pedidos de otros proveedores con productos esperando (pasados desde aquí): { [supplierId]: { name, count } }.
+  const [waiting, setWaiting] = useState({})
+  const moveTo = (hit) => {
+    const { row, best } = hit
+    const count = addExtra(localStorage, bizKey, best.supplierId, { ...row, added: true, movedFrom: supplier?.name })
+    setRows((rs) => rs.filter((r) => r.productId !== row.productId))
+    setWaiting((w) => ({ ...w, [best.supplierId]: { name: best.supplierName, count } }))
+    toast.success(t('«{name}» pasó al pedido de {supplier}.', { name: row.productName, supplier: best.supplierName }))
+  }
+  const moveAll = () => cheaper.forEach(moveTo)
+  const openOther = (id, name) => {
+    if (peekExtras(localStorage, bizKey, id).length === 0) return
+    onSwitchSupplier?.(fullSupplier(id, name))
   }
 
   const validRows = rows.filter((r) => Number(r.qty) > 0)
@@ -255,6 +317,70 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
               </div>
             )}
 
+            {/* Comparar proveedores: aviso de lo que otro dio más barato (solo lo ve el negocio, no sale en el PDF) */}
+            {cheaper.length > 0 && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3" data-testid="order-cheaper">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <TrendingDown size={16} className="mt-0.5 flex-shrink-0 text-amber-700" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-900">
+                        {cheaper.length === 1
+                          ? t('Mira: 1 producto de este pedido lo compraste más barato a otro proveedor')
+                          : t('Mira: {n} productos de este pedido los compraste más barato a otro proveedor', { n: cheaper.length })}
+                      </p>
+                      <p className="text-xs text-amber-800">
+                        {t('Con las cantidades de este pedido pagarías unos {amount} menos. Es según la última compra a cada uno: confirma el precio de hoy.', { amount: formatAmount(cheaperTotal) })}
+                      </p>
+                    </div>
+                  </div>
+                  {cheaper.length > 1 && (
+                    <button type="button" onClick={moveAll} data-testid="order-cheaper-move-all"
+                      className="flex-shrink-0 rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">
+                      {t('Pasar todos al más barato')}
+                    </button>
+                  )}
+                </div>
+                <ul className="mt-2 divide-y divide-amber-100 rounded-lg bg-white ring-1 ring-amber-100">
+                  {cheaper.map((c) => (
+                    <li key={c.row.productId} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3 py-2" data-testid="order-cheaper-row">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{c.row.productName}</p>
+                        <p className="text-xs text-gray-600">
+                          <span className="inline-block">{supplier?.name}: <strong>{formatPrice(c.mine.unitCost)}</strong> <span className="text-gray-400">({formatNumericDate(c.mine.date)})</span></span>
+                          <span className="mx-1.5 text-gray-300">·</span>
+                          <span className="inline-block"><span className="text-emerald-700">{c.best.supplierName}: <strong>{formatPrice(c.best.unitCost)}</strong></span> <span className="text-gray-400">({formatNumericDate(c.best.date)})</span>
+                          <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">−{c.pct}%</span></span>
+                        </p>
+                      </div>
+                      <button type="button" onClick={() => moveTo(c)} data-testid="order-cheaper-move"
+                        className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                        {t('Pasar al pedido de {supplier}', { supplier: c.best.supplierName })} <ArrowRight size={12} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-[11px] text-amber-700">{t('Si lo dejas aquí, se pide a {supplier} como siempre.', { supplier: supplier?.name ?? '' })}</p>
+              </div>
+            )}
+
+            {/* Lo que ya se pasó a otro proveedor: su pedido espera */}
+            {Object.keys(waiting).length > 0 && (
+              <div className="mt-3 space-y-1.5" data-testid="order-waiting">
+                {Object.entries(waiting).map(([id, w]) => (
+                  <div key={id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                    <p className="text-xs text-emerald-900">
+                      {t('En el pedido de {supplier} te esperan {n} producto(s). Termina este y ábrelo, o ábrelo ahora (este se guarda).', { supplier: w.name, n: w.count })}
+                    </p>
+                    <button type="button" onClick={() => openOther(id, w.name)} data-testid="order-open-other"
+                      className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                      {t('Abrir pedido de {supplier}', { supplier: w.name })} <ArrowRight size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Tabla editable */}
             <div className="mt-5 overflow-x-auto rounded-xl border border-gray-100">
               <table className="w-full text-sm">
@@ -280,7 +406,13 @@ export default function SupplierOrderModal({ supplier, items: initialItems, user
                         <td className="px-3 py-2 font-mono text-xs text-gray-600">{r.providerCode || '—'}</td>
                         <td className="px-3 py-2 font-medium text-gray-900">
                           {r.productName}
-                          {r.added && <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{t('agregado')}</span>}
+                          {r.added && <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{r.movedFrom ? t('venía del pedido de {supplier}', { supplier: r.movedFrom }) : t('agregado')}</span>}
+                          {cheaperById[r.productId] && (
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+                              title={t('Solo lo ves tú: no sale en el documento')}>
+                              <TrendingDown size={10} /> {t('más barato con {supplier}', { supplier: cheaperById[r.productId].best.supplierName })}
+                            </span>
+                          )}
                           {r.currentStock != null && r.minStock != null && (
                             <span className={`block text-[11px] font-normal ${isLow(r) ? 'text-red-500' : 'text-gray-400'}`}
                               title={t('Solo lo ves tú: no sale en el documento')}>

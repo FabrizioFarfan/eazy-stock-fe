@@ -1,4 +1,5 @@
 import { formatPrice, currencySymbol } from '../utils/formatMoney'
+import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -606,7 +607,8 @@ function TabSupplierRestock({ businessId }) {
         qty: Math.max(Number(r.sold) || 0, Math.max(0, (Number(r.minStock) || 0) - (Number(r.currentStock) || 0))),
       }))
       .filter((it) => it.qty > 0)
-    if (!items.length) return
+    // Sin ventas en el período ni nada bajo el mínimo: se dice (antes el botón no hacía nada).
+    if (!items.length) { toast.info(t('No hay nada que pedirle en este período: no se vendió nada suyo ni hay productos bajo el mínimo. Prueba con un período más largo.')); return }
     setOrderPreview({
       supplier: { id: s?.id, name: s?.name ?? supplierName, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
       items,

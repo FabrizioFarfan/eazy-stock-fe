@@ -3,6 +3,15 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.43.0 — 2026-11-20 (William: comparar proveedores por producto y elegir el grupo al vender)
+- William: el mismo producto se lo traen dos o tres proveedores y el precio va cambiando; quiere saber quién lo tiene más barato. Al armar el pedido de un proveedor, un aviso dice qué productos compró más barato a otro la última vez (los dos precios, las fechas, el % y cuánto se ahorraría con las cantidades del pedido) y cada uno se puede pasar al pedido del otro («Pasar al pedido de X», o todos de una vez). Lo pasado espera en el pedido de ese proveedor y se puede abrir ahí mismo; el pedido actual se guarda.
+- Ficha del producto: «Quién te lo trae y a cuánto», la última compra a cada proveedor del más barato al más caro, con el de siempre y el más barato marcados. Solo sale si lo trajeron dos o más; el vendedor que no ve costos no lo ve.
+- Nada que mantener a mano: sale de las compras registradas. Solo lo ve el negocio; el PDF del pedido no cambia.
+- William: 10 martillos, 5 con agarre adherente y 5 sin, y quiere facturar solo los de un grupo. En Nueva venta la tarjeta del producto ya deja elegir «De cuál» antes de agregar (con lo que queda de cada grupo), y buscar «martillo agarre» encuentra el producto y trae ese grupo marcado. Antes el grupo solo se elegía ya dentro del carrito y el buscador no miraba los lotes.
+- Resurtido: «Armar pedido» sin nada que pedir en el período ahora lo dice (antes el botón no hacía nada).
+- `version.json` en la raíz del sitio tras cada build, para comprobar en el dominio qué versión está puesta.
+- `utils/supplierCompare.js` (con tests), `hooks/useSupplierPrices.js`, `components/products/SupplierOffers.jsx`, `SupplierOrderModal`, `lotMatching` en `utils/lots.js`, textos en `i18n/dict/supplierCompare.js`. Pide API 1.29.0.
+
 ## 1.42.0 — 2026-11-19 (William: «desde ahora me lo trae este proveedor»)
 - William cambió de proveedor en un producto y su ficha seguía diciendo el viejo. Al guardar una compra con productos que eran de otro proveedor, se pregunta por cada uno: «Sí, desde ahora me lo trae X» o «No, solo esta compra». No hay respuesta marcada de antemano; con varios productos hay «Todos: …».
 - Sale antes del aviso de cambio de precio, en «Registrar recepción» y al completar el costo de una entrada simple. Solo a quien puede gestionar productos.

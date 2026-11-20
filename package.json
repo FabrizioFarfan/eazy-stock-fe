@@ -1,11 +1,11 @@
 {
   "name": "eazy-stock-fe",
   "private": true,
-  "version": "1.42.0",
+  "version": "1.43.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build && node scripts/prerender.mjs && node scripts/version-json.mjs",
     "lint": "eslint .",
     "test": "node --test src/utils/*.test.mjs",
     "preview": "vite preview"

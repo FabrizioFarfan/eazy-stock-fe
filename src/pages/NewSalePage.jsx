@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { lotBuckets, defaultLot, lineKey, stockKey, availableFor, lotMissing, changeLineLot } from '../utils/lots'
+import { lotBuckets, defaultLot, lineKey, stockKey, availableFor, lotMissing, changeLineLot, lotMatching } from '../utils/lots'
 import {
   saleUnitsOf, saleUnitOf, baseQuantity, listPriceOf, isVariablePrice, startingPrice, withSaleUnit, suggestSaleUnit,
   applySuggestion, quantityIsValid, maxInSaleUnit, overStockLines, saleUnitField, unitNameOf,
@@ -50,8 +50,14 @@ function parseNumber(s) {
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
-function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }) {
+function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved, query = '' }) {
   const t = useT()
+  // De cuál (William, 20-nov-2026: 10 martillos, 5 con agarre adherente y 5 sin): el grupo se elige ya en la tarjeta,
+  // y si lo que se buscó nombra a uno («martillo agarre») viene marcado. undefined = se elige luego en el carrito.
+  const buckets = lotBuckets(product)
+  const [lotPick, setLotPick] = useState(() => lotMatching(buckets, product, query))
+  const picked = lotPick === undefined ? null : buckets.find((b) => b.lotId === lotPick) ?? null
+  const stockHere = picked ? picked.quantity : Number(product.currentStock ?? 0)
   // Creado al vuelo y «por completar» (20-oct): se vende aunque no tenga stock cargado.
   const quick      = !!product.quickCreated
   const noStock    = product.currentStock === 0 && !quick
@@ -104,10 +110,10 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
 
   const q = Number(qty)
   const qtyInvalid = !Number.isFinite(q) || !quantityIsValid(draft)
-    || (!quick && baseQuantity(draft) > Number(product.currentStock ?? 0) + 1e-9)
+    || (!quick && baseQuantity(draft) > stockHere + 1e-9)
 
   const handleAdd = () => {
-    onAdd(product, q, !form && priceOpen && price != null ? price : null, form ? form.id : null)
+    onAdd(product, q, !form && priceOpen && price != null ? price : null, form ? form.id : null, picked ? picked.lotId : undefined)
     setQty(1); setPriceOpen(false); setPrice(null); setUnitId(null)
   }
 
@@ -201,7 +207,7 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
               value={qty}
               onChange={setQty}
               unit={form ? form.name : product.unit || t('unidad')}
-              max={quick ? undefined : maxInSaleUnit(product.currentStock, draft)}
+              max={quick ? undefined : maxInSaleUnit(stockHere, draft)}
               maxDecimals={3}
               className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             />
@@ -212,6 +218,25 @@ function ProductCard({ product, inCart, onAdd, canEditPrices, onSalePriceSaved }
           </div>
         )}
       </div>
+
+      {/* ¿De cuál? Solo si el stock del producto está repartido en grupos (lotes por parámetro). */}
+      {buckets.length > 1 && !inCart && !noStock && (
+        <div className="mt-2.5" data-testid="card-lot-picker">
+          <p className="mb-1 text-xs font-semibold text-gray-500">{t('De cuál')}</p>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup">
+            {buckets.map((b) => {
+              const on = picked?.lotId === b.lotId
+              return (
+                <button key={b.lotId ?? 'loose'} type="button" role="radio" aria-checked={on} data-testid="card-lot-option"
+                  onClick={() => { setLotPick(on ? undefined : b.lotId); setQty(1) }}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors ${on ? 'border-violet-600 bg-violet-600 text-white' : 'border-gray-200 bg-white text-gray-700 hover:border-violet-300'}`}>
+                  {b.label ?? t('Sin lote')} <span className={on ? 'text-violet-100' : 'text-gray-400'}>· {formatQty(b.quantity)}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ¿Cómo lo lleva? Solo si el producto tiene formas de venta. */}
       {forms.length > 0 && !inCart && !noStock && (
@@ -775,13 +800,13 @@ export default function NewSalePage() {
 
   // La tarjeta puede mandar cantidad y precio ya decididos; el escáner usa
   // los defaults (1 unidad, precio de lista).
-  const addToCart = (product, quantity = 1, priceOverride = null, saleUnitId = null) => {
+  const addToCart = (product, quantity = 1, priceOverride = null, saleUnitId = null, lotId = undefined) => {
     setCart((prev) => [
       ...prev,
       {
         product,
         quantity,
-        lotId: defaultLot(product),
+        lotId: lotId !== undefined ? lotId : defaultLot(product),
         // Forma de venta (ciento, caja…): la cantidad y el precio de la línea van en esa forma. null = por unidad.
         saleUnitId,
         // Precio variable arranca vacío para forzar al cajero a definirlo
@@ -1138,7 +1163,7 @@ export default function NewSalePage() {
           ) : (
             <div className="space-y-2.5">
               {searchResults.map((p) => (
-                <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart}
+                <ProductCard key={p.id} product={p} inCart={cartIds.has(p.id)} onAdd={addToCart} query={debouncedSearch}
                   canEditPrices={canEditPrices} onSalePriceSaved={onSalePriceSaved} />
               ))}
               <LoadMoreRow search={productSearch} className="border-t-0" />

@@ -5,6 +5,9 @@ export const productsApi = {
   // params: { page, size, search, lowStock, active, businessId }
 
   getById: (id) => api.get(`/products/${id}`),
+  // Comparar proveedores (William, 20-nov-2026): última compra de cada producto a cada proveedor, del más barato al más caro.
+  // body: { productIds: [...], businessId? } → [{ productId, supplierId, offers: [{ supplierId, supplierName, unitCost, quantity, date, receiptId, referenceDocument }] }]
+  supplierPrices: (body) => api.post('/supplier-prices', body),
   // Lotes (William, 7-nov-2026): repartir el stock sin cambiar el total
   separateLot: (id, data) => api.post(`/products/${id}/lots`, data),
   setLotQuantity: (id, lotId, quantity) => api.put(`/products/${id}/lots/${lotId}`, { quantity }),

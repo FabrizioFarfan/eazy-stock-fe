@@ -1,4 +1,5 @@
 import { X, Package, TrendingUp, TrendingDown, ArrowUpDown, QrCode, Tag, Truck, FolderOpen, AlertTriangle, CalendarClock, Edit, Trash2, ArrowDownToLine, SlidersHorizontal, Eye, MapPin, Maximize2, Merge, Loader2, History, PackagePlus } from 'lucide-react'
+import SupplierOffers from './SupplierOffers'
 import { imageSrc } from '../../utils/productImage'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -303,6 +304,9 @@ export default function ProductDetailModal({ product, onClose, hideHistoryLink =
               {/* Repetidos: mismo nombre con otro código. Hasta el 16-sep cada recepción
                   de otro proveedor creaba un clon (TRIZ ×2); el dueño los fusiona desde acá. */}
               <ProductLots product={product} />
+
+              {/* Comparar proveedores (William, 20-nov-2026): a quién se le compró y a cuánto la última vez */}
+              {!hidesCost && <SupplierOffers product={product} businessId={bizParam.businessId} />}
 
               {onMerged && <DuplicatesSection product={product} onMerged={onMerged} />}
 

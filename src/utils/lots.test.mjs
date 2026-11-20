@@ -49,3 +49,15 @@ test('cambiar de lote: si ya hay línea de ese lote, se juntan', () => {
   assert.deepEqual(other.map((i) => i.lotId), [null, 'l1'])
   assert.notEqual(lineKey(a), lineKey({ ...a, lotId: null }))
 })
+
+test('lo buscado marca el grupo que nombra: «martillo agarre» → el lote con agarre', async () => {
+  const { lotMatching } = await import('./lots.js')
+  const buckets = [{ lotId: null, label: null, quantity: 5 }, { lotId: 'l1', label: 'Agarre adherente: Sí', quantity: 5 }]
+  const martillo = { name: 'Martillo Truper 16 oz' }
+  assert.equal(lotMatching(buckets, martillo, 'martillo agarre'), 'l1')
+  assert.equal(lotMatching(buckets, martillo, 'martillo ADHERÉNTE'), 'l1')
+  assert.equal(lotMatching(buckets, martillo, 'martillo truper'), undefined) // solo nombra al producto
+  assert.equal(lotMatching(buckets, martillo, ''), undefined)
+  // Dos grupos lo nombran: no se adivina
+  assert.equal(lotMatching([{ lotId: 'a', label: 'Color: Rojo', quantity: 1 }, { lotId: 'b', label: 'Color: Azul', quantity: 1 }], martillo, 'martillo color'), undefined)
+})

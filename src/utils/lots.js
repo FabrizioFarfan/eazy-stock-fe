@@ -60,3 +60,17 @@ export function changeLineLot(cart, key, lotId) {
   if (!target) return cart.map((i) => (i === line ? moved : i))
   return cart.filter((i) => i !== line).map((i) => (i === target ? { ...i, quantity: num(i.quantity) + num(line.quantity) } : i))
 }
+
+const plain = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+/**
+ * El grupo que nombra lo buscado (William, 20-nov-2026: «martillo agarre» → el lote «Agarre adherente: Sí»): una palabra
+ * de 3 letras o más que está en la etiqueta de UN solo grupo y no en el nombre del producto. Si no, undefined.
+ */
+export function lotMatching(buckets, product, query) {
+  const name = plain(product?.name)
+  const words = plain(query).split(/\s+/).filter((w) => w.length >= 3 && !name.includes(w))
+  if (words.length === 0) return undefined
+  const hits = (buckets ?? []).filter((b) => b.label && words.some((w) => plain(b.label).includes(w)))
+  return hits.length === 1 ? hits[0].lotId : undefined
+}
