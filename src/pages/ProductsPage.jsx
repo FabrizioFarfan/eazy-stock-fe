@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive, ArrowRight, AlertTriangle, CalendarClock, CircleDollarSign, Truck, Boxes, Zap } from 'lucide-react'
+import { Search, Package, Trash2, ChevronLeft, ChevronRight, Plus, SlidersHorizontal, HelpCircle, FileSpreadsheet, Download, X, EyeOff, Archive, ArrowRight, AlertTriangle, CalendarClock, CircleDollarSign, Truck, Boxes, Zap, Camera } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { photoLoadsApi } from '../services/endpoints/photoLoads'
 import { useAuth } from '../context/AuthContext'
 import { useProducts, useProductUnits } from '../hooks/useProducts'
 import { useParameters } from '../hooks/useParameters'
@@ -230,9 +232,20 @@ const canMutate = (u) => u?.role === 'OWNER' || (u?.role === 'SUPER_ADMIN' && !!
 const hidesCost = (u) => u?.role === 'EMPLOYEE'
 
 export default function ProductsPage() {
-  const { user, seenTutorials, markTutorialSeen } = useAuth()
+  const { user, seenTutorials, markTutorialSeen, can } = useAuth()
   const t = useT()
   const isManager   = canMutate(user)
+  // «Cargar con fotos» (21-nov-2026): el dueño o un vendedor con «Gestionar productos», y sólo si el servidor
+  // tiene la IA configurada (lo que no está no se anuncia).
+  const canPhotoLoad = user?.role === 'OWNER' || (user?.role === 'EMPLOYEE' && can('canManageProducts'))
+  const { data: photoLoadStatus } = useQuery({
+    queryKey: ['photo-load-status'],
+    queryFn: () => photoLoadsApi.status().then((r) => r.data.data),
+    enabled: canPhotoLoad,
+    staleTime: 60_000,
+    retry: false,
+  })
+  const showPhotoLoad = canPhotoLoad && photoLoadStatus?.enabled === true
 
   // Tutorial interactivo del modal "Nuevo producto".
   //
@@ -610,8 +623,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Franja del catálogo + accesos grandes (mismo lenguaje que el Dashboard) */}
-      <div className={`grid grid-cols-1 gap-4 ${isManager ? 'lg:grid-cols-3' : ''}`}>
-        <div className={isManager ? 'lg:col-span-2' : ''}>
+      <div className={`grid grid-cols-1 gap-4 ${isManager || showPhotoLoad ? 'lg:grid-cols-3' : ''}`}>
+        <div className={isManager || showPhotoLoad ? 'lg:col-span-2' : ''}>
           <CatalogHero total={counts.active ?? 0} counts={counts} loading={counts.active == null} onPick={focusShortcut} />
         </div>
         {isManager && (
@@ -619,6 +632,14 @@ export default function ProductsPage() {
             <ActionTile icon={Plus} label={t('Nuevo producto')} hint={t('Cárgalo en un minuto')} onClick={openCreate} primary className="col-span-2 lg:col-span-1" />
             <ActionTile icon={FileSpreadsheet} label={t('Importar')} hint={t('Todo tu inventario desde Excel')} to="/products/import" />
             <ActionTile icon={Download} label={t('Exportar')} hint={t('Tu catálogo a Excel')} to="/products/export" />
+            {showPhotoLoad && (
+              <ActionTile icon={Camera} label={t('Cargar con fotos')} hint={photoLoadStatus.pending ? t('Tienes una lista por revisar') : t('La IA arma tu lista desde fotos')} to="/products/photos" className="col-span-2 lg:col-span-1" />
+            )}
+          </div>
+        )}
+        {!isManager && showPhotoLoad && (
+          <div className="grid grid-cols-1 gap-3">
+            <ActionTile icon={Camera} label={t('Cargar con fotos')} hint={photoLoadStatus.pending ? t('Tienes una lista por revisar') : t('La IA arma tu lista desde fotos')} to="/products/photos" />
           </div>
         )}
       </div>

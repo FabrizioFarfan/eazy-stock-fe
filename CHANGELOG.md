@@ -3,6 +3,19 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.44.0 — 2026-11-21 (Frank: «Carga tu inventario con fotos», la primera función con IA)
+
+- **Productos › Cargar con fotos** (`/products/photos`): el dueño, o un vendedor con «Gestionar productos», sube hasta 10 fotos de sus estantes, su almacén, su cuaderno o la lista del proveedor, y la IA propone los productos. Nada se crea sin confirmar.
+- Antes de empezar: tres pasos y el aviso «Hazlo bien, es una sola vez», con los consejos (buena luz, de frente, etiquetas y precios visibles, máximo 10 fotos).
+- Las fotos se reducen en el navegador a ~1500 px y se suben de una en una. La lectura tarda uno a tres minutos; si se cierra la pantalla, la lista espera y se retoma al volver.
+- Revisión: tabla editable con casilla por fila (tarjetas en el móvil), proveedor elegido una vez para todos, sin precio queda «Precio variable», stock inicial 0 si no se contó. Lo que ya existe sale como «Ya lo tienes»: sin marcar se salta, marcado actualiza su precio. Botón «Crear N productos» siempre a la vista.
+- Al final: resumen de lo creado, lo que no se pudo crear con su motivo (se puede corregir) y enlace a Productos.
+- Límites: 1 carga gratis por negocio; Pro pagando, 3 cada 24 horas. Sin cargas se explica y se ofrece ver los planes.
+- El acceso sólo aparece si el servidor tiene la IA configurada (sin clave no se anuncia).
+- Boss: cada negocio muestra sus cargas con IA y el costo estimado.
+- Privacidad (de/es/en): apartado 11a con Anthropic como encargado; las fotos no se guardan.
+- `pages/ProductPhotoLoadPage.jsx`, `utils/photoLoad.js` (+6 tests), `services/endpoints/photoLoads.js`, `i18n/dict/photoLoad.js`. Pide API 1.30.0.
+
 ## 1.43.1 — 2026-11-20 (William: el nuevo precio de venta en la recepción solo dejaba 2 decimales)
 - En «Registrar recepción», el campo «Nuevo precio de venta» de cada producto cortaba a 2 decimales, cuando el costo de esa misma línea y el precio de venta en el resto de la app (producto, Nueva venta, aviso de cambio de precio) admiten hasta 6. Un tornillo a 0.0357 no se podía poner ahí. Ahora admite hasta 6.
 

@@ -370,6 +370,14 @@ function BusinessCard({ biz, serverTs, onPick, busy }) {
             <ShoppingCart size={11} />
             {biz.salesLast7Days === 1 ? t('1 venta · 7d') : t('{n} ventas · 7d', { n: biz.salesLast7Days })}
           </span>
+          {/* 21-nov-2026: lo que el negocio lleva gastado en cargas con fotos (IA) */}
+          {biz.photoLoads && (
+            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700"
+              title={t('{a} tokens de entrada y {b} de salida · {c} productos creados', { a: biz.photoLoads.inputTokens, b: biz.photoLoads.outputTokens, c: biz.photoLoads.productsCreated })}>
+              {biz.photoLoads.loads === 1 ? t('1 carga IA') : t('{n} cargas IA', { n: biz.photoLoads.loads })}
+              {biz.photoLoads.costUsd != null ? ` · $${Number(biz.photoLoads.costUsd).toFixed(2)}` : ''}
+            </span>
+          )}
           {!biz.active && <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-500">{t('Inactivo')}</span>}
         </div>
       </div>

@@ -35,6 +35,7 @@ import DashboardPage  from '../pages/DashboardPage'
 import WelcomePage    from '../pages/WelcomePage'
 import ProductsPage   from '../pages/ProductsPage'
 import ProductImportPage from '../pages/ProductImportPage'
+import ProductPhotoLoadPage from '../pages/ProductPhotoLoadPage'
 import ProductExportPage from '../pages/ProductExportPage'
 import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
@@ -125,6 +126,10 @@ export default function AppRouter() {
       } />
       <Route path="/products/import" element={
         <ProtectedRoute allowedRoles={['OWNER', 'SUPER_ADMIN']}><ProductImportPage /></ProtectedRoute>
+      } />
+      {/* 21-nov-2026: «Carga tu inventario con fotos» (IA). El vendedor entra sólo con «Gestionar productos». */}
+      <Route path="/products/photos" element={
+        <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ProductPhotoLoadPage /></ProtectedRoute>
       } />
       <Route path="/products/export" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE', 'SUPER_ADMIN']}><ProductExportPage /></ProtectedRoute>

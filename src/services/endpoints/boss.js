@@ -3,7 +3,8 @@ import api from '../api'
 export const bossApi = {
   getActivity: () => api.get('/boss/activity'),
   // { serverTime, businesses: [{ id, name, countryCode, active, createdAt, salesLast7Days, lastSaleAt,
-  //   ownerId, ownerName, accountKind, users: [{ id, name, email, role, active, lastSeenAt, accountKind }] }] }
+  //   ownerId, ownerName, accountKind, users: [{ id, name, email, role, active, lastSeenAt, accountKind }],
+  //   photoLoads: { loads, inputTokens, outputTokens, productsCreated, costUsd } | null (API 1.30.0) }] }
   // API 1.19.0 (30-oct): qué es la cuenta de un dueño — 'CUSTOMER' | 'TESTER' | 'TEAM' | null (sin revisar).
   setAccountKind: (userId, kind) => api.patch(`/boss/accounts/${userId}/kind`, { kind }),
   // API 1.21.0 (4-nov): Socios. { bosses: [UserResponse], partners: [UserResponse con accountKind TEAM] }
