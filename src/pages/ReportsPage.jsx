@@ -790,6 +790,10 @@ export default function ReportsPage() {
               <p className="mt-1">{t('Productos bajo su mínimo con el déficit de cada uno.')} <strong>{t('Elige un proveedor y pulsa Generar PDF: verás una previsual editable del pedido.')}</strong> {t('Quita productos que no quieras pedir, cambia la cantidad (por defecto es el déficit) o agrega productos que no están en stock bajo. El PDF nunca muestra tu stock ni tus precios: solo lo que el proveedor necesita.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">💰 {t('¿Quién te lo da más barato?')}</p>
+              <p className="mt-1">{t('Al armar un pedido (desde Stock bajo o Resurtido), si un producto lo compraste la última vez más barato a otro proveedor, el pedido te avisa y te deja pasarlo al pedido de ese proveedor con un toque. Sale de tus compras registradas: es el precio de la última compra a cada uno, así que confirma el de hoy. En la ficha de cada producto, «Quién te lo trae y a cuánto» muestra la lista completa, y al registrar una compra también te avisa si ese costo es más alto que el de otro proveedor.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">📅 {t('Por vencer')}</p>
               <p className="mt-1"><strong>{t('Productos que vencen dentro de 30 días o ya vencieron')}</strong> {t('(según la fecha de vencimiento que cargas en cada producto). Úsalo para hacer promociones antes de perder mercadería o para retirar lo vencido.')} <em>{t('"¿Qué tengo que mover ya?"')}</em></p>
             </div>

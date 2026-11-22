@@ -62,7 +62,7 @@ export function printDoc(p, kind = 'quote') {
     const subtotal = it.subtotal != null ? Number(it.subtotal) : qty * (Number(it.unitPrice) || 0)
     return `<tr>
       <td class="c muted">${i + 1}</td>
-      <td>${escapeHtml(it.name)}${it.sku ? `<div class="sku">${escapeHtml(it.sku)}</div>` : ''}</td>
+      <td>${escapeHtml(it.name)}${it.lotLabel ? `<div class="sku" style="font-family:inherit">${escapeHtml(it.lotLabel)}</div>` : ''}${it.sku ? `<div class="sku">${escapeHtml(it.sku)}</div>` : ''}</td>
       <td class="c">${qty}${it.unit ? ` ${escapeHtml(it.unit)}` : ''}</td>
       <td class="r">${money(it.unitPrice)}</td>
       <td class="r strong">${money(subtotal)}</td>

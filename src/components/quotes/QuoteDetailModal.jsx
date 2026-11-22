@@ -6,6 +6,7 @@ import { useQuote, useDeleteQuote } from '../../hooks/useQuotes'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { formatQty } from '../../utils/quantity'
 import { quoteFormFields, cartLineFromQuoteItem, quoteItemShort } from '../../utils/saleUnits'
+import { quoteLotFields } from '../../utils/quoteLots'
 import QuoteActions from './QuoteActions'
 import { quoteDraftKey } from '../../utils/quoteDraft'
 import { useT, dateLocale } from '../../i18n'
@@ -33,7 +34,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
     businessName: user?.businessName,
     authorName: q.authorName,
     customer: { name: q.customerName ?? '', phone: q.customerPhone ?? '', email: q.customerEmail ?? '' },
-    items: q.items.map((it) => ({ name: it.productName, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })),
+    items: q.items.map((it) => ({ name: it.productName, lotLabel: it.lotLabel, sku: it.productSku, unit: it.unit, qty: Number(it.quantity), unitPrice: Number(it.unitPrice) })),
     notes: q.notes ?? '',
     validityDays: q.validityDays ?? 0,
     number: q.number,
@@ -58,8 +59,9 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
       const form = fields.saleUnits.find((u) => u.id === fields.saleUnitId)
       const lost = it.saleUnitId && !form ? Number(it.saleUnitFactor) || 1 : 1
       return {
-        productId: it.productId, name: it.productName, sku: it.productSku, unit: form ? form.name : fields.baseUnit,
+        key: it.id, productId: it.productId, name: it.productName, sku: it.productSku, unit: form ? form.name : fields.baseUnit,
         ...fields,
+        ...quoteLotFields({ id: it.productId, currentStock: it.currentStock, lots: it.lots, looseStock: it.looseStock, attributes: it.productAttributes }, it.lotId, it.lotLabel),
         qty: Number(it.quantity) * lost,
         unitPrice: form ? Number(form.salePrice)
           : it.priceIsVariable ? Number(it.unitPrice) / lost : (Number(it.currentSalePrice) || Number(it.unitPrice) / lost),
@@ -146,6 +148,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900">{it.productName}</p>
+                          {it.lotLabel && <p className="text-xs font-semibold text-violet-700" data-testid="quote-item-lot">{it.lotLabel}</p>}
                           <p className="font-mono text-xs text-gray-400">{it.productSku}</p>
                           {!it.productActive && <p className="text-xs font-semibold text-red-500">{t('ya no está en el catálogo')}</p>}
                         </div>
@@ -178,6 +181,7 @@ export default function QuoteDetailModal({ id, user, canSell, onClose }) {
                       <tr key={it.id} className="border-b border-gray-50">
                         <td className="px-5 py-2.5 sm:px-6">
                           <p className="font-semibold text-gray-900">{it.productName}</p>
+                          {it.lotLabel && <p className="text-xs font-semibold text-violet-700" data-testid="quote-item-lot">{it.lotLabel}</p>}
                           <p className="font-mono text-xs text-gray-400">{it.productSku}{!it.productActive && <span className="ml-2 font-sans font-semibold text-red-500">{t('ya no está en el catálogo')}</span>}</p>
                         </td>
                         <td className="px-3 py-2.5 text-center text-gray-700">{formatQty(it.quantity)} {it.unit}</td>

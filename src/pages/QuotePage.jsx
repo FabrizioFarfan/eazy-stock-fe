@@ -1,7 +1,7 @@
 import { formatPhoneDisplay } from '../utils/phone'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2, MapPin, Search } from 'lucide-react'
+import { ArrowLeft, FileText, Trash2, Package, CheckCircle2, X, PencilLine, Loader2, MapPin, Search, Plus } from 'lucide-react'
 import ProductThumb from '../components/products/ProductThumb'
 import { toast } from 'sonner'
 import { useAuth } from '../context/AuthContext'
@@ -23,6 +23,7 @@ import HelpDrawer from '../components/common/HelpDrawer'
 import { useT } from '../i18n'
 import { formatQty } from '../utils/quantity'
 import { quoteFormFields, quoteFormPatch } from '../utils/saleUnits'
+import { quoteLotFields, quoteLotPatch, quoteLineKey, freeLotOptions, canAddLotLine, nameWithLot } from '../utils/quoteLots'
 
 // ── Borrador de cotización ────────────────────────────────────────────────────
 // Igual que la venta: lo que se va armando se guarda en localStorage (por
@@ -62,6 +63,33 @@ function QuoteFormSelect({ item, onChange }) {
   )
 }
 
+// De cuál grupo (lote) es lo cotizado: «martillo con agarre» o «sin». Opcional; con «＋ Otro grupo» el mismo producto va en dos líneas.
+function QuoteLotSelect({ item, onChange, onAddLine }) {
+  const t = useT()
+  if (!item.lotOptions?.length) return null
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <label className="flex items-center gap-1.5 text-xs text-gray-500">
+        {t('¿De cuál?')}
+        <select value={item.lotLabel ?? ''} data-testid="quote-lot-select"
+          onChange={(e) => onChange(quoteLotPatch(item, e.target.value))}
+          className="max-w-[16rem] rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-800 outline-none focus:border-blue-600">
+          <option value="">{t('No decir cuál')}</option>
+          {item.lotOptions.map((o) => <option key={o.label} value={o.label}>{o.label}</option>)}
+        </select>
+      </label>
+      {onAddLine && (
+        <button type="button" onClick={onAddLine} data-testid="quote-lot-add-line"
+          className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline">
+          <Plus size={12} /> {t('Otro grupo')}
+        </button>
+      )}
+    </div>
+  )
+}
+
+const newLineKey = (productId) => `${productId}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+
 export default function QuotePage() {
   const navigate = useNavigate()
   const t = useT()
@@ -92,12 +120,15 @@ export default function QuotePage() {
     setItems((prev) => {
       if (prev.some((x) => x.productId === p.id)) return prev
       return [...prev, {
+        key: newLineKey(p.id),
         productId: p.id,
         name: p.name,
         sku: p.sku,
         unit: p.unit,
         // Formas de venta (ciento, caja…): `unit` es en qué se cotiza; cantidad y precio van en esa forma.
         ...quoteFormFields(p.unit, p.saleUnits, p.priceIsVariable ? 0 : Number(p.salePrice) || 0, null),
+        // Grupos (lotes): si el stock está repartido, se puede decir de cuál es lo cotizado.
+        ...quoteLotFields(p),
         qty: 1,
         unitPrice: p.priceIsVariable ? 0 : Number(p.salePrice) || 0,
       }]
@@ -106,10 +137,19 @@ export default function QuotePage() {
     setShowDrop(false)
   }
 
-  const updateItem = (id, patch) =>
-    setItems((prev) => prev.map((it) => (it.productId === id ? { ...it, ...patch } : it)))
-  const removeItem = (id) =>
-    setItems((prev) => prev.filter((it) => it.productId !== id))
+  // Las líneas se identifican por su llave: el mismo producto puede ir en dos, una por grupo (tarea 2237).
+  const updateItem = (key, patch) =>
+    setItems((prev) => prev.map((it) => (quoteLineKey(it) === key ? { ...it, ...patch } : it)))
+  const removeItem = (key) =>
+    setItems((prev) => prev.filter((it) => quoteLineKey(it) !== key))
+  // «＋ Otro grupo»: otra línea del mismo producto, ya con el primer grupo que falta, justo debajo de esta.
+  const addLotLine = (line) => setItems((prev) => {
+    const next = freeLotOptions(prev, line)[0]
+    if (!next) return prev
+    const at = prev.findIndex((it) => quoteLineKey(it) === quoteLineKey(line))
+    const copy = { ...line, key: newLineKey(line.productId), qty: 1, lotId: next.lotId, lotLabel: next.label }
+    return [...prev.slice(0, at + 1), copy, ...prev.slice(at + 1)]
+  })
 
   const handleScan = async (code) => {
     if (scanLock.current) return
@@ -148,8 +188,9 @@ export default function QuotePage() {
       return
     }
     setItems(q.items.map((it) => ({
-      productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
+      key: it.id, productId: it.productId, name: it.productName, sku: it.productSku, unit: it.unit,
       ...quoteFormFields(it.productUnit ?? it.unit, it.saleUnits, it.priceIsVariable ? 0 : Number(it.currentSalePrice) || 0, it.saleUnitId),
+      ...quoteLotFields({ id: it.productId, currentStock: it.currentStock, lots: it.lots, looseStock: it.looseStock, attributes: it.productAttributes }, it.lotId, it.lotLabel),
       qty: Number(it.quantity), unitPrice: Number(it.unitPrice),
     })))
     setCust({
@@ -230,6 +271,8 @@ export default function QuotePage() {
       items: items.map((it) => ({
         productId: it.productId, quantity: Number(it.qty), unitPrice: Number(it.unitPrice) || 0,
         ...(it.saleUnitId && { saleUnitId: it.saleUnitId }),
+        ...(it.lotId && { lotId: it.lotId }),
+        ...(it.lotLabel && { lotLabel: it.lotLabel }),
       })),
       customerId: cust.customer?.id || undefined,
       customerName: c.name || undefined,
@@ -312,6 +355,10 @@ export default function QuotePage() {
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('💲 Cantidad y precio')}</p>
               <p className="mt-1">{t('Ajusta la cantidad y el precio de cada línea. Los productos de precio variable entran en 0: define tú el precio a cotizar. El selector «Formato del precio» cambia entre 2 decimales fijos o casillas separadas.')}</p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+              <p className="font-semibold text-gray-800">{t('🧩 ¿De cuál?')}</p>
+              <p className="mt-1">{t('Si el producto tiene el stock repartido en grupos (martillos con agarre y sin agarre), elige de cuál es lo que cotizas: sale escrito en el PDF para que el cliente sepa qué le ofreces. Con «Otro grupo» cotizas los dos, cada uno en su línea. Si el cliente vuelve y vendes desde la cotización, la venta sale de ese mismo grupo.')}</p>
             </div>
             <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
               <p className="font-semibold text-gray-800">{t('👤 Cliente y validez')}</p>
@@ -418,14 +465,16 @@ export default function QuotePage() {
               {/* Celular: una tarjeta por línea */}
               <ul className="divide-y divide-gray-100 md:hidden">
                 {items.map((it) => (
-                  <li key={it.productId} className="px-4 py-3.5">
+                  <li key={quoteLineKey(it)} className="px-4 py-3.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="break-words text-sm font-bold text-gray-900">{it.name}</p>
                         {it.sku && <p className="font-mono text-xs text-gray-400">{it.sku}</p>}
-                        <QuoteFormSelect item={it} onChange={(patch) => updateItem(it.productId, patch)} />
+                        <QuoteFormSelect item={it} onChange={(patch) => updateItem(quoteLineKey(it), patch)} />
+                        <QuoteLotSelect item={it} onChange={(patch) => updateItem(quoteLineKey(it), patch)}
+                          onAddLine={canAddLotLine(items, it) ? () => addLotLine(it) : null} />
                       </div>
-                      <button onClick={() => removeItem(it.productId)} title={t('Quitar')}
+                      <button onClick={() => removeItem(quoteLineKey(it))} title={t('Quitar')}
                         className="flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500">
                         <Trash2 size={15} />
                       </button>
@@ -436,14 +485,14 @@ export default function QuotePage() {
                         <input
                           type="number" min="0" step="any"
                           value={it.qty}
-                          onChange={(e) => updateItem(it.productId, { qty: e.target.value === '' ? '' : Number(e.target.value) })}
+                          onChange={(e) => updateItem(quoteLineKey(it), { qty: e.target.value === '' ? '' : Number(e.target.value) })}
                           className="w-full rounded-lg border border-gray-200 px-2 py-2 text-center text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                         />
                       </label>
                       <PriceInput
                         label={t('Precio unit.')}
                         value={it.unitPrice === '' ? null : it.unitPrice}
-                        onChange={(v) => updateItem(it.productId, { unitPrice: v ?? 0 })}
+                        onChange={(v) => updateItem(quoteLineKey(it), { unitPrice: v ?? 0 })}
                         maxDecimals={6}
                       />
                     </div>
@@ -466,17 +515,19 @@ export default function QuotePage() {
                   </thead>
                   <tbody>
                     {items.map((it) => (
-                      <tr key={it.productId} className="border-b border-gray-50 align-top">
+                      <tr key={quoteLineKey(it)} className="border-b border-gray-50 align-top">
                         <td className="px-4 py-3">
                           <p className="font-semibold text-gray-900">{it.name}</p>
                           {it.sku && <p className="font-mono text-xs text-gray-400">{it.sku}</p>}
-                          <QuoteFormSelect item={it} onChange={(patch) => updateItem(it.productId, patch)} />
+                          <QuoteFormSelect item={it} onChange={(patch) => updateItem(quoteLineKey(it), patch)} />
+                        <QuoteLotSelect item={it} onChange={(patch) => updateItem(quoteLineKey(it), patch)}
+                          onAddLine={canAddLotLine(items, it) ? () => addLotLine(it) : null} />
                         </td>
                         <td className="px-4 py-3 text-center">
                           <input
                             type="number" min="0" step="any"
                             value={it.qty}
-                            onChange={(e) => updateItem(it.productId, { qty: e.target.value === '' ? '' : Number(e.target.value) })}
+                            onChange={(e) => updateItem(quoteLineKey(it), { qty: e.target.value === '' ? '' : Number(e.target.value) })}
                             className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
                           />
                         </td>
@@ -484,7 +535,7 @@ export default function QuotePage() {
                           <div className="w-44">
                             <PriceInput
                               value={it.unitPrice === '' ? null : it.unitPrice}
-                              onChange={(v) => updateItem(it.productId, { unitPrice: v ?? 0 })}
+                              onChange={(v) => updateItem(quoteLineKey(it), { unitPrice: v ?? 0 })}
                               maxDecimals={6}
                             />
                           </div>
@@ -493,7 +544,7 @@ export default function QuotePage() {
                           {formatAmount((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button onClick={() => removeItem(it.productId)} title={t('Quitar')}
+                          <button onClick={() => removeItem(quoteLineKey(it))} title={t('Quitar')}
                             className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
                             <Trash2 size={14} />
                           </button>
@@ -565,8 +616,8 @@ export default function QuotePage() {
             </div>
             <ul className="mt-4 max-h-56 divide-y divide-gray-50 overflow-y-auto rounded-xl border border-gray-100">
               {items.map((it) => (
-                <li key={it.productId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                  <span className="min-w-0 truncate text-gray-800">{it.name}</span>
+                <li key={quoteLineKey(it)} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate text-gray-800">{nameWithLot(it.name, it.lotLabel)}</span>
                   <span className="flex-shrink-0 text-xs text-gray-500">{formatQty(it.qty)}{it.unit ? ` ${it.unit}` : ''} × {formatPrice(it.unitPrice)}</span>
                 </li>
               ))}

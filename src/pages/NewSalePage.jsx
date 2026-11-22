@@ -1075,6 +1075,10 @@ export default function NewSalePage() {
             <p className="mt-1">{t('En la tarjeta indicas cuánto lleva antes de agregar. Los productos por kilo, litro, metro o gramo aceptan decimales (1.5 kg); los que se venden por unidad, solo enteros. Nunca podrás superar el stock disponible.')}</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="font-semibold text-gray-800">{t('🧩 ¿De cuál le das?')}</p>
+            <p className="mt-1">{t('Si un producto tiene el stock repartido en grupos (por ejemplo martillos con agarre y sin agarre), en la tarjeta aparece «De cuál»: toca el grupo y la cantidad se limita a lo que queda en él. Si buscas «martillo agarre» ya viene marcado. Para llevar de dos grupos, usa «+ Lleva también del otro» en el carrito: sale una línea por cada uno. No se puede cobrar sin decir de cuál.')}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
             <p className="font-semibold text-gray-800">{t('💲 Precio variable y cambio de precio')}</p>
             <p className="mt-1">{t('Los productos marcados «Precio variable» entran sin precio: defínelo antes de cobrar (la venta no se confirma hasta entonces). El precio de UNA venta se cambia en el carrito (queda marcado como «Precio modificado»). El botón «Cambiar precio de venta» de la tarjeta cambia el precio del producto para siempre: lo tiene el dueño y el vendedor con el permiso «Cambiar precios de venta».')}</p>
           </div>

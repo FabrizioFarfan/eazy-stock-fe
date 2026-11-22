@@ -3,6 +3,13 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.45.0 — 2026-11-22 (la cotización dice de cuál grupo; aviso al comprar más caro; ayudas al día)
+
+- **Cotización: «¿De cuál?»** Si el producto tiene el stock repartido en grupos (martillos con agarre y sin agarre), cada línea deja elegir de cuál es lo cotizado, o no decirlo. Con «Otro grupo» el mismo producto va en dos líneas. El grupo sale en el resumen, el detalle, el PDF y la impresión. Al duplicar se conserva, y al «vender estos productos» la venta sale de ese mismo grupo (si ya no le queda stock, se pregunta al vender). Necesita la API 1.31.0.
+- **Nueva recepción: aviso si lo compras más caro.** Al escribir el costo de una línea, si la última vez otro proveedor lo dio más barato, sale «Ojo: a X se lo compraste a … el … (… menos por unidad)». No bloquea nada; sale de las compras registradas. La entrada simple del vendedor no lo muestra.
+- **Ayudas «¿Cómo funciona?»**: Nueva venta explica «De cuál», Reportes explica la comparación de proveedores y Cotización explica el grupo.
+- Lógica en `utils/quoteLots.js` (con tests), `cheaperThanCost` en `utils/supplierCompare.js` y el grupo en `cartLineFromQuoteItem`. 263 tests.
+
 ## 1.44.0 — 2026-11-21 (Frank: «Carga tu inventario con fotos», la primera función con IA)
 
 - **Productos › Cargar con fotos** (`/products/photos`): el dueño, o un vendedor con «Gestionar productos», sube hasta 10 fotos de sus estantes, su almacén, su cuaderno o la lista del proveedor, y la IA propone los productos. Nada se crea sin confirmar.

@@ -52,3 +52,25 @@ test('lo que se pasa a otro proveedor espera en su pedido y entra una sola vez',
   assert.deepEqual(peekExtras(s, 'b', 'f'), [])
   assert.deepEqual(mergeExtras([{ productId: 'p2', qty: 5 }], taken).map((r) => [r.productId, r.qty]), [['p2', 5], ['p1', 12]])
 })
+
+test('al comprar: avisa si otro proveedor lo dio más barato la última vez', async () => {
+  const { cheaperThanCost } = await import('./supplierCompare.js')
+  const offers = [
+    { supplierId: 'femaco', supplierName: 'Femaco', unitCost: 8, date: '2026-11-10' },
+    { supplierId: 'ferdicon', supplierName: 'Ferdicon', unitCost: 9.5, date: '2026-11-01' },
+  ]
+  // compro a Ferdicon a 10: Femaco lo dio a 8
+  const hit = cheaperThanCost(offers, 'ferdicon', 10)
+  assert.equal(hit.best.supplierName, 'Femaco')
+  assert.equal(hit.extra, 2)
+  assert.equal(hit.pct, 20)
+  // compro a Femaco (el más barato): se compara con el siguiente, Ferdicon a 9.5
+  assert.equal(cheaperThanCost(offers, 'femaco', 9), null)
+  assert.equal(cheaperThanCost(offers, 'femaco', 10).best.supplierName, 'Ferdicon')
+  // igual o más barato que todos, sin costo todavía, o sin compras a otros: nada
+  assert.equal(cheaperThanCost(offers, 'ferdicon', 8), null)
+  assert.equal(cheaperThanCost(offers, 'ferdicon', 8.005), null)
+  assert.equal(cheaperThanCost(offers, 'ferdicon', null), null)
+  assert.equal(cheaperThanCost([offers[1]], 'ferdicon', 50), null)
+  assert.equal(cheaperThanCost(undefined, 'x', 5), null)
+})

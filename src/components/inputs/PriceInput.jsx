@@ -78,7 +78,7 @@ const PriceInput = forwardRef(function PriceInput(
             disabled={disabled}
             autoFocus={autoFocus}
             placeholder={`${placeholderWhole}.${placeholderDecimals}`}
-            label={label}
+            label={typeof label === 'string' ? label : null}
           />
         </div>
       ) : (
@@ -91,7 +91,7 @@ const PriceInput = forwardRef(function PriceInput(
           autoFocus={autoFocus}
           placeholderWhole={placeholderWhole}
           placeholderDecimals={placeholderDecimals}
-          label={label}
+          label={typeof label === 'string' ? label : null}
           symbol={symbol}
           error={error}
         />

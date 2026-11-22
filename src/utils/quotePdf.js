@@ -153,7 +153,7 @@ export function buildDocPdf(quote, kind = 'quote') {
       const qty = Number(it.qty) || 0
       return [
         String(i + 1),
-        it.sku ? `${it.name}\n${it.sku}` : it.name,
+        [it.name, it.lotLabel, it.sku].filter(Boolean).join('\n'),
         `${formatQty(qty)}${it.unit ? ` ${it.unit}` : ''}`,
         formatPrice(it.unitPrice),
         formatPrice(it.subtotal != null ? it.subtotal : qty * (Number(it.unitPrice) || 0)),

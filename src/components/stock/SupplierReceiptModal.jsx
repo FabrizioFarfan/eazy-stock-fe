@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Loader2, Trash2, Truck, AlertTriangle, PackagePlus, ChevronDown, ChevronUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import { useSupplierSearch, useCreateSupplier } from '../../hooks/useSuppliers'
@@ -16,6 +16,9 @@ import LotFields from './LotFields'
 import { attributesDelta } from '../../utils/parameters'
 import { purchasePriceChanges, decisionFields } from '../../utils/purchasePriceChanges'
 import { supplierChanges, adoptFields } from '../../utils/supplierChanges'
+import { cheaperThanCost } from '../../utils/supplierCompare'
+import { useSupplierPrices } from '../../hooks/useSupplierPrices'
+import { formatNumericDate } from '../../utils/formatDate'
 import { productsApi } from '../../services/endpoints/products'
 import ScannerInput from '../ScannerInput'
 import ProductFormModal from '../products/ProductFormModal'
@@ -138,6 +141,10 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
   ))
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = items }, [items])
+  // Tarea 2238: a quién más se le compró cada producto y a cuánto, para avisar si este costo sale más caro.
+  // La entrada simple del vendedor no lleva costos; el API ya responde vacío a quien no los ve.
+  const lineProductIds = useMemo(() => items.map((i) => i.product.id), [items])
+  const { byProduct: otherOffers } = useSupplierPrices(lineProductIds, undefined, { enabled: !simple })
 
   // Cambiar de proveedor ya NO vacía el carrito (19-nov-2026): el buscador mira todo el catálogo y William cambia
   // de proveedor justo con el producto ya puesto (entra desde su ficha, que trae el proveedor viejo). Al guardar
@@ -724,6 +731,18 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
                               <span className="font-semibold">{formatPrice(it.unitCost)}</span>
                             </p>
                           )}
+                          {(() => {
+                            const hit = supplier ? cheaperThanCost(otherOffers[it.product.id], supplier.id, it.unitCost) : null
+                            return hit && (
+                              <p className="mt-1 flex items-start gap-1 text-xs font-medium text-amber-700" data-testid="receipt-line-cheaper">
+                                <TrendingDown size={12} className="mt-0.5 flex-shrink-0" />
+                                <span>{t('Ojo: a {supplier} se lo compraste a {price} el {date} ({extra} menos por unidad).', {
+                                  supplier: hit.best.supplierName, price: formatPrice(hit.best.unitCost),
+                                  date: formatNumericDate(hit.best.date), extra: formatPrice(hit.extra),
+                                })}</span>
+                              </p>
+                            )
+                          })()}
                           {it.unitCost != null && !it.product.priceIsVariable
                             && effSale(it) > 0 && Number(it.unitCost) >= effSale(it) && (
                             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600">

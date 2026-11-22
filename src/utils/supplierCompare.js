@@ -29,6 +29,20 @@ export function cheaperOffer(offers, supplierId) {
   return { mine, best, saving, pct: Math.round((saving / num(mine.unitCost)) * 100) }
 }
 
+/**
+ * Al registrar una compra (tarea 2238): ¿otro proveedor lo dio la última vez más barato que el costo que se está
+ * escribiendo? Devuelve esa compra (la más barata de OTRO proveedor) con lo que se paga de más por unidad, o null.
+ * Menos de un céntimo de diferencia no se avisa.
+ */
+export function cheaperThanCost(offers, supplierId, unitCost) {
+  const cost = num(unitCost)
+  if (cost <= 0) return null
+  const best = (offers ?? []).find((o) => o.supplierId !== supplierId && num(o.unitCost) > 0)
+  if (!best || cost - num(best.unitCost) < 0.01) return null
+  const extra = cost - num(best.unitCost)
+  return { best, extra, pct: Math.round((extra / cost) * 100) }
+}
+
 /** Las filas del pedido que otro proveedor dio más barato, con lo que se ahorraría por la cantidad pedida. */
 export function cheaperRows(rows, byProduct, supplierId) {
   const out = []

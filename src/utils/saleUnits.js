@@ -2,6 +2,8 @@
 // Un producto puede venderse, además de por su unidad, de a varias unidades con su propio precio: «ciento» = 100 a
 // S/ 12. En el carrito la línea lleva `saleUnitId` (null = la unidad del producto) y su cantidad y su precio van EN
 // ESA FORMA: 2 cientos a 12. El stock siempre se mide en la unidad del producto (2 cientos = 200).
+import { lotBuckets, defaultLot } from './lots.js'
+
 // Espejo de isDivisibleUnit (utils/quantity.js), que no se puede importar en los tests por su dependencia de i18n.
 const isDivisibleUnit = (unit) => unit != null && String(unit).trim().toLowerCase() !== 'unidad'
 
@@ -214,15 +216,24 @@ export function cartLineFromQuoteItem(it) {
   const product = {
     id: it.productId, name: it.productName, sku: it.productSku, unit: it.productUnit ?? (it.saleUnitId ? 'unidad' : it.unit),
     currentStock: stock, priceIsVariable: it.priceIsVariable, salePrice: it.currentSalePrice, saleUnits: forms,
+    lots: it.lots ?? [], looseStock: it.looseStock, attributes: it.productAttributes ?? {},
   }
+  // El grupo cotizado (tarea 2237): si hoy sigue teniendo stock, la venta sale de él; si no, se pregunta al vender.
+  const buckets = lotBuckets(product)
+  const quoted = it.lotId || it.lotLabel
+    ? buckets.find((b) => (it.lotId ? b.lotId === it.lotId : b.lotId === null && b.label === it.lotLabel))
+    : null
+  const lotId = quoted ? quoted.lotId : defaultLot(product)
+  const available = quoted ? quoted.quantity : stock
   const wanted = num(it.quantity) * lostFactor
-  const fits = form ? Math.floor(stock / num(form.units)) : stock
+  const fits = form ? Math.floor(available / num(form.units)) : available
   const quantity = Math.min(wanted, fits)
   return {
     product,
     quantity: quantity > 0 ? quantity : 1,
     saleUnitId: form ? form.id : null,
     unitPrice: num(it.unitPrice) / lostFactor,
+    lotId,
   }
 }
 
