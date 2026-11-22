@@ -53,7 +53,7 @@ import { taxIdLabel } from '../../utils/taxIdText'
  * stock sube al momento y la recepción queda «sin costo» hasta que el dueño la
  * completa desde su detalle.
  */
-export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null, simple = false }) {
+export default function SupplierReceiptModal({ onClose, initialSupplier = null, initialProduct = null, simple = false, fromPhotos = false }) {
   const t = useT()
   const createReceipt = useCreateSupplierReceipt()
   const createSimple  = useCreateSimpleReceipt()
@@ -444,8 +444,13 @@ export default function SupplierReceiptModal({ onClose, initialSupplier = null, 
             {restoredBanner && (
               <div className="flex items-start justify-between gap-3 rounded-xl bg-blue-50 px-4 py-3 ring-1 ring-blue-100">
                 <p className="text-xs leading-relaxed text-blue-700">
-                  <span className="font-semibold">{t('Retomaste una recepción guardada.')}</span>{' '}
-                  {t('El carrito se guarda solo: puedes cerrar, crear productos en Productos y volver — nada se pierde.')}
+                  {fromPhotos ? (<>
+                    <span className="font-semibold">{t('Esto es lo que leímos de tus fotos.')}</span>{' '}
+                    {t('Revisa cantidades, costos y cómo se pagó. Nada entra al stock hasta que pulses «Registrar recepción».')}
+                  </>) : (<>
+                    <span className="font-semibold">{t('Retomaste una recepción guardada.')}</span>{' '}
+                    {t('El carrito se guarda solo: puedes cerrar, crear productos en Productos y volver — nada se pierde.')}
+                  </>)}
                 </p>
                 <button
                   type="button"

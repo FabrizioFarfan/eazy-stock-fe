@@ -36,6 +36,7 @@ import WelcomePage    from '../pages/WelcomePage'
 import ProductsPage   from '../pages/ProductsPage'
 import ProductImportPage from '../pages/ProductImportPage'
 import ProductPhotoLoadPage from '../pages/ProductPhotoLoadPage'
+import ReceiptPhotoPage from '../pages/ReceiptPhotoPage'
 import ProductExportPage from '../pages/ProductExportPage'
 import SalesPage      from '../pages/SalesPage'
 import NewSalePage    from '../pages/NewSalePage'
@@ -130,6 +131,10 @@ export default function AppRouter() {
       {/* 21-nov-2026: «Carga tu inventario con fotos» (IA). El vendedor entra sólo con «Gestionar productos». */}
       <Route path="/products/photos" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE']}><ProductPhotoLoadPage /></ProtectedRoute>
+      } />
+      {/* 22-nov-2026: «Recibir mercadería con fotos» (IA): la foto de la factura o del cuaderno → la recepción ya llena. */}
+      <Route path="/stock/recepcion-fotos" element={
+        <ProtectedRoute allowedRoles={['OWNER']}><ReceiptPhotoPage /></ProtectedRoute>
       } />
       <Route path="/products/export" element={
         <ProtectedRoute allowedRoles={['OWNER', 'EMPLOYEE', 'SUPER_ADMIN']}><ProductExportPage /></ProtectedRoute>

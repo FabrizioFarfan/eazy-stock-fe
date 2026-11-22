@@ -3,6 +3,15 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.46.0 — 2026-11-22 (Frank: «Recibir mercadería con fotos»)
+
+- **Stock › Recibir con fotos** (`/stock/recepcion-fotos`, sólo el dueño y sólo si el servidor tiene la IA configurada): llegó mercadería y, en vez de teclear la factura, se le saca una foto. Vale la factura, la guía, la nota de pedido o la hoja del cuaderno escrita a mano; hasta 6 fotos por documento.
+- La IA copia cada línea y reconoce los productos que ya existen. En la revisión, por línea: «es este producto» (con «Cambiar»), «¿cuál de tus productos es?» cuando hay varios parecidos, «es un producto nuevo» (nombre y unidad editables) o «saltar». Cantidad y costo editables; se ve la suma y, si el documento dice otro total, el aviso (impuestos o flete).
+- El proveedor sale ya elegido si el del documento existe; si no, «Crearlo como proveedor nuevo».
+- «Pasar a la recepción» crea los productos nuevos (nacen con «Precio variable») y abre **Nueva recepción ya llena**: ahí siguen valiendo el pago, el aviso de cambio de precio, la pregunta de cambio de proveedor, los lotes y el aviso de costo más alto. Nada entra al stock hasta «Registrar recepción».
+- La lectura queda guardada: si se cierra la pantalla, se retoma. Lecturas que quedan a la vista (al mes o al día según el plan).
+- Lógica en `utils/receiptPhoto.js` (con tests). Necesita la API 1.32.0. 267 tests.
+
 ## 1.45.0 — 2026-11-22 (la cotización dice de cuál grupo; aviso al comprar más caro; ayudas al día)
 
 - **Cotización: «¿De cuál?»** Si el producto tiene el stock repartido en grupos (martillos con agarre y sin agarre), cada línea deja elegir de cuál es lo cotizado, o no decirlo. Con «Otro grupo» el mismo producto va en dos líneas. El grupo sale en el resumen, el detalle, el PDF y la impresión. Al duplicar se conserva, y al «vender estos productos» la venta sale de ese mismo grupo (si ya no le queda stock, se pregunta al vender). Necesita la API 1.31.0.

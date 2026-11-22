@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
-import { PackagePlus, SlidersHorizontal, ArrowUpDown, ArrowRight, AlertTriangle, PackageX, Truck } from 'lucide-react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { PackagePlus, SlidersHorizontal, ArrowUpDown, ArrowRight, AlertTriangle, PackageX, Truck, Camera } from 'lucide-react'
+import { photoLoadsApi } from '../../services/endpoints/photoLoads'
 import PageTitle from '../../components/common/PageTitle'
 import HelpDrawer from '../../components/common/HelpDrawer'
 import { useAuth } from '../../context/AuthContext'
@@ -68,9 +70,9 @@ function TodayMovesHero({ total, entries, sales, adjustments, cobros, loading, o
   )
 }
 
-function ActionTile({ icon: Icon, label, hint, onClick, primary, className = '' }) {
+function ActionTile({ icon: Icon, label, hint, onClick, primary, className = '', ...rest }) {
   return (
-    <button type="button" onClick={onClick}
+    <button type="button" onClick={onClick} {...rest}
       className={`group flex items-center gap-3 rounded-2xl p-4 text-left transition-all active:scale-[0.98] ${
         primary
           ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 hover:bg-blue-700'
@@ -150,6 +152,17 @@ export default function StockPage() {
   const { data: pOut } = useProducts({ page: 0, size: 1, active: true, stockMax: 0, ...biz })
   const { data: rMonth } = useReceipts({ page: 0, size: 1, from: firstOfMonthStr(), to: today, ...biz })
   // Entradas que anotaron los vendedores y esperan su costo (solo le importa al dueño).
+  // «Recibir con fotos» (22-nov-2026): sólo el dueño y sólo si el servidor tiene la IA configurada (lo que no está no se anuncia).
+  const navigate = useNavigate()
+  const { data: photoReceiptStatus } = useQuery({
+    queryKey: ['photo-load-status', 'RECEIPT'],
+    queryFn: () => photoLoadsApi.status('RECEIPT').then((r) => r.data.data),
+    enabled: user?.role === 'OWNER',
+    staleTime: 60_000,
+    retry: false,
+  })
+  const showPhotoReceipt = user?.role === 'OWNER' && photoReceiptStatus?.enabled === true
+
   const { data: rPending } = useReceipts({ page: 0, size: 1, costPending: true, ...biz }, { enabled: isManager })
   const pendingCount = isManager ? (rPending?.totalElements ?? 0) : 0
   const setProduct = (p) => {
@@ -231,6 +244,11 @@ export default function StockPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:content-start">
             <ActionTile icon={PackagePlus} primary label={t('Registrar recepción')} hint={t('Llegó mercadería del proveedor')}
               onClick={() => setShowReceiptModal(true)} />
+            {showPhotoReceipt && (
+              <ActionTile icon={Camera} label={t('Recibir con fotos')} data-testid="stock-photo-receipt"
+                hint={photoReceiptStatus.pending ? t('Tienes una lectura por revisar') : t('Foto de la factura o del cuaderno y la IA la llena')}
+                onClick={() => navigate('/stock/recepcion-fotos')} />
+            )}
             <ActionTile icon={SlidersHorizontal} label={t('Ajuste de stock')} hint={t('Corrige lo que no cuadra con el conteo')}
               onClick={() => setModal('ADJUSTMENT')} />
           </div>

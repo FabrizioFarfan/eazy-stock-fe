@@ -14,8 +14,13 @@ import api from '../api'
  *   discard(id)
  */
 export const photoLoadsApi = {
-  status: () => api.get('/photo-loads/status'),
-  create: () => api.post('/photo-loads'),
+  // kind: sin nada = la carga inicial del catálogo; 'RECEIPT' = recibir mercadería (22-nov-2026, API 1.32.0): límite y
+  // propuesta pendiente propios, y get() trae `receipt` { supplierName, supplier, referenceDocument, total, lines: [{ ref,
+  // name, code, quantity, unit, unitCost, lineTotal, confidence, photo, match, candidates }] } en vez de `items`.
+  status: (kind) => api.get('/photo-loads/status', { params: kind ? { kind } : undefined }),
+  create: (kind) => api.post('/photo-loads', null, { params: kind ? { kind } : undefined }),
+  // Recepción con fotos: la lectura ya pasó a «Nueva recepción»; cierra la propuesta.
+  done: (id, body) => api.post(`/photo-loads/${id}/done`, body ?? {}),
   addPhoto: (id, file) => {
     const fd = new FormData()
     fd.append('file', file, file.name || 'foto.jpg')
