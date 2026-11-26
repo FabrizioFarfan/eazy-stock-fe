@@ -11,6 +11,7 @@ import SupplierOrderModal from '../reports/SupplierOrderModal'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { formatAmount, formatPrice } from '../../utils/formatMoney'
 import { useT, dateLocale } from '../../i18n'
+import { orderOrigin } from '../../utils/orderDraft'
 import { signedQuantityLabel, movementDirection } from '../../utils/movementSign'
 import { MoneyMovementsTable, MoneyStrip } from './MoneyMovements'
 
@@ -532,6 +533,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
                 unit: r.unit, qty: Number(r.totalSold) || 1, currentStock: r.currentStock, minStock: r.minStock,
               })),
               title: t('Pedido con lo vendido {range}', { range: rangeLabel(t, from, to) || t('en todo el historial') }),
+              origin: orderOrigin('sales', from, to),
             })
           }} />
       ) : (
@@ -663,6 +665,7 @@ export default function MovementsTab({ productId = null, productHint = null, onP
           supplier={orderPreview.supplier}
           items={orderPreview.items}
           title={orderPreview.title}
+          origin={orderPreview.origin}
           subtitle={t('Cantidades = lo vendido del período. Quita lo que no pidas, ajusta o deja solo lo que está bajo el mínimo.')}
           user={user}
           businessId={user?.businessId}

@@ -24,6 +24,7 @@ import TopProductsList from '../components/reports/TopProductsList'
 import SalesTable      from '../components/reports/SalesTable'
 import HelpDrawer from '../components/common/HelpDrawer'
 import SupplierOrderModal from '../components/reports/SupplierOrderModal'
+import { orderOrigin } from '../utils/orderDraft'
 import { localISODate } from '../utils/formatDate'
 import { useT, t as tr, dateLocale } from '../i18n'
 import { signedQuantityLabel, movementDirection } from '../utils/movementSign'
@@ -612,6 +613,7 @@ function TabSupplierRestock({ businessId }) {
     setOrderPreview({
       supplier: { id: s?.id, name: s?.name ?? supplierName, contact: s?.contact, phone: s?.phone, ruc: s?.ruc },
       items,
+      origin: orderOrigin('restock', from, to),
     })
   }
 
@@ -657,6 +659,7 @@ function TabSupplierRestock({ businessId }) {
         <SupplierOrderModal
           supplier={orderPreview.supplier}
           items={orderPreview.items}
+          origin={orderPreview.origin}
           user={user}
           businessId={businessId}
           onClose={() => setOrderPreview(null)}

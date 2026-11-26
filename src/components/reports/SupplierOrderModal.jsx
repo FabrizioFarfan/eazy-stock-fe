@@ -14,6 +14,7 @@ import { formatPrice, formatAmount } from '../../utils/formatMoney'
 import { useSupplierPrices } from '../../hooks/useSupplierPrices'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { cheaperRows, addExtra, peekExtras, setExtras, mergeExtras } from '../../utils/supplierCompare'
+import { orderOrigin, loadOrderDraft, saveOrderDraft, clearOrderDraft } from '../../utils/orderDraft'
 
 /**
  * Previsual EDITABLE de la orden de pedido antes de generar el PDF (pedido de
@@ -35,19 +36,14 @@ import { cheaperRows, addExtra, peekExtras, setExtras, mergeExtras } from '../..
  * @param {string}   [p.businessId]
  * @param {string}   [p.title]    cabecera alternativa (p. ej. «Pedido con lo vendido del período»)
  * @param {string}   [p.subtitle]
+ * @param {object}   [p.origin]   de dónde sale el pedido (`orderOrigin(kind, from, to)`); por defecto Stock bajo
  * @param {Function} p.onClose
  */
 // Borrador del pedido por proveedor: cerrar la previsual (o irse a otra
 // pantalla) no pierde las cantidades ajustadas, lo quitado ni las notas. Se
 // limpia al generar el PDF o al descartarlo.
-const orderDraftKey = (businessId, supplierId) => `eazystock_order_draft_${businessId || 'default'}_${supplierId || 'none'}`
-
-function loadOrderDraft(key) {
-  try {
-    const d = JSON.parse(localStorage.getItem(key))
-    return Array.isArray(d?.rows) ? d : null
-  } catch { return null }
-}
+// Cada borrador recuerda de dónde salió (`origin`: Stock bajo, Resurtido o lo vendido en unas fechas) y solo vuelve
+// ahí: el de Stock bajo ya no aparece al armar el pedido con lo vendido de la semana (William, 26-nov-2026).
 
 /**
  * Comparar proveedores (William, 20-nov-2026): desde el pedido de un proveedor se puede saltar al de otro (el que lo
@@ -62,17 +58,18 @@ export default function SupplierOrderModal(props) {
       items={other ? [] : props.items}
       title={other ? undefined : props.title}
       subtitle={other ? undefined : props.subtitle}
+      origin={other ? undefined : props.origin}
       onSwitchSupplier={(s) => setOther({ supplier: s })}
     />
   )
 }
 
-function OrderModal({ supplier, items: initialItems, user, businessId, title, subtitle, onClose, onSwitchSupplier }) {
+function OrderModal({ supplier, items: initialItems, user, businessId, title, subtitle, origin: originProp, onClose, onSwitchSupplier }) {
   const t = useT()
   const [busy, setBusy] = useState(null)
   const bizKey = businessId ?? user?.businessId
-  const draftKey = orderDraftKey(bizKey, supplier?.id)
-  const [draft] = useState(() => loadOrderDraft(draftKey))
+  const [origin] = useState(() => originProp ?? orderOrigin('low'))
+  const [draft] = useState(() => loadOrderDraft(localStorage, bizKey, supplier?.id, origin))
   // Lo que se pasó a este proveedor desde el pedido de otro (filas con `movedFrom`) entra aquí al abrir. Esas filas no
   // van en el borrador: siguen apuntadas aparte hasta que el pedido se envía, así no tapan lo que Resurtido sugiera luego.
   const [rows, setRows]       = useState(() => mergeExtras(
@@ -90,17 +87,15 @@ function OrderModal({ supplier, items: initialItems, user, businessId, title, su
     // Abierto solo para ver lo que vino de otro pedido: sin nada propio no se crea borrador.
     if (!hasDraft.current && own.length === 0 && removed.length === 0 && !notes) return
     hasDraft.current = true
-    try {
-      localStorage.setItem(draftKey, JSON.stringify({ rows: own, removed, notes, savedAt: Date.now() }))
-    } catch { /* best-effort */ }
-  }, [draftKey, bizKey, supplier?.id, rows, removed, notes])
+    saveOrderDraft(localStorage, bizKey, supplier?.id, origin, { rows: own, removed, notes })
+  }, [origin, bizKey, supplier?.id, rows, removed, notes])
 
   const clearDraft = () => {
-    try { localStorage.removeItem(draftKey) } catch { /* noop */ }
+    clearOrderDraft(localStorage, bizKey, supplier?.id, origin)
     setExtras(localStorage, bizKey, supplier?.id, [])
   }
   const discardDraft = () => {
-    try { localStorage.removeItem(draftKey) } catch { /* noop */ }
+    clearOrderDraft(localStorage, bizKey, supplier?.id, origin)
     setRows((rs) => mergeExtras(initialItems.map((it) => ({ ...it, qty: Math.max(1, Number(it.qty) || 1) })), rs.filter((r) => r.movedFrom)))
     setRemoved([])
     setNotes('')

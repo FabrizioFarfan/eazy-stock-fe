@@ -3,6 +3,13 @@
 Versionado semántico desde el 3-oct-2026 (regla de Frank: cada tanda desplegada sube la versión y la app la muestra).
 
 
+## 1.46.1 — 2026-11-26 (William: al armar el pedido con lo vendido en unas fechas le salían los de stock bajo)
+
+- **Stock › Movimientos › Ventas › «Armar pedido»** abre siempre con lo vendido en las fechas elegidas y nada más. Antes, si había un pedido a medias de ese proveedor hecho desde Stock bajo (basta abrirlo y cerrarlo sin enviar), ese pedido volvía a salir en lugar de lo vendido, con el título de las fechas encima.
+- Causa: el borrador del pedido se guardaba solo por proveedor. Ahora cada borrador recuerda de dónde salió (Stock bajo, Resurtido o Ventas) y, en los dos últimos, las fechas: solo vuelve en ese mismo sitio y con esas mismas fechas. Con otras fechas se empieza de lo vendido en ellas.
+- Stock bajo sigue siendo opcional dentro del pedido: el botón «Solo los que están bajo el mínimo» y el buscador para agregar productos.
+- Lógica en `utils/orderDraft.js` (con tests). 272 tests.
+
 ## 1.46.0 — 2026-11-22 (Frank: «Recibir mercadería con fotos»)
 
 - **Stock › Recibir con fotos** (`/stock/recepcion-fotos`, sólo el dueño y sólo si el servidor tiene la IA configurada): llegó mercadería y, en vez de teclear la factura, se le saca una foto. Vale la factura, la guía, la nota de pedido o la hoja del cuaderno escrita a mano; hasta 6 fotos por documento.
